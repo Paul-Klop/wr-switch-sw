@@ -109,8 +109,8 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 		wrsPtpDataTable_array[0].wrsPtpClockOffsetErrCnt = ppsi_servo->n_err_offset;
 		wrsPtpDataTable_array[0].wrsPtpRTTErrCnt = ppsi_servo->n_err_delta_rtt;
 		wrsPtpDataTable_array[0].wrsPtpServoUpdateTime =
-			(((uint64_t) ppsi_servo->update_time.seconds) * 1000000000LL)
-			+ ppsi_servo->update_time.nanoseconds;
+			ppsi_servo->update_time.secs * 1000 * 1000 * 1000
+			+ (ppsi_servo->update_time.scaled_nsecs >> 16);
 		retries++;
 		if (retries > 100) {
 			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",

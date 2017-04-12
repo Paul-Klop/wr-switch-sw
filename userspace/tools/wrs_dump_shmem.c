@@ -89,6 +89,7 @@ enum dump_type {
 			   * endianess */
 	dump_type_bina, /* for binary stull in MAC format */
 	/* normal types follow */
+	dump_type_uint64_t,
 	dump_type_uint32_t,
 	dump_type_uint16_t,
 	dump_type_int,
@@ -113,7 +114,7 @@ enum dump_type {
 	dump_type_PortIdentity,
 	dump_type_ClockQuality,
 	/* and this is ours */
-	dump_type_TimeInternal,
+	dump_type_time,
 	dump_type_ip_address,
 	dump_type_sfp_flags,
 	dump_type_port_mode,
@@ -143,10 +144,11 @@ struct dump_info {
 void dump_one_field(void *addr, struct dump_info *info)
 {
 	void *p = addr + info->offset;
-	struct TimeInternal *ti = p;
+	struct pp_time *t = p;
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
+	long nano, pico;
 	int i;
 
 	printf("        %-30s ", info->name); /* name includes trailing ':' */
@@ -172,6 +174,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 			       i == info->size - 1 ? '\n' : ':');
 		break;
 	case dump_type_UInteger64:
+	case dump_type_uint64_t:
 		printf("%lld\n", *(unsigned long long *)p);
 		break;
 	case dump_type_Integer64:
@@ -212,9 +215,12 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
-	case dump_type_TimeInternal:
-		printf("correct %i: %10i.%09i:%04i\n", ti->correct,
-		       ti->seconds, ti->nanoseconds, ti->phase);
+	case dump_type_time:
+		nano = t->scaled_nsecs >> 16;
+		pico = t->scaled_nsecs & 0xffff;
+		pico = (pico * 1000) >> 16;
+		printf("correct %i: %10lli.%09li.%03li\n",
+		       !is_incorrect(t), t->secs, nano,pico);
 		break;
 
 	case dump_type_ip_address:
@@ -592,8 +598,8 @@ struct dump_info dsd_info [] = {
 #define DUMP_STRUCT DSCurrent /* Horrible typedef */
 struct dump_info dsc_info [] = {
 	DUMP_FIELD(UInteger16, stepsRemoved),
-	DUMP_FIELD(TimeInternal, offsetFromMaster),
-	DUMP_FIELD(TimeInternal, meanPathDelay), /* oneWayDelay */
+	DUMP_FIELD(time, offsetFromMaster),
+	DUMP_FIELD(time, meanPathDelay), /* oneWayDelay */
 	DUMP_FIELD(UInteger16, primarySlavePortNumber),
 };
 
@@ -634,15 +640,15 @@ struct dump_info servo_state_info [] = {
 	DUMP_FIELD(Integer32, delta_rx_s),
 	DUMP_FIELD(Integer32, fiber_fix_alpha),
 	DUMP_FIELD(Integer32, clock_period_ps),
-	DUMP_FIELD(TimeInternal, t1),
-	DUMP_FIELD(TimeInternal, t2),
-	DUMP_FIELD(TimeInternal, t3),
-	DUMP_FIELD(TimeInternal, t4),
-	DUMP_FIELD(TimeInternal, t5),
-	DUMP_FIELD(TimeInternal, t6),
+	DUMP_FIELD(time, t1),
+	DUMP_FIELD(time, t2),
+	DUMP_FIELD(time, t3),
+	DUMP_FIELD(time, t4),
+	DUMP_FIELD(time, t5),
+	DUMP_FIELD(time, t6),
 	DUMP_FIELD(Integer32, delta_ms_prev),
 	DUMP_FIELD(int, missed_iters),
-	DUMP_FIELD(TimeInternal, mu),		/* half of the RTT */
+	DUMP_FIELD(time, mu),		/* half of the RTT */
 	DUMP_FIELD(Integer64, picos_mu),
 	DUMP_FIELD(Integer32, cur_setpoint),
 	DUMP_FIELD(Integer32, delta_ms),
@@ -654,7 +660,7 @@ struct dump_info servo_state_info [] = {
 	DUMP_FIELD(UInteger32, n_err_state),
 	DUMP_FIELD(UInteger32, n_err_offset),
 	DUMP_FIELD(UInteger32, n_err_delta_rtt),
-	DUMP_FIELD(TimeInternal, update_time),
+	DUMP_FIELD(time, update_time),
 };
 
 #undef DUMP_STRUCT
@@ -698,17 +704,15 @@ struct dump_info ppi_info [] = {
 	DUMP_FIELD_SIZE(bina, peer, 6),
 	DUMP_FIELD(uint16_t, peer_vid),
 
-	DUMP_FIELD(TimeInternal, t1),
-	DUMP_FIELD(TimeInternal, t2),
-	DUMP_FIELD(TimeInternal, t3),
-	DUMP_FIELD(TimeInternal, t4),
-	DUMP_FIELD(TimeInternal, t5),
-	DUMP_FIELD(TimeInternal, t6),
-	DUMP_FIELD(Integer32,  t4_cf),
-	DUMP_FIELD(Integer32,  t6_cf),
-	DUMP_FIELD(TimeInternal, cField),
-	DUMP_FIELD(TimeInternal, last_rcv_time),
-	DUMP_FIELD(TimeInternal, last_snt_time),
+	DUMP_FIELD(time, t1),
+	DUMP_FIELD(time, t2),
+	DUMP_FIELD(time, t3),
+	DUMP_FIELD(time, t4),
+	DUMP_FIELD(time, t5),
+	DUMP_FIELD(time, t6),
+	DUMP_FIELD(uint64_t, syncCF),
+	DUMP_FIELD(time, last_rcv_time),
+	DUMP_FIELD(time, last_snt_time),
 	DUMP_FIELD(UInteger16, frgn_rec_num),
 	DUMP_FIELD(Integer16,  frgn_rec_best),
 	//DUMP_FIELD(struct pp_frgn_master frgn_master[PP_NR_FOREIGN_RECORDS]),

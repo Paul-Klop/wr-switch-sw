@@ -1,0 +1,220 @@
+From e5a832ead5fd37822559b5485db0c12c98d060d0 Mon Sep 17 00:00:00 2001
+From: Cesar Prados <c.prados@gsi.de>
+Date: Mon, 29 May 2017 00:43:20 +0200
+Subject: [PATCH] lldp: add patches from buildroot master branch
+ 2017.05-rc2-45-g019ad60
+
+---
+ ...generation-of-atom-glue-compatible-with-o.patch | 43 +++++++++++++++
+ .../0002-configure-do-not-check-for-libbsd.patch   | 61 ++++++++++++++++++++++
+ package/lldpd/S60lldpd                             | 25 +++++++++
+ package/lldpd/lldpd.hash                           |  2 +-
+ package/lldpd/lldpd.mk                             | 18 ++++++-
+ 5 files changed, 147 insertions(+), 2 deletions(-)
+ create mode 100644 package/lldpd/0001-build-make-generation-of-atom-glue-compatible-with-o.patch
+ create mode 100644 package/lldpd/0002-configure-do-not-check-for-libbsd.patch
+ create mode 100644 package/lldpd/S60lldpd
+
+diff --git a/package/lldpd/0001-build-make-generation-of-atom-glue-compatible-with-o.patch b/package/lldpd/0001-build-make-generation-of-atom-glue-compatible-with-o.patch
+new file mode 100644
+index 0000000..d5675d3
+--- /dev/null
++++ b/package/lldpd/0001-build-make-generation-of-atom-glue-compatible-with-o.patch
+@@ -0,0 +1,43 @@
++From 106aa50d4e5b336f7dd2d5cf4d882e692d205e91 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.im>
++Date: Sat, 18 Jun 2016 22:18:41 +0200
++Subject: [PATCH] build: make generation of atom-glue compatible with older gcc
++ versions
++
++With old versions, cpp doesn't accept several files as input. See #186.
++
++Signed-off-by: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
++---
++ src/lib/Makefile.am | 8 +++++---
++ 1 file changed, 5 insertions(+), 3 deletions(-)
++
++diff --git a/src/lib/Makefile.am b/src/lib/Makefile.am
++index 250e32a..2a5cdb3 100644
++--- a/src/lib/Makefile.am
+++++ b/src/lib/Makefile.am
++@@ -20,8 +20,9 @@ nodist_liblldpctl_la_SOURCES = atom-glue.c
++ liblldpctl_la_LIBADD  = $(top_builddir)/src/libcommon-daemon-lib.la libfixedpoint.la
++ 
++ atom-glue.c: $(ATOM_FILES) Makefile
++-	$(AM_V_GEN)($(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
++-		$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) $(ATOM_FILES:%=$(srcdir)/%) | \
+++	$(AM_V_GEN)(for f in $(ATOM_FILES:%=$(srcdir)/%); do \
+++		$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+++		$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) $$f; done | \
++ 		$(SED) -n 's+^void init_atom_builder_\([^(]*\)().*, \([0-9]*\)).*+\2 \1+p' | \
++ 		sort | \
++ 		$(AWK) '{ atoms[$$2] = 1 } \
++@@ -30,8 +31,9 @@ atom-glue.c: $(ATOM_FILES) Makefile
++                                print " static int init = 0; if (init) return; init++;"; \
++ 			       for (atom in atoms) { print " init_atom_builder_"atom"();" } \
++ 			       print "}"; }' && \
+++		for f in $(ATOM_FILES:%=$(srcdir)/%); do \
++ 		$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
++-		$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) $(ATOM_FILES:%=$(srcdir)/%) | \
+++		$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) $$f; done | \
++ 		$(SED) -n 's+^void init_atom_map_\([^(]*\)().*, \([0-9]*\)).*+\2 \1+p' | \
++ 		sort -n | \
++ 		$(AWK) '{ atoms[$$2] = 1 } \
++-- 
++2.9.0
++
+diff --git a/package/lldpd/0002-configure-do-not-check-for-libbsd.patch b/package/lldpd/0002-configure-do-not-check-for-libbsd.patch
+new file mode 100644
+index 0000000..4d63274
+--- /dev/null
++++ b/package/lldpd/0002-configure-do-not-check-for-libbsd.patch
+@@ -0,0 +1,61 @@
++From 0801a066cd4a24a858ddfa7c62c7802e0f5533a8 Mon Sep 17 00:00:00 2001
++From: "Yann E. MORIN" <yann.morin.1998@free.fr>
++Date: Sun, 14 Aug 2016 12:15:17 +0200
++Subject: [PATCH] configure: do not check for libbsd
++
++libbsd causes build issues because its libbsd-overlay.pc file is borked:
++it contains -isystem in CFLAGS, which is not munged by pkgconf, so we
++end up using the headers of the build machine, causing all sorts of
++hard-to-debug trouble at build time.
++
++lldpd uses libbsd-overlay for a few helper functions, but has fallbacks
++in case it is not available. The only feature that is lost when not using
++it is that the neighbour name is no longer displayed in /proc/self/cmdline.
++As the author of lldpd said on IRC: "people should survive! ;-)"
++
++So we just remove the detection of libbsd altogether.
++
++Fixes:
++    http://autobuild.buildroot.org/results/6b7/6b70fa379e834ec71cc260ba6af771b531ca3511/
++    http://autobuild.buildroot.org/results/769/769074c4bb67336ae6679f2c1cd2a8220d2bec24/
++    http://autobuild.buildroot.org/results/c8a/c8a6001f437701ecc75f6c9252935645bda8a8c8/
++    [...]
++
++Signed-off-by: "Yann E. MORIN" <yann.morin.1998@free.fr>
++---
++ configure.ac | 19 -------------------
++ 1 file changed, 19 deletions(-)
++
++diff --git a/configure.ac b/configure.ac
++index dd723b0..45498ce 100644
++--- a/configure.ac
+++++ b/configure.ac
++@@ -165,25 +165,6 @@ AC_FUNC_MALLOC
++ AC_FUNC_REALLOC
++ AC_FUNC_FORK
++ 
++-# Some functions can be in libbsd
++-PKG_CHECK_MODULES([libbsd], [libbsd-overlay], [
++-  _save_CFLAGS="$CFLAGS"
++-  _save_LIBS="$LIBS"
++-  CFLAGS="$CFLAGS $libbsd_CFLAGS"
++-  LIBS="$LIBS $libbsd_LIBS"
++-  AC_MSG_CHECKING([if libbsd can be linked correctly])
++-  AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
++-    [
++-      AC_MSG_RESULT(yes)
++-      LLDP_CFLAGS="$LLDP_CFLAGS $libbsd_CFLAGS"
++-      LLDP_LDFLAGS="$LLDP_LDFLAGS $libbsd_LIBS"
++-    ],[
++-      AC_MSG_RESULT(no)
++-      CFLAGS="$_save_CFLAGS"
++-      LIBS="$_save_LIBS"
++-    ])
++-], [:])
++-
++ # setproctitle may have an _init function
++ AC_REPLACE_FUNCS([setproctitle])
++ AC_CHECK_FUNCS([setproctitle_init])
++-- 
++2.7.4
++
+diff --git a/package/lldpd/S60lldpd b/package/lldpd/S60lldpd
+new file mode 100644
+index 0000000..3dfa6c1
+--- /dev/null
++++ b/package/lldpd/S60lldpd
+@@ -0,0 +1,25 @@
++#!/bin/sh
++#
++# Controls lldpd.
++#
++
++case $1 in
++    start)
++	printf "Starting lldpd: "
++	start-stop-daemon -S -q -p /var/run/lldpd.pid --exec /usr/sbin/lldpd
++	[ $? = 0 ] && echo "OK" || echo "FAIL"
++	;;
++    stop)
++	printf "Stopping lldpd: "
++	start-stop-daemon -K -q -p /var/run/lldpd.pid
++	[ $? = 0 ] && echo "OK" || echo "FAIL"
++	;;
++    restart)
++	$0 stop
++	$0 start
++	;;
++    *)
++	echo "Usage: $0 {start|stop|restart}"
++	exit 1
++	;;
++esac
+diff --git a/package/lldpd/lldpd.hash b/package/lldpd/lldpd.hash
+index a6d905b..fc3d21f 100644
+--- a/package/lldpd/lldpd.hash
++++ b/package/lldpd/lldpd.hash
+@@ -1,2 +1,2 @@
+ # Locally computed
+-sha256 aac11cb1fdc037709517372c70c9bf89c752ab8e5eaab9ce140b84ed5a0507c8  lldpd-0.7.19.tar.gz
++sha256 eb1f5beff2ff5c13c5e0342b5b9da815ed4a63866262445e1168a79ee65c9079  lldpd-0.9.4.tar.gz
+diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
+index 416967b..951c914 100644
+--- a/package/lldpd/lldpd.mk
++++ b/package/lldpd/lldpd.mk
+@@ -4,11 +4,21 @@
+ #
+ ################################################################################
+ 
+-LLDPD_VERSION = 0.7.19
++LLDPD_VERSION = 0.9.4
+ LLDPD_SITE = http://media.luffy.cx/files/lldpd
+ LLDPD_DEPENDENCIES = host-pkgconf libevent
+ LLDPD_LICENSE = ISC
+ LLDPD_LICENSE_FILES = README.md
++# 0002-configure-do-not-check-for-libbsd.patch
++LLDPD_AUTORECONF = YES
++
++ifeq ($(BR2_PACKAGE_CHECK),y)
++LLDPD_DEPENDENCIES += check
++endif
++
++ifeq ($(BR2_PACKAGE_VALGRIND),y)
++LLDPD_DEPENDENCIES += valgrind
++endif
+ 
+ # Detection of c99 support in configure fails without WCHAR. To enable
+ # automatic detection of c99 support by configure, we need to enable
+@@ -16,6 +26,7 @@ LLDPD_LICENSE_FILES = README.md
+ # runtime. So requesting WCHAR in toolchain just for automatic detection
+ # will be overkill. To solve this, explicitly -specify c99 here.
+ LLDPD_CONF_ENV = ac_cv_prog_cc_c99=-std=gnu99
++LLDPD_CONF_ENV += NETSNMP_CONFIG=$(HOST_DIR)/usr/arm-buildroot-linux-uclibcgnueabi/sysroot/usr/bin/net-snmp-config
+ 
+ LLDPD_CONF_OPTS = \
+ 	--without-readline \
+@@ -35,4 +46,9 @@ LLDPD_CONF_OPTS = \
+ 	$(if $(BR2_PACKAGE_LLDPD_DOT3),--enable-dot3,--disable-dot3) \
+ 	$(if $(BR2_PACKAGE_LLDPD_CUSTOM_TLV),--enable-custom,--disable-custom)
+ 
++define LLDPD_INSTALL_INIT_SYSV
++	$(INSTALL) -D -m 0755 package/lldpd/S60lldpd \
++		$(TARGET_DIR)/etc/init.d/S60lldpd
++endef
++
+ $(eval $(autotools-package))
+-- 
+2.1.4
+

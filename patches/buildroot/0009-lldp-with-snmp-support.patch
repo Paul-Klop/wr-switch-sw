@@ -1,16 +1,16 @@
-From e5a832ead5fd37822559b5485db0c12c98d060d0 Mon Sep 17 00:00:00 2001
+From c136c356d98fdea387581774f609269d276777aa Mon Sep 17 00:00:00 2001
 From: Cesar Prados <c.prados@gsi.de>
-Date: Mon, 29 May 2017 00:43:20 +0200
-Subject: [PATCH] lldp: add patches from buildroot master branch
- 2017.05-rc2-45-g019ad60
+Date: Thu, 8 Jun 2017 13:50:15 +0200
+Subject: [PATCH] lldp: add snmp support and netsnmp config path
 
+uses the lldp buildroot package of the commit 019ad60
 ---
  ...generation-of-atom-glue-compatible-with-o.patch | 43 +++++++++++++++
  .../0002-configure-do-not-check-for-libbsd.patch   | 61 ++++++++++++++++++++++
  package/lldpd/S60lldpd                             | 25 +++++++++
  package/lldpd/lldpd.hash                           |  2 +-
- package/lldpd/lldpd.mk                             | 18 ++++++-
- 5 files changed, 147 insertions(+), 2 deletions(-)
+ package/lldpd/lldpd.mk                             | 22 ++++++--
+ 5 files changed, 149 insertions(+), 4 deletions(-)
  create mode 100644 package/lldpd/0001-build-make-generation-of-atom-glue-compatible-with-o.patch
  create mode 100644 package/lldpd/0002-configure-do-not-check-for-libbsd.patch
  create mode 100644 package/lldpd/S60lldpd
@@ -171,7 +171,7 @@ index a6d905b..fc3d21f 100644
 -sha256 aac11cb1fdc037709517372c70c9bf89c752ab8e5eaab9ce140b84ed5a0507c8  lldpd-0.7.19.tar.gz
 +sha256 eb1f5beff2ff5c13c5e0342b5b9da815ed4a63866262445e1168a79ee65c9079  lldpd-0.9.4.tar.gz
 diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
-index 416967b..951c914 100644
+index 416967b..5ee5122 100644
 --- a/package/lldpd/lldpd.mk
 +++ b/package/lldpd/lldpd.mk
 @@ -4,11 +4,21 @@
@@ -181,7 +181,8 @@ index 416967b..951c914 100644
 -LLDPD_VERSION = 0.7.19
 +LLDPD_VERSION = 0.9.4
  LLDPD_SITE = http://media.luffy.cx/files/lldpd
- LLDPD_DEPENDENCIES = host-pkgconf libevent
+-LLDPD_DEPENDENCIES = host-pkgconf libevent
++LLDPD_DEPENDENCIES = host-pkgconf libevent netsnmp
  LLDPD_LICENSE = ISC
  LLDPD_LICENSE_FILES = README.md
 +# 0002-configure-do-not-check-for-libbsd.patch
@@ -197,14 +198,20 @@ index 416967b..951c914 100644
  
  # Detection of c99 support in configure fails without WCHAR. To enable
  # automatic detection of c99 support by configure, we need to enable
-@@ -16,6 +26,7 @@ LLDPD_LICENSE_FILES = README.md
+@@ -16,11 +26,12 @@ LLDPD_LICENSE_FILES = README.md
  # runtime. So requesting WCHAR in toolchain just for automatic detection
  # will be overkill. To solve this, explicitly -specify c99 here.
  LLDPD_CONF_ENV = ac_cv_prog_cc_c99=-std=gnu99
-+LLDPD_CONF_ENV += NETSNMP_CONFIG=$(HOST_DIR)/usr/arm-buildroot-linux-uclibcgnueabi/sysroot/usr/bin/net-snmp-config
++LLDPD_CONF_ENV += NETSNMP_CONFIG=$(STAGING_DIR)/usr/bin/net-snmp-config
  
  LLDPD_CONF_OPTS = \
  	--without-readline \
+ 	--without-embedded-libevent \
+-	--without-snmp \
++	--with-snmp \
+ 	--without-xml \
+ 	--without-json \
+ 	--without-seccomp \
 @@ -35,4 +46,9 @@ LLDPD_CONF_OPTS = \
  	$(if $(BR2_PACKAGE_LLDPD_DOT3),--enable-dot3,--disable-dot3) \
  	$(if $(BR2_PACKAGE_LLDPD_CUSTOM_TLV),--enable-custom,--disable-custom)

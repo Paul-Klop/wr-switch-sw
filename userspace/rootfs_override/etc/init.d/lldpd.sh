@@ -4,6 +4,8 @@
 #
 
 CONFIG=/etc/lldpd.conf
+LLDP=/usr/sbin/lldpd
+OPT=-x
 
 case $1 in
     start)
@@ -14,7 +16,7 @@ case $1 in
 	echo "resume" >> $CONFIG
 
 	printf "Starting lldpd: "
-	start-stop-daemon -S -q -p /var/run/lldpd.pid --exec /usr/sbin/lldpd
+        start-stop-daemon -S -q -p /var/run/lldpd.pid -x $LLDP -- $OPT
 	[ $? = 0 ] && echo "OK" || echo "FAIL"
 	;;
     stop)

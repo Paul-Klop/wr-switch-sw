@@ -76,6 +76,10 @@ for i_zero in {01..18};do
 	unset p_name
 	unset p_proto
 	unset p_role
+	unset p_ext
+	# delay mechanism
+	unset p_dm
+	unset p_monitor
 	# parse parameters
 	param_line=$(eval "echo \$CONFIG_PORT"$i_zero"_PARAMS")
 	IFS_OLD=$IFS
@@ -94,6 +98,13 @@ for i_zero in {01..18};do
 			p_proto="$value";;
 		"role")
 			p_role="$value";;
+		"ext")
+			p_ext="$value";;
+		"dm")
+			p_dm="$value";;
+		"monitor")
+			# read by SNMP directly from the config
+			continue;;
 		"rx"|"tx"|"fiber")
 			continue;;
 		*)
@@ -117,12 +128,38 @@ for i_zero in {01..18};do
 	else
 		echo "port wri$i-raw" >> $OUTPUT_FILE
 	fi
+
 	echo "iface wri$i" >> $OUTPUT_FILE
+
 	if [ -n "$p_role" ]; then
 		echo "role $p_role" >> $OUTPUT_FILE
+	else
+		echo "$0: Role not defined in CONFIG_PORT"$i_zero"_PARAMS"
 	fi
-	#hardcode whiterabbit as extension even for non-wr
-	echo "extension whiterabbit" >> $OUTPUT_FILE
+
+	if [ "${p_ext,,}" = "wr" ]; then # lower case
+		echo "extension whiterabbit" >> $OUTPUT_FILE
+	# add HA one day...
+	# elif [ "${p_ext,,}" = "ha" ]; then # lower case
+	# 	echo "extension whiterabbit" >> $OUTPUT_FILE
+	elif [ "${p_ext,,}" = "none" ]; then # lower case
+		# do nothing
+		echo "# no extension" >> $OUTPUT_FILE
+	elif [ -n "$p_ext" ]; then
+		echo "$0: Invalid parameter ext=\"$p_ext\" in CONFIG_PORT"$i_zero"_PARAMS"
+	else
+		# default
+		echo "extension whiterabbit" >> $OUTPUT_FILE
+	fi
+
+	if [ "${p_dm,,}" = "p2p" ]; then # lower case
+		echo "mechanism p2p" >> $OUTPUT_FILE
+	elif [ "${p_dm,,}" = "e2e" ]; then # lower case
+		# do nothing
+		true
+	elif [ -n "$p_dm" ]; then
+		echo "$0: Invalid parameter dm=\"$p_dm\" in CONFIG_PORT"$i_zero"_PARAMS"
+	fi
 
 	# add vlans
 	if [ "$CONFIG_VLANS_ENABLE" = "y" ]; then

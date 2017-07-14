@@ -5,9 +5,10 @@
 
 PRE_FILE="/wr/etc/ppsi-pre.conf"
 OUTPUT_FILE="/etc/ppsi.conf"
+DOTCONFIG_FILE="/wr/etc/dot-config"
 
-if [ -f /wr/etc/dot-config ]; then
-    . /wr/etc/dot-config
+if [ -f "$DOTCONFIG_FILE" ]; then
+    . "$DOTCONFIG_FILE"
 else
     # if dot-config not available remove ppsi's config
     rm $OUTPUT_FILE
@@ -19,6 +20,37 @@ echo "# This file will be overwritten at next boot." >> $OUTPUT_FILE
 
 #copy top of ppsi.conf
 cat $PRE_FILE >> $OUTPUT_FILE
+
+if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
+	echo clock-class "$CONFIG_PTP_OPT_CLOCK_CLASS" >> $OUTPUT_FILE
+fi
+
+if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
+	echo clock-accuracy "$CONFIG_PTP_OPT_CLOCK_ACCURACY" >> $OUTPUT_FILE
+fi
+if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE" ]; then
+	echo clock-allan-variance "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE" >> $OUTPUT_FILE
+fi
+
+if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER" ]; then
+	echo domain-number "$CONFIG_PTP_OPT_DOMAIN_NUMBER" >> $OUTPUT_FILE
+fi
+
+if [ -n "$CONFIG_PTP_OPT_ANNOUNCE_INTERVAL" ]; then
+	echo announce-interval "$CONFIG_PTP_OPT_ANNOUNCE_INTERVAL" >> $OUTPUT_FILE
+fi
+
+if [ -n "$CONFIG_PTP_OPT_SYNC_INTERVAL" ]; then
+	echo sync-interval "$CONFIG_PTP_OPT_SYNC_INTERVAL" >> $OUTPUT_FILE
+fi
+
+if [ -n "$CONFIG_PTP_OPT_PRIORITY1" ]; then
+	echo priority1 "$CONFIG_PTP_OPT_PRIORITY1" >> $OUTPUT_FILE
+fi
+
+if [ -n "$CONFIG_PTP_OPT_PRIORITY2" ]; then
+	echo priority2 "$CONFIG_PTP_OPT_PRIORITY2" >> $OUTPUT_FILE
+fi
 
 for i_zero in {01..18};do
 	# unset parametes

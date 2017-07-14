@@ -694,6 +694,84 @@ config PTP_CONF_URL
 	  you can use host names.
 	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
 
+menu "PTP options"
+	depends on PTP_PORT_PARAMS
+
+config PTP_OPT_CLOCK_CLASS
+	string "clock-class"
+	help
+	  An attribute defining the TAI traceability, synchronization state and
+	  expected performance of the time or frequency distributed by a
+	  Boundary Clock or Ordinary Clock.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_CLOCK_ACCURACY
+	string "clock-accuracy"
+	help
+	  An attribute defining the accuracy of the Local Clock (e.g. local
+	  oscillator) of a Boundary Clock or Ordinary Clock.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_CLOCK_ALLAN_VARIANCE
+	string "clock-allan-variance/offsetScaledLogVariance"
+	help
+	  An attribute defining the stability of the Local Clock of a
+	  Boundary Clock or Ordinary Clock.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_DOMAIN_NUMBER
+	string "domain-number"
+	help
+	  A domain consists of one or more PTP devices communicating with each
+	  other as defined by the PTP protocol. A domain defines the scope of
+	  PTP message communication, state, operations, data sets, and
+	  timescale. PTP devices may participate in multiple domains.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_ANNOUNCE_INTERVAL
+	string "announce-interval"
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_SYNC_INTERVAL
+	string "sync-interval"
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_PRIORITY1
+	string "priority1"
+	help
+	  A user configurable designation that a clock belongs to an ordered
+	  set of PTP devices from which a PTP Master is selected.
+	  For more details please refer to the IEEE 1588-2008 standard
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_PRIORITY2
+	string "priority2"
+	help
+	  A user configurable designation that provides finer grained ordering
+	  among otherwise equivalent PTP devices.
+	  For more details please refer to the IEEE 1588-2008 standard
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+endmenu #"PPSI options"
 
 menu "Management configuration"
 config SNMP_TRAPSINK_ADDRESS

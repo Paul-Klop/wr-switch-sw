@@ -65,6 +65,10 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		else
 			return HEXP_LOCK_STATUS_NONE;
 		break;
+			
+	case HEXP_LOCK_CMD_RESET:
+		return hal_port_reset(port_name);
+		
 	}
 
 	return -100;		/* fixme: add real error code */

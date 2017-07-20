@@ -760,6 +760,39 @@ int hal_port_check_lock(const char *port_name)
 		(hs->flags & RTS_REF_LOCKED));
 }
 
+int hal_port_reset(const char *port_name)
+{
+	struct hal_port_state *p = hal_lookup_port(ports,
+						  hal_port_nports, port_name);
+
+	if (!p)
+		return -1;
+
+	if (p->state != HAL_PORT_STATE_LINK_DOWN
+	    && p->state != HAL_PORT_STATE_DISABLED) {
+		if (p->locked) {
+			pr_info("Switching RTS to use local reference\n");
+			if (hal_get_timing_mode()
+			    != HAL_TIMING_MODE_GRAND_MASTER)
+				rts_set_mode(RTS_MODE_GM_FREERUNNING);
+		}
+
+		/* turn off synced LED */
+		set_led_synced(p->hw_index, 0);
+
+		/* turn off link/wrmode LEDs */
+		set_led_wrmode(p->hw_index, SFP_LED_WRMODE_OFF);
+		p->state = HAL_PORT_STATE_LINK_DOWN;
+		hal_port_reset_state(p);
+
+		rts_enable_ptracker(p->hw_index, 0);
+		pr_info("%s: link down\n", p->name);
+
+		return 1;
+	}
+	return 0;
+}
+
 /* to avoid i2c transfers to set the link LEDs, cache their state */
 static void set_led_wrmode(int p_index, int val)
 {

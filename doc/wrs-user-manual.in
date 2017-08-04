@@ -907,6 +907,12 @@ appropriate way, before the respective service is started.
 	If set, this configuration item overwrites the default value from
 	ppsi-pre.conf during generation of ppsi.conf.
 
+@item CONFIG_PTP_OPT_TIME_SOURCE
+	This information-only attribute indicates the source of time used
+	by the grandmaster (or free-running master).
+
+	NOTE: This is not supported yet by the PPSi.
+
 @item CONFIG_SNMP_TRAPSINK_ADDRESS
 @itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
 @itemx CONFIG_SNMP_RO_COMMUNITY

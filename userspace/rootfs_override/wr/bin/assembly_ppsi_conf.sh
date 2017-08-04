@@ -63,6 +63,11 @@ if [ -n "$CONFIG_PTP_OPT_PRIORITY2" ]; then
 	echo priority2 "$CONFIG_PTP_OPT_PRIORITY2" >> $OUTPUT_FILE
 fi
 
+if [ -n "$CONFIG_PTP_OPT_TIME_SOURCE" ]; then
+	echo time-source "$CONFIG_PTP_OPT_TIME_SOURCE" >> $OUTPUT_FILE
+fi
+
+
 # 2 new lines
 echo -n -e "\n\n"  >> $OUTPUT_FILE
 

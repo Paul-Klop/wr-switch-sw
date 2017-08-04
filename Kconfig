@@ -783,6 +783,13 @@ config PTP_OPT_PRIORITY2
 	  If set, this configuration item overwrites the default value from
 	  ppsi-pre.conf during generation of ppsi.conf.
 
+config PTP_OPT_TIME_SOURCE
+	string "time-source"
+	help
+	  This information-only attribute indicates the source of time used
+	  by the grandmaster (or free-running master).
+	  NOTE: This is not supported yet by the PPSi.
+
 endmenu #"PPSI options"
 
 menu "Management configuration"

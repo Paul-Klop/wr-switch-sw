@@ -805,6 +805,9 @@ appropriate way, before the respective service is started.
         external reference; or a normal ``boundary-clock'' (BC) device that
         is slave on some ports and master on other ports.
 
+        The PTP's clockClass is set based on which option is selected.
+        For the GM the clockClass is 6, for the FM is 52, for the BC is 248.
+
 @item CONFIG_PTP_PORT_PARAMS
 @itemx CONFIG_PTP_CUSTOM
 @itemx CONFIG_PTP_REMOTE_CONF

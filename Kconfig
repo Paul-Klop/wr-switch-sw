@@ -627,6 +627,10 @@ config TIME_GM
 	  This options selects the White Rabbit Switch as a grandmaster,
 	  i.e. it uses its input channels to track an Atomic or GPS and
 	  claim to be a PTP authoritative source on the network.
+	  The clockClass is set to 6 which designates a clock that is
+	  synchronized to a primary reference time source.
+	  The value of the clockClass can be overridden by the user in
+	  a separate configuration parameter (CONFIG_PTP_OPT_CLOCK_CLASS).
 
 config TIME_FM
 	bool "Free-Running Master"
@@ -634,6 +638,11 @@ config TIME_FM
 	  The White Rabbit Switch pretends to be a master on his PTP
 	  network, but it doesn't sync to an external source. Its own
 	  internal clocks and counters are used to drive timing.
+	  The clockClass is set to 52 which designates a clock that shall not
+	  be a slave to another clock i the domain.
+	  The value of the clockClass can be overridden by the user in
+	  a separate configuration parameter (CONFIG_PTP_OPT_CLOCK_CLASS).
+
 
 config TIME_BC
 	bool "Boundary Clock"
@@ -641,6 +650,9 @@ config TIME_BC
 	  The White Rabbit Switch is a normal PTP Boundary Clock: it is
 	  slave on one of its ports and master on the other ones, according
 	  to the standard Best Master Clock algorithm.
+	  The clockClass is set to 248 which is the default clockClass.
+	  The value of the clockClass can be overridden by the user in
+	  a separate configuration parameter (CONFIG_PTP_OPT_CLOCK_CLASS).
 
 endchoice
 

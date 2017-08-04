@@ -21,8 +21,19 @@ echo "# This file will be overwritten at next boot." >> $OUTPUT_FILE
 #copy top of ppsi.conf
 cat $PRE_FILE >> $OUTPUT_FILE
 
+
 if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
 	echo clock-class "$CONFIG_PTP_OPT_CLOCK_CLASS" >> $OUTPUT_FILE
+else
+	if [ "$CONFIG_TIME_GM" = "y" ]; then
+		echo clock-class 6 >> $OUTPUT_FILE
+	fi
+	if [ "$CONFIG_TIME_FM" = "y" ]; then
+		echo clock-class 52 >> $OUTPUT_FILE
+	fi
+	if [ "$CONFIG_TIME_BC" = "y" ]; then
+		echo clock-class 248 >> $OUTPUT_FILE
+	fi
 fi
 
 if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
@@ -51,6 +62,9 @@ fi
 if [ -n "$CONFIG_PTP_OPT_PRIORITY2" ]; then
 	echo priority2 "$CONFIG_PTP_OPT_PRIORITY2" >> $OUTPUT_FILE
 fi
+
+# 2 new lines
+echo -n -e "\n\n"  >> $OUTPUT_FILE
 
 for i_zero in {01..18};do
 	# unset parametes

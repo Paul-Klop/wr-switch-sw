@@ -11,6 +11,7 @@
 #define HAL_PORT_STATE_UP 2
 #define HAL_PORT_STATE_CALIBRATION 3
 #define HAL_PORT_STATE_LOCKING 4
+#define HAL_PORT_STATE_RESET 5
 
 /* Read temperature from SFPs */
 #define READ_SFP_DIAG_ENABLE 1

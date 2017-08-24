@@ -423,6 +423,7 @@ static void hal_port_fsm(struct hal_port_state * p)
 
 		/* Default state - wait until the link goes up */
 	case HAL_PORT_STATE_LINK_DOWN:
+	case HAL_PORT_STATE_RESET:
 		{
 			if (link_up) {
 				p->calib.tx_calibrated = 1;
@@ -782,8 +783,8 @@ int hal_port_reset(const char *port_name)
 
 		/* turn off link/wrmode LEDs */
 		set_led_wrmode(p->hw_index, SFP_LED_WRMODE_OFF);
-		p->state = HAL_PORT_STATE_LINK_DOWN;
 		hal_port_reset_state(p);
+		p->state = HAL_PORT_STATE_RESET;
 
 		rts_enable_ptracker(p->hw_index, 0);
 		pr_info("%s: link down\n", p->name);

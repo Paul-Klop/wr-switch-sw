@@ -216,15 +216,64 @@ int main(int argc, char **argv)
 			unix_time_set_utc_offset(offset, leap59, leap61);
 		}			
 
-		for (i=0; i< 20; i++)
-		{
+		if (j == 0) {
+			if ((hours == 23) && (minutes == 59) && (seconds == 50) && (offset == 37) && (leap59 == 0) && (leap61 == 1)) {
+				printf("pre leap61 handling correct\n");
+			} else {
+				printf("pre leap61 handling failed\n");
+				return -1;
+			}				
+		} else if (j == 1) {
+			if ((hours == 23) && (minutes == 59) && (seconds == 50) && (offset == 37) && (leap59 == 1) && (leap61 == 0)) {
+				printf("pre leap59 handling correct\n");
+			} else {
+				printf("pre leap59 handling failed\n");
+				return -2;
+			}
+		} else {
+			if ((hours == 23) && (minutes == 59) && (seconds == 50) && (offset == 37) && (leap59 == 0) && (leap61 == 0)) {
+				printf("pre no-leap handling correct\n");
+			} else {
+				printf("pre no-leap handling failed\n");
+				return -3;
+			}
+		}	
+		
+		for (i=0; i< 20; i++) {
 			/* Get the UTC time */
 			unix_time_get_utc_offset(&offset, &leap59, &leap61);	
 			unix_time_get_utc_time(&hours, &minutes, &seconds);
 			printf("new current time after offset and leap %d:%d:%d, offset=%d, l59=%d, l61=%d\n", hours, minutes, seconds, offset, leap59, leap61);
 			sleep(1);
 		}
+		
+		unix_time_get_utc_offset(&offset, &leap59, &leap61);	
+		unix_time_get_utc_time(&hours, &minutes, &seconds);
+		
+		if (j == 0) {
+			if ((hours == 0) && (minutes == 0) && (seconds == 9) && (offset == 38) && (leap59 == 0) && (leap61 == 0)) {
+				printf("post leap61 handling correct\n\n");
+			} else {
+				printf("post leap61 handling failed\n\n");
+				return -1;
+			}				
+		} else if (j == 1) {
+			if ((hours == 0) && (minutes == 0) && (seconds == 11) && (offset == 36) && (leap59 == 0) && (leap61 == 0)) {
+				printf("post leap59 handling correct\n\n");
+			} else {
+				printf("post leap59 handling failed\n\n");
+				return -2;
+			}
+		} else {
+			if ((hours == 0) && (minutes == 0) && (seconds == 10) && (offset == 37) && (leap59 == 0) && (leap61 == 0)) {
+				printf("post no-leap handling correct\n\n");
+			} else {
+				printf("post no-leap handling failed\n\n");
+				return -3;
+			}
+		}				
 	}
 
+	printf("all leap handling tests passed\n\n");
 	return 0;	
 }

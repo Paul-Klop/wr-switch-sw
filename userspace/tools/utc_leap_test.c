@@ -216,19 +216,12 @@ int main(int argc, char **argv)
 			unix_time_set_utc_offset(offset, leap59, leap61);
 		}			
 
-
-		/* Get the UTC time */
-		unix_time_get_utc_offset(&offset, &leap59, &leap61);	
-		printf("new current time after offset and leap %d:%d:%d, offset=%d, l59=%d, l61=%d\n", hours, minutes, seconds, offset, leap59, leap61);
-		unix_time_get_utc_time(&hours, &minutes, &seconds);
-
-
-
 		for (i=0; i< 20; i++)
 		{
+			/* Get the UTC time */
 			unix_time_get_utc_offset(&offset, &leap59, &leap61);	
-			printf("new current time after offset and leap %d:%d:%d, offset=%d, l59=%d, l61=%d\n", hours, minutes, seconds, offset, leap59, leap61);
 			unix_time_get_utc_time(&hours, &minutes, &seconds);
+			printf("new current time after offset and leap %d:%d:%d, offset=%d, l59=%d, l61=%d\n", hours, minutes, seconds, offset, leap59, leap61);
 			sleep(1);
 		}
 	}

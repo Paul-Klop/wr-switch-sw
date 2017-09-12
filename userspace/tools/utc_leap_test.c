@@ -221,21 +221,21 @@ int main(int argc, char **argv)
 				printf("pre leap61 handling correct\n");
 			} else {
 				printf("pre leap61 handling failed\n");
-				return -1;
+				exit(1);
 			}				
 		} else if (j == 1) {
 			if ((hours == 23) && (minutes == 59) && (seconds == 50) && (offset == 37) && (leap59 == 1) && (leap61 == 0)) {
 				printf("pre leap59 handling correct\n");
 			} else {
 				printf("pre leap59 handling failed\n");
-				return -2;
+				exit(2);
 			}
 		} else {
 			if ((hours == 23) && (minutes == 59) && (seconds == 50) && (offset == 37) && (leap59 == 0) && (leap61 == 0)) {
 				printf("pre no-leap handling correct\n");
 			} else {
 				printf("pre no-leap handling failed\n");
-				return -3;
+				exit(3);
 			}
 		}	
 		
@@ -255,25 +255,25 @@ int main(int argc, char **argv)
 				printf("post leap61 handling correct\n\n");
 			} else {
 				printf("post leap61 handling failed\n\n");
-				return -1;
+				exit(1);
 			}				
 		} else if (j == 1) {
 			if ((hours == 0) && (minutes == 0) && (seconds == 11) && (offset == 36) && (leap59 == 0) && (leap61 == 0)) {
 				printf("post leap59 handling correct\n\n");
 			} else {
 				printf("post leap59 handling failed\n\n");
-				return -2;
+				exit(2);
 			}
 		} else {
 			if ((hours == 0) && (minutes == 0) && (seconds == 10) && (offset == 37) && (leap59 == 0) && (leap61 == 0)) {
 				printf("post no-leap handling correct\n\n");
 			} else {
 				printf("post no-leap handling failed\n\n");
-				return -3;
+				exit(3);
 			}
 		}				
 	}
 
 	printf("all leap handling tests passed\n\n");
-	return 0;	
+	exit(0);	
 }

@@ -103,6 +103,7 @@ static uint8_t mi2c_get_byte(struct i2c_bitbang *bus, int ack)
 
 	mi2c_pin_out(bus->scl, 0);
 	shw_pio_setdir(bus->sda, PIO_IN);	//let SDA float so we can read it
+	shw_udelay(I2C_DELAY);              // wait for the SDA to become stable
 
 	for (i = 0; i < 8; i++) {
 		mi2c_pin_out(bus->scl, 1);

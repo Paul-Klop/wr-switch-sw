@@ -81,12 +81,14 @@ int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	char *mac;
 	uint32_t port_mask;
 	int type;
+	int vid;
 	int *p_ret = (int *)ret; /* force pointed to int type */
 
 	mac = (char *)args;
 	args = minipc_get_next_arg(args, pd->args[0]);
 	port_mask = (int)args[0];
 	type = (int)args[1];
+	vid = (int)args[2];
 
 	if (mac_verify(mac)) {
 		pr_error("%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)\n",
@@ -105,11 +107,15 @@ int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 		*p_ret = -1;
 		return *p_ret;
 	}
-
+	if (0 > vid || vid > 0xFFF) { /* FID must be between 0x0 and 0xFFF*/
+		pr_error("Wrong FID value 0x%x\n", vid);
+		*p_ret = -1;
+		return *p_ret;
+	}
 	pr_debug("Request to add an entry with port mask 0x%x, MAC: %s, "
 		 "type:%s\n", port_mask, mac_to_string(mac_tmp),
 		 rtu_type_to_str(type));
-	*p_ret = rtu_fd_create_entry(mac_tmp, 0, port_mask, type,
+	*p_ret = rtu_fd_create_entry(mac_tmp, vid, port_mask, type,
 				     OVERRIDE_EXISTING);
 	return *p_ret;
 }

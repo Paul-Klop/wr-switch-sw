@@ -62,6 +62,7 @@ struct minipc_pd rtud_export_add_entry = {
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRING, char *), /* MAC */
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* port mask */
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* type */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* VID */
 		 MINIPC_ARG_END,
 		 },
 };

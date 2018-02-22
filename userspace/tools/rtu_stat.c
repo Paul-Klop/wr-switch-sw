@@ -52,11 +52,11 @@ int rtudexp_clear_entries(int port, int type)
 	return (ret < 0) ? ret : val;
 }
 
-int rtudexp_add_entry(const char *mac, int port_mask, int type)
+int rtudexp_add_entry(const char *mac, int port_mask, int type, int vid)
 {
 	int val, ret;
 	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_add_entry,
-			  &val, mac, port_mask, type);
+			  &val, mac, port_mask, type, vid);
 	return (ret < 0) ? ret : val;
 }
 
@@ -145,13 +145,20 @@ void show_help(char *prgname)
 			"                                           MAC address on a given port mask with\n"
 			"                                           an optional type (default %d-static)\n",
 			RTU_ENTRY_TYPE_STATIC);
-	fprintf(stderr, "   add <mac> <port> [<type>]: Add entry for a specific MAC address with an\n"
-			"                              optional type  (default %d-static)\n",
-			RTU_ENTRY_TYPE_STATIC);
-	fprintf(stderr, "   add mask <mac> <port_mask> [<type>]: Add an entry for a specific \n"
+	fprintf(stderr, "   add <mac> <port> [<type> <VID>]: Add entry for a specific MAC address with an\n"
+			"                              optional type  (default %d-static) and VID (default %d);\n"
+			"                              if VID is specified, the type also has to be specified;\n"
+			"                              in order to add MAC to a VID, this VID must exist in the\n"
+			"                              VLAN Table\n",
+			RTU_ENTRY_TYPE_STATIC, RTU_ENTRY_VID_DEFAULT);
+	fprintf(stderr, "   add mask <mac> <port_mask> [<type> <VID>]: Add an entry for a specific \n"
 			"                                        MAC address and multiple ports with\n"
-			"                                        an optional type  (default %d-static)\n",
-			RTU_ENTRY_TYPE_STATIC);
+			"                                        an optional type  (default %d-static)\n"
+			"                                        and VID (default %d); if VID is specified,\n"
+			"                                        type also has to be specified;in order to\n"
+			"                                        add MAC to a VID, this VID must exist in the\n"
+			"                                        VLAN Table\n",
+			RTU_ENTRY_TYPE_STATIC, RTU_ENTRY_VID_DEFAULT);
 	fprintf(stderr, "   learning:         Read status of learning process in RTU\n");
 	fprintf(stderr, "   learning <enable|disable> [<port>]: Enable/disable learning process in RTU\n"
 			"                                       for optional port, otherwise for all\n"
@@ -404,6 +411,7 @@ int main(int argc, char **argv)
 	int n_wait = 0;
 	int ret;
 	int type;
+	int vid;
 	int enable;
 	uint32_t mask;
 
@@ -516,11 +524,11 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 		isok = 1;
-/* ****************** add mask <mac> <port_mask> [<type>] ****************** */
+/* ****************** add mask <mac> <port_mask> [<type>, <VID>] ************ */
 	} else if (argc >= 5
 		   && !strcmp(argv[1], "add")
 		   && !strcmp(argv[2], "mask")) {
-		/* rtu_stat add mask <mac> <port_mask> [<type>] */
+		/* rtu_stat add mask <mac> <port_mask> [<type>, <VID>] */
 		i = read_port_mask(argv[4], nports);
 		/* interface number 1..18, CPU is 19 */
 		if (i < 0) {
@@ -536,9 +544,15 @@ int main(int argc, char **argv)
 			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
 			exit(1);
 		}
+		vid = atoidef(argc, argv, 6, RTU_ENTRY_VID_DEFAULT);
+		if (0 > vid || vid > 0xFFF) {
+			fprintf(stderr, "rtu_stat: Incorrect VID %d\n", vid);
+			exit(1);
+		}
 		ret = rtudexp_add_entry(argv[3], /* MAC */
 					i, /* port mask */
-					type /* type */
+					type, /* type */
+					vid /* VID */
 					);
 		if (ret > 0)
 			printf("Added %d entries for port mask 0x%x\n",
@@ -548,10 +562,10 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 		isok = 1;
-/* ****************** add <mac> <port> [<type>] **************************** */
+/* ****************** add <mac> <port> [<type>, <VID>] ********************** */
 	} else if (argc >= 4
 		   && !strcmp(argv[1], "add")) {
-		/* rtu_stat add <mac> <port> [<type>] */
+		/* rtu_stat add <mac> <port> [<type>, <VID>] */
 		i = read_port(argv[3], nports);
 		/* interface number 1..18, CPU is 19 */
 		if (i < 0) {
@@ -567,9 +581,15 @@ int main(int argc, char **argv)
 			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
 			exit(1);
 		}
+		vid = atoidef(argc, argv, 5, RTU_ENTRY_VID_DEFAULT);
+		if (0 > vid || vid > 0xFFF) {
+			fprintf(stderr, "rtu_stat: Incorrect VID %d\n", vid);
+			exit(1);
+		}
 		ret = rtudexp_add_entry(argv[2], /* MAC */
 					1 << (i - 1), /* port mask */
-					type /* type */
+					type, /* type */
+					vid /* VID */
 					);
 		if (ret > 0)
 			printf("Added %d entries for port %d (wri%d)\n",

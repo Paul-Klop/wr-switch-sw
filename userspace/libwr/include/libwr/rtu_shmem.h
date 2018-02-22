@@ -25,6 +25,9 @@ struct rtu_addr {
 #define RTU_ENTRY_TYPE_DYNAMIC 1
 #define RTU_ENTRY_TYPE_STATIC 0
 
+/* When adding MAC entry, the Default VID is 0x0 */
+#define RTU_ENTRY_VID_DEFAULT 0
+
 /* helper to verify correctness of a rtu type */
 static inline int rtu_check_type(int type)
 {

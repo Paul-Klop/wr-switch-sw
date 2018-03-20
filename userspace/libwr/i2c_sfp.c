@@ -325,9 +325,9 @@ void shw_sfp_print_dom(struct shw_sfp_dom * dom)
 {
 	printf("Temperature: %.3f C\n", (int8_t)dom->temp[0] + dom->temp[1]/(float)256);
 	printf("Voltage: %.3f V\n", (dom->vcc[0]*256 + dom->vcc[1])/(float)10000);
-	printf("Bias Current:  %.3f uA\n", (dom->tx_bias[0]*256+dom->tx_bias[1])/(float)500000);
-	printf("TX power: %.3f mW\n", (dom->tx_pow[0]*256 + dom->tx_pow[1])/(float)100000);
-	printf("RX power: %.3f mW\n", (dom->rx_pow[0]*256 + dom->rx_pow[1])/(float)100000);
+	printf("Bias Current:  %.3f mA\n", (dom->tx_bias[0]*256+dom->tx_bias[1])/(float)500);
+	printf("TX power: %.3f mW\n", (dom->tx_pow[0]*256 + dom->tx_pow[1])/(float)10000);
+	printf("RX power: %.3f mW\n", (dom->rx_pow[0]*256 + dom->rx_pow[1])/(float)10000);
 }
 
 void shw_sfp_header_dump(struct shw_sfp_header *head)

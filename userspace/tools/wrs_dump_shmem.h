@@ -38,6 +38,7 @@ enum dump_type {
 	dump_type_uint16_t,
 	dump_type_int,
 	dump_type_unsigned_long,
+	dump_type_long_long,
 	dump_type_unsigned_char,
 	dump_type_unsigned_short,
 	dump_type_double,
@@ -57,6 +58,9 @@ enum dump_type {
 	dump_type_ClockIdentity,
 	dump_type_PortIdentity,
 	dump_type_ClockQuality,
+	dump_type_TimeInterval,
+	dump_type_RelativeDifference,
+	dump_type_Timestamp,
 	/* and this is ours */
 	dump_type_time,
 	dump_type_ip_address,

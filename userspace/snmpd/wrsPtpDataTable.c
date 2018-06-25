@@ -83,34 +83,32 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	while (1) {
 		ii = wrs_shm_seqbegin(ppsi_head);
 
-		strncpy(wrsPtpDataTable_array[0].wrsPtpServoState,
-			ppsi_servo->servo_state_name,
-			sizeof(ppsi_servo->servo_state_name));
-		wrsPtpDataTable_array[0].wrsPtpServoStateN = ppsi_servo->state;
-		/* Keep value 0 for Not available */
-		wrsPtpDataTable_array[0].wrsPtpPhaseTracking =
-					1 + ppsi_servo->tracking_enabled;
-		wrsPtpDataTable_array[0].wrsPtpRTT = ppsi_servo->picos_mu;
-		wrsPtpDataTable_array[0].wrsPtpClockOffsetPs =
-						ppsi_servo->offset;
-		wrsPtpDataTable_array[0].wrsPtpClockOffsetPsHR =
-					int_saturate(ppsi_servo->offset);
-		wrsPtpDataTable_array[0].wrsPtpSkew =
-						int_saturate(ppsi_servo->skew);
-		wrsPtpDataTable_array[0].wrsPtpLinkLength =
-			(uint32_t)(ppsi_servo->delta_ms/1e12 * 300e6 / 1.55);
-		wrsPtpDataTable_array[0].wrsPtpServoUpdates =
-						ppsi_servo->update_count;
-		wrsPtpDataTable_array[0].wrsPtpDeltaTxM = ppsi_servo->delta_tx_m;
-		wrsPtpDataTable_array[0].wrsPtpDeltaRxM = ppsi_servo->delta_rx_m;
-		wrsPtpDataTable_array[0].wrsPtpDeltaTxS = ppsi_servo->delta_tx_s;
-		wrsPtpDataTable_array[0].wrsPtpDeltaRxS = ppsi_servo->delta_rx_s;
-		wrsPtpDataTable_array[0].wrsPtpServoStateErrCnt = ppsi_servo->n_err_state;
-		wrsPtpDataTable_array[0].wrsPtpClockOffsetErrCnt = ppsi_servo->n_err_offset;
-		wrsPtpDataTable_array[0].wrsPtpRTTErrCnt = ppsi_servo->n_err_delta_rtt;
-		wrsPtpDataTable_array[0].wrsPtpServoUpdateTime =
-			ppsi_servo->update_time.secs * 1000 * 1000 * 1000
-			+ (ppsi_servo->update_time.scaled_nsecs >> 16);
+		//TODO JCB	: Search servo instance to display
+//		strncpy(wrsPtpDataTable_array[0].wrsPtpServoState,
+//			ppsi_servo->servo_state_name,
+//			sizeof(ppsi_servo->servo_state_name));
+//		wrsPtpDataTable_array[0].wrsPtpServoStateN = ppsi_servo->state;
+//		/* Keep value 0 for Not available */
+//		wrsPtpDataTable_array[0].wrsPtpPhaseTracking = 0; //JCB TODO	1 + ppsi_servo->tracking_enabled;
+//		wrsPtpDataTable_array[0].wrsPtpRTT =  0; //JCB TODO	ppsi_servo->picos_mu;
+//		wrsPtpDataTable_array[0].wrsPtpClockOffsetPs = pp_time_to_picos(&ppsi_servo->offsetFromMaster);
+//		wrsPtpDataTable_array[0].wrsPtpClockOffsetPsHR =
+//					int_saturate(wrsPtpDataTable_array[0].wrsPtpClockOffsetPs);
+//		wrsPtpDataTable_array[0].wrsPtpSkew = 0; //JCB TODO int_saturate(ppsi_servo->skew);
+//		wrsPtpDataTable_array[0].wrsPtpLinkLength =
+//				(uint32_t)(pp_time_to_picos(&ppsi_servo->delayMS)/1e12 * 300e6 / 1.55);
+//		wrsPtpDataTable_array[0].wrsPtpServoUpdates =
+//						ppsi_servo->update_count;
+//		wrsPtpDataTable_array[0].wrsPtpDeltaTxM = 0;//JCB TODO ppsi_servo->delta_txm_ps;
+//		wrsPtpDataTable_array[0].wrsPtpDeltaRxM = 0;//JCB TODO ppsi_servo->delta_rxm_ps;
+//		wrsPtpDataTable_array[0].wrsPtpDeltaTxS = 0;//JCB TODO ppsi_servo->delta_txs_ps;
+//		wrsPtpDataTable_array[0].wrsPtpDeltaRxS = 0;//JCB TODO ppsi_servo->delta_rxs_ps;
+//		wrsPtpDataTable_array[0].wrsPtpServoStateErrCnt = 0;//JCB TODO ppsi_servo->n_err_state;
+//		wrsPtpDataTable_array[0].wrsPtpClockOffsetErrCnt = 0;//JCB TODO ppsi_servo->n_err_offset;
+//		wrsPtpDataTable_array[0].wrsPtpRTTErrCnt = 0;//JCB TODO ppsi_servo->n_err_delta_rtt;
+//		wrsPtpDataTable_array[0].wrsPtpServoUpdateTime = 0;
+//		//JCB TODO ppsi_servo->update_time.secs * 1000 * 1000 * 1000
+//		//JCB TODO + (ppsi_servo->update_time.scaled_nsecs >> 16);
 		retries++;
 		if (retries > 100) {
 			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",

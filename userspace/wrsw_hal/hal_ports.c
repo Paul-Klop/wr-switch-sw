@@ -43,7 +43,6 @@ typedef struct {
 } inst_servo_t  ;
 
 static inst_servo_t servo;
-struct pp_servo *ppsi_servo;
 
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
@@ -992,6 +991,12 @@ static int read_servo(void){
 		/* we are only interested  on instances in SLAVE state */
 		if (ppi->state == PPS_SLAVE ) {
 
+			/* ppsi-servo points to instance servo data */
+			struct pp_servo *ppsi_servo = wrs_shm_follow(ppsi_head, ppi->servo);
+			if (!ppsi_servo) {
+				return -1; /* Cannot access servo data */
+			}
+
 			while (1) {
 				unsigned ii = wrs_shm_seqbegin(ppsi_head);
 				unsigned retries = 0;
@@ -1017,7 +1022,7 @@ static int try_open_ppsi_shmem(void)
 	int ret;
 	static int open_error;
 
-	if (ppsi_servo && ppsi_instances) {
+	if (ppsi_instances) {
 		/* shmem already opened */
 		return 1;
 	}
@@ -1049,13 +1054,6 @@ static int try_open_ppsi_shmem(void)
 		return 0;
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
-
-	/* ppsi-servo points to the common servo data */
-	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->servo);
-	if (!ppsi_servo) {
-		pr_error("Cannot follow ppsi_servo in shmem.\n");
-		return 0;
-	}
 
 	ppsi_instances = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 	if (!ppsi_instances) {

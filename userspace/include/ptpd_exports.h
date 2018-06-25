@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define PTPDEXP_COMMAND_TRACKING 1
+#define PTPDEXP_COMMAND_WR_TRACKING 1
+#define PTPDEXP_COMMAND_L1SYNC_TRACKING 2
 
 extern int ptpdexp_cmd(int cmd, int value);
 

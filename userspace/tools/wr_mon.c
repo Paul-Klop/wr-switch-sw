@@ -307,7 +307,7 @@ int read_servo(void){
 				struct pp_servo *ppsi_servo;
 
 				/* Copy common data */
-				if ( !(ppsi_servo = wrs_shm_follow(ppsi_head, ppg->servo)) )
+				if ( !(ppsi_servo = wrs_shm_follow(ppsi_head, ppi->servo)) )
 						break;
 				memcpy(&servo->servo_snapshot, ppsi_servo, sizeof(struct pp_servo));
 

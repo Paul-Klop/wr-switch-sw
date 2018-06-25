@@ -28,7 +28,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int rval;
 
-	pr_debug("halexp_lock_cmd: cmd=%d port=%s\n", command, port_name);
+/*	pr_debug("halexp_lock_cmd: cmd=%d port=%s\n", command, port_name); */
 
 	switch (command) {
 	case HEXP_LOCK_CMD_ENABLE_TRACKING:
@@ -80,6 +80,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 {
 	int busy;
 
+	pr_debug("halexp_pps_cmd: cmd=%d\n", cmd);
 	switch (cmd) {
 		/* fixme: TODO: implement HEXP_PPSG_CMD_GET call */
 

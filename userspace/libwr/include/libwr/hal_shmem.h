@@ -39,6 +39,9 @@ typedef struct hal_port_calibration {
 	uint32_t delta_tx_phy;
 	uint32_t delta_rx_phy;
 
+	/* bit slide expresse in picos */
+	uint32_t bitslide_ps;
+
 	/* Current board routing delays (between the DDMTD inputs to
 	   the PHY clock inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;

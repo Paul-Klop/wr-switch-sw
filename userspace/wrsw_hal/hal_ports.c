@@ -37,6 +37,14 @@
 #define UPDATE_LINK_LEDS_PERIOD 500 /* ms */
 #define UPDATE_SFP_DOM_PERIOD 1000 /* ms */
 
+typedef struct {
+	struct pp_instance * ppi;              /* pointer to the ppi instance */
+	struct pp_servo      servo_snapshot;  /* image of a the ppsi servo */
+} inst_servo_t  ;
+
+static inst_servo_t servo;
+struct pp_servo *ppsi_servo;
+
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
 
@@ -56,8 +64,7 @@ static timeout_t update_sync_leds_tmo, update_link_leds_tmo;
 static timeout_t update_sfp_dom_tmo;
 static int hal_port_nports;
 
-static struct wr_servo_state *ppsi_servo;
-static struct wr_servo_state ppsi_servo_local;
+static struct pp_globals *ppg;
 static struct pp_instance *ppsi_instances;
 static struct pp_instance ppsi_instances_local[PP_MAX_LINKS];
 static struct wrs_shm_head *ppsi_head;
@@ -426,14 +433,17 @@ static void hal_port_fsm(struct hal_port_state * p)
 	case HAL_PORT_STATE_RESET:
 		{
 			if (link_up) {
+				uint32_t bit_slide_steps;
+
 				p->calib.tx_calibrated = 1;
 				p->calib.rx_calibrated = 1;
 				/* FIXME: use proper register names */
-				pr_info("Bitslide: %d\n",
-				      ((pcs_readl(p, 16) >> 4) & 0x1f));
+				bit_slide_steps=(pcs_readl(p, 16) >> 4) & 0x1f;
+				p->calib.bitslide_ps=bit_slide_steps*800; /* 1 step = 800ps */
+				pr_info("Bitslide: %d\n",bit_slide_steps);
+
 				p->calib.delta_rx_phy =
-				    p->calib.phy_rx_min +
-				    ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
+				    p->calib.phy_rx_min + p->calib.bitslide_ps;
 				p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
 				if (0)
@@ -921,15 +931,19 @@ static void update_sync_leds(void)
 	int i;
 	static uint32_t update_count = 0;
 	static uint32_t since_last_servo_update = 0;
+	char *iface_name;
 
 	/* read servo */
 	if (read_servo())
 		return;
 
-	if (!strnlen(ppsi_servo_local.if_name, 16))
+	iface_name=servo.ppi->cfg.iface_name;
+    if (!strnlen(iface_name, 16))
 		return;
 
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		int ledValue;
+
 		/* Check:
 		 * --port in use
 		 * --link is up
@@ -939,53 +953,68 @@ static void update_sync_leds(void)
 		 */
 		if (ports[i].in_use
 		    && state_up(ports[i].state)
-		    && !strcmp(ppsi_servo_local.if_name, ports[i].name)) {
-			if (update_count == ppsi_servo_local.update_count) {
+		    && !strcmp(iface_name, ports[i].name)) {
+			if (update_count == servo.servo_snapshot.update_count) {
 				if (since_last_servo_update < 7)
 					since_last_servo_update++;
 			} else {
 				since_last_servo_update = 0;
-				update_count = ppsi_servo_local.update_count;
+				update_count = servo.servo_snapshot.update_count;
 			}
 			/* Check:
 			* --port in slave mode
-			* --servo is in track phase
+			* --servo is locked
+			* --not the standard PTP servo
 			* --servo is updating
 			*/
-			if (ports[i].mode == HEXP_PORT_MODE_WR_SLAVE
-			    && ppsi_servo_local.state == WR_TRACK_PHASE
+			ledValue=(ports[i].mode == HEXP_PORT_MODE_WR_SLAVE
+				&& servo.servo_snapshot.servo_locked
+				&& servo.ppi->protocol_extension != PPSI_EXT_NONE
 			    && since_last_servo_update < 7
-			    ) {
-				set_led_synced(i, 1);
-			} else {
-				set_led_synced(i, 0);
-			}
+			    ) ? 1 : 0;
+			set_led_synced(i, ledValue);
 		}
 	}
 }
 
 static int read_servo(void){
-	unsigned ii;
-	unsigned retries = 0;
 
-	/* read data, with the sequential lock to have all data consistent */
-	while (1) {
-		ii = wrs_shm_seqbegin(ppsi_head);
-		memcpy(&ppsi_servo_local, ppsi_servo, sizeof(*ppsi_servo));
-		retries++;
-		if (retries > 100)
-			return -1;
-		if (!wrs_shm_seqretry(ppsi_head, ii))
-			break; /* consistent read */
+	unsigned int i;
+
+	if ( read_ppsi_instances() )
+		return -1;
+
+	bzero(&servo.servo_snapshot,sizeof(struct pp_servo));
+
+	for (i = 0; i < ppg->nlinks; i++) {
+		struct pp_instance *ppi = &ppsi_instances_local[i];
+
+		/* we are only interested  on instances in SLAVE state */
+		if (ppi->state == PPS_SLAVE ) {
+
+			while (1) {
+				unsigned ii = wrs_shm_seqbegin(ppsi_head);
+				unsigned retries = 0;
+
+				memcpy(&servo.servo_snapshot, ppsi_servo, sizeof(struct pp_servo));
+				servo.ppi=ppi;
+
+				if (!wrs_shm_seqretry(ppsi_head, ii)) {
+					break; /* consistent read */
+				}
+				retries++;
+				if (retries > 100)
+					return -1;
+			}
+			return 0; /* We assume that we have only one servo */
+		}
 	}
-
-	return 0;
+	return -1; /* No active servo found */
 }
 
 static int try_open_ppsi_shmem(void)
 {
 	int ret;
-	struct pp_globals *ppg;
 	static int open_error;
 
 	if (ppsi_servo && ppsi_instances) {
@@ -1021,8 +1050,8 @@ static int try_open_ppsi_shmem(void)
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
-	/* there is an assumption that there is only one servo in ppsi! */
-	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
+	/* ppsi-servo points to the common servo data */
+	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->servo);
 	if (!ppsi_servo) {
 		pr_error("Cannot follow ppsi_servo in shmem.\n");
 		return 0;

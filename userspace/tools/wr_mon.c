@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/timex.h>
+#include <inttypes.h>
 #include <ppsi/ppsi.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
@@ -36,6 +37,71 @@
 #define SHOW_ALL		(SHOW_ALL_PORTS | SHOW_SERVO | \
 				SHOW_TEMPERATURES | SHOW_WR_TIME)
 
+
+#define MAX_INST_SERVO 2
+struct inst_servo_t {
+	struct pp_instance * ppi;              /* pointer to the ppi instance */
+	int                  valid_servo_data; /* 1 means servo data are vaild */
+	TimeInterval         offsetFromMaster; /* currentDS.offsetFromMaster */
+	TimeInterval         meanDelay;        /* currentDS.meanDelay */
+	TimeInterval         delayAsymmetry;   /* portDS.delayAsymmetry */
+	RelativeDifference	 scaledDelayCoefficient; /* AsymmetryCorrectionPortDS.scaledDelayCoefficient */
+	TimeInterval         egressLatency;    /* timestampCorrectionPortDS.egressLatency */
+	TimeInterval         ingressLatency;   /* timestampCorrectionPortDS.ingressLatency */
+	TimeInterval         semistaticLatency;/* timestampCorrectionPortDS.semistaticLatency */
+	TimeInterval	     constantAsymmetry;/* asymmetryCorrectionPortDS.constantAsymmetry */
+	struct pp_servo      servo_snapshot;  /* image of a the ppsi servo */
+	void *               servo_ext_snapshot; /* image of the extension servo */
+};
+
+/* protocol extension data */
+#define IS_PROTO_EXT_INFO_AVAILABLE( proto_id ) \
+	((proto_id < sizeof(proto_ext_info)/sizeof(struct proto_ext_info_t)) \
+			&& (proto_ext_info[proto_id].valid==1))
+
+struct proto_ext_info_t {
+	int valid;
+	char *ext_name; /* Extension name */
+	char short_ext_name; /* Very short extension name - just one character */
+	int servo_ext_size; /* Size of the extension */
+	int ipc_cmd_tacking; /* Command to enable/disable servo tacking*/
+	int track_onoff;     /* Tracking on/off */
+	time_t lastt;
+	int last_count;
+};
+
+static struct proto_ext_info_t proto_ext_info [] = {
+		[PPSI_EXT_NONE] = {
+				.valid=1,
+				.ext_name="PTP",
+				.short_ext_name='P',
+				.ipc_cmd_tacking=-1, /* Invalid */
+		},
+
+#if CONFIG_EXT_WR == 1
+		[PPSI_EXT_WR] = {
+				.valid=1,
+				.ext_name="White-Rabbit",
+				.short_ext_name='W',
+				.servo_ext_size=sizeof(struct wr_servo_state),
+				.ipc_cmd_tacking=PTPDEXP_COMMAND_WR_TRACKING,
+				.track_onoff = 1,
+		},
+#endif
+#if CONFIG_EXT_L1SYNC == 1
+		[PPSI_EXT_L1S] = {
+				.valid=1,
+				.ext_name="L1Sync",
+				.short_ext_name='L',
+				.servo_ext_size=sizeof(struct l1e_servo_state),
+				.ipc_cmd_tacking=PTPDEXP_COMMAND_L1SYNC_TRACKING,
+				.track_onoff = 1,
+		}
+#endif
+};
+
+static struct inst_servo_t servos[MAX_INST_SERVO];
+
 int mode = SHOW_GUI;
 
 static struct minipc_ch *ptp_ch;
@@ -47,8 +113,6 @@ static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
-static struct wr_servo_state *ppsi_servo;
-static struct wr_servo_state ppsi_servo_local; /* local copy of servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 /* local copy of temperature sensor readings */
@@ -97,6 +161,66 @@ static char *pp_instance_state_to_name[PP_INSTANCE_STATE_MAX] = {
 	[WR_PORT_CALIBRATION_8] = "WR_P_CAL8 ",
 };
 
+#define EMPTY_EXTENSION_STATE_NAME "          "
+
+#if CONFIG_EXT_L1SYNC == 1
+static char * l1e_instance_extension_state[]={
+		[__L1SYNC_MISSING   ] = "MISSING   ",
+		[L1SYNC_DISABLED    ] = "DISABLED  ",
+		[L1SYNC_IDLE        ] = "IDLE      ",
+		[L1SYNC_LINK_ALIVE  ] = "LINK ALIVE",
+		[L1SYNC_CONFIG_MATCH] = "CFG MATCH ",
+		[L1SYNC_UP          ] = "UP        "
+};
+#define L1S_INSTANCE_EXTENSION_STATE_MAX (sizeof (l1e_instance_extension_state)/sizeof(char *) )
+
+#endif
+
+
+int64_t interval_to_picos(TimeInterval interval)
+{
+	return (interval * 1000) >>  TIME_INTERVAL_FRACBITS;
+}
+
+int64_t pp_time_to_picos(struct pp_time *ts)
+{
+	return ts->secs * PP_NSEC_PER_SEC
+		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
+}
+
+static double pp_time_to_double (struct pp_time *ts) {
+	return (double) (ts->secs * PP_NSEC_PER_SEC
+		+ (ts->scaled_nsecs >> TIME_INTERVAL_FRACBITS));
+
+}
+
+static double interval_to_double (TimeInterval interval) {
+	  double f ;
+	  int neg = interval<0;
+
+	  if(neg) interval= ~interval+1;
+	  f= (double)interval/(double)(1LL<<TIME_INTERVAL_FRACBITS);
+	  return  neg ? -f : f;
+}
+
+static double relDiff_to_double(RelativeDifference relDiff) {
+  double f ;
+  int neg = relDiff<0;
+
+  if(neg) relDiff= ~relDiff+1;
+  f= (double)relDiff/(double)(1LL<<REL_DIFF_FRACBITS);
+  return  neg ? -f : f;
+}
+
+static double alpha_to_double(int32_t alpha) {
+  double f ;
+  int neg = alpha<0;
+
+  if(neg) alpha= ~alpha+1;
+  f= (double)alpha/(double)(1LL<<FIX_ALPHA_FRACBITS);
+  return  neg ? -f : f;
+}
+
 void help(char *prgname)
 {
 	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
@@ -144,21 +268,97 @@ int read_hal(void){
 }
 
 int read_servo(void){
-	unsigned ii;
-	unsigned retries = 0;
 
-	/* read data, with the sequential lock to have all data consistent */
-	while (1) {
-		ii = wrs_shm_seqbegin(ppsi_head);
-		memcpy(&ppsi_servo_local, ppsi_servo, sizeof(*ppsi_servo));
-		retries++;
-		if (retries > 100)
-			return -1;
-		if (!wrs_shm_seqretry(ppsi_head, ii))
-			break; /* consistent read */
-		usleep(1000);
+	struct pp_instance *pp_array;
+	unsigned int i, servoIdx;
+
+
+	/* Clear servo structure */
+	for (i=0; i<MAX_INST_SERVO; i++) {
+		if (servos[i].ppi ) {
+			if ( servos[i].servo_ext_snapshot )
+				free(servos[i].servo_ext_snapshot);
+		}
 	}
+	bzero(&servos, sizeof(servos));
 
+	if ( !(pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances)) )
+		return -1;
+
+	servoIdx=0;
+	for (i = 0; i < ppg->nlinks; i++) {
+		struct pp_instance *ppi = &pp_array[i];
+
+		/* we are only interested  on instances in SLAVE state */
+		if (ppi->state == PPS_SLAVE ) {
+			struct inst_servo_t *servo=&servos[servoIdx++];
+			int alloc_size=IS_PROTO_EXT_INFO_AVAILABLE(ppi->protocol_extension) ?
+					proto_ext_info[ppi->protocol_extension].servo_ext_size :
+					0;
+
+			/* Allocate extension data memory if needed */
+			if ( alloc_size > 0 )
+				if ( !(servo->servo_ext_snapshot=malloc(alloc_size)) )
+					return -1;
+
+			while (1) {
+				unsigned ii = wrs_shm_seqbegin(ppsi_head);
+				unsigned retries = 0;
+				struct pp_servo *ppsi_servo;
+
+				/* Copy common data */
+				if ( !(ppsi_servo = wrs_shm_follow(ppsi_head, ppg->servo)) )
+						break;
+				memcpy(&servo->servo_snapshot, ppsi_servo, sizeof(struct pp_servo));
+
+				/* Copy extension servo data */
+				if ( servo->servo_ext_snapshot ) {
+					void *ppsi_servo_ext;
+
+					if ( !(ppsi_servo_ext = wrs_shm_follow(ppsi_head, ppi->ext_data)) )
+							break;
+					memcpy(servo->servo_ext_snapshot, ppsi_servo_ext,alloc_size);
+				}
+
+				/* Copy extra interesting data */
+				{
+					currentDS_t *currenDS;
+
+					if ( !(currenDS = wrs_shm_follow(ppsi_head, ppg->currentDS) ) )
+							break;
+
+					servo->offsetFromMaster=currenDS->offsetFromMaster; /* currentDS.offsetFromMaster */
+					servo->meanDelay=currenDS->meanDelay;    /* currentDS.meanDelay */
+				}
+				{
+					portDS_t *portDS;
+
+					if ( !(portDS = wrs_shm_follow(ppsi_head, ppi->portDS) ) )
+							break;
+					servo->delayAsymmetry=portDS->delayAsymmetry;   /* portDS.delayAsymmetry */
+				}
+				servo->scaledDelayCoefficient=ppi->asymmetryCorrectionPortDS.scaledDelayCoefficient; /* AsymmetryCorrectionPortDS.scaledDelayCoefficient */
+				servo->constantAsymmetry=ppi->asymmetryCorrectionPortDS.constantAsymmetry;/* asymmetryCorrectionPortDS.constantAsymmetry */
+				servo->egressLatency=ppi->timestampCorrectionPortDS.egressLatency;   /* timestampCorrectionPortDS.egressLatency */
+				servo->ingressLatency=ppi->timestampCorrectionPortDS.ingressLatency;  /* timestampCorrectionPortDS.ingressLatency */
+				servo->semistaticLatency=ppi->timestampCorrectionPortDS.semistaticLatency;  /* timestampCorrectionPortDS.semistaticLatency */
+				if (!wrs_shm_seqretry(ppsi_head, ii)) {
+					servo->valid_servo_data=1;
+					break; /* consistent read */
+				}
+				retries++;
+				if (retries > 100)
+					break;
+			}
+			if ( servo->valid_servo_data ) {
+				servo->ppi=ppi;
+			} else {
+				if ( servo->servo_ext_snapshot ) {
+					free (servo->servo_ext_snapshot);
+				}
+			}
+		}
+	}
 	return 0;
 }
 
@@ -254,12 +454,6 @@ void init_shm(void)
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
-	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
-	if (!ppsi_servo) {
-		pr_error("Cannot follow ppsi_servo in shmem.\n");
-		exit(1);
-	}
-
 	ppsi_connect_minipc();
 }
 
@@ -308,9 +502,9 @@ void show_ports(int alive)
 		}
 
 /*                                    -------------------------------------------------------------------------------*/
-		term_cprintf(C_CYAN, "------------- HAL -----------|-------------- PPSI -----------------------------\n");
-		term_cprintf(C_CYAN, " Port | Link | WRconf | Freq |Inst| MAC of peer port  | PTP state | Pro | VLANs\n");
-		term_cprintf(C_CYAN, "------|------|--------|------|----|-------------------|-----------|-----|------\n");
+		term_cprintf(C_CYAN, "------------- HAL -----------|-------------- PPSI ----------------------------------------\n");
+		term_cprintf(C_CYAN, " Port | Link | WRconf | Freq |Inst| MAC of peer port  |    PTP/EXT states    | Pro | VLANs\n");
+		term_cprintf(C_CYAN, "------|------|--------|------|----|-------------------|----------------------|-----|------\n");
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 		printf("PORTS ");
@@ -417,8 +611,12 @@ void show_ports(int alive)
 			 * For this lookup, the port in ppsi shmem
 			 */
 			for (j = 0; j < ppg->nlinks; j++) {
+				struct pp_instance *ppi=&pp_array[j];
+				int proto_extension=ppi->protocol_extension;
+				struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
+
 				if (strcmp(if_name,
-						pp_array[j].cfg.iface_name)) {
+						ppi->cfg.iface_name)) {
 					/* Instance not for this interface
 					 * skip */
 					continue;
@@ -434,67 +632,81 @@ void show_ports(int alive)
 				/* Note: we may have more pp instances per
 				 * port */
 				if (state_up(port_state->state)) {
-					unsigned char *p = pp_array[j].peer;
+					unsigned char *p = ppi->peer;
+					char * extension_state_name=EMPTY_EXTENSION_STATE_NAME;
 
 					term_cprintf(C_WHITE, "%02x:%02x"
 						     ":%02x:%02x:%02x:%02x ",
 						     p[0], p[1], p[2], p[3],
 						     p[4], p[5]);
 					term_cprintf(C_CYAN, "| ");
-					if (pp_array[j].state < PP_INSTANCE_STATE_MAX) {
+					if (ppi->state < PP_INSTANCE_STATE_MAX) {
 						/* Known state */
-						term_cprintf(C_GREEN, "%s",
-							pp_instance_state_to_name[pp_array[j].state]);
+						term_cprintf(C_GREEN, "%s/",
+							pp_instance_state_to_name[ppi->state]);
 					} else {
 						/* Unknown ptp state */
 						term_cprintf(C_GREEN,
 							"unkn(%3i)",
-							pp_array[j].state);
+							ppi->state);
 					}
+					/* print extension state */
+					switch (ppi->protocol_extension ) {
+					case PPSI_EXT_WR :
+						break;
+#if CONFIG_EXT_L1SYNC == 1
+					case PPSI_EXT_L1S :
+					{
+						portDS_t *portDS;
+
+						extension_state_name="????????? ";
+						if ( (portDS = wrs_shm_follow(ppsi_head, ppi->portDS) ) ) {
+							l1e_ext_portDS_t *extPortDS;
+
+							if ( (extPortDS = wrs_shm_follow(ppsi_head, portDS->ext_dsport) ) ) {
+								if ( extPortDS->basic.L1SyncState <= L1S_INSTANCE_EXTENSION_STATE_MAX )
+									extension_state_name=l1e_instance_extension_state[extPortDS->basic.L1SyncState];
+							}
+						}
+						break;
+					}
+#endif
+					}
+					term_cprintf(C_GREEN, "%s",extension_state_name);
 				} else {
-					term_cprintf(C_WHITE, "               "
-						     "   ");
+					term_cprintf(C_WHITE, "                  ");
 					term_cprintf(C_CYAN, "|");
-					term_cprintf(C_WHITE, "           ");
+					term_cprintf(C_WHITE, "                      ");
 				}
 				term_cprintf(C_CYAN, "| ");
-				if (pp_array[j].proto == PPSI_PROTO_RAW) {
+				if (ppi->proto == PPSI_PROTO_RAW) {
 					term_cprintf(C_WHITE, "R");
-				} else if (pp_array[j].proto
+				} else if (ppi->proto
 					   == PPSI_PROTO_UDP) {
 					term_cprintf(C_WHITE, "U");
-				} else if (pp_array[j].proto
+				} else if (ppi->proto
 					   == PPSI_PROTO_VLAN) {
 					term_cprintf(C_WHITE, "V");
 				} else {
 					term_cprintf(C_WHITE, "?");
 				}
-				if (pp_array[j].cfg.ext == PPSI_EXT_WR) {
-					term_cprintf(C_WHITE, "-W");
-				} else if (pp_array[j].cfg.ext
-					   == PPSI_EXT_NONE) {
-					term_cprintf(C_WHITE, "  ");
-				} else {
-					term_cprintf(C_WHITE, "-?");
-				}
+				term_cprintf(C_WHITE, "-%c",pe_info->short_ext_name);
 
-				nvlans = pp_array[j].nvlans;
+				nvlans = ppi->nvlans;
 				term_cprintf(C_CYAN, " | ");
 				for (vlan_i = 0; vlan_i < nvlans; vlan_i++) {
 					term_cprintf(C_WHITE, "%d",
-						    pp_array[j].vlans[vlan_i]);
+						    ppi->vlans[vlan_i]);
 					if (vlan_i < nvlans - 1)
 						term_cprintf(C_WHITE, ",");
 				}
 			}
 			if (!instance_port) {
 				term_cprintf(C_WHITE, " -- ");
-				term_cprintf(C_CYAN, "|                   |   "
-					     "        |     |");
+				term_cprintf(C_CYAN, "|                   |                      |     |");
 			}
 			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
-			printf("%-5s ", if_name);
 			printf("%s ", state_up(port_state->state)
 				? "up" : "down");
 			printf("%s ", if_mode);
@@ -503,24 +715,6 @@ void show_ports(int alive)
 			printf("%s ", port_state->calib.rx_calibrated
 				&& port_state->calib.tx_calibrated
 				? "Calibrated" : "Uncalibrated");
-
-			for (j = 0; j < ppg->nlinks; j++) {
-				if (strcmp(if_name,
-					   pp_array[j].cfg.iface_name)
-				   ) {
-					/* Instance not for this interface
-					* skip */
-					continue;
-				}
-				if (state_up(port_state->state)) {
-					unsigned char *p = pp_array[j].peer;
-					printf("%02x:%02x:%02x:%02x:%02x:%02x"
-					       " ", p[0], p[1], p[2], p[3],
-					       p[4], p[5]);
-				}
-			}
-			printf("\n");
-
 		} else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
@@ -535,21 +729,21 @@ void show_ports(int alive)
 	}
 }
 
-void show_servo(int alive)
+void show_servo(struct inst_servo_t *servo, int alive)
 {
-	int64_t total_asymmetry;
-	int64_t crtt;
-	static time_t lastt;
-	static int last_count;
 
-	total_asymmetry = ppsi_servo_local.picos_mu -
-			  2LL * ppsi_servo_local.delta_ms;
-	crtt = ppsi_servo_local.picos_mu - ppsi_servo_local.delta_tx_m -
-	       ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
-	       ppsi_servo_local.delta_rx_s;
+	struct wr_servo_state * wr_servo;
+	struct l1e_servo_state * l1e_servo;
+	int proto_extension=servo->ppi->protocol_extension;
+	struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
+
+	wr_servo= (servo->ppi->protocol_extension==PPSI_EXT_WR) ?
+			( struct wr_servo_state * ) servo->servo_ext_snapshot : NULL;
+
+	l1e_servo= (servo->ppi->protocol_extension==PPSI_EXT_L1S) ?
+			( struct l1e_servo_state * ) servo->servo_ext_snapshot : NULL;
 
 	if (mode == SHOW_GUI) {
-/*                                      -------------------------------------------------------------------------------*/
 		term_cprintf(C_CYAN, "\n--------------------------- Synchronization status ----------------------------\n");
 	}
 
@@ -560,54 +754,65 @@ void show_servo(int alive)
 	}
 
 	if (mode == SHOW_GUI) {
-		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
+		if (!(servo->servo_snapshot.flags & PP_SERVO_FLAG_VALID)) {
 			term_cprintf(C_RED,
 				     "Master mode or sync info not valid\n");
 			return;
 		}
 
 		term_cprintf(C_BLUE, "Servo state:          ");
-		if (lastt && time(NULL) - lastt > 5) {
+		if (pe_info->lastt && time(NULL) - pe_info->lastt > 5) {
 			term_cprintf(C_RED, "--- not updating ---\n");
 		} else {
-			term_cprintf(C_WHITE, "%s: %s%s\n",
-				     ppsi_servo_local.if_name,
-				     ppsi_servo_local.servo_state_name,
-				     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
+			term_cprintf(C_WHITE, "%s:%s: %s%s\n",
+				     servo->ppi->cfg.iface_name,
+					 pe_info->ext_name,
+					 servo->servo_snapshot.servo_state_name,
+					 servo->servo_snapshot.flags & PP_SERVO_FLAG_WAIT_HW ?
 				     " (wait for hw)" : "");
 		}
 
 		/* "tracking disabled" is just a testing tool */
-		if (!ppsi_servo_local.tracking_enabled)
+		if (wr_servo  && !wr_servo->tracking_enabled)
 			term_cprintf(C_RED, "Tracking forcibly disabled\n");
-/*                                      -------------------------------------------------------------------------------*/
-		term_cprintf(C_CYAN, "\n------------------------------ Timing parameters ------------------------------\n");
+		term_cprintf(C_CYAN, "\n +- Timing parameters ---------------------------------------------------------\n");
 
-		term_cprintf(C_BLUE, "Round-trip time (mu): ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",
-			     ppsi_servo_local.picos_mu/1000.0);
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "meanDelay        : ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n", interval_to_double(servo->meanDelay) );
 
-		term_cprintf(C_BLUE, "Estimated link length:     ");
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMS          : ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",	pp_time_to_double(&servo->servo_snapshot.delayMS));
+
+		//term_cprintf(C_BLUE, "Estimated link length:     ");
 		/* (RTT - deltas) / 2 * c / ri
 		 c = 299792458 - speed of light in m/s
 		 ri = 1.4682 - refractive index for fiber g.652. However,
 			       experimental measurements using long (~5km) and
 			       short (few m) fibers gave a value 1.4827
 		 */
-		term_cprintf(C_WHITE, "%10.2f meters\n",
-			crtt / 2 / 1e6 * 299.792458 / 1.4827);
+		//term_cprintf(C_WHITE, "%10.2f meters\n",
+		//	crtt / 2 / 1e6 * 299.792458 / 1.4827);
 
-		term_cprintf(C_BLUE, "Master-slave delay:   ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",
-			     ppsi_servo_local.delta_ms/1000.0);
 
-		term_cprintf(C_BLUE, "Total link asymmetry: ");
-		term_cprintf(C_WHITE, "%15.3f nsec, ",
-			     total_asymmetry / 1000.0);
-		/* print alpha as fixed point number */
-		term_cprintf(C_BLUE, "alpha: ");
-		term_cprintf(C_WHITE, "%d\n",
-			     ppsi_servo_local.fiber_fix_alpha);
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayAsymmetry   : ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->delayAsymmetry));
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "scaledDelayCoef  : ");
+		term_cprintf(C_WHITE, "%.9f fpa(%" PRId64 ")",  relDiff_to_double(servo->scaledDelayCoefficient), (int64_t)servo->scaledDelayCoefficient);
+		if ( wr_servo ) {
+			term_cprintf(C_BLUE,  "  Fixed Alpha : ");
+			term_cprintf(C_WHITE, "%.9f fpa(%d)", alpha_to_double(wr_servo->fiber_fix_alpha), wr_servo->fiber_fix_alpha);
+		}
+		if ( l1e_servo ) {
+			term_cprintf(C_BLUE,  "  Fixed Alpha : ");
+			term_cprintf(C_WHITE, "%.9f fpa(%" PRId64 ")", alpha_to_double(l1e_servo->fiber_fix_alpha), l1e_servo->fiber_fix_alpha);
+		}
+		term_cprintf(C_WHITE, "\n");
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "ingressLatency   : ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->ingressLatency));
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "egressLatency    : ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->egressLatency));
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "semistaticLatency: ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->semistaticLatency));
 
 		/*if (0) {
 			term_cprintf(C_BLUE, "Fiber asymmetry:   ");
@@ -615,40 +820,44 @@ void show_servo(int alive)
 				ss.fiber_asymmetry/1000.0);
 		}*/
 
-		term_cprintf(C_BLUE, "Clock offset:         ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",
-			     ppsi_servo_local.offset/1000.0);
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "offsetFromMaster : ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n", interval_to_double (servo->offsetFromMaster));
 
-		term_cprintf(C_BLUE, "Phase setpoint:       ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",
-			     ppsi_servo_local.cur_setpoint/1000.0);
+		if ( wr_servo ) {
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
+			term_cprintf(C_WHITE, "%15.3f nsec\n",wr_servo->cur_setpoint/1000.0);
 
-		term_cprintf(C_BLUE, "Skew:                 ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",
-			     ppsi_servo_local.skew/1000.0);
-
-		term_cprintf(C_BLUE, "Servo update counter: ");
-		term_cprintf(C_WHITE, "%15u times\n",
-			     ppsi_servo_local.update_count);
-		if (ppsi_servo_local.update_count != last_count) {
-			lastt = time(NULL);
-			last_count = ppsi_servo_local.update_count;
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
+			term_cprintf(C_WHITE, "%15.3f nsec\n",wr_servo->skew/1000.0);
 		}
-		term_cprintf(C_BLUE, "Master PHY delays:    ");
-		term_cprintf(C_BLUE, "TX: ");
-		term_cprintf(C_WHITE, "%11.3f nsec, ",
-			     ppsi_servo_local.delta_tx_m/1000.0);
-		term_cprintf(C_BLUE, "RX: ");
-		term_cprintf(C_WHITE, "%11.3f nsec\n",
-			     ppsi_servo_local.delta_rx_m/1000.0);
 
-		term_cprintf(C_BLUE, "Slave PHY delays:     ");
-		term_cprintf(C_BLUE, "TX: ");
-		term_cprintf(C_WHITE, "%11.3f nsec, ",
-			     ppsi_servo_local.delta_tx_s/1000.0);
-		term_cprintf(C_BLUE, "RX: ");
-		term_cprintf(C_WHITE, "%11.3f nsec\n",
-			     ppsi_servo_local.delta_rx_s/1000.0);
+		if ( l1e_servo ) {
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
+			term_cprintf(C_WHITE, "%15.3f nsec\n",l1e_servo->cur_setpoint_ps/1000.0);
+
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
+			term_cprintf(C_WHITE, "%15.3f nsec\n",l1e_servo->skew_ps/1000.0);
+		}
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Update counter  : ");
+		term_cprintf(C_WHITE, "%15u times\n", servo->servo_snapshot.update_count);
+		if (servo->servo_snapshot.update_count != pe_info->last_count) {
+			pe_info->lastt = time(NULL);
+			pe_info->last_count = servo->servo_snapshot.update_count;
+		}
+
+		if ( wr_servo ) {
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Master PHY delays ");
+			term_cprintf(C_BLUE, "TX: ");
+			term_cprintf(C_WHITE, "%11.3f nsec, ", wr_servo->delta_txm_ps/1000.0);
+			term_cprintf(C_BLUE, "RX: ");
+			term_cprintf(C_WHITE, "%11.3f nsec\n", wr_servo->delta_rxm_ps/1000.0);
+
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Slave  PHY delays ");
+			term_cprintf(C_BLUE, "TX: ");
+			term_cprintf(C_WHITE, "%11.3f nsec, ", wr_servo->delta_txs_ps/1000.0);
+			term_cprintf(C_BLUE, "RX: ");
+			term_cprintf(C_WHITE, "%11.3f nsec\n",wr_servo->delta_rxs_ps/1000.0);
+		}
 	} else {
 		/* TJP: commented out fields are present on the SPEC,
 		 *      does the switch have similar fields?
@@ -657,44 +866,65 @@ void show_servo(int alive)
 /*		printf("lnk:");*/
 /*		printf("rx:");*/
 /*		printf("tx:");*/
-		printf("lock:%i ", ppsi_servo_local.tracking_enabled);
-		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
-		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
+		printf("sv:%d ", servo->servo_snapshot.flags & PP_SERVO_FLAG_VALID ? 1 : 0);
+		printf("ss:'%s' ", servo->servo_snapshot.servo_state_name);
 /*		printf("aux:");*/
-		printf("mu:%llu ", ppsi_servo_local.picos_mu);
-		printf("dms:%llu ", ppsi_servo_local.delta_ms);
-		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
-		       ppsi_servo_local.delta_rx_m);
-		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
-		       ppsi_servo_local.delta_rx_s);
-		printf("asym:%lld ", total_asymmetry);
+		printf("md:%llu ", interval_to_picos(servo->meanDelay));
+		printf("dms:%llu ", pp_time_to_picos(&servo->servo_snapshot.delayMS));
+		if ( wr_servo ) {
+			int64_t crtt= wr_servo->delayMM_ps - wr_servo->delta_txm_ps -
+					wr_servo->delta_rxm_ps - wr_servo->delta_txs_ps -
+					wr_servo->delta_rxs_ps;
+
+			printf("lock:%i ", wr_servo->tracking_enabled);
+			printf("dtxm:%d drxm:%d ", wr_servo->delta_txm_ps, wr_servo->delta_rxm_ps);
+			printf("dtxs:%d drxs:%d ", wr_servo->delta_txs_ps, wr_servo->delta_rxs_ps);
 		/* (RTT - deltas) / 2 * c / ri
 		 c = 299792458 - speed of light in m/s
 		 ri = 1.4682 - refractive index for fiber g.652. However,
 			       experimental measurements using long (~5km) and
 			       short (few m) fibers gave a value 1.4827
 		 */
-		printf("ll:%d ",
-		       (int) (crtt / 2 / 1e6 * 299.792458 / 1.4827 * 100));
-		printf("crtt:%llu ", crtt);
-		printf("cko:%lld ", ppsi_servo_local.offset);
-		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
+		//printf("ll:%d ",
+		//       (int) (crtt / 2 / 1e6 * 299.792458 / 1.4827 * 100));
+			printf("crtt:%llu ", crtt);
+			printf("setp:%d ", wr_servo->cur_setpoint);
+		}
+		if ( l1e_servo ) {
+			printf("lock:%i ", l1e_servo->tracking_enabled);
+			printf("setp:%d ", l1e_servo->cur_setpoint_ps);
+		}
+		printf("asym:%lld ", interval_to_picos(servo->delayAsymmetry));
+		printf("cko:%lld ", interval_to_picos(servo->offsetFromMaster));
 /*		printf("hd:");*/
 /*		printf("md:");*/
 /*		printf("ad:");*/
-		printf("ucnt:%u ", ppsi_servo_local.update_count);
+		printf("ucnt:%u ", servo->servo_snapshot.update_count);
 		/* SPEC shows temperature, but that can be selected separately
 		 * in this program
 		 */
-		if (mode == WEB_INTERFACE)
-			printf("\n");
 	}
 }
 
+void show_servos(int alive) {
+
+	int i;
+
+	for (i=0; i<MAX_INST_SERVO; i++)
+		if (servos[i].ppi )
+			show_servo(&servos[i], alive);
+}
+
+
 void show_temperatures(void)
 {
-	if ((mode == SHOW_GUI)) {
-		term_cprintf(C_CYAN, "\n-------------------------------- Temperatures ---------------------------------\n");
+	if ((mode == SHOW_GUI) || (mode & WEB_INTERFACE)) {
+		if (mode == SHOW_GUI) {
+/*                                              -------------------------------------------------------------------------------*/
+			term_cprintf(C_CYAN, "\n-------------------------------- Temperatures ---------------------------------\n");
+		} else {
+			term_cprintf(C_CYAN, "\nTemperatures:\n");
+		}
 
 		term_cprintf(C_BLUE, "FPGA: ");
 		term_cprintf(C_WHITE, "%2.2f ",
@@ -714,16 +944,12 @@ void show_temperatures(void)
 		printf("pll:%2.2f ", temp_sensors_local.pll/256.0);
 		printf("psl:%2.2f ", temp_sensors_local.psl/256.0);
 		printf("psr:%2.2f", temp_sensors_local.psr/256.0);
-		if (mode == WEB_INTERFACE)
-			printf("\n");
 	}
 }
 
 void show_time(void)
 {
 	printf("TIME sec:%lld nsec:%d ", seconds, nanoseconds);
-	if (mode == WEB_INTERFACE)
-		printf("\n");
 }
 
 void show_all(void)
@@ -743,7 +969,7 @@ void show_all(void)
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0))
 								+ ignore_alive;
 
-	if (mode & (SHOW_WR_TIME | WEB_INTERFACE)) {
+	if (mode & SHOW_WR_TIME) {
 		if (ppsi_alive)
 			show_time();
 		else if (mode == SHOW_ALL)
@@ -754,8 +980,8 @@ void show_all(void)
 		show_ports(hal_alive);
 	}
 
-	if (mode & (SHOW_SERVO | WEB_INTERFACE) || mode == SHOW_GUI) {
-		show_servo(ppsi_alive);
+	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
+		show_servos(ppsi_alive);
 	}
 
 	if (mode & (SHOW_TEMPERATURES | WEB_INTERFACE) || mode == SHOW_GUI) {
@@ -770,11 +996,30 @@ void show_all(void)
 	fflush(stdout);
 }
 
+static void enable_disable_tracking(int proto_extension) {
+
+	if ( IS_PROTO_EXT_INFO_AVAILABLE(proto_extension)  ) {
+		struct proto_ext_info_t *pe_info= &proto_ext_info[proto_extension];
+
+		if ( pe_info->ipc_cmd_tacking!=-1 ) {
+			int rval;
+
+			pe_info->track_onoff = 1-pe_info->track_onoff;
+			if (ptp_ch_pid != ppsi_head->pid) {
+				/* ppsi was restarted since minipc
+				 * connection, reconnect now */
+				ppsi_connect_minipc();
+			}
+			minipc_call(ptp_ch, 200, &__rpcdef_cmd,
+				&rval, pe_info->ipc_cmd_tacking,pe_info->track_onoff);
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 1;
-	int track_onoff = 1;
 
 	/* try a pps_gen based approach */
 	uint64_t last_seconds = 0;
@@ -850,20 +1095,15 @@ int main(int argc, char *argv[])
 		if (term_poll(10)) {
 			int c = term_get();
 
-			if (c == 'q')
+			switch (c) {
+			case 'q':
+				goto quit;
+			case 'w' :
+				enable_disable_tracking (PPSI_EXT_WR);
 				break;
-
-			if (c == 't') {
-				int rval;
-				track_onoff = 1-track_onoff;
-				if (ptp_ch_pid != ppsi_head->pid) {
-					/* ppsi was restarted since minipc
-					 * connection, reconnect now */
-					ppsi_connect_minipc();
-				}
-				minipc_call(ptp_ch, 200, &__rpcdef_cmd,
-					&rval, PTPDEXP_COMMAND_TRACKING,
-					track_onoff);
+			case 'l' :
+				enable_disable_tracking (PPSI_EXT_L1S);
+				break;
 			}
 		}
 
@@ -881,6 +1121,7 @@ int main(int argc, char *argv[])
 			exit(1);
 	}
 
+	quit:;
 	term_restore();
 	setlinebuf(stdout);
 	printf("\n");

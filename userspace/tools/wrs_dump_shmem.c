@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 #include <sys/mman.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
@@ -76,10 +77,13 @@ void dump_one_field(void *addr, struct dump_info *info)
 {
 	void *p = addr + info->offset;
 	struct pp_time *t = p;
+	RelativeDifference *rd=p;
+	Timestamp *ts=p;
+	TimeInterval *ti=p;
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
-	long nano, pico;
+	uint64_t sec, nano, pico;
 	int i;
 
 	printf("        %-30s ", info->name); /* name includes trailing ':' */
@@ -108,6 +112,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_uint64_t:
 		printf("%lld\n", *(unsigned long long *)p);
 		break;
+	case dump_type_long_long:
 	case dump_type_Integer64:
 		printf("%lld\n", *(long long *)p);
 		break;
@@ -146,14 +151,43 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
+
+#define TIME_FRACBITS 16
+#define TIME_FRACMASK 0xFFFF
+
 	case dump_type_time:
-		nano = t->scaled_nsecs >> 16;
-		pico = t->scaled_nsecs & 0xffff;
-		pico = (pico * 1000) >> 16;
-		printf("correct %i: %10lli.%09li.%03li\n",
+		nano = t->scaled_nsecs >> TIME_FRACBITS;
+		pico = t->scaled_nsecs & TIME_FRACMASK;
+		pico = (pico * 1000) >> TIME_FRACBITS;
+		printf("correct %i: %10lli.%09"PRIu64".%03"PRIu64"\n",
 		       !is_incorrect(t), t->secs, nano,pico);
 		break;
 
+	case dump_type_Timestamp:
+		sec=(ts->secondsField.msb << sizeof(ts->secondsField.msb)) + ts->secondsField.lsb;
+		printf("%10"PRIu64".%09"PRIu32".000\n",
+				sec, (uint32_t)ts->nanosecondsField);
+		break;
+
+#define TIME_INTERVAL_FRACBITS 16
+#define TIME_INTERVAL_FRACMASK 0xFFFF
+
+case dump_type_TimeInterval:
+		nano = *ti >> TIME_INTERVAL_FRACBITS;
+		pico = *ti & TIME_INTERVAL_FRACMASK;
+		pico = (pico * 1000) >> TIME_INTERVAL_FRACBITS;
+		printf("%09"PRIu64".%03"PRIu64"\n", nano,pico);
+		break;
+
+#define REL_DIFF_FRACBITS 62
+#define REL_DIFF_FRACMASK 0x3fffffffffffffff
+
+	case dump_type_RelativeDifference:
+		nano = *rd >> REL_DIFF_FRACBITS;
+		pico = *rd & REL_DIFF_FRACMASK;
+		pico = (pico * 1000L) >> REL_DIFF_FRACBITS;
+		printf("%01"PRIu64".%03"PRIu64"\n", nano,pico);
+		break;
 	case dump_type_ip_address:
 		for (i = 0; i < 4; i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
@@ -305,6 +339,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 		break;
 	}
 }
+
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 {
 	int i;

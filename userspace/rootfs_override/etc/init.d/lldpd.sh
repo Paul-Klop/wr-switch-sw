@@ -3,33 +3,80 @@
 # Controls lldpd.
 #
 
-CONFIG=/etc/lldpd.conf
-LLDP=/usr/sbin/lldpd
-OPT=-x
+LLDPD_CONFIG=/etc/lldpd.conf
+LLDPD=/usr/sbin/lldpd
+# -x -- Enable SNMP subagent.
+LLDPD_OPT=-x
 
-case $1 in
-    start)
-	
-	printf "Creating lldpd config: "
-	echo "configure system hostname '$(hostname)'" > $CONFIG
-	echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $CONFIG
-	echo "resume" >> $CONFIG
+dotconfig=/wr/etc/dot-config
 
-	printf "Starting lldpd: "
-        start-stop-daemon -S -q -p /var/run/lldpd.pid -x $LLDP -- $OPT
-	[ $? = 0 ] && echo "OK" || echo "FAIL"
+
+start_counter() {
+    # increase start counter
+    COUNTER_FILE="/tmp/start_cnt_lldpd"
+    START_COUNTER=1
+    if [ -f "$COUNTER_FILE" ];
+    then
+	read -r START_COUNTER < $COUNTER_FILE
+	START_COUNTER=$((START_COUNTER+1))
+    fi
+    echo "$START_COUNTER" > $COUNTER_FILE
+}
+
+start() {
+
+    echo -n "Creating lldpd config: "
+    echo "configure system hostname '$(hostname)'" > $LLDPD_CONFIG
+    echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $LLDPD_CONFIG
+    echo "resume" >> $LLDPD_CONFIG
+
+    echo -n "Starting lldpd: "
+#     if [ -f $dotconfig ]; then
+# 	. $dotconfig
+#     else
+# 	echo "$0 unable to source dot-config ($dotconfig)!"
+#     fi
+# 
+
+    start-stop-daemon -S -q -p /var/run/lldpd.pid --exec $LLDPD -- $LLDPD_OPT
+    ret=$?
+    if [ $ret -eq 0 ]; then
+	start_counter
+	echo "OK"
+    elif [ $ret -eq 1 ]; then
+	echo "Failed (already running?)"
+    else
+	echo "Failed"
+    fi
+}
+
+stop() {
+    echo -n "Stopping lldpd: "
+    start-stop-daemon -K -q -p /var/run/lldpd.pid
+    if [ $? -eq 0 ]; then
+	echo "OK"
+    else
+	echo "Failed"
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+  start)
+	start
 	;;
-    stop)
-	printf "Stopping lldpd: "
-	start-stop-daemon -K -q -p /var/run/lldpd.pid
-	[ $? = 0 ] && echo "OK" || echo "FAIL"
+  stop)
+	stop
 	;;
-    restart)
-	$0 stop
-	$0 start
+  restart|reload)
+	restart
 	;;
-    *)
-	echo "Usage: $0 {start|stop|restart}"
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
 	exit 1
 	;;
 esac

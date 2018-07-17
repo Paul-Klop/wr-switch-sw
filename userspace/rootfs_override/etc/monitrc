@@ -66,3 +66,7 @@ set statefile /tmp/monit.state
 #
 include /etc/monit.d/*.conf
 #
+# enable Monit CLI to start and stop services, disable or enable service
+# monitoring as well as view the status of each service.
+# use socket instead of TCP to prevent access from outside switch
+set httpd unixsocket /var/run/monit.sock allow root:root

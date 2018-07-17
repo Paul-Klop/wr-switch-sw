@@ -920,6 +920,15 @@ config CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
 
 endmenu
 
+menu "LLDP options"
+config LLDPD_DISABLE
+	bool "Disable LLDP daemon"
+	default n
+	help
+	  Disable LLDP daemon to prevent sending LLDP frames. It may be useful
+	  for networks not using LLDP or with a low latency requirement.
+endmenu
+
 config HTTPD_DISABLE
 	bool "Disable web interface"
 	default n

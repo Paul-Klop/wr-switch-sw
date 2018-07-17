@@ -7,6 +7,7 @@ LLDPD_CONFIG=/etc/lldpd.conf
 LLDPD=/usr/sbin/lldpd
 # -x -- Enable SNMP subagent.
 LLDPD_OPT=-x
+MONIT=/usr/bin/monit
 
 dotconfig=/wr/etc/dot-config
 
@@ -29,14 +30,26 @@ start() {
     echo "configure system hostname '$(hostname)'" > $LLDPD_CONFIG
     echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $LLDPD_CONFIG
     echo "resume" >> $LLDPD_CONFIG
+    echo "OK"
 
     echo -n "Starting lldpd: "
-#     if [ -f $dotconfig ]; then
-# 	. $dotconfig
-#     else
-# 	echo "$0 unable to source dot-config ($dotconfig)!"
-#     fi
-# 
+
+    if [ -f $dotconfig ]; then
+	. $dotconfig
+    else
+	echo "$0 unable to source dot-config ($dotconfig)!"
+    fi
+
+    if [ "$CONFIG_LLDPD_DISABLE" = "y" ]; then
+	echo "lldpd disabled in dot-config!"
+	if [ "$1" != "force" ]; then
+	    # Unmonitor lldpd, ignore all printouts from monit.
+	    # Run in background since monit may wait for a timeout.
+	    $MONIT unmonitor lldpd &>/dev/null &
+	    exit 0
+	fi
+	echo -n "Force start of lldpd: "
+    fi
 
     start-stop-daemon -S -q -p /var/run/lldpd.pid --exec $LLDPD -- $LLDPD_OPT
     ret=$?
@@ -47,6 +60,15 @@ start() {
 	echo "Failed (already running?)"
     else
 	echo "Failed"
+    fi
+
+    # check whether the process was monitored
+    $MONIT summary 2>&1 | grep lldpd | grep "Not monitored" &> /dev/null
+    if [ $? -eq 0 ]; then
+	echo "lldpd was not monitored, enabling monitoring"
+	# the process was not monitored, enable monitoring
+	# this will generate extra log entries from monit
+	$MONIT monitor lldpd
     fi
 }
 
@@ -67,7 +89,7 @@ restart() {
 
 case "$1" in
   start)
-	start
+	start "$2"
 	;;
   stop)
 	stop
@@ -76,7 +98,8 @@ case "$1" in
 	restart
 	;;
   *)
-	echo $"Usage: $0 {start|stop|restart}"
+	echo "Usage: $0 {start <force>|stop|restart}"
+	echo "    start force -- enable lldpd even it is disabled in the dot-config"
 	exit 1
 	;;
 esac

@@ -926,7 +926,29 @@ appropriate way, before the respective service is started.
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
 
+@item CONFIG_LLDPD_DISABLE
+@itemx CONFIG_LLDPD_TX_INTERVAL
+@itemx CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE
+@itemx CONFIG_LLDPD_MINIMUM_FRAME_SIZE
+
+	Set of parameters related to the LLDP daemon (lldpd) configuration.
+	From the version 5.1 switch by default sends LLDP frames on its all
+	ports (including management). In some installations it may be necessary
+	to disable LLDP traffic on the management port (option
+	@t{CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE}). Additionally, in some cases
+	(like networks that needs low latency) it may be necessary to disable
+	LLDP at all (@t{CONFIG_LLDPD_DISABLE}).
+
+	The transmission frequency of LLDP frames can be changed using option
+	@t{CONFIG_LLDPD_TX_INTERVAL}.
+
+	Networks that would benefit from the LLDP, but have low latency
+	constraints can use option @t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE}. With
+	this option LLPD daemon includes only minimal set of information into
+	LLPD frames.
+
 @item CONFIG_HTTPD_DISABLE
+
 	Disable web interface on a switch.
 
 @item CONFIG_MONIT_DISABLE

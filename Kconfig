@@ -934,6 +934,14 @@ config LLDPD_MANAGEMENT_PORT_DISABLE
 	depends on !LLDPD_DISABLE
 	help
 	  Disable LLDP traffic on management port.
+
+config LLDPD_MINIMUM_FRAME_SIZE
+	bool "Send only minimum information via LLDP"
+	default n
+	depends on !LLDPD_DISABLE
+	help
+	  Send only minimum information via LLDP. May be useful in networks
+	  which require low latency.
 endmenu
 
 config HTTPD_DISABLE

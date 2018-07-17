@@ -928,6 +928,13 @@ config LLDPD_DISABLE
 	  Disable LLDP daemon to prevent sending LLDP frames. It may be useful
 	  for networks not using LLDP or with a low latency requirement.
 
+config LLDPD_TX_INTERVAL
+	int "LLDP TX interval"
+	default 5
+	depends on !LLDPD_DISABLE
+	help
+	  Define how often LLDP frames are sent.
+
 config LLDPD_MANAGEMENT_PORT_DISABLE
 	bool "Disable LLDP on the management port"
 	default n

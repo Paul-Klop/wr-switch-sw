@@ -927,6 +927,13 @@ config LLDPD_DISABLE
 	help
 	  Disable LLDP daemon to prevent sending LLDP frames. It may be useful
 	  for networks not using LLDP or with a low latency requirement.
+
+config LLDPD_MANAGEMENT_PORT_DISABLE
+	bool "Disable LLDP on the management port"
+	default n
+	depends on !LLDPD_DISABLE
+	help
+	  Disable LLDP traffic on management port.
 endmenu
 
 config HTTPD_DISABLE

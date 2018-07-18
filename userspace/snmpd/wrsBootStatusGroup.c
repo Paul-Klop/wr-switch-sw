@@ -459,7 +459,10 @@ static void get_daemons_status(void)
 	char key[41]; /* 1 for null char */
 	int ret = 0;
 	int i;
-	int processes_wrong = 0; /* number of too many or too few processes */
+	int processes_wrong = 0; /* number of too many or too few processes
+				  * (in total) */
+	int missing_process = 0; /* number of too many or too few processes
+				  * (particular process) */
 
 
 	/* clear user space daemon counters */
@@ -518,8 +521,20 @@ static void get_daemons_status(void)
 		/* Calculate delta between expected and counted number
 		 * of processes. Neither too much or too few are ok.
 		 * NOTE: abs "exp" too */
-		processes_wrong += abs(abs(userspace_daemons[i].exp)
+		missing_process = abs(abs(userspace_daemons[i].exp)
 				       - userspace_daemons[i].cnt);
+		if (missing_process) {
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 " wrsBootUserspaceDaemonsMissing: wrong "
+				 "number of running %s processes. Expected %d,"
+				 " counted %d\n",
+				 userspace_daemons[i].key,
+				 userspace_daemons[i].exp,
+				 userspace_daemons[i].cnt
+				 );
+		}
+
+		processes_wrong += missing_process;
 	}
 
 	/* save number of processes missing */

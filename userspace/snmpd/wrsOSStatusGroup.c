@@ -160,7 +160,7 @@ time_t wrsOSStatus_data_fill(void)
 	/* check the number of missing daemons */
 	if (b->wrsBootUserspaceDaemonsMissing > 0) {
 		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: %d userspace daemons not started\n",
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: wrong number of userspace daemons (differs by %d)\n",
 			 slog_obj_name, b->wrsBootUserspaceDaemonsMissing);
 	}
 

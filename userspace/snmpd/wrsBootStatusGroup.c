@@ -93,6 +93,7 @@ struct wrs_usd_item {
 	uint32_t cnt;	/* number of processes found */
 };
 
+#define UDI_HTTP 4 /* index of web server in userspace_daemons array */
 #define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
 /* user space daemon list */
 /* - key contain process name reported by ps command
@@ -107,7 +108,8 @@ static struct wrs_usd_item userspace_daemons[] = {
 	[1] = {"/wr/bin/wrsw_hal", 2}, /* two wrsw_hal instances */
 	[2] = {"/wr/bin/wrsw_rtud", 1},
 	[3] = {"/wr/bin/ppsi", 1},
-	[4] = {"/usr/sbin/lighttpd", 1},
+	[UDI_HTTP] = {"/usr/sbin/lighttpd", 1}, /* web interface can be
+						 * disabled in dot-config */
 	[UDI_MONIT] = {"/usr/bin/monit", 1}, /* Monit can be disabled in
 					      * dot-config */
 	[6] = {"/usr/sbin/snmpd", 1},
@@ -474,6 +476,14 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 		daemon_array[UDI_MONIT].exp = 0;
 		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
 			 " CONFIG_MONIT_DISABLE=y in dot-config\n");
+	}
+
+	tmp = libwr_cfg_get("HTTPD_DISABLE");
+	if (tmp && !strcmp(tmp, "y")) {
+		/* SNMP should not expect lighttpd (web server) to be running*/
+		daemon_array[UDI_HTTP].exp = 0;
+		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+			 " CONFIG_HTTPD_DISABLE=y in dot-config\n");
 	}
 }
 

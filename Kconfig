@@ -920,6 +920,12 @@ config CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
 
 endmenu
 
+config HTTPD_DISABLE
+	bool "Disable web interface"
+	default n
+	help
+	  Disable web interface.
+
 menu "Developer options"
 config MONIT_DISABLE
 	bool "Disable monit"

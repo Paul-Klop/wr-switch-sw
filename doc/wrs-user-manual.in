@@ -926,6 +926,9 @@ appropriate way, before the respective service is started.
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
 
+@item CONFIG_HTTPD_DISABLE
+	Disable web interface on a switch.
+
 @item CONFIG_MONIT_DISABLE
 
 	Disable monitoring of running processes by @i{Monit}. @i{Monit} by

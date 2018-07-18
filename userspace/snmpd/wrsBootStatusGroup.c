@@ -95,6 +95,7 @@ struct wrs_usd_item {
 
 #define UDI_HTTP 4 /* index of web server in userspace_daemons array */
 #define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
+#define UDI_LLDP 8 /* index of LLDP in userspace_daemons array */
 /* user space daemon list */
 /* - key contain process name reported by ps command
  * - positive exp describe exact number of expected processes
@@ -114,6 +115,8 @@ static struct wrs_usd_item userspace_daemons[] = {
 					      * dot-config */
 	[6] = {"/usr/sbin/snmpd", 1},
 	[7] = {"/wr/bin/wrs_watchdog", 1},
+	[UDI_LLDP] = {"/usr/sbin/lldpd", 1}, /* LLDP can be disabled in
+						dot-config */
 };
 
 struct wrs_bc_item {
@@ -484,6 +487,14 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 		daemon_array[UDI_HTTP].exp = 0;
 		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
 			 " CONFIG_HTTPD_DISABLE=y in dot-config\n");
+	}
+
+	tmp = libwr_cfg_get("LLDPD_DISABLE");
+	if (tmp && !strcmp(tmp, "y")) {
+		/* SNMP should not expect lldpd to be running */
+		daemon_array[UDI_LLDP].exp = 0;
+		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+			 " CONFIG_LLDPD_DISABLE=y in dot-config\n");
 	}
 }
 

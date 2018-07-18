@@ -1,5 +1,6 @@
 #include "wrsSnmp.h"
 #include <libwr/util.h>
+#include <libwr/config.h>
 #include "wrsBootStatusGroup.h"
 
 #define BOOTCOUNT_FILE "/proc/wrs-bootcount"
@@ -92,6 +93,7 @@ struct wrs_usd_item {
 	uint32_t cnt;	/* number of processes found */
 };
 
+#define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
 /* user space daemon list */
 /* - key contain process name reported by ps command
  * - positive exp describe exact number of expected processes
@@ -106,7 +108,8 @@ static struct wrs_usd_item userspace_daemons[] = {
 	[2] = {"/wr/bin/wrsw_rtud", 1},
 	[3] = {"/wr/bin/ppsi", 1},
 	[4] = {"/usr/sbin/lighttpd", 1},
-	[5] = {"/usr/bin/monit", 1},
+	[UDI_MONIT] = {"/usr/bin/monit", 1}, /* Monit can be disabled in
+					      * dot-config */
 	[6] = {"/usr/sbin/snmpd", 1},
 	[7] = {"/wr/bin/wrs_watchdog", 1},
 };
@@ -452,6 +455,28 @@ static void get_loaded_kernel_modules_status(void)
 	fclose(f);
 }
 
+static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
+{
+	static int run_once = 1;
+	char *tmp;
+
+	/* Read the information about disabled daemons from dot-config only
+	 * once. Another read makes no sense, because SNMP daemon reads
+	 * dot-config only once at startup */
+	if (!run_once)
+		return;
+
+	run_once = 0;
+
+	tmp = libwr_cfg_get("MONIT_DISABLE");
+	if (tmp && !strcmp(tmp, "y")) {
+		/* SNMP should not expect monit to be running */
+		daemon_array[UDI_MONIT].exp = 0;
+		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+			 " CONFIG_MONIT_DISABLE=y in dot-config\n");
+	}
+}
+
 /* check if daemons from userspace_daemons array are running */
 static void get_daemons_status(void)
 {
@@ -469,6 +494,9 @@ static void get_daemons_status(void)
 	for (i = 0; i < ARRAY_SIZE(userspace_daemons); i++) {
 		userspace_daemons[i].cnt = 0;
 	}
+
+	/* Check if all daemons are expected */
+	update_daemon_expectancy(userspace_daemons);
 
 	/* Use ps command to get process list, more portable, less error prone
 	 * but probably slower than manually parsing /proc/ */

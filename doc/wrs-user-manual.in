@@ -946,6 +946,57 @@ appropriate way, before the respective service is started.
 	constraints can use option @t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE}. With
 	this option LLPD daemon includes only minimal set of information into
 	LLPD frames.
+	
+	The table below contains comparison of LLDP frame's fields for standard
+	frame size and minimal frame size (with
+	@t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE} option enabled). Size of some of
+	fields (like @t{System name} or	@t{System Description}) depends on
+	a network configuration.
+
+@multitable @columnfractions .25 .25 .35
+@headitem Standard frame @tab Minimum frame @tab Description
+@item 14
+@tab 14
+@tab ETH header
+@item 9
+@tab 9
+@tab Chasis ID (with MAC)
+@item 9
+@tab 9
+@tab Port ID (with MAC)
+@item 4
+@tab 4
+@tab Time To Live
+@item 2+len(System name)
+@tab 2+len(System name)
+@tab System name
+@item 2+len(System desc.)
+@tab 2+len(@t{WR-SWITCH})
+@tab System description
+@item 6
+@tab 0
+@tab Capabilities
+@item 14
+@tab 0
+@tab Management Address
+@item 7
+@tab 7
+@tab Port description
+@item 2
+@tab 2
+@tab End of LLDP frame
+
+@item 69
+
++len(System name)
+
++len(System desc.)
+@tab 58
+
++len(System name)
+@tab Total length
+
+@end multitable
 
 @item CONFIG_HTTPD_DISABLE
 

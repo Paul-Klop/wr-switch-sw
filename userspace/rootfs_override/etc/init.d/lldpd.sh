@@ -65,6 +65,10 @@ start() {
 
     if [ "$CONFIG_LLDPD_MINIMUM_FRAME_SIZE" = "y" ]; then 
 	echo "configure system description  'WR-SWITCH'" >> $LLDPD_CONFIG
+	# disable capabilities-advertisements
+	echo "unconfigure ports all lldp capabilities-advertisements" >> $LLDPD_CONFIG
+	# disable management ip advertisements
+	echo "unconfigure ports all lldp management-addresses-advertisements" >> $LLDPD_CONFIG
     else
 	echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $LLDPD_CONFIG
     fi

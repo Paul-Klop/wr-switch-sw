@@ -18,13 +18,17 @@ IMPORTS
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201602171600Z"
+    LAST-UPDATED "201807181400Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
                  "
     DESCRIPTION  "White Rabbit Switch internal details
                  "
+    REVISION     "201807181400Z"
+    DESCRIPTION
+        "Add wrsStartCntLldpd"
+
     REVISION     "201602171600Z"
     DESCRIPTION
         "Use 64bit counters for pstats. Make wrsPstats* obsolete,
@@ -1145,6 +1149,14 @@ wrsStartCntWrsWatchdog OBJECT-TYPE
     DESCRIPTION
             "Number of wrs_watchdog daemon starts"
     ::= { wrsStartCntGroup 8 }
+
+wrsStartCntLldpd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of LLDP daemon starts"
+    ::= { wrsStartCntGroup 9 }
 
 -- wrsSpllState (.7.3)
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }

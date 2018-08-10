@@ -920,6 +920,37 @@ config CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
 
 endmenu
 
+menu "LLDP options"
+config LLDPD_DISABLE
+	bool "Disable LLDP daemon"
+	default n
+	help
+	  Disable LLDP daemon to prevent sending LLDP frames. It may be useful
+	  for networks not using LLDP or with a low latency requirement.
+
+config LLDPD_TX_INTERVAL
+	int "LLDP TX interval"
+	default 5
+	depends on !LLDPD_DISABLE
+	help
+	  Define how often LLDP frames are sent.
+
+config LLDPD_MANAGEMENT_PORT_DISABLE
+	bool "Disable LLDP on the management port"
+	default n
+	depends on !LLDPD_DISABLE
+	help
+	  Disable LLDP traffic on management port.
+
+config LLDPD_MINIMUM_FRAME_SIZE
+	bool "Send only minimum information via LLDP"
+	default n
+	depends on !LLDPD_DISABLE
+	help
+	  Send only minimum information via LLDP. May be useful in networks
+	  which require low latency.
+endmenu
+
 config HTTPD_DISABLE
 	bool "Disable web interface"
 	default n

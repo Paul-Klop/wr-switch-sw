@@ -10,6 +10,7 @@ TOOLS += wrs_status_led
 TOOLS += mkpasswd
 TOOLS += wrs_sfp_dump
 TOOLS += wrs_throttling
+TOOLS += utc_leap_test
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit

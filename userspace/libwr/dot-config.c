@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <ctype.h>
 /* for dirname and basename */
 #include <libgen.h>
 #include <libwr/wrs-msg.h>
@@ -75,6 +76,8 @@ static int libwr_cfg_line(char *line)
 {
 	struct cfg_item *c;
 	char name[512], value[512];
+	char * p_value; /* pointer to the beginig of a value */
+	char * p_end;   /* pointer to the end of a value */
 
 	if (line[0] == '#')
 		return 0;
@@ -86,20 +89,64 @@ static int libwr_cfg_line(char *line)
 		return -1;
 	}
 
+	/* Parse the value in the following way
+	 * - skip all leading spaces in the value
+	 * - If number or (-), search for "#". Ignore "#" and the rest of
+	 *   a line
+	 * - If ", search for another " (but make sure it is not escaped),
+	 *   then search for "#" and drop the rest. Meanwhile strip quotes */
+
+	p_value = value;
+	/* Skip all spaces in value */
+	while (*p_value == ' ')
+		p_value++;
+
+	if (isdigit(*p_value) || *p_value == '-') { /* parameter is a digit */
+		/* Number (including "-"), search for # */
+		p_end = strchr(p_value, '#');
+		if (p_end) {
+			/* Ignore content after # */
+			*p_end = '\0';
+		}
+	} else if (*p_value == 'y' || *p_value == 'n' || *p_value == 'm') {
+		/* Recognize single y, n, and m */
+		/* Drop everything after recognized char */
+		*(p_value + 1) = '\0';
+	} else if (*p_value == '"') { /* parameter is a string */
+		/* Ignore opening quote */
+		p_value++;
+		p_end = p_value;
+		while (1) {
+			p_end = strchr(p_end, '\"');
+			if (!p_end) {
+				/* End of string */
+				break;
+			}
+			if (*(p_end - 1) == '\\') {
+				/* Keep escaped quotes as they where */
+				p_end++;
+			} else {
+				/* Everything including and after closing quote
+				 * will be ignored. This also ignores closing
+				 * quote */
+				*p_end = '\0';
+				break;
+			}
+		}
+	} else {
+		/* Value has not acceptable form */
+		errno = EINVAL;
+		return -1;
+	}
+
 	c = malloc(sizeof(*c));
 	if (!c)
 		return -1;
 	c->subcfg = NULL;
 	c->name = strdup(name);
-	c->value = strdup(value);
+	c->value = strdup(p_value);
 	if (!c->name || !c->value)
 		return -1;
-
-	/* Strip quotes */
-	if (c->value[0] == '"')
-		c->value++;
-	if (c->value[strlen(c->value) - 1] == '"')
-		c->value[strlen(c->value) - 1] = '\0';
 
 	libwr_subcfg(c);
 

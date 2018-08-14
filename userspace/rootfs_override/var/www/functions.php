@@ -1352,6 +1352,15 @@ function wrs_reboot($timeout=40){
 function load_kconfig(){
 	$_SESSION['LASTIME'] = filectime($GLOBALS['kconfigfile']);
 	$_SESSION['KCONFIG'] = parse_ini_file($GLOBALS['kconfigfile']);
+	/* Ignore everything after "#". It is intended to ignore comments at
+	 * the end of a line. However, it will also affect items with "#" in
+	 * the value.
+	 * NOTE: When dot-config is written back all coments will be gone!
+	 */
+	foreach ($_SESSION['KCONFIG'] as &$row) {
+		$no_comments = explode("#",$row);
+		$row = $no_comments[0];
+	}
 }
 
 /*

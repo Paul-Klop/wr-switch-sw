@@ -110,19 +110,19 @@ char *decode_ports(int dpm, int nports)
 	static char str[80],str2[20];
 	int i;
 
-	if ((dpm & ((1<<nports)-1)) == ((1<<nports)-1))
-	{
-		strcpy(str,"ALL");
-		return str;
-	}
-	strcpy(str,"");
+	/* Print "ALL" or list ports from the mask */
+	if ((dpm & ((1<<nports)-1)) == ((1<<nports)-1)) {
+		strcpy(str, "ALL ");
+	} else {
+		strcpy(str, "");
 
-	for (i = 0; i < nports; i++)
-	{
-		sprintf(str2, "%d ", i + 1);
-		if(dpm&(1<<i)) strcat(str,str2);
+		for (i = 0; i < nports; i++) {
+			sprintf(str2, "%d ", i + 1);
+			if (dpm & (1<<i)) strcat(str,str2);
+		}
 	}
 
+	/* print CPU if it is in the mask */
 	if (dpm & (1<<nports))
 		strcat(str, "CPU");
 

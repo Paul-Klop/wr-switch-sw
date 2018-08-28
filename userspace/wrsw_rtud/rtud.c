@@ -91,10 +91,12 @@ int read_ports(void){
 static int rtu_create_static_entries(void)
 {
 	uint8_t bcast_mac[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	uint8_t stp_bpdu_mac[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 };
 	uint8_t slow_proto_mac[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x01 };
 	uint8_t ptp_mcast_mac[] = { 0x01, 0x1b, 0x19, 0x00, 0x00, 0x00 };
 	uint8_t udp_ptp_mac[] = { 0x01, 0x00, 0x5e, 0x00, 0x01, 0x81 };
 	uint8_t udp_ptp_p2p_mac[] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x6b };
+
 	int i, err;
 	uint32_t enabled_port_mask = 0;
 
@@ -103,9 +105,25 @@ static int rtu_create_static_entries(void)
 	pr_info("Number of physical ports: %d\n",
 	      hal_nports_local);
 
+	for (i = 0; i < hal_nports_local; i++) {
+		enabled_port_mask |= (1 << hal_ports_local_copy[i].hw_index);
+
+		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
+	}
+
 	// VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
 	pr_info("Adding static routes for slow protocols...\n");
-	for (i = 0; i < NUM_RESERVED_ADDR; i++) {
+	/* Silently add (R)STP BPDUs broadcasting while no support of STP
+	   in software. */
+	err =
+	    rtu_fd_create_entry(stp_bpdu_mac, 0,
+				enabled_port_mask | (1 << hal_nports_local),
+				RTU_ENTRY_TYPE_STATIC, OVERRIDE_EXISTING);
+	if (err)
+		return err;
+
+	/* Add other slow protocols */
+	for (i = 1; i < NUM_RESERVED_ADDR; i++) {
 		slow_proto_mac[5] = i;
 		err =
 		    rtu_fd_create_entry(slow_proto_mac, 0,
@@ -114,12 +132,6 @@ static int rtu_create_static_entries(void)
 					OVERRIDE_EXISTING);
 		if (err)
 			return err;
-	}
-
-	for (i = 0; i < hal_nports_local; i++) {
-		enabled_port_mask |= (1 << hal_ports_local_copy[i].hw_index);
-
-		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
 	}
 
 	/* PTP over UDP */

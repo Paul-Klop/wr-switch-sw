@@ -296,9 +296,13 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			//it means that the port moved, so we override the existing mask...
 			mask_src = 0xFFFFFFFF;	//ML: filtering on ingress is optional according to 802.1Q-2012
 			//by default it should not happen. TODO: add optional config
-			if ((ent->port_mask_dst != mask_dst) || (ent->port_mask_src != mask_src)) {	// something new
+			if ((ent->port_mask_dst != mask_dst)
+			    || (ent->port_mask_src != mask_src)
+			    || (ent->dynamic != dynamic)) {
+				/* new entry */
 				ent->port_mask_dst = mask_dst;
 				ent->port_mask_src = mask_src;
+				ent->dynamic = dynamic;
 				/* ML: update time always when updating
 				 * the entry */
 				ent->last_access_t = get_monotonic_sec();

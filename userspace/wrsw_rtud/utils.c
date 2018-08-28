@@ -84,7 +84,7 @@ void usage(char *name)
 		"\t-r   aging resolution (in sec). 20 sec by default\n"
 		"\t-t   aging time (10 to 10000 sec). 300 sec by default.\n"
 		"\t-q   decrease verbosity\n"
-		"\t-v   dncrease verbosity\n",
+		"\t-v   increase verbosity\n",
 		name);
 	exit(1);
 }

@@ -51,6 +51,8 @@ SOURCES = \
 	wrsPortStatusTable.c \
 	init.c \
 
+MIBS = WR-SWITCH-MIB.txt
+
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(SHLIB)
@@ -63,4 +65,5 @@ clean:
 
 install:
 	install -d  $(WR_INSTALL_ROOT)/lib
-	install *.so $(WR_INSTALL_ROOT)/lib
+	install $(SHLIB) $(WR_INSTALL_ROOT)/lib
+	install $(MIBS) $(WR_INSTALL_ROOT)/lib

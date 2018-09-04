@@ -82,7 +82,7 @@ function wrs_header_ports(){
 }
 
 function draw_table(){
-	$ports = shell_exec("/wr/bin/wr_mon -w | tail -20 | head -18");        
+	$ports = shell_exec("/wr/bin/wr_mon -w | tail -20 | head -18 2>/dev/null");
 	$ports = explode(PHP_EOL, $ports);
  	
 	echo  "<table id='sfp_panel' border='0' align='center' vspace='15'>";
@@ -90,10 +90,10 @@ function draw_table(){
         $cont = 0;
         for($i=0; $i<18; $i=$i+1){
                 if (strpos($ports[$i], "up")){
-                        if (!strpos($ports[$i],"Master")){
-                                $mode="master";
-                        }else{
+                        if (strpos($ports[$i],"Master") === false){
                                 $mode="slave";
+                        }else{
+                                $mode="master";
                         }
                 }
                 else $mode="linkdown";

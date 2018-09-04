@@ -1338,7 +1338,7 @@ function echoSelectedClassIfRequestMatches($requestUri)
         return 'class="selected"';
 }
 
-function wrs_reboot($timeout=40){
+function wrs_reboot($timeout=60){
 	sleep(1);
 	header ('Location: reboot.php?timeout='.$timeout);
 }

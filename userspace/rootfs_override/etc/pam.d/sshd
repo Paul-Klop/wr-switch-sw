@@ -9,3 +9,4 @@ password   required     /lib/security/pam_unix.so shadow nullok use_authtok
 session    required     /lib/security/pam_unix.so
 session    required     /lib/security/pam_limits.so
 session    required     /lib/security/pam_krb5.so minimum_uid=1000
+session    required     /lib/security/pam_mkhomedir.so skel=/etc/skel umask=0022

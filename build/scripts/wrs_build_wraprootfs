@@ -61,7 +61,7 @@ chmod a+rx $TMPFS
 
 ##### now move stuff to usr (we need usr to be in flash, / remains initramfs)
 # remove needless stuff
-rm -rf $TMPFS/home $TMPFS/opt
+rm -rf $TMPFS/opt
 sed -i '/^default/ d' $TMPFS/etc/passwd
 # move /wr and /var to /usr/wr and /usr/var
 mv $TMPFS/wr  $TMPFS/usr; ln -s usr/wr  $TMPFS

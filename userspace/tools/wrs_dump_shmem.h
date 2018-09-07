@@ -70,6 +70,8 @@ enum dump_type {
 	/* rtu_filtering_entry enumerations */
 	dump_type_rtu_filtering_entry_dynamic,
 	dump_type_array_int,
+	/* scaledPicoseconds */
+	dump_type_scaledPicoseconds,
 };
 /*
  * A structure to dump fields. This is meant to simplify things, see use here

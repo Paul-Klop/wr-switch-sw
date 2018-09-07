@@ -287,6 +287,9 @@ void dump_one_field(void *addr, struct dump_info *info)
 		printf("\n");
 		break;
 		}
+	case dump_type_scaledPicoseconds:
+		printf("%lld\n", (*(unsigned long long *)p)>>16);
+		break;
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)

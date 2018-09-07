@@ -25,3 +25,4 @@ wrs_status_led
 wrs_sfp_dump
 wrs_pps_control
 wrs_throttling
+utc_leap_test

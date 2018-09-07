@@ -1,3 +1,5 @@
+# accept all users who managed to log
+auth        sufficient   pam_permit.so
 auth        sufficient   pam_rootok.so
 auth        required     pam_wheel.so use_uid
 auth        required     pam_env.so

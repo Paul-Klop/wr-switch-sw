@@ -387,139 +387,7 @@ config KEEP_ROOTFS
 
 endmenu
 
-menu "Port Timing Configuration"
-
-config PORT01_PARAMS
-	string "Parameters for port 1"
-	default "name=wri1,proto=raw,tx=223897,rx=226273,role=slave,ext=WR,dm=e2e,monitor=y,fiber=0" if TIME_BC
-	default "name=wri1,proto=raw,tx=223897,rx=226273,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  This item, and the following ones, are used to assign the tx and rx
-	  constant delays (likely from calibration), protocol type (raw or udp),
-	  port roles, type of fiber (number referring to the corresponding
-	  FIBERXX_PARAMS) and vlan configuration of PPSi for each of the ports.
-	  Please refer to the user manual for more information.
-	  "role" can be one of the following:
-	    - master - configure port as a master
-	    - slave - configure port as a slave
-	    - auto - when a port is connected to master behave as a slave,
-		     otherwise behave as master
-	    - non-wr - (obsolete) don't report problems with this port via SNMP
-		       like SFP not in DB, copper SFP connected, non 1GB SFP
-		       etc.
-	    - none - disable White Rabbit and PTP on a port
-	  "ext" (extension) can be one of the following:
-	    - WR - use White Rabbit as an extension on this port (default)
-	    - none - no extension on this port
-	  "dm" (delay mechanism) can be one of the following:
-	    - e2e - end to end (default)
-	    - p2p - peer to peer
-	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
-	  
-
-config PORT02_PARAMS
-	string "Parameters for port 2"
-	default "name=wri2,proto=raw,tx=224037,rx=226377,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT03_PARAMS
-	string "Parameters for port 3"
-	default "name=wri3,proto=raw,tx=224142,rx=226638,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT04_PARAMS
-	string "Parameters for port 4"
-	default "name=wri4,proto=raw,tx=224313,rx=226471,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT05_PARAMS
-	string "Parameters for port 5"
-	default "name=wri5,proto=raw,tx=224455,rx=227679,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT06_PARAMS
-	string "Parameters for port 6"
-	default "name=wri6,proto=raw,tx=224603,rx=227891,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT07_PARAMS
-	string "Parameters for port 7"
-	default "name=wri7,proto=raw,tx=224761,rx=228055,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT08_PARAMS
-	string "Parameters for port 8"
-	default "name=wri8,proto=raw,tx=224898,rx=228178,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT09_PARAMS
-	string "Parameters for port 9"
-	default "name=wri9,proto=raw,tx=225069,rx=228277,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT10_PARAMS
-	string "Parameters for port 10"
-	default "name=wri10,proto=raw,tx=225245,rx=228435,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT11_PARAMS
-	string "Parameters for port 11"
-	default "name=wri11,proto=raw,tx=225463,rx=228963,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT12_PARAMS
-	string "Parameters for port 12"
-	default "name=wri12,proto=raw,tx=225645,rx=229107,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT13_PARAMS
-	string "Parameters for port 13"
-	default "name=wri13,proto=raw,tx=225801,rx=229225,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT14_PARAMS
-	string "Parameters for port 14"
-	default "name=wri14,proto=raw,tx=225983,rx=229463,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT15_PARAMS
-	string "Parameters for port 15"
-	default "name=wri15,proto=raw,tx=226208,rx=229850,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT16_PARAMS
-	string "Parameters for port 16"
-	default "name=wri16,proto=raw,tx=226393,rx=229907,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT17_PARAMS
-	string "Parameters for port 17"
-	default "name=wri17,proto=raw,tx=226594,rx=230106,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-config PORT18_PARAMS
-	string "Parameters for port 18"
-	default "name=wri18,proto=raw,tx=226737,rx=230273,role=master,ext=WR,dm=e2e,monitor=y,fiber=0"
-	help
-	  Please check the help of PORT01_PARAMS
-
-endmenu
+source Kconfig_port_timing.in
 
 menu "SFP and Media Timing Configuration"
 
@@ -716,10 +584,19 @@ config PTP_CONF_URL
 	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
 
 menu "PTP options"
-	depends on PTP_PORT_PARAMS
 
+config PTP_OPT_OVERWRITE_CLOCK_CLASS
+	boolean "Overwrite default clock-class"
+	default FALSE
+	help
+	  The clock class is automatically set depending of the timing mode.
+	  This option allows to overwrite the default value.
+	   
 config PTP_OPT_CLOCK_CLASS
-	string "clock-class"
+	int "clock-class"
+	default 248
+	range 0 255
+	depends on PTP_OPT_OVERWRITE_CLOCK_CLASS
 	help
 	  An attribute defining the TAI traceability, synchronization state and
 	  expected performance of the time or frequency distributed by a
@@ -729,7 +606,9 @@ config PTP_OPT_CLOCK_CLASS
 	  ppsi-pre.conf during generation of ppsi.conf.
 
 config PTP_OPT_CLOCK_ACCURACY
-	string "clock-accuracy"
+	int "clock-accuracy"
+	range 0 255
+	default "254"
 	help
 	  An attribute defining the accuracy of the Local Clock (e.g. local
 	  oscillator) of a Boundary Clock or Ordinary Clock.
@@ -738,7 +617,9 @@ config PTP_OPT_CLOCK_ACCURACY
 	  ppsi-pre.conf during generation of ppsi.conf.
 
 config PTP_OPT_CLOCK_ALLAN_VARIANCE
-	string "clock-allan-variance/offsetScaledLogVariance"
+	int "clock-allan-variance/offsetScaledLogVariance"
+	default "65535"
+	range 0 65535
 	help
 	  An attribute defining the stability of the Local Clock of a
 	  Boundary Clock or Ordinary Clock.
@@ -747,44 +628,29 @@ config PTP_OPT_CLOCK_ALLAN_VARIANCE
 	  ppsi-pre.conf during generation of ppsi.conf.
 
 config PTP_OPT_DOMAIN_NUMBER
-	string "domain-number"
+	int "domain-number"
+	default 0
+	range 0 255
 	help
 	  A domain consists of one or more PTP devices communicating with each
 	  other as defined by the PTP protocol. A domain defines the scope of
 	  PTP message communication, state, operations, data sets, and
 	  timescale. PTP devices may participate in multiple domains.
 	  For more details please refer to the IEEE 1588-2008 standard.
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
-
-config PTP_OPT_ANNOUNCE_INTERVAL
-	string "announce-interval"
-	help
-	  The mean time interval between transmissions of successive
-	  Announce messages.
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
-
-config PTP_OPT_SYNC_INTERVAL
-	string "sync-interval"
-	help
-	  The mean time interval between transmission of successive
-	  Sync messages, i.e., the sync-interval, when transmitted
-	  as multicast messages. The value is the logarithm to the base 2.
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
 
 config PTP_OPT_PRIORITY1
-	string "priority1"
+	int "priority1"
+	default "128"
+	range 0 255
 	help
 	  A user configurable designation that a clock belongs to an ordered
 	  set of PTP devices from which a PTP Master is selected.
 	  For more details please refer to the IEEE 1588-2008 standard
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
 
 config PTP_OPT_PRIORITY2
-	string "priority2"
+	int "priority2"
+	default "128"
+	range 0 255
 	help
 	  A user configurable designation that provides finer grained ordering
 	  among otherwise equivalent PTP devices.
@@ -792,8 +658,18 @@ config PTP_OPT_PRIORITY2
 	  If set, this configuration item overwrites the default value from
 	  ppsi-pre.conf during generation of ppsi.conf.
 
+config PTP_OPT_OVERWRITE_TIME_SOURCE
+	boolean "Overwrite default time-source"
+	default FALSE
+	help
+	  The clock class is automatically set depending of the timing mode.
+	  This option allows to overwrite the default value.
+	  
 config PTP_OPT_TIME_SOURCE
-	string "time-source"
+	int "time-source"
+	default 160
+	range 0 255
+	depends on PTP_OPT_OVERWRITE_TIME_SOURCE
 	help
 	  This information-only attribute indicates the source of time used
 	  by the grandmaster (or free-running master).

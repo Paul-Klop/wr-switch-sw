@@ -117,7 +117,8 @@ static int hal_port_check_presence(const char *if_name, unsigned char *mac)
 static int hal_port_init(int index)
 {
 	struct hal_port_state *p = &ports[index];
-	char name[128], s[128];
+	int i;
+	char name[128];
 	int val, error;
 	int port_i;
 
@@ -128,7 +129,7 @@ static int hal_port_init(int index)
 	hal_port_reset_state(p);
 
 	/* read dot-config values for this index, starting from name */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "name", LIBWR_STRING,
+	error = libwr_cfg_convert2("PORT%02i_PARAMS", "iface", LIBWR_STRING,
 				   name, port_i);
 	if (error)
 		return -1;
@@ -141,21 +142,38 @@ static int hal_port_init(int index)
 	p->state = HAL_PORT_STATE_DISABLED;
 	p->in_use = 1;
 
+	/* Search an instance using the WR profile */
+	for (i=1; i<=2; i++) {
+		char str[32];
+		if ( !(error = libwr_cfg_convert2("PORT%02i_INST%02i", "prof", LIBWR_STRING,
+					   str, port_i,i))) {
+			if ( strcasecmp("WR",str)==0 )
+				break; // Found
+		}
+	}
 	val = 18 * 800; /* magic default from previous code */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "tx", LIBWR_INT,
-				   &val, port_i);
-	if (error)
-		pr_error("port %i (%s): no \"tx=\" specified\n",
-			port_i, name);
-	p->calib.phy_tx_min = val;
+	if ( !error ) {
+		// WR instance found
+		val = 18 * 800; /* magic default from previous code */
+		error = libwr_cfg_convert2("PORT%02i_INST%02i", "tx", LIBWR_INT,
+					   &val, port_i,i);
+		if (error)
+			pr_error("port %i (%s): no \"tx=\" specified\n",
+				port_i, name);
+		p->calib.phy_tx_min = val;
 
-	val = 18 * 800; /* magic default from previous code */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "rx", LIBWR_INT,
-				   &val, port_i);
-	if (error)
-		pr_error("port %i (%s): no \"rx=\" specified\n",
+		error = libwr_cfg_convert2("PORT%02i_INST%02i", "rx", LIBWR_INT,
+					   &val, port_i,i);
+		if (error)
+			pr_error("port %i (%s): no \"rx=\" specified\n",
+				port_i, name);
+		p->calib.phy_rx_min = val;
+
+	} else {
+		pr_error("port %i (%s): no WhiteRabbit instance defined\n",
 			port_i, name);
-	p->calib.phy_rx_min = val;
+		p->calib.phy_tx_min = p->calib.phy_rx_min = val;
+	}
 
 	p->calib.delta_tx_board = 0; /* never set */
 	p->calib.delta_rx_board = 0; /* never set */
@@ -167,45 +185,6 @@ static int hal_port_init(int index)
 	p->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
 	p->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
 	p->clock_period = REF_CLOCK_PERIOD_PS;
-
-	/* enabling of ports is done by startup script */
-
-	{
-		static struct roletab { char *name; int value; } *rp, rt[] = {
-			{"auto",   HEXP_PORT_MODE_WR_M_AND_S},
-			{"master", HEXP_PORT_MODE_WR_MASTER},
-			{"slave",  HEXP_PORT_MODE_WR_SLAVE},
-			{"non-wr", HEXP_PORT_MODE_NON_WR},
-			{"none",   HEXP_PORT_MODE_NONE},
-			{NULL,     HEXP_PORT_MODE_NON_WR /* default,
-						* should exist and be last*/},
-		};
-
-		strcpy(s, "non-wr"); /* default if no string passed */
-		p->mode = HEXP_PORT_MODE_NON_WR;
-		error = libwr_cfg_convert2("PORT%02i_PARAMS", "role",
-					   LIBWR_STRING, s, port_i);
-		if (error)
-			pr_error("port %i (%s): "
-				"no \"role=\" specified\n", port_i, name);
-
-		for (rp = rt; rp->name; rp++)
-			if (!strcasecmp(s, rp->name))
-				break;
-		p->mode = rp->value;
-
-		if (!rp->name) {
-			for (rp = rt; rp->name; rp++)
-				if (p->mode == rp->value)
-					break;
-			pr_error("port %i (%s): invalid role "
-				"\"%s\" specified; using mode %s\n", port_i,
-				name, s, rp->name);
-		}
-
-		pr_debug("Port %s: mode %s (%i)\n", p->name, rp->name,
-			 p->mode);
-	}
 
 	/* Get fiber type */
 	error = libwr_cfg_convert2("PORT%02i_PARAMS", "fiber",
@@ -941,7 +920,6 @@ static void update_sync_leds(void)
 		return;
 
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
-		int ledValue;
 
 		/* Check:
 		 * --port in use
@@ -953,6 +931,8 @@ static void update_sync_leds(void)
 		if (ports[i].in_use
 		    && state_up(ports[i].state)
 		    && !strcmp(iface_name, ports[i].name)) {
+			int ledValue=0; /* default value */
+
 			if (update_count == servo.servo_snapshot.update_count) {
 				if (since_last_servo_update < 7)
 					since_last_servo_update++;
@@ -960,15 +940,16 @@ static void update_sync_leds(void)
 				since_last_servo_update = 0;
 				update_count = servo.servo_snapshot.update_count;
 			}
+
 			/* Check:
-			* --port in slave mode
+			* --ppsi instance in slave state
 			* --servo is locked
-			* --not the standard PTP servo
+			* --WR of HA PTP servo
 			* --servo is updating
 			*/
-			ledValue=(ports[i].mode == HEXP_PORT_MODE_WR_SLAVE
+			ledValue=(servo.ppi->state == PPS_SLAVE
 				&& servo.servo_snapshot.servo_locked
-				&& servo.ppi->protocol_extension != PPSI_EXT_NONE
+				&& (servo.ppi->protocol_extension == PPSI_EXT_WR || servo.ppi->protocol_extension == PPSI_EXT_L1S)
 			    && since_last_servo_update < 7
 			    ) ? 1 : 0;
 			set_led_synced(i, ledValue);

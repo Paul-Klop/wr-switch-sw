@@ -93,10 +93,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			*/
 			wrsPortStatusTable_array[i].wrsPortStatusLink =
 					1 + state_up(port_state->state);
-			 /* values defined as
-			  * WRS_PORT_STATUS_CONFIGURED_MODE_* */
-			wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode =
-							port_state->mode;
 			if (port_state->state == HAL_PORT_STATE_DISABLED) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpError =
 					  WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN;

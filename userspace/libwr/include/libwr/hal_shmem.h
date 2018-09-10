@@ -74,9 +74,6 @@ struct hal_port_state {
 	int fd;
 	int hw_addr_auto;
 
-	/* port timing mode (HEXP_PORT_MODE_xxxx) */
-	int mode;
-
 	/* port FSM state (HAL_PORT_STATE_xxxx) */
 	int state;
 

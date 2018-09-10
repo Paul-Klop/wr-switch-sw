@@ -1,0 +1,4817 @@
+menu "Port Timing Configuration"
+config PTP_OPT_EXT_PORT_CONFIG_ENABLED
+	bool "externalPortConfigurationEnabled" 
+	default true
+	help
+	  This option is used by the high accuracy profile to force the port state.
+	  For more details please refer to the IEEE 1588-20019 (clause 17.6.2)
+
+menu "PORT 1"
+
+config PORT01_PARAMS
+	string "Port parameters"
+	default "iface=wri1,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT01_INSTANCE_COUNT_1
+	config PORT01_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT01_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT01_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT01_INSTANCE_COUNT_1 ||  PORT01_INSTANCE_COUNT_2  
+
+config PORT01_INST01
+	string "Port instance 1"
+	default "tx=223897,rx=226273,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT01_INST01_DESIRADE_STATE_SLAVE if TIME_BC
+    default PORT01_INST01_DESIRADE_STATE_MASTER
+    config PORT01_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT01_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT01_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT01_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT01_INST01_BMODE_AUTO
+    config PORT01_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT01_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT01_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT01_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT01_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT01_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT01_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT01_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT01_INSTANCE_COUNT_2  
+
+config PORT01_INST02
+	string "Port instance 1"
+	default "tx=223897,rx=226273,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT01_INST02_DESIRADE_STATE_SLAVE if TIME_BC
+    default PORT01_INST02_DESIRADE_STATE_MASTER
+    config PORT01_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT01_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT01_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT01_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT01_INST02_BMODE_AUTO
+    config PORT01_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT01_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT01_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT01_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT01_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT01_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT01_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT01_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT01_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 2"
+
+config PORT02_PARAMS
+	string "Port parameters"
+	default "iface=wri2,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT02_INSTANCE_COUNT_1
+	config PORT02_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT02_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT02_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT02_INSTANCE_COUNT_1 ||  PORT02_INSTANCE_COUNT_2  
+
+config PORT02_INST01
+	string "Port instance 1"
+	default "tx=224037,rx=226377,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT02_INST01_DESIRADE_STATE_MASTER
+    config PORT02_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT02_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT02_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT02_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT02_INST01_BMODE_AUTO
+    config PORT02_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT02_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT02_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT02_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT02_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT02_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT02_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT02_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT02_INSTANCE_COUNT_2  
+
+config PORT02_INST02
+	string "Port instance 1"
+	default "tx=224037,rx=226377,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT02_INST02_DESIRADE_STATE_MASTER
+    config PORT02_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT02_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT02_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT02_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT02_INST02_BMODE_AUTO
+    config PORT02_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT02_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT02_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT02_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT02_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT02_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT02_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT02_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT02_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 3"
+
+config PORT03_PARAMS
+	string "Port parameters"
+	default "iface=wri3,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT03_INSTANCE_COUNT_1
+	config PORT03_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT03_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT03_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT03_INSTANCE_COUNT_1 ||  PORT03_INSTANCE_COUNT_2  
+
+config PORT03_INST01
+	string "Port instance 1"
+	default "tx=224142,rx=226638,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT03_INST01_DESIRADE_STATE_MASTER
+    config PORT03_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT03_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT03_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT03_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT03_INST01_BMODE_AUTO
+    config PORT03_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT03_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT03_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT03_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT03_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT03_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT03_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT03_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT03_INSTANCE_COUNT_2  
+
+config PORT03_INST02
+	string "Port instance 1"
+	default "tx=224142,rx=226638,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT03_INST02_DESIRADE_STATE_MASTER
+    config PORT03_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT03_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT03_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT03_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT03_INST02_BMODE_AUTO
+    config PORT03_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT03_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT03_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT03_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT03_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT03_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT03_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT03_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT03_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 4"
+
+config PORT04_PARAMS
+	string "Port parameters"
+	default "iface=wri4,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT04_INSTANCE_COUNT_1
+	config PORT04_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT04_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT04_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT04_INSTANCE_COUNT_1 ||  PORT04_INSTANCE_COUNT_2  
+
+config PORT04_INST01
+	string "Port instance 1"
+	default "tx=224313,rx=226471,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT04_INST01_DESIRADE_STATE_MASTER
+    config PORT04_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT04_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT04_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT04_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT04_INST01_BMODE_AUTO
+    config PORT04_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT04_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT04_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT04_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT04_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT04_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT04_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT04_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT04_INSTANCE_COUNT_2  
+
+config PORT04_INST02
+	string "Port instance 1"
+	default "tx=224313,rx=226471,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT04_INST02_DESIRADE_STATE_MASTER
+    config PORT04_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT04_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT04_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT04_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT04_INST02_BMODE_AUTO
+    config PORT04_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT04_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT04_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT04_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT04_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT04_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT04_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT04_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT04_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 5"
+
+config PORT05_PARAMS
+	string "Port parameters"
+	default "iface=wri5,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT05_INSTANCE_COUNT_1
+	config PORT05_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT05_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT05_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT05_INSTANCE_COUNT_1 ||  PORT05_INSTANCE_COUNT_2  
+
+config PORT05_INST01
+	string "Port instance 1"
+	default "tx=224455,rx=227679,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT05_INST01_DESIRADE_STATE_MASTER
+    config PORT05_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT05_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT05_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT05_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT05_INST01_BMODE_AUTO
+    config PORT05_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT05_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT05_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT05_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT05_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT05_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT05_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT05_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT05_INSTANCE_COUNT_2  
+
+config PORT05_INST02
+	string "Port instance 1"
+	default "tx=224455,rx=227679,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT05_INST02_DESIRADE_STATE_MASTER
+    config PORT05_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT05_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT05_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT05_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT05_INST02_BMODE_AUTO
+    config PORT05_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT05_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT05_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT05_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT05_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT05_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT05_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT05_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT05_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 6"
+
+config PORT06_PARAMS
+	string "Port parameters"
+	default "iface=wri6,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT06_INSTANCE_COUNT_1
+	config PORT06_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT06_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT06_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT06_INSTANCE_COUNT_1 ||  PORT06_INSTANCE_COUNT_2  
+
+config PORT06_INST01
+	string "Port instance 1"
+	default "tx=224603,rx=227891,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT06_INST01_DESIRADE_STATE_MASTER
+    config PORT06_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT06_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT06_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT06_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT06_INST01_BMODE_AUTO
+    config PORT06_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT06_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT06_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT06_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT06_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT06_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT06_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT06_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT06_INSTANCE_COUNT_2  
+
+config PORT06_INST02
+	string "Port instance 1"
+	default "tx=224603,rx=227891,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT06_INST02_DESIRADE_STATE_MASTER
+    config PORT06_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT06_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT06_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT06_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT06_INST02_BMODE_AUTO
+    config PORT06_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT06_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT06_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT06_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT06_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT06_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT06_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT06_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT06_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 7"
+
+config PORT07_PARAMS
+	string "Port parameters"
+	default "iface=wri7,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT07_INSTANCE_COUNT_1
+	config PORT07_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT07_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT07_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT07_INSTANCE_COUNT_1 ||  PORT07_INSTANCE_COUNT_2  
+
+config PORT07_INST01
+	string "Port instance 1"
+	default "tx=224761,rx=228055,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT07_INST01_DESIRADE_STATE_MASTER
+    config PORT07_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT07_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT07_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT07_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT07_INST01_BMODE_AUTO
+    config PORT07_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT07_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT07_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT07_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT07_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT07_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT07_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT07_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT07_INSTANCE_COUNT_2  
+
+config PORT07_INST02
+	string "Port instance 1"
+	default "tx=224761,rx=228055,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT07_INST02_DESIRADE_STATE_MASTER
+    config PORT07_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT07_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT07_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT07_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT07_INST02_BMODE_AUTO
+    config PORT07_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT07_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT07_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT07_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT07_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT07_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT07_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT07_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT07_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 8"
+
+config PORT08_PARAMS
+	string "Port parameters"
+	default "iface=wri8,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT08_INSTANCE_COUNT_1
+	config PORT08_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT08_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT08_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT08_INSTANCE_COUNT_1 ||  PORT08_INSTANCE_COUNT_2  
+
+config PORT08_INST01
+	string "Port instance 1"
+	default "tx=224898,rx=228178,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT08_INST01_DESIRADE_STATE_MASTER
+    config PORT08_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT08_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT08_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT08_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT08_INST01_BMODE_AUTO
+    config PORT08_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT08_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT08_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT08_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT08_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT08_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT08_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT08_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT08_INSTANCE_COUNT_2  
+
+config PORT08_INST02
+	string "Port instance 1"
+	default "tx=224898,rx=228178,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT08_INST02_DESIRADE_STATE_MASTER
+    config PORT08_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT08_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT08_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT08_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT08_INST02_BMODE_AUTO
+    config PORT08_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT08_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT08_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT08_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT08_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT08_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT08_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT08_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT08_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 9"
+
+config PORT09_PARAMS
+	string "Port parameters"
+	default "iface=wri9,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT09_INSTANCE_COUNT_1
+	config PORT09_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT09_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT09_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT09_INSTANCE_COUNT_1 ||  PORT09_INSTANCE_COUNT_2  
+
+config PORT09_INST01
+	string "Port instance 1"
+	default "tx=225069,rx=228277,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT09_INST01_DESIRADE_STATE_MASTER
+    config PORT09_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT09_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT09_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT09_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT09_INST01_BMODE_AUTO
+    config PORT09_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT09_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT09_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT09_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT09_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT09_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT09_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT09_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT09_INSTANCE_COUNT_2  
+
+config PORT09_INST02
+	string "Port instance 1"
+	default "tx=225069,rx=228277,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT09_INST02_DESIRADE_STATE_MASTER
+    config PORT09_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT09_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT09_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT09_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT09_INST02_BMODE_AUTO
+    config PORT09_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT09_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT09_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT09_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT09_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT09_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT09_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT09_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT09_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 10"
+
+config PORT10_PARAMS
+	string "Port parameters"
+	default "iface=wri10,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT10_INSTANCE_COUNT_1
+	config PORT10_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT10_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT10_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT10_INSTANCE_COUNT_1 ||  PORT10_INSTANCE_COUNT_2  
+
+config PORT10_INST01
+	string "Port instance 1"
+	default "tx=225245,rx=228435,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT10_INST01_DESIRADE_STATE_MASTER
+    config PORT10_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT10_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT10_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT10_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT10_INST01_BMODE_AUTO
+    config PORT10_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT10_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT10_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT10_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT10_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT10_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT10_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT10_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT10_INSTANCE_COUNT_2  
+
+config PORT10_INST02
+	string "Port instance 1"
+	default "tx=225245,rx=228435,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT10_INST02_DESIRADE_STATE_MASTER
+    config PORT10_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT10_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT10_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT10_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT10_INST02_BMODE_AUTO
+    config PORT10_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT10_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT10_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT10_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT10_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT10_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT10_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT10_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT10_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 11"
+
+config PORT11_PARAMS
+	string "Port parameters"
+	default "iface=wri11,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT11_INSTANCE_COUNT_1
+	config PORT11_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT11_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT11_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT11_INSTANCE_COUNT_1 ||  PORT11_INSTANCE_COUNT_2  
+
+config PORT11_INST01
+	string "Port instance 1"
+	default "tx=225463,rx=228963,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT11_INST01_DESIRADE_STATE_MASTER
+    config PORT11_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT11_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT11_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT11_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT11_INST01_BMODE_AUTO
+    config PORT11_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT11_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT11_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT11_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT11_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT11_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT11_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT11_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT11_INSTANCE_COUNT_2  
+
+config PORT11_INST02
+	string "Port instance 1"
+	default "tx=225463,rx=228963,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT11_INST02_DESIRADE_STATE_MASTER
+    config PORT11_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT11_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT11_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT11_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT11_INST02_BMODE_AUTO
+    config PORT11_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT11_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT11_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT11_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT11_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT11_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT11_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT11_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT11_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 12"
+
+config PORT12_PARAMS
+	string "Port parameters"
+	default "iface=wri12,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT12_INSTANCE_COUNT_1
+	config PORT12_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT12_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT12_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT12_INSTANCE_COUNT_1 ||  PORT12_INSTANCE_COUNT_2  
+
+config PORT12_INST01
+	string "Port instance 1"
+	default "tx=225645,rx=229107,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT12_INST01_DESIRADE_STATE_MASTER
+    config PORT12_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT12_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT12_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT12_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT12_INST01_BMODE_AUTO
+    config PORT12_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT12_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT12_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT12_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT12_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT12_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT12_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT12_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT12_INSTANCE_COUNT_2  
+
+config PORT12_INST02
+	string "Port instance 1"
+	default "tx=225645,rx=229107,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT12_INST02_DESIRADE_STATE_MASTER
+    config PORT12_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT12_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT12_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT12_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT12_INST02_BMODE_AUTO
+    config PORT12_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT12_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT12_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT12_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT12_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT12_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT12_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT12_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT12_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 13"
+
+config PORT13_PARAMS
+	string "Port parameters"
+	default "iface=wri13,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT13_INSTANCE_COUNT_1
+	config PORT13_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT13_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT13_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT13_INSTANCE_COUNT_1 ||  PORT13_INSTANCE_COUNT_2  
+
+config PORT13_INST01
+	string "Port instance 1"
+	default "tx=225801,rx=229225,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT13_INST01_DESIRADE_STATE_MASTER
+    config PORT13_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT13_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT13_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT13_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT13_INST01_BMODE_AUTO
+    config PORT13_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT13_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT13_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT13_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT13_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT13_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT13_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT13_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT13_INSTANCE_COUNT_2  
+
+config PORT13_INST02
+	string "Port instance 1"
+	default "tx=225801,rx=229225,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT13_INST02_DESIRADE_STATE_MASTER
+    config PORT13_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT13_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT13_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT13_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT13_INST02_BMODE_AUTO
+    config PORT13_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT13_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT13_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT13_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT13_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT13_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT13_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT13_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT13_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 14"
+
+config PORT14_PARAMS
+	string "Port parameters"
+	default "iface=wri14,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT14_INSTANCE_COUNT_1
+	config PORT14_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT14_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT14_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT14_INSTANCE_COUNT_1 ||  PORT14_INSTANCE_COUNT_2  
+
+config PORT14_INST01
+	string "Port instance 1"
+	default "tx=225983,rx=229463,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT14_INST01_DESIRADE_STATE_MASTER
+    config PORT14_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT14_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT14_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT14_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT14_INST01_BMODE_AUTO
+    config PORT14_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT14_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT14_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT14_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT14_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT14_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT14_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT14_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT14_INSTANCE_COUNT_2  
+
+config PORT14_INST02
+	string "Port instance 1"
+	default "tx=225983,rx=229463,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT14_INST02_DESIRADE_STATE_MASTER
+    config PORT14_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT14_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT14_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT14_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT14_INST02_BMODE_AUTO
+    config PORT14_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT14_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT14_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT14_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT14_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT14_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT14_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT14_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT14_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 15"
+
+config PORT15_PARAMS
+	string "Port parameters"
+	default "iface=wri15,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT15_INSTANCE_COUNT_1
+	config PORT15_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT15_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT15_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT15_INSTANCE_COUNT_1 ||  PORT15_INSTANCE_COUNT_2  
+
+config PORT15_INST01
+	string "Port instance 1"
+	default "tx=226208,rx=229850,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT15_INST01_DESIRADE_STATE_MASTER
+    config PORT15_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT15_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT15_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT15_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT15_INST01_BMODE_AUTO
+    config PORT15_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT15_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT15_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT15_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT15_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT15_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT15_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT15_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT15_INSTANCE_COUNT_2  
+
+config PORT15_INST02
+	string "Port instance 1"
+	default "tx=226208,rx=229850,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT15_INST02_DESIRADE_STATE_MASTER
+    config PORT15_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT15_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT15_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT15_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT15_INST02_BMODE_AUTO
+    config PORT15_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT15_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT15_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT15_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT15_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT15_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT15_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT15_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT15_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 16"
+
+config PORT16_PARAMS
+	string "Port parameters"
+	default "iface=wri16,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT16_INSTANCE_COUNT_1
+	config PORT16_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT16_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT16_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT16_INSTANCE_COUNT_1 ||  PORT16_INSTANCE_COUNT_2  
+
+config PORT16_INST01
+	string "Port instance 1"
+	default "tx=226393,rx=229907,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT16_INST01_DESIRADE_STATE_MASTER
+    config PORT16_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT16_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT16_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT16_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT16_INST01_BMODE_AUTO
+    config PORT16_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT16_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT16_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT16_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT16_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT16_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT16_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT16_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT16_INSTANCE_COUNT_2  
+
+config PORT16_INST02
+	string "Port instance 1"
+	default "tx=226393,rx=229907,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT16_INST02_DESIRADE_STATE_MASTER
+    config PORT16_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT16_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT16_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT16_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT16_INST02_BMODE_AUTO
+    config PORT16_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT16_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT16_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT16_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT16_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT16_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT16_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT16_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT16_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 17"
+
+config PORT17_PARAMS
+	string "Port parameters"
+	default "iface=wri17,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT17_INSTANCE_COUNT_1
+	config PORT17_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT17_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT17_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT17_INSTANCE_COUNT_1 ||  PORT17_INSTANCE_COUNT_2  
+
+config PORT17_INST01
+	string "Port instance 1"
+	default "tx=226594,rx=230106,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT17_INST01_DESIRADE_STATE_MASTER
+    config PORT17_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT17_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT17_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT17_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT17_INST01_BMODE_AUTO
+    config PORT17_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT17_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT17_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT17_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT17_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT17_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT17_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT17_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT17_INSTANCE_COUNT_2  
+
+config PORT17_INST02
+	string "Port instance 1"
+	default "tx=226594,rx=230106,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT17_INST02_DESIRADE_STATE_MASTER
+    config PORT17_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT17_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT17_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT17_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT17_INST02_BMODE_AUTO
+    config PORT17_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT17_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT17_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT17_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT17_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT17_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT17_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT17_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT17_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+menu "PORT 18"
+
+config PORT18_PARAMS
+	string "Port parameters"
+	default "iface=wri18,fiber=0,asym=0"
+	help
+	  This item, and the following ones, are used to define physical ports.
+		 An empty string means no instance declaration.
+		 Please refer to the user manual for more information.
+		  "iface" - the interface name
+		  "fiber" - the type of fiber (number referring to the corresponding  
+		            FIBERXX_PARAMS)
+		  "asym"  - the constant delay asymmetry
+
+choice
+	prompt "Number of port instances"
+	default PORT18_INSTANCE_COUNT_1
+	config PORT18_INSTANCE_COUNT_0
+	  bool "0"
+	config PORT18_INSTANCE_COUNT_1
+	  bool "1"
+	config PORT18_INSTANCE_COUNT_2
+	  bool "2"
+endchoice
+
+menu "Instance 1"
+	depends on PORT18_INSTANCE_COUNT_1 ||  PORT18_INSTANCE_COUNT_2  
+
+config PORT18_INST01
+	string "Port instance 1"
+	default "tx=226737,rx=230273,proto=raw,prof=WR,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT18_INST01_DESIRADE_STATE_MASTER
+    config PORT18_INST01_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT18_INST01_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT18_INST01_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT18_INST01_BMODE_MASTER_ONLY if TIME_BC
+    default PORT18_INST01_BMODE_AUTO
+    config PORT18_INST01_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT18_INST01_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT18_INST01_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT18_INST01_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT18_INST01_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT18_INST01_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT18_INST01_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT18_INST01_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+menu "Instance 2"
+	depends on PORT18_INSTANCE_COUNT_2  
+
+config PORT18_INST02
+	string "Port instance 1"
+	default "tx=226737,rx=230273,proto=raw,prof=HA,dm=e2e,monitor=y"
+	help
+	  This item, and the following ones, are used to define PPSI instances.
+	  An empty string means no instance declaration.
+	  Please refer to the user manual for more information.
+	  "proto" can be one of the following:
+	    - raw - raw ethernet protocol
+	    - udp - UDP protocol
+	  "tx"  defines the transmission constant delay (ps)
+	  "rx"  defines the reception constant delay (ps) 
+	  "prof" (profile) can be one of the following:
+	    - WR - use White Rabbit (default)
+	    - HA - use High accuracy profile
+	    - none - no extension on this port
+	  "dm" (delay mechanism) can be one of the following:
+	    - e2e - end to end (default)
+	    - p2p - peer to peer
+	  "monitor" option to disable ("n") or enable ("y") triggering errors in SNMP on a port; "y" by default
+
+choice
+    prompt "Desired state"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED
+    default PORT18_INST02_DESIRADE_STATE_MASTER
+    config PORT18_INST02_DESIRADE_STATE_MASTER
+        bool "Master"
+    config PORT18_INST02_DESIRADE_STATE_SLAVE
+        bool "Slave"
+    config PORT18_INST02_DESIRADE_STATE_PASSIVE
+        bool "Passive"
+endchoice
+
+choice
+    prompt "BMCA mode"
+    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y
+    default PORT18_INST02_BMODE_MASTER_ONLY if TIME_BC
+    default PORT18_INST02_BMODE_AUTO
+    config PORT18_INST02_BMODE_MASTER_ONLY
+        bool "MasterOnly"
+    config PORT18_INST02_BMODE_AUTO
+        bool "Auto"
+endchoice
+
+config PORT18_INST02_ANNOUNCE_INTERVAL
+	int "announce-interval" 
+	default 1
+	range 0 4
+	help
+	  The mean time interval between transmissions of successive
+	  Announce messages. The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 4.
+
+config PORT18_INST02_ANNOUNCE_RECEIPT_TIMEOUT
+	int "announce-receipt-timeout"
+	default 3
+	range 2 255
+	help
+	  The announe receipt timeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 255
+
+config PORT18_INST02_SYNC_INTERVAL
+	int "sync-interval"
+	default 0
+	range -1 1
+	help
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+	  The configurable range shall be -1 to +1
+
+config PORT18_INST02_MIN_DELAY_REQ_INTERVAL
+	int "min-delay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT18_INST02_MIN_PDELAY_REQ_INTERVAL
+	int "min-pdelay-req-interval"
+	default 0
+	range 0 5
+	help
+	  The min delay request interval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 0 to 5
+
+config PORT18_INST02_L1SYNC_INTERVAL
+	int "l1sync-interval"
+	default 0
+	range -4 4
+	help
+	  The L1Sync interval specifies the time interval
+	  between successive periodic L1_SYNC TLV.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be -4 to 4
+
+config PORT18_INST02_L1SYNC_RECEIPT_TIMEOUT
+	int "l1sync-receipt-timeout"
+	default 3
+	range 2 10
+	help
+	  The value of L1SyncReceiptTimeout specifies the number of elapsed 
+	  L1SyncIntervals that must pass without reception of the L1_SYNC TLV 
+	  before the L1_SYNC TLV reception timeout occurs.
+	  The value is the logarithm to the base 2.
+	  The configurable range shall be 2 to 10
+
+endmenu
+
+endmenu
+
+endmenu

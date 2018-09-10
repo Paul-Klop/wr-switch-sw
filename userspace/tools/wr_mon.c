@@ -100,6 +100,14 @@ static struct proto_ext_info_t proto_ext_info [] = {
 #endif
 };
 
+typedef struct {
+	struct pp_instance *ppi;
+	portDS_t *portDS;
+}pp_instance_ptr_t;
+
+static pp_instance_ptr_t instances[PP_MAX_LINKS];
+
+
 static struct inst_servo_t servos[MAX_INST_SERVO];
 
 int mode = SHOW_GUI;
@@ -113,6 +121,7 @@ static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
+static 	defaultDS_t *defaultDS;
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 /* local copy of temperature sensor readings */
@@ -165,7 +174,7 @@ static char *pp_instance_state_to_name[PP_INSTANCE_STATE_MAX] = {
 
 #if CONFIG_EXT_L1SYNC == 1
 static char * l1e_instance_extension_state[]={
-		[__L1SYNC_MISSING   ] = "MISSING   ",
+		[__L1SYNC_MISSING   ] = "??????????",
 		[L1SYNC_DISABLED    ] = "DISABLED  ",
 		[L1SYNC_IDLE        ] = "IDLE      ",
 		[L1SYNC_LINK_ALIVE  ] = "LINK ALIVE",
@@ -175,6 +184,9 @@ static char * l1e_instance_extension_state[]={
 #define L1S_INSTANCE_EXTENSION_STATE_MAX (sizeof (l1e_instance_extension_state)/sizeof(char *) )
 
 #endif
+
+/* prototypes */
+int read_instances(void);
 
 
 int64_t interval_to_picos(TimeInterval interval)
@@ -267,9 +279,25 @@ int read_hal(void){
 	return 0;
 }
 
+int read_instances(void) {
+	struct pp_instance *pp_array;
+	int l;
+
+	bzero(instances,sizeof(instances));
+
+	if ( !(pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances)) )
+		return -1;
+
+	for (l = 0; l < ppg->nlinks; l++) {
+		instances[l].ppi=&pp_array[l];
+		if ( ! (instances[l].portDS=wrs_shm_follow(ppsi_head, instances[l].ppi->portDS)) )
+			return -1;
+	}
+	return 0;
+}
+
 int read_servo(void){
 
-	struct pp_instance *pp_array;
 	unsigned int i, servoIdx;
 
 
@@ -282,12 +310,9 @@ int read_servo(void){
 	}
 	bzero(&servos, sizeof(servos));
 
-	if ( !(pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances)) )
-		return -1;
-
 	servoIdx=0;
 	for (i = 0; i < ppg->nlinks; i++) {
-		struct pp_instance *ppi = &pp_array[i];
+		struct pp_instance *ppi = instances[i].ppi;
 
 		/* we are only interested  on instances in SLAVE state */
 		if (ppi->state == PPS_SLAVE ) {
@@ -454,10 +479,36 @@ void init_shm(void)
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
+	/* Access to defaultDS data */
+	defaultDS = wrs_shm_follow(ppsi_head, ppg->defaultDS);
+	if (!defaultDS) {
+		pr_error("Unable to follow defaultDS pointer in PPSI's shmem\n");
+		exit(1);
+	}
+
+	if ( read_instances()==-1 )
+		exit(1);
+
 	ppsi_connect_minipc();
 }
 
-void show_ports(int alive)
+static struct desired_state_t{
+	char *str_state;
+	int state;
+} desired_states[] = {
+	{ "initializing", PPS_INITIALIZING},
+	{ "faulty", PPS_FAULTY},
+	{ "disabled", PPS_DISABLED},
+	{ "listening", PPS_LISTENING},
+	{ "pre-master", PPS_PRE_MASTER},
+	{ "master", PPS_MASTER},
+	{ "passive", PPS_PASSIVE},
+	{ "uncalibrated", PPS_UNCALIBRATED},
+	{ "slave", PPS_SLAVE},
+	{}
+};
+
+void show_ports(int hal_alive, int ppsi_alive)
 {
 	int i, j;
 	time_t t;
@@ -465,20 +516,17 @@ void show_ports(int alive)
 	struct tm *tm;
 	char datestr[32];
 	struct hal_port_state *port_state;
-	struct pp_instance *pp_array;
 	int vlan_i;
 	int nvlans;
 	int *p;
 
-	if (!alive) {
+	if (!hal_alive) {
 		if (mode == SHOW_GUI)
 			term_cprintf(C_RED, "HAL is dead!\n");
 		else if (mode == SHOW_ALL)
 			printf("HAL is dead!\n");
 		return;
 	}
-
-	pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 
 	if (mode == SHOW_GUI) {
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
@@ -501,10 +549,10 @@ void show_ports(int alive)
 			term_cprintf(C_WHITE, "%3d\n", *p);
 		}
 
-/*                                    -------------------------------------------------------------------------------*/
-		term_cprintf(C_CYAN, "------------- HAL -----------|-------------- PPSI ----------------------------------------\n");
-		term_cprintf(C_CYAN, " Port | Link | WRconf | Freq |Inst| MAC of peer port  |    PTP/EXT states    | Pro | VLANs\n");
-		term_cprintf(C_CYAN, "------|------|--------|------|----|-------------------|----------------------|-----|------\n");
+		term_cprintf(C_CYAN, "----- HAL ---|--------------------------------- PPSI -------------------------------------------------\n");
+		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT states    | Pro | VLANs\n");
+		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+----------------------+-----+------\n");
+
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 		printf("PORTS ");
@@ -512,7 +560,6 @@ void show_ports(int alive)
 
 	for (i = 0; i < hal_nports_local; i++) {
 		char if_name[10];
-		char if_mode[15];
 		int print_port = 0;
 		int instance_port = 0;
 
@@ -523,81 +570,13 @@ void show_ports(int alive)
 		if (!port_state)
 			continue;
 
-		switch (port_state->mode) {
-		case HEXP_PORT_MODE_WR_MASTER:
-			if (mode == SHOW_GUI) {
-				strcpy(if_mode, "Master");
-			} else if (mode & SHOW_MASTER_PORTS) {
-				print_port = 1;
-				strcpy(if_mode, "M");
-			} else if (mode & WEB_INTERFACE) {
-				strcpy(if_mode, "Master");
-			}
-			break;
-		case HEXP_PORT_MODE_WR_SLAVE:
-			if (mode == SHOW_GUI) {
-				strcpy(if_mode, "Slave ");
-			} else if (mode & SHOW_SLAVE_PORTS) {
-				print_port = 1;
-				strcpy(if_mode, "S");
-			} else if (mode & WEB_INTERFACE) {
-				strcpy(if_mode, "Slave");
-			}
-			break;
-		case HEXP_PORT_MODE_NON_WR:
-			if (mode == SHOW_GUI) {
-				strcpy(if_mode, "Non WR");
-			} else if (mode & SHOW_OTHER_PORTS) {
-				print_port = 1;
-				strcpy(if_mode, "N");
-			} else if (mode & WEB_INTERFACE) {
-				strcpy(if_mode, "Non WR");
-			}
-			break;
-		case HEXP_PORT_MODE_NONE:
-			if (mode == SHOW_GUI) {
-				strcpy(if_mode, "None  ");
-			} else if (mode & SHOW_OTHER_PORTS) {
-				print_port = 1;
-				strcpy(if_mode, "X");
-			} else if (mode & WEB_INTERFACE) {
-				strcpy(if_mode, "None");
-			}
-			break;
-		case HEXP_PORT_MODE_WR_M_AND_S:
-			if (mode == SHOW_GUI) {
-				strcpy(if_mode, "Auto  ");
-			} else if (mode &
-				(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
-				print_port = 1;
-				strcpy(if_mode, "A");
-			} else if (mode & WEB_INTERFACE) {
-				strcpy(if_mode, "Auto");
-			}
-			break;
-		default:
-			if (mode == SHOW_GUI) {
-				strcpy(if_mode, "Unkn  ");
-			} else if (mode & SHOW_OTHER_PORTS) {
-				print_port = 1;
-				strcpy(if_mode, "U");
-			} else if (mode & WEB_INTERFACE) {
-				strcpy(if_mode, "Unknown");
-			}
-			break;
-		}
-
 		if (mode == SHOW_GUI) {
-			term_cprintf(C_WHITE, "%-5s", if_name);
-			term_cprintf(C_CYAN, " | ");
 			/* check if link is up */
 			if (state_up(port_state->state))
-				term_cprintf(C_GREEN, "up  ");
+				term_cprintf(C_GREEN, " %-5s", if_name);
 			else
-				term_cprintf(C_RED, "down");
-			term_cprintf(C_CYAN, " | ");
-			term_cprintf(C_WHITE, if_mode);
-			term_cprintf(C_CYAN, " | ");
+				term_cprintf(C_RED, "*%-5s", if_name);
+			term_cprintf(C_CYAN, "| ");
 			if (port_state->locked)
 				term_cprintf(C_GREEN, "Lock ");
 			else
@@ -610,106 +589,137 @@ void show_ports(int alive)
 			 * Actually, what is interesting is the PTP state.
 			 * For this lookup, the port in ppsi shmem
 			 */
-			for (j = 0; j < ppg->nlinks; j++) {
-				struct pp_instance *ppi=&pp_array[j];
-				int proto_extension=ppi->protocol_extension;
-				struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
+			if ( ppsi_alive ) {
+				for (j = 0; j < ppg->nlinks; j++) {
+					char str_config[15];
+					pp_instance_ptr_t *ppi_pt=&instances[j];
+					struct pp_instance *ppi=ppi_pt->ppi;
+					int proto_extension=ppi->protocol_extension;
+					struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
 
-				if (strcmp(if_name,
-						ppi->cfg.iface_name)) {
-					/* Instance not for this interface
-					 * skip */
-					continue;
-				}
-				if (instance_port > 0) {
-					term_cprintf(C_CYAN, "\n      |      |"
-						     "        |      |");
-				}
-				instance_port++;
-				/* print instance number */
-				term_cprintf(C_WHITE, " %2d ", j);
-				term_cprintf(C_CYAN, "| ");
-				/* Note: we may have more pp instances per
-				 * port */
-				if (state_up(port_state->state)) {
-					unsigned char *p = ppi->peer;
-					char * extension_state_name=EMPTY_EXTENSION_STATE_NAME;
-
-					term_cprintf(C_WHITE, "%02x:%02x"
-						     ":%02x:%02x:%02x:%02x ",
-						     p[0], p[1], p[2], p[3],
-						     p[4], p[5]);
-					term_cprintf(C_CYAN, "| ");
-					if (ppi->state < PP_INSTANCE_STATE_MAX) {
-						/* Known state */
-						term_cprintf(C_GREEN, "%s/",
-							pp_instance_state_to_name[ppi->state]);
-					} else {
-						/* Unknown ptp state */
-						term_cprintf(C_GREEN,
-							"unkn(%3i)",
-							ppi->state);
+					if (strcmp(if_name,
+							ppi->cfg.iface_name)) {
+						/* Instance not for this interface
+						 * skip */
+						continue;
 					}
-					/* print extension state */
-					switch (ppi->protocol_extension ) {
-					case PPSI_EXT_WR :
-						break;
-#if CONFIG_EXT_L1SYNC == 1
-					case PPSI_EXT_L1S :
-					{
-						portDS_t *portDS;
+					if (instance_port > 0) {
+						term_cprintf(C_CYAN, "\n      |      |");
+					}
+					instance_port++;
+					// Evaluate the instance configuration
+					strcpy(str_config,"unknown");
+					if ( defaultDS->slaveOnly) {
+						strncpy(str_config,"slaveOnly",sizeof(str_config)-1);
+					} else {
+						if ( defaultDS->externalPortConfigurationEnabled ) {
+							int s=0;
+							for ( s=0; s<sizeof(desired_states)/sizeof(struct desired_state_t); s++ ) {
+								if (desired_states[s].state == ppi->externalPortConfigurationPortDS.desiredState) {
+									strncpy(str_config,desired_states[s].str_state,sizeof(str_config)-1);
+									break;
+								}
+							}
 
-						extension_state_name="????????? ";
-						if ( (portDS = wrs_shm_follow(ppsi_head, ppi->portDS) ) ) {
-							l1e_ext_portDS_t *extPortDS;
-
-							if ( (extPortDS = wrs_shm_follow(ppsi_head, portDS->ext_dsport) ) ) {
-								if ( extPortDS->basic.L1SyncState <= L1S_INSTANCE_EXTENSION_STATE_MAX )
-									extension_state_name=l1e_instance_extension_state[extPortDS->basic.L1SyncState];
+						} else {
+							if ( ppi_pt->portDS->masterOnly ) {
+								strncpy(str_config,"masterOnly",sizeof(str_config)-1);
+							} else {
+								strncpy(str_config,"auto",sizeof(str_config)-1);
 							}
 						}
-						break;
 					}
-#endif
-					}
-					term_cprintf(C_GREEN, "%s",extension_state_name);
-				} else {
-					term_cprintf(C_WHITE, "                  ");
+					str_config[sizeof(str_config)-1]=0; // Force the string to be well terminated
+					/* print instance number */
+					term_cprintf(C_WHITE, " %2d ", j);
 					term_cprintf(C_CYAN, "|");
-					term_cprintf(C_WHITE, "                      ");
-				}
-				term_cprintf(C_CYAN, "| ");
-				if (ppi->proto == PPSI_PROTO_RAW) {
-					term_cprintf(C_WHITE, "R");
-				} else if (ppi->proto
-					   == PPSI_PROTO_UDP) {
-					term_cprintf(C_WHITE, "U");
-				} else if (ppi->proto
-					   == PPSI_PROTO_VLAN) {
-					term_cprintf(C_WHITE, "V");
-				} else {
-					term_cprintf(C_WHITE, "?");
-				}
-				term_cprintf(C_WHITE, "-%c",pe_info->short_ext_name);
+					/* print instance name */
+					term_cprintf(C_WHITE, "%-14s",ppi->cfg.port_name);
+					term_cprintf(C_CYAN, "|");
+					term_cprintf(C_WHITE, "%-12s",str_config);
+					term_cprintf(C_CYAN, "| ");
 
-				nvlans = ppi->nvlans;
-				term_cprintf(C_CYAN, " | ");
-				for (vlan_i = 0; vlan_i < nvlans; vlan_i++) {
-					term_cprintf(C_WHITE, "%d",
-						    ppi->vlans[vlan_i]);
-					if (vlan_i < nvlans - 1)
-						term_cprintf(C_WHITE, ",");
+					/* Note: we may have more pp instances per port */
+/*					if (state_up(port_state->state)) */ {
+						unsigned char *p = ppi->peer;
+						char * extension_state_name=EMPTY_EXTENSION_STATE_NAME;
+
+						term_cprintf(C_WHITE, "%02x:%02x"
+								 ":%02x:%02x:%02x:%02x ",
+								 p[0], p[1], p[2], p[3],
+								 p[4], p[5]);
+						term_cprintf(C_CYAN, "| ");
+						if (ppi->state < PP_INSTANCE_STATE_MAX) {
+							/* Known state */
+							term_cprintf(C_GREEN, "%s/",
+								pp_instance_state_to_name[ppi->state]);
+						} else {
+							/* Unknown ptp state */
+							term_cprintf(C_GREEN,
+								"unkn(%3i)",
+								ppi->state);
+						}
+						/* print extension state */
+						switch (ppi->protocol_extension ) {
+						case PPSI_EXT_WR :
+							break;
+#if CONFIG_EXT_L1SYNC == 1
+						case PPSI_EXT_L1S :
+						{
+							portDS_t *portDS;
+
+							extension_state_name="????????? ";
+							if ( (portDS = wrs_shm_follow(ppsi_head, ppi->portDS) ) ) {
+								l1e_ext_portDS_t *extPortDS;
+
+								if ( (extPortDS = wrs_shm_follow(ppsi_head, portDS->ext_dsport) ) ) {
+									if ( extPortDS->basic.L1SyncState <= L1S_INSTANCE_EXTENSION_STATE_MAX )
+										extension_state_name=l1e_instance_extension_state[extPortDS->basic.L1SyncState];
+								}
+							}
+							break;
+						}
+#endif
+						}
+						term_cprintf(C_GREEN, "%s",extension_state_name);
+					} // else {
+//						term_cprintf(C_WHITE, "                  ");
+//						term_cprintf(C_CYAN, "|");
+//						term_cprintf(C_WHITE, "                      ");
+//					}
+					term_cprintf(C_CYAN, "| ");
+					if (ppi->proto == PPSI_PROTO_RAW) {
+						term_cprintf(C_WHITE, "R");
+					} else if (ppi->proto
+						   == PPSI_PROTO_UDP) {
+						term_cprintf(C_WHITE, "U");
+					} else if (ppi->proto
+						   == PPSI_PROTO_VLAN) {
+						term_cprintf(C_WHITE, "V");
+					} else {
+						term_cprintf(C_WHITE, "?");
+					}
+					term_cprintf(C_WHITE, "-%c",pe_info->short_ext_name);
+
+					nvlans = ppi->nvlans;
+					term_cprintf(C_CYAN, " | ");
+					for (vlan_i = 0; vlan_i < nvlans; vlan_i++) {
+						term_cprintf(C_WHITE, "%d",
+								ppi->vlans[vlan_i]);
+						if (vlan_i < nvlans - 1)
+							term_cprintf(C_WHITE, ",");
+					}
 				}
 			}
-			if (!instance_port) {
+			if (!instance_port || !ppsi_alive) {
 				term_cprintf(C_WHITE, " -- ");
-				term_cprintf(C_CYAN, "|                   |                      |     |");
+				term_cprintf(C_CYAN, "|              |            |                   |                      |     |");
 			}
 			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
 			printf("%s ", state_up(port_state->state)
 				? "up" : "down");
-			printf("%s ", if_mode);
+			// JCB mode is per instance // printf("%s ", if_mode);
 			printf("%s ", port_state->locked
 				? "Locked" : "NoLock");
 			printf("%s ", port_state->calib.rx_calibrated
@@ -718,7 +728,7 @@ void show_ports(int alive)
 		} else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
-			printf("mode:%s ", if_mode);
+			// JCB mode is per instance // printf("mode:%s ", if_mode);
 			printf("lock:%d ", port_state->locked);
 			print_port = 0;
 		}
@@ -801,10 +811,6 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		if ( wr_servo ) {
 			term_cprintf(C_BLUE,  "  Fixed Alpha : ");
 			term_cprintf(C_WHITE, "%.9f fpa(%d)", alpha_to_double(wr_servo->fiber_fix_alpha), wr_servo->fiber_fix_alpha);
-		}
-		if ( l1e_servo ) {
-			term_cprintf(C_BLUE,  "  Fixed Alpha : ");
-			term_cprintf(C_WHITE, "%.9f fpa(%" PRId64 ")", alpha_to_double(l1e_servo->fiber_fix_alpha), l1e_servo->fiber_fix_alpha);
 		}
 		term_cprintf(C_WHITE, "\n");
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "ingressLatency   : ");
@@ -977,7 +983,7 @@ void show_all(void)
 	}
 
 	if ((mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) || mode == SHOW_GUI) {
-		show_ports(hal_alive);
+		show_ports(hal_alive,ppsi_alive);
 	}
 
 	if (mode & SHOW_SERVO || mode == SHOW_GUI) {

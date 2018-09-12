@@ -820,6 +820,7 @@ struct dump_info spll_stats_info[] = {
 	DUMP_FIELD_SIZE(char_e, build_date, 16),
 	DUMP_FIELD_SIZE(char_e, build_time, 16),
 	DUMP_FIELD_SIZE(char_e, build_by, 32),
+	DUMP_FIELD(int, ext_pps_latency_ps),
 };
 
 static int dump_spll_mem(struct spll_stats *spll)

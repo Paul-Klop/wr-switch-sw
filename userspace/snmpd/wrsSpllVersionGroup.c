@@ -44,7 +44,7 @@ time_t wrsSpllVersion_data_fill(void)
 	}
 	/* check version of SPLL's stat structure, version fields are from
 	 * version 2 */
-	if (spll_stats_p->ver == 2 || spll_stats_p->ver == 3) {
+	if (spll_stats_p->ver <= 4) {
 		int len;
 		strncpy_e(wrsSpllVersion_s.wrsSpllVersion, spll_stats_p->commit_id, 32);
 		/* concatenate date and time */
@@ -62,9 +62,10 @@ time_t wrsSpllVersion_data_fill(void)
 			spll_stats_p->ver);
 	}
 	/* buil_by was introduced in version 3 */
-	if (spll_stats_p->ver == 3) {
+	if (spll_stats_p->ver >= 3) {
 		strncpy_e(wrsSpllVersion_s.wrsSpllBuildBy, spll_stats_p->build_by, 32);
 	}
+
 	/* there was an update, return current time */
 	return time_update;
 }

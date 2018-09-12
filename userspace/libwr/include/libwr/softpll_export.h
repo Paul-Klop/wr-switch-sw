@@ -57,7 +57,7 @@
 #define ALIGN_STATE_WAIT_CLKIN 9
 #define ALIGN_STATE_WAIT_PLOCK 10
 
-#define SPLL_STATS_VER 3
+#define SPLL_STATS_VER 4
 
 /* info reported through .stat section */
 /* due to endiannes problem strings has to be 4 bytes alligned */
@@ -78,6 +78,7 @@ struct spll_stats {
 	char build_date[16];
 	char build_time[16];
 	char build_by[32];
+	int ext_pps_latency_ps;
 };
 
 extern struct spll_stats stats;

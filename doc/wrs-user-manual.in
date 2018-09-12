@@ -1416,6 +1416,9 @@ appropriate way, before the respective service is started.
   In case you need to generate another clock frequency, please refer to
   @ref{wrs_auxclk}.
 
+@item CONFIG_EXT_PPS_LATENCY_PS
+	A value in ps to align the 1-PPS input and 1-PPS output.
+
 @item CONFIG_NIC_THROTTLING_ENABLED
 @itemx CONFIG_NIC_THROTTLING_VAL
 

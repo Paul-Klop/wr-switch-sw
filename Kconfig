@@ -841,6 +841,19 @@ config PPSGEN_FR_ON_SYNC_ONLY
 	  when synchronized to another master. Otherwise PPS is generated all
 	  the time."
 
+config EXT_PPS_LATENCY_PS
+	int "Compensate signal skew between PPS IN and PPS OUT (in ps)"
+	depends on TIME_GM || TIME_ARB_GM || TIME_CUSTOM
+	default "0"
+	help
+	  If one needs to precisely align 1-PPS output with 1-PPS input when WRS
+	  works as GrandMaster, calibration are needed to overcome the signal
+	  skew between the 1-PPS input and 10MHz clock input. As the component
+	  variance of different clock source and WRS, this latency parameter
+	  should be calibrated one by one to achieve PPS alignment with high
+	  accuracy.
+	  The entered value is in ps.
+
 endmenu
 
 choice

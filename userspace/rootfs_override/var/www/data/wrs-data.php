@@ -278,6 +278,12 @@ $WRS_FORMS = Array(
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_PPSHIFT"],
 			'vname' => "auxclkppshift",
 		),
+		'CONFIG_WRSAUXCLK_05' => Array(
+			'key' => "CONFIG_EXT_PPS_LATENCY_PS",
+			'name' => "EXT PPS LATENCY",
+			'value' => $_SESSION["KCONFIG"]["CONFIG_EXT_PPS_LATENCY_PS"],
+			'vname' => "extppslatency",
+		),
 	),
 
 );

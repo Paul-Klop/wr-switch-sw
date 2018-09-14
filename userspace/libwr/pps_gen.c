@@ -105,3 +105,12 @@ void shw_pps_gen_read_time(uint64_t * seconds, uint32_t * nanoseconds)
 	if (nanoseconds)
 		*nanoseconds = ns_cnt;
 }
+
+void shw_pps_gen_in_term_enable(int enable)
+{
+	uint32_t escr = ppsg_read(ESCR);
+	if (enable)
+		ppsg_write(ESCR, escr | PPSG_ESCR_PPS_IN_TERM);
+	else
+		ppsg_write(ESCR, escr & ~PPSG_ESCR_PPS_IN_TERM);
+}

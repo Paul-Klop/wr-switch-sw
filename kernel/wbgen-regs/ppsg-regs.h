@@ -84,6 +84,9 @@
 /* definitions for field: Set nanoseconds counter in reg: External sync control register */
 #define PPSG_ESCR_NSEC_SET                    WBGEN2_GEN_MASK(4, 1)
 
+/* definitions for field: Enable PPS_IN 50Ohm termination in reg: External sync control register */
+#define PPSG_ESCR_PPS_IN_TERM                 WBGEN2_GEN_MASK(5, 1)
+
 PACKED struct PPSG_WB {
   /* [0x0]: REG Control Register */
   uint32_t CR;

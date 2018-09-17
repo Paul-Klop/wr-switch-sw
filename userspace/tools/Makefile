@@ -38,7 +38,8 @@ CFLAGS =  -O2 -g -Wall \
 		-I../libwr/include \
 		-include $(PPSI_CONFIG) \
 		-I../ppsi/include \
-		-I../ppsi/arch-wrs/include
+		-I../ppsi/arch-wrs/include \
+		-I.
 
 # for wrs_version alone (but others may use this)
 GIT_VER = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
@@ -66,6 +67,10 @@ check:
 
 %: %.o
 	$(CC) $*.o $(LDFLAGS) -o $*
+
+VPATH+=../ppsi/tools
+wrs_dump_shmem: wrs_dump_shmem.o wrs_dump_shmem_ppsi.o
+	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_mon: wr_mon.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)

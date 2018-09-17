@@ -972,6 +972,9 @@ appropriate way, before the respective service is started.
 	@t{CONFIG_NIC_THROTTLING_VAL} contains maximum allowed bandwidth
 	in KB/s.
 
+@item CONFIG_PPS_IN_TERM_50OHM
+	Enable 50ohm termination for 1-PPS input.
+
 @item CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
 @itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
 @itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE

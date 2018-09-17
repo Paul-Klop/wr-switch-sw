@@ -9,6 +9,9 @@
 #define PPSG_ADJUST_SEC 0x1
 #define PPSG_ADJUST_NSEC 0x2
 
+#define PPSG_PPS_IN_TERM_50OHM_ENABLE 0x1
+#define PPSG_PPS_IN_TERM_50OHM_DISABLE 0x0
+
 /* Initializes the PPS Generator. 0 on success, negative on failure. */
 int shw_pps_gen_init(void);
 
@@ -23,5 +26,14 @@ int shw_pps_gen_enable_output(int enable);
 
 /* Reads the current time and stores at <seconds,nanoseconds>. */
 void shw_pps_gen_read_time(uint64_t * seconds, uint32_t * nanoseconds);
+
+/* Enables PPS_IN 50Ohm termination */
+void shw_pps_gen_in_term_enable(int enable);
+
+/* Reads status of PPS_IN 50Ohm termination */
+int shw_pps_gen_in_term_read(void);
+
+/* Enables PPS_IN 50Ohm termination based on dot-config option */
+int shw_pps_gen_in_term_init(void);
 
 #endif /* __LIBWR_PPS_GEN_H */

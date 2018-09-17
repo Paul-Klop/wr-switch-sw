@@ -15,6 +15,7 @@
 
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/config.h>
 
 /* Default width (in 8ns units) of the pulses on the PPS output */
 #define PPS_WIDTH 100000
@@ -113,4 +114,42 @@ void shw_pps_gen_in_term_enable(int enable)
 		ppsg_write(ESCR, escr | PPSG_ESCR_PPS_IN_TERM);
 	else
 		ppsg_write(ESCR, escr & ~PPSG_ESCR_PPS_IN_TERM);
+}
+
+int shw_pps_gen_in_term_read(void)
+{
+	uint32_t escr = ppsg_read(ESCR);
+
+	return escr & PPSG_ESCR_PPS_IN_TERM ?
+		PPSG_PPS_IN_TERM_50OHM_ENABLE : PPSG_PPS_IN_TERM_50OHM_DISABLE;
+}
+
+/* Enable PPS_IN 50Ohm termination based on dot-config option */
+int shw_pps_gen_in_term_init(void)
+{
+	char *config_item;
+
+	config_item = libwr_cfg_get("PPS_IN_TERM_50OHM");
+	if ((config_item) && !strcmp(config_item, "y")) {
+		pr_info("Enabling 50ohm termination on 1-PPS in\n");
+		shw_pps_gen_in_term_enable(PPSG_PPS_IN_TERM_50OHM_ENABLE);
+		if (shw_pps_gen_in_term_read()
+		    != PPSG_PPS_IN_TERM_50OHM_ENABLE) {
+			pr_err("Unable to enable 50ohm termination on 1-PPS "
+			       "in\n");
+		}
+	} else if (shw_pps_gen_in_term_read()
+		   == PPSG_PPS_IN_TERM_50OHM_ENABLE) {
+		pr_info("Disabling previously enabled 50ohm termination on "
+			"1-PPS in\n");
+		shw_pps_gen_in_term_enable(PPSG_PPS_IN_TERM_50OHM_DISABLE);
+		if (shw_pps_gen_in_term_read()
+		    != PPSG_PPS_IN_TERM_50OHM_DISABLE) {
+			pr_err("Unable to disable 50ohm termination on 1-PPS "
+			       "in\n");
+		}
+
+	}
+	
+	return 0;
 }

@@ -7,6 +7,7 @@
 #include "i2c_sfp.h"
 #include <libwr/shw_io.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/pps_gen.h>
 
 int shw_init()
 {
@@ -30,6 +31,9 @@ int shw_init()
 
 	/* Init the FANs */
 	assert_init(shw_init_fans());
+
+	/* Set 50ohm termination on 1-PPS in if needed */
+	assert_init(shw_pps_gen_in_term_init());
 
 	pr_info("HW initialization done!\n");
 	return 0;

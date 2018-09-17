@@ -9,6 +9,9 @@
 #define PPSG_ADJUST_SEC 0x1
 #define PPSG_ADJUST_NSEC 0x2
 
+#define PPSG_PPS_OUT_ENABLE 0x1
+#define PPSG_PPS_OUT_DISABLE 0x0
+
 #define PPSG_PPS_IN_TERM_50OHM_ENABLE 0x1
 #define PPSG_PPS_IN_TERM_50OHM_DISABLE 0x0
 
@@ -23,6 +26,9 @@ int shw_pps_gen_busy(void);
 
 /* Enables/disables PPS Generator PPS output */
 int shw_pps_gen_enable_output(int enable);
+
+/* Reads PPS Generator PPS output */
+int shw_pps_gen_enable_output_read(void);
 
 /* Reads the current time and stores at <seconds,nanoseconds>. */
 void shw_pps_gen_read_time(uint64_t * seconds, uint32_t * nanoseconds);

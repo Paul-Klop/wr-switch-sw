@@ -86,6 +86,15 @@ int shw_pps_gen_enable_output(int enable)
 	return 0;
 }
 
+/* Enables/disables PPS output */
+int shw_pps_gen_enable_output_read(void)
+{
+	uint32_t escr = ppsg_read(ESCR);
+
+	return escr & PPSG_ESCR_PPS_VALID ?
+		PPSG_PPS_OUT_ENABLE : PPSG_PPS_OUT_DISABLE;
+}
+
 void shw_pps_gen_read_time(uint64_t * seconds, uint32_t * nanoseconds)
 {
 	uint32_t ns_cnt;

@@ -6,9 +6,6 @@
 #include <libwr/switch_hw.h>
 #include <libwr/pps_gen.h>
 
-#define PPS_ON 1
-#define PPS_OFF 0
-
 void help(char *prgname)
 {
 	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd>\n",
@@ -18,7 +15,7 @@ void help(char *prgname)
 		"  -h   print help\n"
 		"\n"
 		"  Commands are:\n"
-		"      pps <on|off>                - switch PPS output on/off.\n"
+		"      pps <on|off|read>           - switch PPS output on/off.\n"
 		"      50ohm-term-in <on|off|read> - on/off/read 50ohm termination for 1-PPS input\n");
 	exit(1);
 }
@@ -43,11 +40,20 @@ int main(int argc, char *argv[])
 			}
 			if (!strcmp(argv[2], "on")) {
 				assert_init(shw_fpga_mmap_init());
-				shw_pps_gen_enable_output(PPS_ON);
+				shw_pps_gen_enable_output(PPSG_PPS_OUT_ENABLE);
 				exit(0);
 			} else if (!strcmp(argv[2], "off")) {
 				assert_init(shw_fpga_mmap_init());
-				shw_pps_gen_enable_output(PPS_OFF);
+				shw_pps_gen_enable_output(PPSG_PPS_OUT_DISABLE);
+				exit(0);
+			} else if (!strcmp(argv[2], "read")) {
+				assert_init(shw_fpga_mmap_init());
+				if (shw_pps_gen_enable_output_read()
+				    == PPSG_PPS_OUT_ENABLE) {
+					printf("PPS output on\n;");
+				} else {
+					printf("PPS output off\n;");
+				}
 				exit(0);
 			} else {
 				printf("Unknown parameter\n;");

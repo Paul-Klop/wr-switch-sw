@@ -17,6 +17,12 @@
 #include <libwr/util.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
+
+/*  be safe, in case some other header had them slightly differently */
+#undef container_of
+#undef offsetof
+#undef ARRAY_SIZE
+
 #include "wrs_dump_shmem.h"
 
 #define FPGA_SPLL_STAT 0x10006800
@@ -83,7 +89,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
-	uint64_t sec, nano, pico;
+	uint64_t sec, nano, pico, femto;
 	int i;
 
 	printf("        %-30s ", info->name); /* name includes trailing ':' */
@@ -134,6 +140,9 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_Boolean:
 		printf("%i\n", *(unsigned char *)p);
 		break;
+	case dump_type_UInteger4:
+		printf("%i\n", *(unsigned char *)p & 0xF);
+		break;
 	case dump_type_UInteger16:
 	case dump_type_uint16_t:
 	case dump_type_unsigned_short:
@@ -156,11 +165,20 @@ void dump_one_field(void *addr, struct dump_info *info)
 #define TIME_FRACMASK 0xFFFF
 
 	case dump_type_time:
-		nano = t->scaled_nsecs >> TIME_FRACBITS;
-		pico = t->scaled_nsecs & TIME_FRACMASK;
+	{
+		char sign='+';
+		int64_t scaled_nsecs=t->scaled_nsecs;
+
+		if ( scaled_nsecs < 0) {
+			scaled_nsecs =-scaled_nsecs;
+			sign='-';
+		}
+		nano = scaled_nsecs >> TIME_FRACBITS;
+		pico = scaled_nsecs & TIME_FRACMASK;
 		pico = (pico * 1000) >> TIME_FRACBITS;
-		printf("correct %i: %10lli.%09"PRIu64".%03"PRIu64"\n",
-		       !is_incorrect(t), t->secs, nano,pico);
+		printf("correct %i: %10c%lli.%09"PRIu64".%03"PRIu64"\n",
+		       !is_incorrect(t),sign, t->secs, nano,pico);
+	}
 		break;
 
 	case dump_type_Timestamp:
@@ -172,21 +190,39 @@ void dump_one_field(void *addr, struct dump_info *info)
 #define TIME_INTERVAL_FRACBITS 16
 #define TIME_INTERVAL_FRACMASK 0xFFFF
 
-case dump_type_TimeInterval:
-		nano = *ti >> TIME_INTERVAL_FRACBITS;
-		pico = *ti & TIME_INTERVAL_FRACMASK;
+	case dump_type_TimeInterval:
+	{
+		char sign='+';
+		int64_t scaled_nsecs=*ti;
+
+		if ( scaled_nsecs < 0) {
+			scaled_nsecs =-scaled_nsecs;
+			sign='-';
+		}
+		nano = scaled_nsecs >> TIME_INTERVAL_FRACBITS;
+		pico = scaled_nsecs & TIME_INTERVAL_FRACMASK;
 		pico = (pico * 1000) >> TIME_INTERVAL_FRACBITS;
-		printf("%09"PRIu64".%03"PRIu64"\n", nano,pico);
+		printf("%c%09"PRIu64".%03"PRIu64"\n", sign,nano,pico);
+	}
 		break;
 
 #define REL_DIFF_FRACBITS 62
 #define REL_DIFF_FRACMASK 0x3fffffffffffffff
 
 	case dump_type_RelativeDifference:
-		nano = *rd >> REL_DIFF_FRACBITS;
-		pico = *rd & REL_DIFF_FRACMASK;
-		pico = (pico * 1000L) >> REL_DIFF_FRACBITS;
-		printf("%01"PRIu64".%03"PRIu64"\n", nano,pico);
+	{
+		char sign='+';
+		int64_t scaled_nsecs=*rd;
+
+		if (scaled_nsecs<0) {
+			scaled_nsecs =-scaled_nsecs;
+			sign='-';
+		}
+		nano = scaled_nsecs >> REL_DIFF_FRACBITS;
+		femto= (scaled_nsecs & REL_DIFF_FRACMASK)>>32;
+		femto = (femto * 1000000L) >> (REL_DIFF_FRACBITS-32);
+		printf("%c%01"PRIu64".%06"PRIu64" \n", sign, nano,femto);
+	}
 		break;
 	case dump_type_ip_address:
 		for (i = 0; i < 4; i++)

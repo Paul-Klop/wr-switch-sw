@@ -53,6 +53,7 @@ enum dump_type {
 	dump_type_Integer16,
 	dump_type_UInteger8,
 	dump_type_Integer8,
+	dump_type_UInteger4,
 	dump_type_Enumeration8,
 	dump_type_Boolean,
 	dump_type_ClockIdentity,

@@ -79,6 +79,24 @@ static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
 				 entries */
 
 
+#define REL_DIFF_FRACBITS 62
+#define REL_DIFF_FRACMASK 0x3fffffffffffffff
+
+void decode_relative_difference(RelativeDifference rd, int32_t *nsecs, uint64_t *sub_yocto) {
+    int64_t fraction;
+	uint64_t bitWeight=500000000000000000;
+	uint64_t mask;
+
+	*sub_yocto=0;
+	*nsecs = (int32_t)(rd >> REL_DIFF_FRACBITS);
+    fraction=(int64_t)rd & REL_DIFF_FRACMASK;
+	for (mask=(uint64_t) 1<< (REL_DIFF_FRACBITS-1);mask!=0; mask>>=1 ) {
+		if ( mask & fraction )
+			*sub_yocto+=bitWeight;
+		bitWeight/=2;
+	}
+}
+
 void dump_one_field(void *addr, struct dump_info *info)
 {
 	void *p = addr + info->offset;
@@ -89,7 +107,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
-	uint64_t sec, nano, pico, femto;
+	uint64_t sec, nano, pico;
 	int i;
 
 	printf("        %-30s ", info->name); /* name includes trailing ':' */
@@ -170,7 +188,6 @@ void dump_one_field(void *addr, struct dump_info *info)
 		int64_t scaled_nsecs=t->scaled_nsecs;
 
 		if ( scaled_nsecs < 0) {
-			scaled_nsecs =-scaled_nsecs;
 			sign='-';
 		}
 		nano = scaled_nsecs >> TIME_FRACBITS;
@@ -192,36 +209,22 @@ void dump_one_field(void *addr, struct dump_info *info)
 
 	case dump_type_TimeInterval:
 	{
-		char sign='+';
 		int64_t scaled_nsecs=*ti;
 
-		if ( scaled_nsecs < 0) {
-			scaled_nsecs =-scaled_nsecs;
-			sign='-';
-		}
 		nano = scaled_nsecs >> TIME_INTERVAL_FRACBITS;
 		pico = scaled_nsecs & TIME_INTERVAL_FRACMASK;
 		pico = (pico * 1000) >> TIME_INTERVAL_FRACBITS;
-		printf("%c%09"PRIu64".%03"PRIu64"\n", sign,nano,pico);
+		printf("%10"PRId64".%03"PRIu64"\n", nano,pico);
 	}
 		break;
 
-#define REL_DIFF_FRACBITS 62
-#define REL_DIFF_FRACMASK 0x3fffffffffffffff
-
 	case dump_type_RelativeDifference:
 	{
-		char sign='+';
-		int64_t scaled_nsecs=*rd;
+	    int32_t nsecs;
+		uint64_t sub_yocto;
 
-		if (scaled_nsecs<0) {
-			scaled_nsecs =-scaled_nsecs;
-			sign='-';
-		}
-		nano = scaled_nsecs >> REL_DIFF_FRACBITS;
-		femto= (scaled_nsecs & REL_DIFF_FRACMASK)>>32;
-		femto = (femto * 1000000L) >> (REL_DIFF_FRACBITS-32);
-		printf("%c%01"PRIu64".%06"PRIu64" \n", sign, nano,femto);
+		decode_relative_difference(*rd, &nsecs, &sub_yocto);
+		printf("%"PRId32".%018"PRIu64"\n", nsecs, sub_yocto);
 	}
 		break;
 	case dump_type_ip_address:

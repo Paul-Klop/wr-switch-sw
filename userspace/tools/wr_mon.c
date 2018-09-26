@@ -215,13 +215,23 @@ static double interval_to_double (TimeInterval interval) {
 	  return  neg ? -f : f;
 }
 
-static double relDiff_to_double(RelativeDifference relDiff) {
-  double f ;
-  int neg = relDiff<0;
+#define REL_DIFF_FRACBITS 62
+#define REL_DIFF_FRACMASK 0x3fffffffffffffff
 
-  if(neg) relDiff= ~relDiff+1;
-  f= (double)relDiff/(double)(1LL<<REL_DIFF_FRACBITS);
-  return  neg ? -f : f;
+/* We cannot use double for calculation as it is less precise than the RelativeDifference type */
+void decode_relative_difference(RelativeDifference rd, int32_t *nsecs, uint64_t *sub_yocto) {
+    int64_t fraction;
+	uint64_t bitWeight=500000000000000000;
+	uint64_t mask;
+
+	*sub_yocto=0;
+	*nsecs = (int32_t)(rd >> REL_DIFF_FRACBITS);
+    fraction=(int64_t)rd & REL_DIFF_FRACMASK;
+	for (mask=(uint64_t) 1<< (REL_DIFF_FRACBITS-1);mask!=0; mask>>=1 ) {
+		if ( mask & fraction )
+			*sub_yocto+=bitWeight;
+		bitWeight/=2;
+	}
 }
 
 static double alpha_to_double(int32_t alpha) {
@@ -743,6 +753,8 @@ void show_servo(struct inst_servo_t *servo, int alive)
 {
 
 	struct wr_servo_state * wr_servo;
+	int32_t nsecs;
+	uint64_t sub_yocto;
 	struct l1e_servo_state * l1e_servo;
 	int proto_extension=servo->ppi->protocol_extension;
 	struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
@@ -807,7 +819,8 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayAsymmetry   : ");
 		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->delayAsymmetry));
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "scaledDelayCoef  : ");
-		term_cprintf(C_WHITE, "%.9f fpa(%" PRId64 ")",  relDiff_to_double(servo->scaledDelayCoefficient), (int64_t)servo->scaledDelayCoefficient);
+		decode_relative_difference(servo->scaledDelayCoefficient, &nsecs, &sub_yocto);
+		term_cprintf(C_WHITE, "%"PRId32".%018"PRIu64" fpa(%" PRIu64 ")",  nsecs, sub_yocto, (uint64_t)servo->scaledDelayCoefficient);
 		if ( wr_servo ) {
 			term_cprintf(C_BLUE,  "  Fixed Alpha : ");
 			term_cprintf(C_WHITE, "%.9f fpa(%d)", alpha_to_double(wr_servo->fiber_fix_alpha), wr_servo->fiber_fix_alpha);

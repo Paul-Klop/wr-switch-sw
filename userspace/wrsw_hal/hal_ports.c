@@ -421,7 +421,7 @@ static void hal_port_fsm(struct hal_port_state * p)
 				pr_info("Bitslide: %d\n",bit_slide_steps);
 
 				p->calib.delta_rx_phy =
-				    p->calib.phy_rx_min + p->calib.bitslide_ps;
+				    p->calib.phy_rx_min;
 				p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
 				if (0)

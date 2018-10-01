@@ -15,7 +15,7 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 CFLAGS =  -D KBUILD_NO_NLS
 
 # most of this is just copying stuff in
-RFILES = Kconfig Kconfig_vlans.in dot-config wrs_release_defconfig
+RFILES = Kconfig_port_timing.in Kconfig Kconfig_vlans.in dot-config wrs_release_defconfig 
 XFILES = conf mconf nconf
 FILES = $(RFILES) $(XFILES)
 
@@ -34,6 +34,9 @@ dot-config: $(WRS_BASE_DIR)/../.config
 	cp $^ $@
 
 Kconfig: $(WRS_BASE_DIR)/../Kconfig
+	cp $^ $@
+
+Kconfig_port_timing.in: $(WRS_BASE_DIR)/../Kconfig_port_timing.in
 	cp $^ $@
 
 Kconfig_vlans.in: $(WRS_BASE_DIR)/../Kconfig_vlans.in

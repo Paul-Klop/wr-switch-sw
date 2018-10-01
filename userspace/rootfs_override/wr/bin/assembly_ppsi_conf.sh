@@ -135,7 +135,7 @@ function gen_ppsi_conf() {
 			v="$port_vn[iface]"; echo "iface ${!v}" >>$output
 			v="$inst_vn[masteronly]"; [[ -n "${!v}"  ]] && echo "masterOnly  ${!v}" >>$output
 			v="$inst_vn[vlan]" ; [[ -n "${!v}"       ]] && echo "vlan  ${!v}" >>$output
-			v="$inst_vn[dm]"   ; [[ "${!v}" != "e2e" ]] && echo "dm    ${!v}" >>$output
+			v="$inst_vn[dm]"   ; [[ "${!v}" != "e2e" ]] && echo "mechanism    ${!v}" >>$output
 			v="$inst_vn[prof]" ; echo "profile  ${!v}" >>$output
 			v="$inst_vn[dstate]"; [[ -n "${!v}" ]] &&  echo "desiredState  ${!v}" >>$output
 			v="$inst_vn[rx]";     echo "ingressLatency    ${!v}" >>$output
@@ -246,7 +246,7 @@ function gen_ppsi_conf_json() {
 			v="$inst_vn[proto]"; echo -e "      \"proto\": \"${!v}\"," >>$output
 			v="$inst_vn[masteronly]"; [[ -n "${!v}"  ]] && echo -e "      \"masterOnly\":  \"${!v}\"," >>$output
 			v="$inst_vn[vlan]" ; [[ -n "${!v}"       ]] && echo -e "      \"vlan\":  \"${!v}\"," >>$output
-			v="$inst_vn[dm]"   ; [[ "${!v}" != "e2e" ]] && echo -e "      \"dm\":    \"${!v}\"," >>$output
+			v="$inst_vn[dm]"   ; [[ "${!v}" != "e2e" ]] && echo -e "      \"mechanism\":    \"${!v}\"," >>$output
 			v="$inst_vn[prof]" ; echo -e -n "      \"profile\":  \"${!v}\"" >>$output
 			v="$inst_vn[dstate]"; [[ -n "${!v}" ]] &&  echo -e -n ",\n      \"desiredState\": \"${!v}\"" >>$output
 

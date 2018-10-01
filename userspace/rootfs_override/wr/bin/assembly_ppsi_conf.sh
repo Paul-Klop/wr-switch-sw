@@ -463,11 +463,11 @@ for i_port in {01..18}; do # scan all the physical ports
 		# set the profile
 		v="$inst_vn[prof]"
 		p_prof=${!v}
-		if [ "${p_prof}" = "wr" ]; then
+		if [ "${p_prof}" == "wr" ]; then
 			eval ${v}="whiterabbit"
-		elif [ "${p_prof}" = "ha" ]; then
+		elif [ "${p_prof}" == "ha" ]; then
 		    eval ${v}="highaccuracy"
-		elif [ "${p_prof}" = "none" ]; then
+		elif [ "${p_prof}" == "none" ] || [ "${p_prof}" == "ptp" ]; then
 			# do nothing
 		    eval ${v}="ptp" >> $OUTPUT_FILE
 		    p_prof="ptp"

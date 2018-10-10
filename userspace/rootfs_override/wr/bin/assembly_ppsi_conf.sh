@@ -465,6 +465,8 @@ for i_port in {01..18}; do # scan all the physical ports
 		p_prof=${!v}
 		if [ "${p_prof}" == "wr" ]; then
 			eval ${v}="whiterabbit"
+			t="$inst_vn[tx]"; eval ${t}="0"
+			t="$inst_vn[rx]"; eval ${t}="0"
 		elif [ "${p_prof}" == "ha" ]; then
 		    eval ${v}="highaccuracy"
 		elif [ "${p_prof}" == "none" ] || [ "${p_prof}" == "ptp" ]; then

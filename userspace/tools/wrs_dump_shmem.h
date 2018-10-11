@@ -93,5 +93,6 @@ struct dump_info {
 	int size;  /* only for strings or binary strings */
 };
 
-void dump_many_fields(void *addr, struct dump_info *info, int ninfo);
+void dump_many_fields(void *addr, struct dump_info *info, int ninfo,
+		      char *prefix);
 int dump_ppsi_mem(struct wrs_shm_head *head);

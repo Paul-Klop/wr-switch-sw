@@ -107,7 +107,7 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
-	uint64_t sec, nano, pico;
+	uint64_t sec, nano, pico, femto;
 	int i;
 	char pname[128];
 
@@ -187,18 +187,26 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 
 #define TIME_FRACBITS 16
 #define TIME_FRACMASK 0xFFFF
+#define TIME_SIGNMASK 0x8000000000000000
 
 	case dump_type_time:
 	{
 		char sign='+';
-		int64_t scaled_nsecs=t->scaled_nsecs;
+		uint64_t scaled_nsecs=t->scaled_nsecs;
+		int64_t secs=t->secs;
 
-		if ( scaled_nsecs < 0) {
+		if ( (scaled_nsecs & TIME_SIGNMASK) || secs<0) {
 			sign='-';
+			scaled_nsecs= ~scaled_nsecs+1;
+			secs=-secs;
 		}
 		nano = scaled_nsecs >> TIME_FRACBITS;
-		pico = scaled_nsecs & TIME_FRACMASK;
-		pico = (pico * 1000) >> TIME_FRACBITS;
+		femto = scaled_nsecs & TIME_FRACMASK;
+		femto = (femto * 1000 * 1000 ) >> TIME_FRACBITS;
+		pico= (femto/1000);
+		if ((femto % 1000)>500) {
+			pico++; // rounding
+		}
 		printf("correct=%i, value=%10c%lli.%09"PRIu64".%03"PRIu64"\n",
 		       !is_incorrect(t),sign, t->secs, nano,pico);
 	}
@@ -212,15 +220,25 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 
 #define TIME_INTERVAL_FRACBITS 16
 #define TIME_INTERVAL_FRACMASK 0xFFFF
+#define TIME_INTERVAL_SIGNMASK 0x8000000000000000
 
 	case dump_type_TimeInterval:
 	{
-		int64_t scaled_nsecs=*ti;
+		char sign='+';
+		uint64_t scaled_nsecs=*ti;
 
+		if ( scaled_nsecs & TIME_INTERVAL_SIGNMASK) {
+			sign='-';
+			scaled_nsecs= ~scaled_nsecs+1;
+		}
 		nano = scaled_nsecs >> TIME_INTERVAL_FRACBITS;
-		pico = scaled_nsecs & TIME_INTERVAL_FRACMASK;
-		pico = (pico * 1000) >> TIME_INTERVAL_FRACBITS;
-		printf("%10"PRId64".%03"PRIu64"\n", nano,pico);
+		femto = scaled_nsecs & TIME_INTERVAL_FRACMASK;
+		femto = (femto * 1000 * 1000 ) >> TIME_INTERVAL_FRACBITS;
+		pico= (femto/1000);
+		if ((femto % 1000)>500) {
+			pico++; // rounding
+		}
+		printf("%10c%"PRId64".%03"PRIu64"\n", sign,nano,pico);
 	}
 		break;
 

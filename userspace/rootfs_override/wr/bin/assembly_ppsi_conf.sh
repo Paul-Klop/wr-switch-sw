@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 # Adam Wujek & Jean-Claude BAU @CERN
 # script to assembly ppsi.conf based on dot-config configuration
@@ -54,10 +54,10 @@ function get_fiber_delay_coeff() {
 					IFS='=' read -a fpa <<< "$fiber_param"
 					dc=${fpa[1]}
 				 else
-					echo "$script_name: Unknown fiber=\"$fb\" in CONFIG_PORT"$i_port"_PARAMS"
+					echo "$script_name: Unknown fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER"
 				 fi
 	      	else
-				echo "$script_name: Invalid parameter fiber=\"$fb\" in CONFIG_PORT"$i_port"_PARAMS"
+				echo "$script_name: Invalid parameter fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER"
 		  	fi
 	    fi
 	    echo "$dc" 
@@ -130,22 +130,17 @@ function gen_ppsi_conf() {
 			if [ "${size}" == "0" ] ; then
 				continue
 			fi
-			v="$inst_vn[name]" ; echo "port  ${!v}" >>$output
-			v="$inst_vn[proto]"; echo "proto ${!v}" >>$output
-			v="$port_vn[iface]"; echo "iface ${!v}" >>$output
-			v="$inst_vn[masteronly]"; [[ -n "${!v}"  ]] && echo "masterOnly  ${!v}" >>$output
-			v="$inst_vn[vlan]" ; [[ -n "${!v}"       ]] && echo "vlan  ${!v}" >>$output
-			v="$inst_vn[dm]"   ; [[ "${!v}" != "e2e" ]] && echo "mechanism    ${!v}" >>$output
-			v="$inst_vn[prof]" ; echo "profile  ${!v}" >>$output
-			v="$inst_vn[dstate]"; [[ -n "${!v}" ]] &&  echo "desiredState  ${!v}" >>$output
-			v="$inst_vn[rx]";     echo "ingressLatency    ${!v}" >>$output
-			v="$inst_vn[tx]";     echo "egressLatency     ${!v}" >>$output
-			v="$port_vn[dcoeff]"; echo "delayCoefficient  ${!v}" >>$output
-			v="$port_vn[asym]";   echo "constantAsymmetry ${!v}" >>$output
-			for p in $inst_opt_parameters ; do 
-				plc=$(inst_opt_parameter_to_instance_index ${p})
-				v="$inst_vn[$plc]"
-				[[ -n "${!v}" ]] && echo "$plc    ${!v}" >>$output
+			hpKeys="port proto  iface profile"
+			for k in $hpKeys; do 
+				v="$port_vn[$k]";[[ -n "${!v}" ]] && echo "$k  ${!v}" >>$output
+				v="$inst_vn[$k]";[[ -n "${!v}" ]] && echo "$k  ${!v}" >>$output
+			done
+			# print remaining keys
+			for k in $port_ppsi_keys ; do
+				[[ "$hpKeys" != *"$k"* ]] && (v="$port_vn[$k]";[[ -n "${!v}" ]] && echo "$k  ${!v}" >>$output)
+			done
+			for k in $inst_ppsi_keys ; do
+				[[ "$hpKeys" != *"$k"* ]] && (v="$inst_vn[$k]";[[ -n "${!v}" ]] && echo "$k  ${!v}" >>$output)
 			done
 			echo -n -e "\n\n" >>$output
 		done
@@ -215,9 +210,14 @@ function gen_ppsi_conf_json() {
 		else
 			echo -e ",\n  {" >>$output
 		fi
-		v="$port_vn[iface]";  echo -e "    \"iface\": \"${!v}\"," >>$output
-		v="$port_vn[dcoeff]"; echo -e "    \"delayCoefficient\": \"${!v}\"," >>$output
-		v="$port_vn[asym]";   echo -e "    \"constantAsymmetry\": \"${!v}\"," >>$output
+		hpKeys="iface"
+		for k in $hpKeys; do 
+			v="$port_vn[$k]";[[ -n "${!v}" ]] && echo -e "    \"$k\": \"${!v}\"," >>$output
+		done
+		# print remaining keys
+		for k in $port_ppsi_keys; do 
+			[[ "$hpKeys" != *"$k"* ]] && (v="$port_vn[$k]"; [[ -n "${!v}" ]] && echo -e "    \"$k\": \"${!v}\"," >>$output)
+		done
 		
 		# start instances
 		echo -e "    \"instances\": [" >>$output
@@ -240,20 +240,13 @@ function gen_ppsi_conf_json() {
 				echo -e ",\n    {" >>$output
 			fi
 
-			v="$inst_vn[name]" ; echo -e "      \"port\":  \"${!v}\"," >>$output
-			v="$inst_vn[rx]";    echo -e "      \"ingressLatency\": \"${!v}\"," >>$output
-			v="$inst_vn[tx]";    echo -e "      \"egressLatency\":  \"${!v}\"," >>$output
-			v="$inst_vn[proto]"; echo -e "      \"proto\": \"${!v}\"," >>$output
-			v="$inst_vn[masteronly]"; [[ -n "${!v}"  ]] && echo -e "      \"masterOnly\":  \"${!v}\"," >>$output
-			v="$inst_vn[vlan]" ; [[ -n "${!v}"       ]] && echo -e "      \"vlan\":  \"${!v}\"," >>$output
-			v="$inst_vn[dm]"   ; [[ "${!v}" != "e2e" ]] && echo -e "      \"mechanism\":    \"${!v}\"," >>$output
-			v="$inst_vn[prof]" ; echo -e -n "      \"profile\":  \"${!v}\"" >>$output
-			v="$inst_vn[dstate]"; [[ -n "${!v}" ]] &&  echo -e -n ",\n      \"desiredState\": \"${!v}\"" >>$output
-
-			for p in $inst_opt_parameters ; do 
-				plc=$(inst_opt_parameter_to_instance_index ${p})
-				v="$inst_vn[$plc]"
-				[[ -n "${!v}" ]] && echo -e -n ",\n      \"$plc\": \"${!v}\"" >>$output
+			hpKeys="port proto  iface profile"
+			for k in $hpKeys; do 
+				v="$inst_vn[$k]";[[ -n "${!v}" ]] && echo -e "      \"$k\":  \"${!v}\"," >>$output
+			done
+			# print remaining keys
+			for k in $inst_ppsi_keys ; do
+				[[ "$hpKeys" != *"$k"* ]] && (v="$inst_vn[$k]";[[ -n "${!v}" ]] && echo -e "      \"$k\":  \"${!v}\"," >>$output)
 			done
 
 			# end instance
@@ -275,18 +268,130 @@ function gen_ppsi_conf_json() {
 	echo "}" >>$output
 }
 
-function inst_opt_parameter_to_instance_index() {
-	 echo `echo $1 | tr '[:upper:]_' '[:lower:]-'`
+function disable_L1sync() {
+	local inst=$1
+	local lv
+	
+ 	for k in l1SyncEnabled l1SyncTxCoherencyIsRequired  l1SyncRxCoherencyIsRequired \
+ 	         l1SyncCongruencyIsRequired logL1SyncInterval l1SyncReceiptTimeout l1SyncOptParamsEnabled; do 
+ 		lv="$inst[$k]"; unset ${lv}
+ 	done
 }
+
+function set_profile_for_PTP() {
+	local inst=$1
+	local lv
+	
+	disable_L1sync $inst
+}
+
+
+function set_profile_for_WR() {
+	local inst=$1
+	local lv
+	
+	disable_L1sync $inst
+	# Egress and ingress latencies already integrated in WR calculation 
+ 	for k in egressLatency ingressLatency ; do 
+ 		lv="$inst[$k]"; unset ${lv}
+ 	done
+}
+
+function set_profile_for_HA() {
+	local inst=$1
+	local lv
+	# L1SYNC mandatory values
+ 	for k in l1SyncEnabled l1SyncTxCoherencyIsRequired  l1SyncRxCoherencyIsRequired l1SyncCongruencyIsRequired ; do 
+ 		lv="$inst[$k]"; eval ${lv}="y"
+ 	done
+ 	lv="$inst[l1SyncOptParamsEnabled]"; eval ${lv}="n"
+ 	# Free parameters
+ 	test ! ${inst_vn[logL1SyncInterval]+_}    && (lv="$inst_vn[logL1SyncInterval]";    eval ${lv}="0") # Set default value
+ 	test ! ${inst_vn[l1SyncReceiptTimeout]+_} && (lv="$inst_vn[l1SyncReceiptTimeout]"; eval ${lv}="3") # Set default value
+ 	# Force asymmetry correction
+ 	lv="$inst[asymmetryCorrectionEnable]"; eval ${lv}="y" 
+}
+
+function set_instance_profile() {
+		local inst=$1
+		local lv="$inst[profile]"
+		local value=${!lv}
+		if [ "${value}" == "wr" ]; then
+			eval ${lv}="wr"
+			set_profile_for_WR $inst
+		elif [ "${value}" == "ha" ]; then
+		    eval ${lv}="ha"
+		elif [ "${value}" == "custom" ]; then
+		    eval ${lv}="custom"
+		elif [ "${value}" == "none" ] || [ "${value}" == "ptp" ]; then
+			# do nothing
+		    eval ${lv}="ptp"
+			set_profile_for_PTP $inst
+		elif [ -n "$p" ]; then
+			echo "$script_name: Invalid parameter profile=\"$p\" in ${inst}"
+			eval ${lv}="ha"
+		else
+			# default
+			eval ${lv}="ha"
+		fi
+		value=${!lv}
+		if [ "${value}" == "ha" ]; then 
+		    set_profile_for_HA  $inst
+		fi
+}
+
+function build_port_ppsi_keys() { 
+    local s=""
+    for i in "${!port_dotc_ppsi_key_mapping[@]}"
+	do
+	  	value=`echo ${port_dotc_ppsi_key_mapping[$i]} | head -n1 | cut -d " " -f1`;
+	  	[[ "$s" != *"$value"* ]] && s="$s $value"
+	done
+ 	echo `echo $s | xargs -n1 | sort -u | xargs`
+}
+
+function build_inst_ppsi_keys() { 
+    local s=""
+    for i in "${!inst_dotc_ppsi_key_mapping[@]}"
+	do
+	  	value=`echo ${inst_dotc_ppsi_key_mapping[$i]} | head -n1 | cut -d " " -f1`;
+	  	[[ "$s" != *"$value"* ]] && s="$s $value"
+	done
+ 	echo `echo $s | xargs -n1 | sort -u | xargs`
+}
+
 
 globals_indexes='clock-class clock-accuracy clock-allan-variance domain-number priority1 priority2 time-source externalPortConfigurationEnabled'
 globals_not_yet_supported='time-source'
-port_indexes='fiber asym dcoeff iface'
-instance_indexes='rx tx proto prof dm monitor dstate masteronly'
-inst_opt_parameters='ANNOUNCE_INTERVAL ANNOUNCE_RECEIPT_TIMEOUT SYNC_INTERVAL MIN_DELAY_REQ_INTERVAL MIN_PDELAY_REQ_INTERVAL L1SYNC_INTERVAL L1SYNC_RECEIPT_TIMEOUT'
-echo "${x}" | tr '_' '-' | sed -e "s/\b\(.\)/\u\1/g"
-# update instance_indexes with inst_opt_parameters
-instance_indexes="$instance_indexes `echo ${inst_opt_parameters} | tr '[:upper:]' '[:lower:]'`"
+
+# PHYSICAL PORT PARAMETERS
+declare -A port_dotc_ppsi_key_mapping='(\
+[FIBER]="delayCoefficient" \
+[IFACE]="iface" \
+[CONSTANT_ASYMMETRY]="constantAsymmetry" \
+)'
+port_dotc_keys="${!port_dotc_ppsi_key_mapping[@]}"
+port_ppsi_keys=$(build_port_ppsi_keys)
+
+# PPSI INSTANCE PARAMETERS
+declare -A inst_dotc_ppsi_key_mapping='(\
+[PROTOCOL_RAW]="proto raw" [PROTOCOL_UDP_IPV4]="proto udp" \
+[MECHANISM_E2E]="mechanism e2e" [MECHANISM_P2P]="mechanism p2p" \
+[PROFILE_PTP]="profile ptp" [PROFILE_WR]="profile wr" [PROFILE_HA]="profile ha" [PROFILE_CUSTOM]="profile custom" \
+[DESIRADE_STATE_MASTER]="desiredState master" [DESIRADE_STATE_SLAVE]="desiredState slave" [DESIRADE_STATE_PASSIVE]="desiredState passive" \
+[ANNOUNCE_INTERVAL]="logAnnounceInterval" [ANNOUNCE_RECEIPT_TIMEOUT]="announceReceiptTimeout" \
+[MIN_DELAY_REQ_INTERVAL]="logMinDelayReqInterval" [MIN_PDELAY_REQ_INTERVAL]="logMinPDelayReqInterval" \
+[ASYMMETRY_CORRECTION_ENABLE]="asymmetryCorrectionEnable" \
+[BMODE_MASTER_ONLY]="masterOnly" \
+[EGRESS_LATENCY]="egressLatency" [INGRESS_LATENCY]="ingressLatency" \
+[L1SYNC_ENABLED]="l1SyncEnabled" [L1SYNC_INTERVAL]="logL1SyncInterval" \
+[L1SYNC_RECEIPT_TIMEOUT]="l1SyncReceiptTimeout" [L1SYNC_OPT_PARAMS_ENABLED]="l1SyncOptParamsEnabled" \
+[L1SYNC_TX_COHERENCY_IS_REQUIRED]="l1SyncTxCoherencyIsRequired" \
+[L1SYNC_RX_COHERENCY_IS_REQUIRED]="l1SyncRxCoherencyIsRequired" [L1SYNC_CONGRUENCY_IS_REQUIRED]="l1SyncCongruencyIsRequired" \
+)'
+
+inst_dotc_keys="${!inst_dotc_ppsi_key_mapping[@]}"
+inst_ppsi_keys=$(build_inst_ppsi_keys)
 
 declare -A globals
 
@@ -364,35 +469,23 @@ for i_port in {01..18}; do # scan all the physical ports
 	i_port_int=$(expr $i_port + 0)
 	
 	# parse parameters
-	port_key="CONFIG_PORT${i_port}_PARAMS"
-	port_key_value=${!port_key}
-
-	# save pairs into array
-	IFS=',' read -a pair_array <<< "${port_key_value}"
-	for pair in ${pair_array[@]}
-	do
-		# split pairs
-		IFS='=' read param value <<< "$pair"
-		case "$param" in
-		"fiber")
-		 	v="$port_vn[fiber]"
-		 	eval ${v}="$value"
-		 	v="$port_vn[dcoeff]"
-		 	eval ${v}=$(get_fiber_delay_coeff $value)
-		 	;;
-		"asym")
-		 	v="$port_vn[asym]"
-		 	eval ${v}="$value"
-		 	;;
-		"iface")
-		 	v="$port_vn[iface]"
-		 	eval ${v}="$value"
-		 	;;
-		*)
-			echo "$script_name: Invalid parameter $param in ${port_key}" ;;
-		esac
-	done
+	port_key="CONFIG_PORT${i_port}"
  
+	for p in $port_dotc_keys; do 
+			k="${port_key}_$p"
+			plc="${port_dotc_ppsi_key_mapping[$p]}"
+			if [ -n "${!k}" ] && [ "$plc" != "" ]; then
+				v="$port_vn[${plc}]";
+				if [  "$p" == "FIBER" ] ; then 
+				    # Special treatment for FIBER : Retreive the delay coefficient from the DB
+					fiber_num="${!k}"
+		 			eval ${v}=$(get_fiber_delay_coeff $fiber_num)
+				else
+				  eval ${v}="${!k}"
+				fi
+			fi
+	done
+
 	for j_inst in {01..02}; do  # scan all the ppsi instances for a given port
 
 		#remove leading zero from i_port (params has numbers with leading zero,
@@ -404,111 +497,50 @@ for i_port in {01..18}; do # scan all the physical ports
 		if [ -n "${inst_count_value}" ]; then
 			break # number of defined instances reached 	
 		fi
-
-		# Set default values
-		tx=0
-		rx=0
-		
+	
 		inst_vn="${port_vn}inst${j_inst}"	
 		declare -A $inst_vn
 		inst_key="CONFIG_PORT${i_port}_INST${j_inst}"
-		inst_key_value=${!inst_key}
-	    IFS=',' read -a inst_pair_array <<< "${inst_key_value}"
 
-		for pair in ${inst_pair_array[@]}
-		do
-			# split pairs
-			IFS='=' read param value <<< "$pair"
-			case "$param" in
-			"tx") 
-			    v="$inst_vn[tx]"
-			    eval ${v}="$value"
-			    ;;
-			"rx") 
-			    v="$inst_vn[rx]"
-			    eval ${v}="$value"
-			    ;;
-			"proto")
-				 v="$inst_vn[proto]" 
-				 eval ${v}="${value,,}"
-				 ;;
-			"ext" | "prof")
-				 v="$inst_vn[prof]" 
-				 eval ${v}="${value,,}"
-				 ;;
-			"dm")
-				 v="$inst_vn[dm]" 
-				 eval ${v}="${value,,}"
-				 ;;
-			"monitor")		
-				continue;; # read by SNMP directly from the config
-			*)
-				echo "$script_name: Invalid parameter $param in ${inst_key}" ;;
-			esac
-		
-		done
-		for p in $inst_opt_parameters; do 
+		for p in $inst_dotc_keys; do 
 			k="${inst_key}_$p"
-			plc=$(inst_opt_parameter_to_instance_index ${p})
-			if [ -n "$k" ]; then
-				v="$inst_vn[${plc}]"; eval ${v}="${!k}"
+			plc="${inst_dotc_ppsi_key_mapping[$p]}"
+			if [ -n "${!k}" ] && [ "$plc" != "" ]; then
+			    # Check if the string contains 2 elements separated by a space
+			    OIFS=${IFS}; IFS=' ' read -a tokens <<< "${plc}"; IFS=${OIFS}
+			    plc=${tokens[0]};
+			    v="$inst_vn[${plc}]"
+			    if [ "${#tokens[@]}" -gt "1" ] ; then
+			        eval ${v}="${tokens[1]}";
+			    else
+					eval ${v}="${!k}"
+				fi
 			fi
 		done
-	
+
 		v="$inst_vn[proto]"
 		if [ ! -n "${!v}" ]; then 
 			eval ${v}="raw" # proto not defined. Set it to raw by default
 		fi		
 		
 		# set the profile
-		v="$inst_vn[prof]"
-		p_prof=${!v}
-		if [ "${p_prof}" == "wr" ]; then
-			eval ${v}="whiterabbit"
-			t="$inst_vn[tx]"; eval ${t}="0"
-			t="$inst_vn[rx]"; eval ${t}="0"
-		elif [ "${p_prof}" == "ha" ]; then
-		    eval ${v}="highaccuracy"
-		elif [ "${p_prof}" == "none" ] || [ "${p_prof}" == "ptp" ]; then
-			# do nothing
-		    eval ${v}="ptp" >> $OUTPUT_FILE
-		    p_prof="ptp"
-		elif [ -n "$p" ]; then
-			echo "$script_name: Invalid parameter prof=\"$p\" in ${inst_key}"
-			eval ${v}="highaccuracy"
-			p_prof="ha"
-		else
-			# default
-			eval ${v}="highaccuracy"
-			p_prof="ha"
-		fi
+		set_instance_profile $inst_vn
+		v="$inst_vn[profile]"; p_profile=${!v}
 		
 		# define instance name
 		v="$port_vn[iface]"; p_iface=${!v}
 		v="$inst_vn[proto]"; p_proto=${!v}
-		v="$inst_vn[name]"; eval ${v}="${p_iface}-${j_inst_int}-${p_prof}-${p_proto}"
+		v="$inst_vn[port]"; eval ${v}="${p_iface}-${j_inst_int}-${p_profile}-${p_proto}"
 		
 		# if extPortConfiguration enabled, get the desired state
 		if [ "$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED" == 'y' ] ; then
-			v="$inst_vn[dstate]"; 
-			eval ${v}="passive" # default value
-			k="${inst_key}_DESIRADE_STATE_SLAVE";  [ "${!k}" == 'y' ] && eval ${v}="slave"		
-			k="${inst_key}_DESIRADE_STATE_MASTER"; [ "${!k}" == 'y' ] && eval ${v}="master"
-		else
-			v="$inst_vn[masteronly]"; 
-			k="${inst_key}_BMODE_MASTER_ONLY";  [ "$k" == 'y' ] && eval ${v}="y"					
+			v="$inst_vn[desiredState]";
+			if [ -z "{!v}" ] ; then 
+				eval ${v}="passive" # default value
+			fi
+			v="$inst_vn[masteronly]"; unset  ${v} # remove master only 
 		fi
 		
-		# set delay mechanism
-		v="$inst_vn[dm]"
-		p=${!v}
-		if [ "${p}" = "p2p" -o   "${p}" = "e2e" ]; then
-			# do nothing
-			true
-		elif [ -n "${p}" ]; then
-			echo "$script_name: Invalid parameter dm=\"${p}\" in ${inst_key}"
-		fi
-
 		# add vlans
 		if [ "$CONFIG_VLANS_ENABLE" = "y" ]; then
 			unset ppsi_vlans;

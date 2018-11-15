@@ -118,9 +118,11 @@ static int hal_port_init(int index)
 {
 	struct hal_port_state *p = &ports[index];
 	int i;
-	char name[128];
-	int val, error;
+	char key[128];
+	int val;
+	int wrInstanceFound=0;
 	int port_i;
+	char *retValue;
 
 	/* index is 0..17, port_i 1..18 */
 	port_i = index + 1;
@@ -128,15 +130,14 @@ static int hal_port_init(int index)
 	/* make sure the states and other variables are in their init state */
 	hal_port_reset_state(p);
 
-	/* read dot-config values for this index, starting from name */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "iface", LIBWR_STRING,
-				   name, port_i);
-	if (error)
+	/* read dot-config values to get the interface name */
+	sprintf(key,"PORT%02i_IFACE",port_i);
+	if( (retValue=libwr_cfg_get(key))==NULL)
 		return -1;
-	strncpy(p->name, name, 16);
+	strncpy(p->name, retValue, 16);
 
 	/* check if the port is built into the firmware, if not, we are done */
-	if (!hal_port_check_presence(name, p->hw_addr))
+	if (!hal_port_check_presence(p->name, p->hw_addr))
 		return -1;
 
 	p->state = HAL_PORT_STATE_DISABLED;
@@ -144,34 +145,36 @@ static int hal_port_init(int index)
 
 	/* Search an instance using the WR profile */
 	for (i=1; i<=2; i++) {
-		char str[32];
-		if ( !(error = libwr_cfg_convert2("PORT%02i_INST%02i", "prof", LIBWR_STRING,
-					   str, port_i,i))) {
-			if ( strcasecmp("WR",str)==0 )
-				break; // Found
+		sprintf(key,"PORT%02i_INST%02i_PROFILE_WR",port_i,i);
+		if( ((retValue=libwr_cfg_get(key))!=NULL) && (*retValue=='y') ) {
+			wrInstanceFound++;
+			break; // Found
 		}
 	}
 	val = 18 * 800; /* magic default from previous code */
-	if ( !error ) {
+	if ( wrInstanceFound ) {
 		// WR instance found
 		val = 18 * 800; /* magic default from previous code */
-		error = libwr_cfg_convert2("PORT%02i_INST%02i", "tx", LIBWR_INT,
-					   &val, port_i,i);
-		if (error)
-			pr_error("port %i (%s): no \"tx=\" specified\n",
-				port_i, name);
-		p->calib.phy_tx_min = val;
+		for ( i=0; i<2; i++ ) {
+			char *latency=i==0 ? "EGRESS": "INGRESS";
+			uint32_t *phy_min=i==0 ? &p->calib.phy_tx_min: &p->calib.phy_rx_min;
 
-		error = libwr_cfg_convert2("PORT%02i_INST%02i", "rx", LIBWR_INT,
-					   &val, port_i,i);
-		if (error)
-			pr_error("port %i (%s): no \"rx=\" specified\n",
-				port_i, name);
-		p->calib.phy_rx_min = val;
+			sprintf(key,"PORT%02i_INST%02i_%s_LATENCY",port_i,i,latency);
+			if( (retValue=libwr_cfg_get(key))==NULL ) {
+				pr_error("port %i (%s): no key \"%s\" specified\n",
+					port_i, p->name,key);
+			} else {
+				if (sscanf(retValue, "%i", &val) != 1) {
+					pr_error("port %i (%s): Invalid key \"%s\" value (%d)\n",
+						port_i, p->name, key,*retValue);
+				}
+			}
+			*phy_min = val;
+		}
 
 	} else {
 		pr_error("port %i (%s): no WhiteRabbit instance defined\n",
-			port_i, name);
+			port_i, p->name);
 		p->calib.phy_tx_min = p->calib.phy_rx_min = val;
 	}
 
@@ -187,21 +190,24 @@ static int hal_port_init(int index)
 	p->clock_period = REF_CLOCK_PERIOD_PS;
 
 	/* Get fiber type */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "fiber",
-				   LIBWR_INT, &p->fiber_index, port_i);
-
-	if (error) {
-		pr_error("port %i (%s): "
-			"no \"fiber=\" specified, default fiber to 0\n",
-			port_i, name);
-		p->fiber_index = 0;
+	p->fiber_index = 0; /* Default fiber value */
+	sprintf(key,"PORT%02i_INST%02i_FIBER",port_i,i);
+	if( (retValue=libwr_cfg_get(key))==NULL ) {
+		pr_error("port %i (%s): no key \"%s\" specified. Default fiber 0\n",
+			port_i, p->name,key);
+	} else {
+		if (sscanf(retValue, "%i", &p->fiber_index) != 1) {
+			pr_error("port %i (%s): Invalid key \"%s\" value (%d). Default fiber 0\n",
+				port_i, p->name, key,*retValue);
 		}
+	}
+
 	if (p->fiber_index > 3) {
 		pr_error("port %i (%s): "
-			"not supported \"fiber=\" value, default to 0\n",
-			port_i, name);
+			"not supported fiber value (%d), default to 0\n",
+			port_i, p->name,p->fiber_index);
 		p->fiber_index = 0;
-		}
+	}
 
 	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 

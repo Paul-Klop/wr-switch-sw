@@ -44,17 +44,24 @@ function print_port_header() {
 	
 	echo -e "\nmenu \"PORT ${portIdx}\"" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${1}_PARAMS" >>$OUTPUT_FILE
-	echo -e "\tstring \"Port parameters\"" >>$OUTPUT_FILE
-	echo -e "\tdefault \"iface=wri${portIdx},fiber=0,asym=0\"" >>$OUTPUT_FILE
+	echo -e "\nconfig PORT${1}_IFACE" >>$OUTPUT_FILE
+	echo -e "\tstring \"Network interface\"" >>$OUTPUT_FILE
+	echo -e "\tdefault \"wri${portIdx}\"" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
-	echo -e "\t  This item, and the following ones, are used to define physical ports." >>$OUTPUT_FILE
-	echo -e "\t	 An empty string means no instance declaration." >>$OUTPUT_FILE
-	echo -e "\t	 Please refer to the user manual for more information." >>$OUTPUT_FILE
-	echo -e "\t	  \"iface\" - the interface name" >>$OUTPUT_FILE
-	echo -e "\t	  \"fiber\" - the type of fiber (number referring to the corresponding  " >>$OUTPUT_FILE
-	echo -e "\t	            FIBERXX_PARAMS)" >>$OUTPUT_FILE
-	echo -e "\t	  \"asym\"  - the constant delay asymmetry" >>$OUTPUT_FILE
+	echo -e "\t  Used to set the physivcal port interface name: \"wri[1-18]\"" >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_FIBER" >>$OUTPUT_FILE
+	echo -e "\tint  \"Fiber type\"" >>$OUTPUT_FILE
+	echo -e "\tdefault 0" >>$OUTPUT_FILE
+	echo -e "\thelp" >>$OUTPUT_FILE
+	echo -e "\t  Used to set the type of fiber (number referring to the corresponding " >>$OUTPUT_FILE
+	echo -e "\t  FIBERXX_PARAMS)" >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_CONSTANT_ASYMMETRY" >>$OUTPUT_FILE
+	echo -e "\tint \"asymmetryCorrectionPortDS.constantAsymmetry\"" >>$OUTPUT_FILE
+	echo -e "\tdefault 0" >>$OUTPUT_FILE
+	echo -e "\thelp" >>$OUTPUT_FILE
+	echo -e "\t   Used to set the constant delay asymmetry." >>$OUTPUT_FILE
 
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "\tprompt \"Number of port instances\"" >>$OUTPUT_FILE
@@ -90,28 +97,44 @@ function print_instance_header() {
 	else 
 		echo -e "	depends on PORT${1}_INSTANCE_COUNT_2  " >>$OUTPUT_FILE
 	fi
-	
-	echo -e "\nconfig PORT${1}_INST${2}" >>$OUTPUT_FILE
-	echo -e "	string \"Port instance 1\"" >>$OUTPUT_FILE
-	echo -e "	default \"tx=${tx},rx=${rx},proto=raw,prof=${prof},dm=e2e,monitor=y\"" >>$OUTPUT_FILE
-	echo -e "	help" >>$OUTPUT_FILE
-	echo -e "	  This item, and the following ones, are used to define PPSI instances." >>$OUTPUT_FILE
-	echo -e "	  An empty string means no instance declaration." >>$OUTPUT_FILE
-	echo -e "	  Please refer to the user manual for more information." >>$OUTPUT_FILE
-	echo -e "	  \"proto\" can be one of the following:" >>$OUTPUT_FILE
-	echo -e "	    - raw - raw ethernet protocol" >>$OUTPUT_FILE
-	echo -e "	    - udp - UDP protocol" >>$OUTPUT_FILE
-	echo -e "	  \"tx\"  defines the transmission constant delay (ps)" >>$OUTPUT_FILE
-	echo -e "	  \"rx\"  defines the reception constant delay (ps) " >>$OUTPUT_FILE
-	echo -e "	  \"prof\" (profile) can be one of the following:" >>$OUTPUT_FILE
-	echo -e "	    - WR - use White Rabbit (default)" >>$OUTPUT_FILE
-	echo -e "	    - HA - use High accuracy profile" >>$OUTPUT_FILE
-	echo -e "	    - none - no extension on this port" >>$OUTPUT_FILE
-	echo -e "	  \"dm\" (delay mechanism) can be one of the following:" >>$OUTPUT_FILE
-	echo -e "	    - e2e - end to end (default)" >>$OUTPUT_FILE
-	echo -e "	    - p2p - peer to peer" >>$OUTPUT_FILE
-	echo -e "	  \"monitor\" option to disable (\"n\") or enable (\"y\") triggering errors in SNMP on a port; \"y\" by default" >>$OUTPUT_FILE
 
+	echo -e "\nchoice" >>$OUTPUT_FILE
+	echo -e "    prompt \"Network protocol\"" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_PROTOCOL_RAW" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_PROTOCOL_RAW" >>$OUTPUT_FILE
+	echo -e "        bool \"IEEE 802.3\"" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_PROTOCOL_UDP_IPV4" >>$OUTPUT_FILE
+	echo -e "        bool \"UDP/Ipv4\"" >>$OUTPUT_FILE
+	echo -e "endchoice" >>$OUTPUT_FILE
+
+	echo -e "\nchoice" >>$OUTPUT_FILE
+	echo -e "    prompt \"Delay mechanism\"" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_MECHANISM_E2E" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_MECHANISM_E2E" >>$OUTPUT_FILE
+	echo -e "        bool \"End-to-end\"" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_MECHANISM_P2P" >>$OUTPUT_FILE
+	echo -e "        bool \"Peer-to-peer\"" >>$OUTPUT_FILE
+	echo -e "endchoice" >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_INST${2}_MONITOR" >>$OUTPUT_FILE
+	echo -e "	bool \"SNMP monitoring\"" >>$OUTPUT_FILE
+	echo -e "	default y" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  Option to disable or enable triggering errors in SNMP on a port" >>$OUTPUT_FILE
+	
+	echo -e "\nchoice" >>$OUTPUT_FILE
+	echo -e "    prompt \"Profile\"" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_PROFILE_HA" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_PROFILE_PTP" >>$OUTPUT_FILE
+	echo -e "        bool \"PTP\"" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_PROFILE_WR" >>$OUTPUT_FILE
+	echo -e "        bool \"WhiteRabbit\"" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_PROFILE_HA" >>$OUTPUT_FILE
+	echo -e "        bool \"HighAccuracy\"" >>$OUTPUT_FILE
+	echo -e "    config PORT${1}_INST${2}_PROFILE_CUSTOM" >>$OUTPUT_FILE
+	echo -e "        bool \"Custom\"" >>$OUTPUT_FILE
+	echo -e "endchoice" >>$OUTPUT_FILE
+	
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "    prompt \"Desired state\"" >>$OUTPUT_FILE
 	echo -e "    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED" >>$OUTPUT_FILE
@@ -125,6 +148,14 @@ function print_instance_header() {
 	echo -e "        bool \"Passive\"" >>$OUTPUT_FILE
 	echo -e "endchoice" >>$OUTPUT_FILE
 	
+	echo -e "\nconfig PORT${1}_INST${2}_ASYMMETRY_CORRECTION_ENABLE" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_HA=\"n\" " >>$OUTPUT_FILE
+	echo -e "    bool \"asymmetryCorrectionPortDS.enable\"" >>$OUTPUT_FILE
+	echo -e "    default true" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  When supported, the value TRUE shall indicate that the mechanism of for the calculation" >>$OUTPUT_FILE
+	echo -e "	  of the <delayAsymmetry> for certain media is enabled on the PTP port." >>$OUTPUT_FILE
+	
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "    prompt \"BMCA mode\"" >>$OUTPUT_FILE
 	echo -e "    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y" >>$OUTPUT_FILE
@@ -136,8 +167,22 @@ function print_instance_header() {
 	echo -e "        bool \"Auto\"" >>$OUTPUT_FILE
 	echo -e "endchoice" >>$OUTPUT_FILE
 	
+	echo -e "\nconfig PORT${1}_INST${2}_EGRESS_LATENCY" >>$OUTPUT_FILE
+	echo -e "    depends on PORT${1}_INST${2}_PROFILE_WR!=y" >>$OUTPUT_FILE
+	echo -e "    int \"timestampCorrectionPortDS.egressLatency (ps)\"" >>$OUTPUT_FILE
+	echo -e "    default ${tx}" >>$OUTPUT_FILE
+	echo -e " help" >>$OUTPUT_FILE
+	echo -e "	 Defines the transmission constant delay (ps)" >>$OUTPUT_FILE
+		
+	echo -e "\nconfig PORT${1}_INST${2}_INGRESS_LATENCY" >>$OUTPUT_FILE
+	echo -e "    depends on PORT${1}_INST${2}_PROFILE_WR!=y" >>$OUTPUT_FILE
+	echo -e "    int \"timestampCorrectionPortDS.ingressLatency (ps)\"" >>$OUTPUT_FILE
+	echo -e "    default ${rx}" >>$OUTPUT_FILE
+	echo -e " help" >>$OUTPUT_FILE
+	echo -e "	 Defines the reception constant delay (ps)" >>$OUTPUT_FILE
+		
 	echo -e "\nconfig PORT${1}_INST${2}_ANNOUNCE_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"announce-interval\" " >>$OUTPUT_FILE
+	echo -e "	int \"logAnnounceInterval\" " >>$OUTPUT_FILE
 	echo -e "	default 1" >>$OUTPUT_FILE
 	echo -e "	range 0 4" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -146,18 +191,18 @@ function print_instance_header() {
 	echo -e "	  The configurable range shall be 0 to 4." >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${1}_INST${2}_ANNOUNCE_RECEIPT_TIMEOUT" >>$OUTPUT_FILE
-	echo -e "	int \"announce-receipt-timeout\"" >>$OUTPUT_FILE
+	echo -e "	int \"announceReceiptTimeout\"" >>$OUTPUT_FILE
 	echo -e "	default 3" >>$OUTPUT_FILE
 	echo -e "	range 2 255" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
-	echo -e "	  The announe receipt timeout specifies the number of announceIntervals " >>$OUTPUT_FILE
+	echo -e "	  The announceReceiptTimeout specifies the number of announceIntervals " >>$OUTPUT_FILE
 	echo -e "	  that must pass without receipt of an Announce message before the " >>$OUTPUT_FILE
 	echo -e "	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES." >>$OUTPUT_FILE
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 2 to 255" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${1}_INST${2}_SYNC_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"sync-interval\"" >>$OUTPUT_FILE
+	echo -e "	int \"logSyncInterval\"" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range -1 1" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -167,27 +212,38 @@ function print_instance_header() {
 	echo -e "	  The configurable range shall be -1 to +1" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${1}_INST${2}_MIN_DELAY_REQ_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"min-delay-req-interval\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_MECHANISM_E2E  " >>$OUTPUT_FILE
+	echo -e "	int \"minDelayRequestInterval\"" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range 0 5" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
-	echo -e "	  The min delay request interval specifies the minimum permitted" >>$OUTPUT_FILE
+	echo -e "	  The minDelayRequestInterval specifies the minimum permitted" >>$OUTPUT_FILE
 	echo -e "	  mean time interval between successive Delay_Req messages." >>$OUTPUT_FILE
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 0 to 5" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${1}_INST${2}_MIN_PDELAY_REQ_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"min-pdelay-req-interval\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_MECHANISM_P2P  " >>$OUTPUT_FILE
+	echo -e "	int \"minPDelayRequestInterval\"" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range 0 5" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
-	echo -e "	  The min delay request interval specifies the minimum permitted" >>$OUTPUT_FILE
+	echo -e "	  The minPDelayRequestInterval specifies the minimum permitted" >>$OUTPUT_FILE
 	echo -e "	  mean time interval between successive Pdelay_Req messages." >>$OUTPUT_FILE
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 0 to 5" >>$OUTPUT_FILE
 		
+	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_ENABLED" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_CUSTOM  " >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.L1SyncEnabled\"" >>$OUTPUT_FILE
+	echo -e "	default y" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If" >>$OUTPUT_FILE
+	echo -e "	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled" >>$OUTPUT_FILE
+
 	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"l1sync-interval\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_HA || (PORT${1}_INST${2}_PROFILE_CUSTOM &&  PORT${1}_INST${2}_L1SYNC_ENABLED=\"y\") " >>$OUTPUT_FILE
+	echo -e "	int \"L1SyncBasicPortDS.logL1SyncInterval\"" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range -4 4" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -197,7 +253,8 @@ function print_instance_header() {
 	echo -e "	  The configurable range shall be -4 to 4" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_RECEIPT_TIMEOUT" >>$OUTPUT_FILE
-	echo -e "	int \"l1sync-receipt-timeout\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_HA || (PORT${1}_INST${2}_PROFILE_CUSTOM &&  PORT${1}_INST${2}_L1SYNC_ENABLED=\"y\") " >>$OUTPUT_FILE
+	echo -e "	int \"L1SyncBasicPortDS.L1SyncReceiptTimeout\"" >>$OUTPUT_FILE
 	echo -e "	default 3" >>$OUTPUT_FILE
 	echo -e "	range 2 10" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -206,7 +263,41 @@ function print_instance_header() {
 	echo -e "	  before the L1_SYNC TLV reception timeout occurs." >>$OUTPUT_FILE
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 2 to 10" >>$OUTPUT_FILE
-		
+	
+	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_TX_COHERENCY_IS_REQUIRED" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_CUSTOM &&  PORT${1}_INST${2}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.txCoherencyIsRequired\"" >>$OUTPUT_FILE
+	echo -e "	default y" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the" >>$OUTPUT_FILE
+	echo -e "	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is" >>$OUTPUT_FILE
+	echo -e "	   required to be a transmit coherent port." >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_RX_COHERENCY_IS_REQUIRED" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_CUSTOM &&  PORT${1}_INST${2}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.rxCoherencyIsRequired\"" >>$OUTPUT_FILE
+	echo -e "	default y" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the" >>$OUTPUT_FILE
+	echo -e "	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is" >>$OUTPUT_FILE
+	echo -e "	  required to be a receive coherent port." >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_CONGRUENCY_IS_REQUIRED" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_CUSTOM &&  PORT${1}_INST${2}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.congruencyIsRequired\"" >>$OUTPUT_FILE
+	echo -e "	default y" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected" >>$OUTPUT_FILE
+	echo -e "	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to" >>$OUTPUT_FILE
+	echo -e "	  be a congruent port" >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_OPT_PARAMS_ENABLED" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_PROFILE_CUSTOM &&  PORT${1}_INST${2}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.optParamsEnabled\"" >>$OUTPUT_FILE
+	echo -e "	default n" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC" >>$OUTPUT_FILE
+	echo -e "	  TLV extends this TLV with the information about the optional parameters." >>$OUTPUT_FILE
 }
 
 function print_instance_footer() { 

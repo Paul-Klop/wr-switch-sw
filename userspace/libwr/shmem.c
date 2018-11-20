@@ -216,7 +216,7 @@ void *wrs_shm_follow(struct wrs_shm_head *head, void *ptr)
 
 /* Before and after writing a chunk of data, act on sequence and stamp */
 void wrs_shm_write_caller(struct wrs_shm_head *head, int flags,
-			  const char *caller)
+			  const char *caller, int line)
 {
 	char *msg = "Wrong parameter";
 
@@ -236,24 +236,33 @@ void wrs_shm_write_caller(struct wrs_shm_head *head, int flags,
 	head->sequence += 2;
 	if (flags == WRS_SHM_WRITE_BEGIN) {
 		if (head->sequence & WRS_SHM_LOCK_MASK)
-			pr_error("Trying to lock already locked shmem on the "
-				 "write end! Sequence number is %d. The caller"
-				 " of wrs_shm_write is %s\n",
-				 head->sequence, caller);
+			pr_error("Trying to lock already locked shmem! "
+				 "The sequence number is %d. The current "
+				 "caller of wrs_shm_write is %s (line %d), "
+				 "previous caller %s (line %d)\n",
+				 head->sequence, caller, line,
+				 head->last_write_caller,
+				 head->last_write_line);
 		head->sequence |= WRS_SHM_LOCK_MASK;
+		head->last_write_caller = caller;
+		head->last_write_line = line;
 	}
 
 	if (flags == WRS_SHM_WRITE_END) {
 		/* At end-of-writing update the timestamp too */
 		head->stamp = get_monotonic_sec();
 		if (!(head->sequence & WRS_SHM_LOCK_MASK))
-			pr_error("Trying to unlock already unlocked shmem on "
-				 "the write begin! Sequence number is %d. The "
-				 "caller of wrs_shm_write is %s\n",
-				  head->sequence, caller);
+			pr_error("Trying to unlock already unlocked shmem! "
+				 "The sequence number is %d. The current "
+				 "caller of wrs_shm_write is %s (line %d), "
+				 "previous caller %s (line %d)\n",
+				 head->sequence, caller, line,
+				 head->last_write_caller,
+				 head->last_write_line);
 		head->sequence &= ~WRS_SHM_LOCK_MASK;
+		head->last_write_caller = caller;
+		head->last_write_line = line;
 	}
-
 	return;
 }
 

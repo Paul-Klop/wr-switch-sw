@@ -119,8 +119,7 @@ struct hal_temp_sensors {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 10 /* Version 10 because of adding sfp_dom_raw
-				has_sfp_diag and read_sfp_diag */
+#define HAL_SHMEM_VERSION 11 /* Version 11, changed wrs_shm_head */
 
 struct hal_shmem_header {
 	int nports;

@@ -125,8 +125,7 @@ struct rtu_vlan_table_entry {
 };
 
 /* This is the overall structure stored in shared memory */
-#define RTU_SHMEM_VERSION 2 /* Version 2, added filters_offset and
-			     * vlans_offset */
+#define RTU_SHMEM_VERSION 3 /* Version 3, changed wrs_shm_head */
 struct rtu_shmem_header {
 	struct rtu_filtering_entry *filters;
 	struct rtu_vlan_table_entry *vlans;

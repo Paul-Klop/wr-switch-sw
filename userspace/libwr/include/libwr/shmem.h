@@ -35,6 +35,9 @@ struct wrs_shm_head {
 	unsigned sequence;	/* If we need consistency, this is it. LSB bit
 				 * informs whether shmem is locked already */
 	unsigned version;	/* Version of the data structure */
+	const char *last_write_caller; /* Function of the last wrs_shm_write
+				 * call */
+	int last_write_line;	/* Line of the last wrs_shm_write call */
 	unsigned data_size;	/* Size of it (for binary dumps) */
 };
 
@@ -81,11 +84,11 @@ void *wrs_shm_follow(struct wrs_shm_head *head, void *ptr);
 #define WRS_SHM_WRITE_BEGIN	1
 #define WRS_SHM_WRITE_END	0
 
-/* A helper to pass the name of caller function */
+/* A helper to pass the name of a caller function and a line of the call */
 #define wrs_shm_write(headptr, flags) wrs_shm_write_caller(headptr, flags, \
-							   __func__)
+							   __func__, __LINE__)
 extern void wrs_shm_write_caller(struct wrs_shm_head *head, int flags,
-				 const char *caller);
+				 const char *caller, int line);
 
 /* A reader can rely on the sequence number (in the <linux/seqlock.h> way) */
 extern unsigned wrs_shm_seqbegin(struct wrs_shm_head *head);

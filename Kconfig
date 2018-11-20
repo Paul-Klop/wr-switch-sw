@@ -976,6 +976,12 @@ config NIC_THROTTLING_VAL
 
 endmenu
 
+config PPS_IN_TERM_50OHM
+	bool "Enable 50ohm termination for 1-PPS input"
+	default n
+	help
+	  Enable 50ohm termination for 1-PPS input.
+
 menu "Custom boot script configuration"
 config CUSTOM_BOOT_SCRIPT_ENABLED
 	bool "Execute custom script"

@@ -972,6 +972,9 @@ appropriate way, before the respective service is started.
 	@t{CONFIG_NIC_THROTTLING_VAL} contains maximum allowed bandwidth
 	in KB/s.
 
+@item CONFIG_PPS_IN_TERM_50OHM
+	Enable 50ohm termination for 1-PPS input.
+
 @item CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
 @itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
 @itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
@@ -1853,11 +1856,17 @@ The following tools and scripts are provided:
         (This is probably the most important diagnostic tool on the switch.)
 
 @item wrs_pps_control
-        A tool to switch the PPS output on and off. Usage: ``@t{wrs_pps_control
-        on}'' switches the PPS output on, and ``@t{wrs_pps_control off}''
-        switches the PPS output off. Switching the output on/off is independent
+        A tool to switch the PPS output on and off or reads its setting.
+        It can also on/off/read the 50ohm termination for 1-PPS input.
+        Usage: ``@t{wrs_pps_control pps on}'' switches the PPS output on,
+        ``@t{wrs_pps_control pps off}'' switches the PPS output off, and
+        ``@t{wrs_pps_control pps read}'' check whether PPS output is set to
+        on or off. Switching the output on/off is independent
         of the PPSi process, but PPSi switches the PPS output back on when a
         link restart is detected and PPSi comes into @t{'TRACK_PHASE'} state.
+        To on/off/read the 50ohm termination for 1-PPS input use
+        @t{wrs_pps_control} with a parameter @t{50ohm-term-in} followed by
+        @t{on}, @t{off} or @t{read}.
 
 @item wr_date
 

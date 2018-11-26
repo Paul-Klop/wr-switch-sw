@@ -9,6 +9,16 @@ This patch has been ported from 2.6.39.
 
 Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
 Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+
+OPNT NC 2-10-2018: Changed the timing parameters again. It seems a shorter ncs_xx_setup than the read or write
+setup times means the read and write pulses get shorter! Solution: Keep all the setup times equal and 
+set the pulses to 3 cycles (=22.5ns).
+
+Measurements show that in the original patch the read & write pulses where 15ns which is too short for
+the 1GB replacement NAND flash. Besides that the pulses where shorter than expected (15ns instead of 30ns)
+
+This patch has been engineered so it allows changing all parameters without creating a new patch.
+
 ---
  arch/arm/mach-at91/board-sam9m10g45ek.c | 14 +++++++-------
  1 file changed, 7 insertions(+), 7 deletions(-)
@@ -17,7 +27,7 @@ diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-
 index ebd8ebd..5686a87 100644
 --- a/arch/arm/mach-at91/board-sam9m10g45ek.c
 +++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
-@@ -187,21 +187,21 @@ static struct atmel_nand_data __initdata ek_nand_data = {
+@@ -187,21 +187,21 @@
  };
  
  static struct sam9_smc_config __initdata ek_nand_smc_config = {
@@ -26,26 +36,28 @@ index ebd8ebd..5686a87 100644
 -	.ncs_write_setup	= 0,
 -	.nwe_setup		= 2,
 +	.ncs_read_setup		= 2,
-+	.nrd_setup		= 4,
++	.nrd_setup		= 2,
 +	.ncs_write_setup	= 2,
-+	.nwe_setup		= 4,
++	.nwe_setup		= 2,
  
- 	.ncs_read_pulse		= 4,
- 	.nrd_pulse		= 4,
- 	.ncs_write_pulse	= 4,
- 	.nwe_pulse		= 4,
+-	.ncs_read_pulse		= 4,
+-	.nrd_pulse		= 4,
+-	.ncs_write_pulse	= 4,
+-	.nwe_pulse		= 4,
++	.ncs_read_pulse		= 3,
++	.nrd_pulse		= 3,
++	.ncs_write_pulse	= 3,
++	.nwe_pulse		= 3,
  
 -	.read_cycle		= 7,
 -	.write_cycle		= 7,
-+	.read_cycle		= 12,
-+	.write_cycle		= 12,
++	.read_cycle		= 9,
++	.write_cycle		= 9,
  
  	.mode			= AT91_SMC_READMODE | AT91_SMC_WRITEMODE | AT91_SMC_EXNWMODE_DISABLE,
 -	.tdf_cycles		= 3,
-+	.tdf_cycles		= 4,
++	.tdf_cycles		= 3,
  };
  
  static void __init ek_add_device_nand(void)
--- 
-2.7.4
 

@@ -1,0 +1,48 @@
+--- barebox-2014.04.0/drivers/mtd/devices/mtd_dataflash.c.orig	2018-06-28 14:39:56.000000000 +0200
++++ barebox-2014.04.0/drivers/mtd/devices/mtd_dataflash.c	2018-07-02 20:12:56.776148110 +0200
+@@ -798,6 +798,27 @@
+ 	return ERR_PTR(-ENODEV);
+ }
+ 
++
++
++int adjust_page_size(struct spi_device *spi)
++{
++	int			tmp;
++	uint8_t			cmd_264b_per_page[]={0x3D, 0x2A, 0x80, 0xA7};
++
++	uint8_t			dummy[5];
++
++	//Send command
++	tmp = spi_write_then_read(spi, cmd_264b_per_page, sizeof(cmd_264b_per_page), dummy, 0);
++	if (tmp < 0) {
++		pr_debug("%s: error %d setting 264b per pageD\n",
++			dev_name(&spi->dev), tmp);
++		return ERR_PTR(tmp);
++	}
++
++	return dataflash_waitready(spi);
++}
++
++
+ /*
+  * Detect and initialize DataFlash device, using JEDEC IDs on newer chips
+  * or else the ID code embedded in the status bits:
+@@ -828,6 +849,17 @@
+ 	 */
+ 	info = jedec_probe(spi);
+ 
++
++	if ((info->flags &  IS_POW2PS) !=0)
++		{
++		//NC: Hack to always have dataflash which is 264 pages for the SCB board
++		printk("Adjusting page size for %s\n", info->name);
++		adjust_page_size(spi);
++		}
++
++	//Re-probe to get the final device state
++	info = jedec_probe(spi);
++
+ 	pr_debug("MTD: %s 0x%08x %d %d %d %x\n",
+ 	info->name,info->jedec_id,
+ 	info->nr_pages,info->pagesize,info->pageoffset,info->flags);

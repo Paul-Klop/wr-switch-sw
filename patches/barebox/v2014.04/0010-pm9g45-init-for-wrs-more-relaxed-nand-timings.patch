@@ -4,6 +4,16 @@ Date: Mon, 28 Jul 2014 18:28:25 +0200
 Subject: [PATCH 10/12] pm9g45/init (for wrs): more relaxed nand timings
 
 Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+
+OPNT NC 2-10-2018: Changed the timing parameters again. It seems a shorter ncs_xx_setup than the read or write
+setup times means the read and write pulses get shorter! Solution: Keep all the setup times equal and 
+set the pulses to 3 cycles (=22.5ns).
+
+Measurements show that in the original patch the read & write pulses where 15ns which is too short for
+the 1GB replacement NAND flash. Besides that the pulses where shorter than expected (15ns instead of 30ns)
+
+This patch has been engineered so it allows changing all parameters without creating a new patch.
+
 ---
  arch/arm/boards/pm9g45/init.c |   22 +++++++++++-----------
  1 files changed, 11 insertions(+), 11 deletions(-)
@@ -12,7 +22,7 @@ diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
 index d4cea02..6d8f677 100644
 --- a/arch/arm/boards/pm9g45/init.c
 +++ b/arch/arm/boards/pm9g45/init.c
-@@ -72,21 +72,21 @@ static struct atmel_nand_data nand_pdata = {
+@@ -72,18 +72,18 @@
  };
  
  static struct sam9_smc_config pm_nand_smc_config = {
@@ -20,31 +30,25 @@ index d4cea02..6d8f677 100644
 -	.nrd_setup		= 1,
 -	.ncs_write_setup	= 0,
 -	.nwe_setup		= 1,
--
++	.ncs_read_setup		= 2,
++	.nrd_setup		= 2,
++	.ncs_write_setup	= 2,
++	.nwe_setup		= 2,
+ 
 -	.ncs_read_pulse		= 2,
 -	.nrd_pulse		= 3,
 -	.ncs_write_pulse	= 3,
-+	.ncs_read_setup		= 2,
-+	.nrd_setup		= 4,
-+	.ncs_write_setup	= 2,
-+	.nwe_setup		= 4,
-+
-+	.ncs_read_pulse		= 4,
-+	.nrd_pulse		= 4,
-+	.ncs_write_pulse	= 4,
- 	.nwe_pulse		= 4,
+-	.nwe_pulse		= 4,
++	.ncs_read_pulse		= 3,
++	.nrd_pulse		= 3,
++	.ncs_write_pulse	= 3,
++	.nwe_pulse		= 3,
  
 -	.read_cycle		= 4,
 -	.write_cycle		= 7,
-+	.read_cycle		= 12,
-+	.write_cycle		= 12,
++	.read_cycle		= 9,
++	.write_cycle		= 9,
  
  	.mode			= AT91_SMC_READMODE | AT91_SMC_WRITEMODE | AT91_SMC_EXNWMODE_DISABLE,
--	.tdf_cycles		= 3,
-+	.tdf_cycles		= 4,
- };
- 
- static void pm_add_device_nand(void)
--- 
-1.7.7.2
+ 	.tdf_cycles		= 3,
 

@@ -28,7 +28,9 @@ fi
 
 # Not installing: assume we have ubi in place: attach and mount it now,
 # either it is used for booting, or an interactive user can see it
-addpart /dev/nand0 511M@1M(ubi-nand)
+# OPNT NC: set partition size to 0 so addpart will use what is remaining. This
+# is necessary to use different sizes of NAND flash (at the moment 512MB and 1024MB)
+addpart /dev/nand0 0@1M(ubi-nand)
 ubiattach /dev/nand0.ubi-nand
 mkdir /boot
 mount /dev/ubi0.boot /boot

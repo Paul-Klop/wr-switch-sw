@@ -1,0 +1,24 @@
+--- a/drivers/mtd/nand/nand_base.c.orig	2018-06-28 14:31:09.000000000 +0200
++++ b/drivers/mtd/nand/nand_base.c	2018-06-28 14:34:18.801655500 +0200
+@@ -3883,9 +3883,18 @@
+ 			ecc->layout = &nand_oob_128;
+ 			break;
+ 		default:
+-			pr_warn("No oob scheme defined for oobsize %d\n",
+-				   mtd->oobsize);
+-			BUG();
++			pr_warn("No oob scheme defined for oobsize %d\n", mtd->oobsize);
++			if (mtd->oobsize>128)
++				{
++				//OPNT NC: Force OOB size to 128 because there is no layout for an OOB size of 224
++				mtd->oobsize=128;
++				pr_warn("Forcing oobsize to %d\n", mtd->oobsize);
++				ecc->layout = &nand_oob_128;
++				}
++			else
++				{
++				BUG();
++				}
+ 		}
+ 	}
+ 

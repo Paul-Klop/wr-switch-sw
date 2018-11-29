@@ -298,6 +298,15 @@ function print_instance_header() {
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC" >>$OUTPUT_FILE
 	echo -e "	  TLV extends this TLV with the information about the optional parameters." >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${1}_INST${2}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${1}_INST${2}_L1SYNC_OPT_PARAMS_ENABLED=\"y\" " >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.timestampsCorrectedTx\"" >>$OUTPUT_FILE
+	echo -e "	default n" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, " >>$OUTPUT_FILE
+	echo -e "	  the L1Sync port shall correct the transmitted egress timestamps with " >>$OUTPUT_FILE
+	echo -e "	  the known value of the phase offset." >>$OUTPUT_FILE
 }
 
 function print_instance_footer() { 

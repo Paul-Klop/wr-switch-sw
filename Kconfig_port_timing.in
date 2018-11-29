@@ -242,6 +242,15 @@ config PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -447,6 +456,15 @@ config PORT01_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT01_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT01_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -687,6 +705,15 @@ config PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -891,6 +918,15 @@ config PORT02_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT02_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT02_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -1131,6 +1167,15 @@ config PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -1335,6 +1380,15 @@ config PORT03_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT03_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT03_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -1575,6 +1629,15 @@ config PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -1779,6 +1842,15 @@ config PORT04_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT04_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT04_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -2019,6 +2091,15 @@ config PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -2223,6 +2304,15 @@ config PORT05_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT05_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT05_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -2463,6 +2553,15 @@ config PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -2667,6 +2766,15 @@ config PORT06_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT06_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT06_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -2907,6 +3015,15 @@ config PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -3111,6 +3228,15 @@ config PORT07_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT07_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT07_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -3351,6 +3477,15 @@ config PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -3555,6 +3690,15 @@ config PORT08_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT08_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT08_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -3795,6 +3939,15 @@ config PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -3999,6 +4152,15 @@ config PORT09_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT09_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT09_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -4239,6 +4401,15 @@ config PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -4443,6 +4614,15 @@ config PORT10_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT10_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT10_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -4683,6 +4863,15 @@ config PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -4887,6 +5076,15 @@ config PORT11_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT11_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT11_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -5127,6 +5325,15 @@ config PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -5331,6 +5538,15 @@ config PORT12_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT12_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT12_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -5571,6 +5787,15 @@ config PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -5775,6 +6000,15 @@ config PORT13_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT13_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT13_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -6015,6 +6249,15 @@ config PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -6219,6 +6462,15 @@ config PORT14_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT14_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT14_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -6459,6 +6711,15 @@ config PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -6663,6 +6924,15 @@ config PORT15_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT15_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT15_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -6903,6 +7173,15 @@ config PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -7107,6 +7386,15 @@ config PORT16_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT16_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT16_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -7347,6 +7635,15 @@ config PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -7551,6 +7848,15 @@ config PORT17_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT17_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT17_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 
@@ -7791,6 +8097,15 @@ config PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
+
 endmenu
 
 menu "Instance 2"
@@ -7995,6 +8310,15 @@ config PORT18_INST02_L1SYNC_OPT_PARAMS_ENABLED
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
+
+config PORT18_INST02_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+	depends on PORT18_INST02_L1SYNC_OPT_PARAMS_ENABLED="y" 
+	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
+	default n
+	help
+	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE, 
+	  the L1Sync port shall correct the transmitted egress timestamps with 
+	  the known value of the phase offset.
 
 endmenu
 

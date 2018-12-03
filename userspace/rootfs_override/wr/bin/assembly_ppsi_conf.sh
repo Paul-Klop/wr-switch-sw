@@ -361,7 +361,7 @@ function build_inst_ppsi_keys() {
 }
 
 
-globals_indexes='clock-class clock-accuracy clock-allan-variance domain-number priority1 priority2 time-source externalPortConfigurationEnabled'
+globals_indexes='clock-class clock-accuracy clock-allan-variance domain-number priority1 priority2 time-source externalPortConfigurationEnabled slaveOnly'
 globals_not_yet_supported='time-source'
 
 # PHYSICAL PORT PARAMETERS
@@ -458,6 +458,14 @@ fi
 
 if [ -n "$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED" ]; then
 	globals[externalPortConfigurationEnabled]="$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED"
+else
+	globals[externalPortConfigurationEnabled]="n"
+fi 
+
+if [ -n "$CONFIG_PTP_SLAVE_ONLY" ] && [ "${globals[externalPortConfigurationEnabled]}" = "n" ]; then
+	globals[slaveOnly]="$CONFIG_PTP_SLAVE_ONLY"
+else
+	globals[slaveOnly]="n"
 fi
 
 for i_port in {01..18}; do # scan all the physical ports

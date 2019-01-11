@@ -17,6 +17,7 @@
 #include <libwr/util.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
+#include "time_lib.h"
 
 /*  be safe, in case some other header had them slightly differently */
 #undef container_of
@@ -100,6 +101,7 @@ void decode_relative_difference(RelativeDifference rd, int32_t *nsecs, uint64_t 
 void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 {
 	void *p = addr + info->offset;
+	char buf[128];
 	struct pp_time *t = p;
 	RelativeDifference *rd=p;
 	Timestamp *ts=p;
@@ -107,7 +109,6 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
-	uint64_t sec, nano, pico, femto;
 	int i;
 	char pname[128];
 
@@ -185,71 +186,20 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%i\n", *(short *)p);
 		break;
 
-#define TIME_FRACBITS 16
-#define TIME_FRACMASK 0xFFFF
-#define TIME_SIGNMASK 0x8000000000000000
-
 	case dump_type_time:
-	{
-		char sign='+';
-		uint64_t scaled_nsecs=t->scaled_nsecs;
-		int64_t secs=t->secs;
-
-		if ( (scaled_nsecs & TIME_SIGNMASK) || secs<0) {
-			sign='-';
-			scaled_nsecs= ~scaled_nsecs+1;
-			secs=-secs;
-		}
-		nano = scaled_nsecs >> TIME_FRACBITS;
-		femto = scaled_nsecs & TIME_FRACMASK;
-		femto = (femto * 1000 * 1000 ) >> TIME_FRACBITS;
-		pico= (femto/1000);
-		if ((femto % 1000)>500) {
-			pico++; // rounding
-		}
-		printf("correct=%i, value=%10c%lli.%09"PRIu64".%03"PRIu64"\n",
-		       !is_incorrect(t),sign, t->secs, nano,pico);
-	}
+		printf("%s\n",timeToString(t,buf));
 		break;
 
 	case dump_type_Timestamp:
-		sec=(ts->secondsField.msb << sizeof(ts->secondsField.msb)) + ts->secondsField.lsb;
-		printf("%10"PRIu64".%09"PRIu32".000\n",
-				sec, (uint32_t)ts->nanosecondsField);
+		printf("%s\n",timestampToString(ts,buf));
 		break;
 
-#define TIME_INTERVAL_FRACBITS 16
-#define TIME_INTERVAL_FRACMASK 0xFFFF
-#define TIME_INTERVAL_SIGNMASK 0x8000000000000000
-
 	case dump_type_TimeInterval:
-	{
-		char sign='+';
-		uint64_t scaled_nsecs=*ti;
-
-		if ( scaled_nsecs & TIME_INTERVAL_SIGNMASK) {
-			sign='-';
-			scaled_nsecs= ~scaled_nsecs+1;
-		}
-		nano = scaled_nsecs >> TIME_INTERVAL_FRACBITS;
-		femto = scaled_nsecs & TIME_INTERVAL_FRACMASK;
-		femto = (femto * 1000 * 1000 ) >> TIME_INTERVAL_FRACBITS;
-		pico= (femto/1000);
-		if ((femto % 1000)>500) {
-			pico++; // rounding
-		}
-		printf("%10c%"PRId64".%03"PRIu64"\n", sign,nano,pico);
-	}
+		printf("%s\n",timeIntervalToString(*ti,buf));
 		break;
 
 	case dump_type_RelativeDifference:
-	{
-	    int32_t nsecs;
-		uint64_t sub_yocto;
-
-		decode_relative_difference(*rd, &nsecs, &sub_yocto);
-		printf("%"PRId32".%018"PRIu64"\n", nsecs, sub_yocto);
-	}
+		printf("%s\n",relativeDifferenceToString(*rd,buf));
 		break;
 	case dump_type_ip_address:
 		for (i = 0; i < 4; i++)

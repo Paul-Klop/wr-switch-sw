@@ -17,6 +17,7 @@
 #include <signal.h>
 
 #include "term.h"
+#include <time_lib.h>
 
 #define PTP_EXPORT_STRUCTURES
 #include "ptpd_exports.h"
@@ -198,40 +199,6 @@ int64_t pp_time_to_picos(struct pp_time *ts)
 {
 	return ts->secs * PP_NSEC_PER_SEC
 		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
-}
-
-static double pp_time_to_double (struct pp_time *ts) {
-	return (double) (ts->secs * PP_NSEC_PER_SEC
-		+ (ts->scaled_nsecs >> TIME_INTERVAL_FRACBITS));
-
-}
-
-static double interval_to_double (TimeInterval interval) {
-	  double f ;
-	  int neg = interval<0;
-
-	  if(neg) interval= ~interval+1;
-	  f= (double)interval/(double)(1LL<<TIME_INTERVAL_FRACBITS);
-	  return  neg ? -f : f;
-}
-
-#define REL_DIFF_FRACBITS 62
-#define REL_DIFF_FRACMASK 0x3fffffffffffffff
-
-/* We cannot use double for calculation as it is less precise than the RelativeDifference type */
-void decode_relative_difference(RelativeDifference rd, int32_t *nsecs, uint64_t *sub_yocto) {
-    int64_t fraction;
-	uint64_t bitWeight=500000000000000000;
-	uint64_t mask;
-
-	*sub_yocto=0;
-	*nsecs = (int32_t)(rd >> REL_DIFF_FRACBITS);
-    fraction=(int64_t)rd & REL_DIFF_FRACMASK;
-	for (mask=(uint64_t) 1<< (REL_DIFF_FRACBITS-1);mask!=0; mask>>=1 ) {
-		if ( mask & fraction )
-			*sub_yocto+=bitWeight;
-		bitWeight/=2;
-	}
 }
 
 static double alpha_to_double(int32_t alpha) {
@@ -753,8 +720,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 {
 
 	struct wr_servo_state * wr_servo;
-	int32_t nsecs;
-	uint64_t sub_yocto;
+	char buf[128];
 	struct l1e_servo_state * l1e_servo;
 	int proto_extension=servo->ppi->protocol_extension;
 	struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
@@ -800,10 +766,10 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		term_cprintf(C_CYAN, "\n +- Timing parameters ---------------------------------------------------------\n");
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "meanDelay        : ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n", interval_to_double(servo->meanDelay) );
+		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString(servo->meanDelay,buf) );
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMS          : ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",	pp_time_to_double(&servo->servo_snapshot.delayMS));
+		term_cprintf(C_WHITE, "%16s sec\n",timeToString(&servo->servo_snapshot.delayMS,buf));
 
 		//term_cprintf(C_BLUE, "Estimated link length:     ");
 		/* (RTT - deltas) / 2 * c / ri
@@ -817,21 +783,20 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayAsymmetry   : ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->delayAsymmetry));
+		term_cprintf(C_WHITE, "%16s nsec\n",   timeIntervalToString(servo->delayAsymmetry,buf));
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "scaledDelayCoef  : ");
-		decode_relative_difference(servo->scaledDelayCoefficient, &nsecs, &sub_yocto);
-		term_cprintf(C_WHITE, "%"PRId32".%018"PRIu64" fpa(%" PRIu64 ")",  nsecs, sub_yocto, (uint64_t)servo->scaledDelayCoefficient);
+		term_cprintf(C_WHITE, "%s", relativeDifferenceToString(servo->scaledDelayCoefficient,buf));
 		if ( wr_servo ) {
 			term_cprintf(C_BLUE,  "  Fixed Alpha : ");
 			term_cprintf(C_WHITE, "%.9f fpa(%d)", alpha_to_double(wr_servo->fiber_fix_alpha), wr_servo->fiber_fix_alpha);
 		}
 		term_cprintf(C_WHITE, "\n");
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "ingressLatency   : ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->ingressLatency));
+		term_cprintf(C_WHITE, "%16s nsec\n",   timeIntervalToString(servo->ingressLatency,buf));
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "egressLatency    : ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->egressLatency));
+		term_cprintf(C_WHITE, "%16s nsec\n",   timeIntervalToString(servo->egressLatency,buf));
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "semistaticLatency: ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n",   interval_to_double(servo->semistaticLatency));
+		term_cprintf(C_WHITE, "%16s nsec\n",   timeIntervalToString(servo->semistaticLatency,buf));
 
 		/*if (0) {
 			term_cprintf(C_BLUE, "Fiber asymmetry:   ");
@@ -840,7 +805,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		}*/
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "offsetFromMaster : ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n", interval_to_double (servo->offsetFromMaster));
+		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString (servo->offsetFromMaster,buf));
 
 		if ( wr_servo ) {
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
@@ -852,13 +817,13 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 		if ( l1e_servo ) {
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
-			term_cprintf(C_WHITE, "%15.3f nsec\n",l1e_servo->cur_setpoint_ps/1000.0);
+			term_cprintf(C_WHITE, "%16.3f nsec\n",l1e_servo->cur_setpoint_ps/1000.0);
 
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
-			term_cprintf(C_WHITE, "%15.3f nsec\n",l1e_servo->skew_ps/1000.0);
+			term_cprintf(C_WHITE, "%16.3f nsec\n",l1e_servo->skew_ps/1000.0);
 		}
-		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Update counter  : ");
-		term_cprintf(C_WHITE, "%15u times\n", servo->servo_snapshot.update_count);
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Update counter   : ");
+		term_cprintf(C_WHITE, "%16u times\n", servo->servo_snapshot.update_count);
 		if (servo->servo_snapshot.update_count != pe_info->last_count) {
 			pe_info->lastt = time(NULL);
 			pe_info->last_count = servo->servo_snapshot.update_count;
@@ -888,8 +853,8 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		printf("sv:%d ", servo->servo_snapshot.flags & PP_SERVO_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", servo->servo_snapshot.servo_state_name);
 /*		printf("aux:");*/
-		printf("md:%llu ", interval_to_picos(servo->meanDelay));
-		printf("dms:%llu ", pp_time_to_picos(&servo->servo_snapshot.delayMS));
+		printf("md:%s ", timeIntervalToString(servo->meanDelay,buf));
+		printf("dms:%s ", timeToString(&servo->servo_snapshot.delayMS,buf));
 		if ( wr_servo ) {
 			int64_t crtt= wr_servo->delayMM_ps - wr_servo->delta_txm_ps -
 					wr_servo->delta_rxm_ps - wr_servo->delta_txs_ps -
@@ -913,8 +878,8 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			printf("lock:%i ", l1e_servo->tracking_enabled);
 			printf("setp:%d ", l1e_servo->cur_setpoint_ps);
 		}
-		printf("asym:%lld ", interval_to_picos(servo->delayAsymmetry));
-		printf("cko:%lld ", interval_to_picos(servo->offsetFromMaster));
+		printf("asym:%s ", timeIntervalToString(servo->delayAsymmetry,buf));
+		printf("cko:%s ", timeIntervalToString(servo->offsetFromMaster,buf));
 /*		printf("hd:");*/
 /*		printf("md:");*/
 /*		printf("ad:");*/

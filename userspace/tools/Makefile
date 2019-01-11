@@ -69,10 +69,10 @@ check:
 	$(CC) $*.o $(LDFLAGS) -o $*
 
 VPATH+=../ppsi/tools
-wrs_dump_shmem: wrs_dump_shmem.o wrs_dump_shmem_ppsi.o
+wrs_dump_shmem: wrs_dump_shmem.o wrs_dump_shmem_ppsi.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-wr_mon: wr_mon.o term.o
+wr_mon: wr_mon.o term.o  time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_management: wr_management.o term.o

@@ -29,6 +29,9 @@
 /* Address for hardware, from nic-hardware.h */
 #define FPGA_BASE_PPSG  0x10010500
 
+extern int init_module(void *module, unsigned long len, const char *options);
+extern int delete_module(const char *module, unsigned int flags);
+
 void help(char *prgname)
 {
 	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
@@ -43,6 +46,7 @@ void help(char *prgname)
 		"    get tohost      print WR time and set system time\n"
 		"    set <value>     set WR time to scalar seconds\n"
 		"    set host        set TAI from current host time\n"
+		"    stat            print statistics between TAI (WR time) and linux UTC\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
 /*		"    set ntp:<ip>    set from specified ntp server\n" */
 		, WRDATE_CFG_FILE);
@@ -216,16 +220,108 @@ int fix_host_tai(void)
 	return tai_offset;
 }
 
+#define ADJ_SEC_ITER 10
+
+static int wait_wr_adjustment(struct PPSG_WB *pps)
+{
+	int count=0;
+
+	while ((pps->CR & PPSG_CR_CNT_ADJ)==0) {
+		if ( (count++)>=ADJ_SEC_ITER ) {
+			fprintf(stderr, "%s: warning: WR time adjustment not finished after %ds !!!\n",prgname,ADJ_SEC_ITER);
+			return 0;
+		}
+		if (opt_verbose)
+			printf("WR time adjustment: waiting.\n");
+		sleep(1);
+	}
+	if (opt_verbose)
+		printf("WR time adjustment: done.\n");
+	return 1;
+}
+
+#define CLOCK_SOURCE_MODULE_NAME "wr_clocksource"
+#define CLOCK_SOURCE_MODULE_ELF  "/wr/lib/modules/" CLOCK_SOURCE_MODULE_NAME ".ko"
+
+int removeClockSourceModule(void) {
+  int ret= delete_module(CLOCK_SOURCE_MODULE_NAME, 0);
+  if ( ret<0 ) {
+		fprintf(stderr, "%s: Warning: Cannot remove module "CLOCK_SOURCE_MODULE_NAME " : error=%s\n" ,
+				prgname,
+				strerror(errno));
+		return 0;
+  }
+  if (opt_verbose) {
+	  printf("Driver module "CLOCK_SOURCE_MODULE_NAME" removed.\n");
+  }
+  return 1;
+}
+
+int installClockSourceModule(void) {
+    struct stat st;
+    void *image=NULL;
+    int fd;
+    int ret=0;
+    const char *params="";
+
+    if ((fd = open(CLOCK_SOURCE_MODULE_ELF, O_RDONLY))<0 ) {
+		fprintf(stderr, "%s: Warning: Cannot open file "CLOCK_SOURCE_MODULE_ELF " : error=%s\n" ,
+				prgname,
+				strerror(errno));
+		goto out;;
+    }
+    if ( fstat(fd, &st)<0 ) {
+		fprintf(stderr, "%s: Warning: Cannot stat file "CLOCK_SOURCE_MODULE_ELF " : error=%s\n" ,
+				prgname,
+				strerror(errno));
+		goto out;
+    }
+    if ( (image = malloc(st.st_size)) ==NULL ) {
+		fprintf(stderr, "%s: Warning: Cannot allocate memory : error=%s\n" ,
+				prgname,
+				strerror(errno));
+		goto out;
+    }
+    if ( read(fd, image, st.st_size)< 0 ) {
+		fprintf(stderr, "%s: Warning: Cannot read file "CLOCK_SOURCE_MODULE_ELF " : error=%s\n" ,
+				prgname,
+				strerror(errno));
+		goto out;
+    }
+    if (init_module(image, st.st_size, params) != 0) {
+		fprintf(stderr, "%s: Warning: Cannot init module "CLOCK_SOURCE_MODULE_NAME " : error=%s\n" ,
+				prgname,
+				strerror(errno));
+		goto out;
+    }
+    ret=1;
+
+    out:;
+    if ( fd >=0 )
+    	close(fd);
+    if ( image!=NULL)
+    	free(image);
+    return ret;
+}
+
 /* This sets WR time from host time */
-int wrdate_internal_set(struct PPSG_WB *pps)
+int __wrdate_internal_set(struct PPSG_WB *pps, int deep)
+
 {
 	struct timeval tvh, tvr; /* host, rabbit */
 	signed long long diff64;
 	signed long diff;
 	int tai_offset;
+	int modRemoved=0;
 
+	if ( deep > 4 )
+		return 0; /* Avoid stack overflow (recursive function) in case of error */
+	if ( deep==0 ) {
+		modRemoved=removeClockSourceModule(); // The driver must be removed otherwise the time cannot be set properly
+	}
 	tai_offset = fix_host_tai();
 
+	usleep(100);
 	gettimeofday(&tvh, NULL);
 	gettimeof_wr(&tvr, pps);
 
@@ -246,7 +342,7 @@ int wrdate_internal_set(struct PPSG_WB *pps)
 		fprintf(stderr, "%s: Warning: fractional second differs by"
 			"more than 0.2 (%li ms)\n", prgname, diff / 1000);
 
-	if (opt_verbose) {
+	if (opt_verbose && deep==0) {
 		printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
 		       (long)(tvh.tv_usec));
 		printf("WR   time: %9li.%06li\n", (long)(tvr.tv_sec),
@@ -263,16 +359,39 @@ int wrdate_internal_set(struct PPSG_WB *pps)
 		pps->ADJ_NSEC = 0;
 		asm("" : : : "memory"); /* barrier... */
 		pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
+		if ( wait_wr_adjustment(pps) )
+		__wrdate_internal_set(pps,deep+1); /* adjust the usecs */
 	} else {
 		if (opt_verbose)
 			printf("adjusting by %li usecs\n", diff);
 		pps->ADJ_UTCLO = 0;
 		pps->ADJ_UTCHI = 0;
-		pps->ADJ_NSEC = diff * 64 + diff / 2;
+		pps->ADJ_NSEC = (diff*1000)/16;
 		asm("" : : : "memory"); /* barrier... */
 		pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
+		wait_wr_adjustment(pps);
+	}
+
+	if ( deep==0 && modRemoved ) {
+		installClockSourceModule();
+	}
+
+	if (opt_verbose && deep==0) {
+		usleep(100);
+		gettimeofday(&tvh, NULL);
+		gettimeof_wr(&tvr, pps);
+
+		printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
+		       (long)(tvh.tv_usec));
+		printf("WR   time: %9li.%06li\n", (long)(tvr.tv_sec),
+		       (long)(tvr.tv_usec));
 	}
 	return 0;
+}
+
+/* This sets WR time from host time */
+int wrdate_internal_set(struct PPSG_WB *pps) {
+	return __wrdate_internal_set(pps,0);
 }
 
 /* Frontend to the set mechanism: parse the argument */
@@ -302,6 +421,57 @@ int wrdate_set(struct PPSG_WB *pps, char *arg)
 	printf(" FIXME\n");
 	return 0;
 }
+
+/* Print statistics between TAI and UTC dates */
+#define STAT_SAMPLE_COUNT 20
+
+int wrdate_stat(struct PPSG_WB *pps)
+{
+	int udiff_ref=0,udiff_last;
+
+	printf("Diff_TAI_UTC[sec] Diff_with_last[usec] Diff_with_ref[usec]\n");
+	while ( 1 ) {
+		int64_t udiff_arr[STAT_SAMPLE_COUNT]; // Diff in useconds
+		struct timeval tv_tai,tv_host;
+		int i;
+		int64_t udiff_sum=0, udiff;
+
+		for ( i=0; i<STAT_SAMPLE_COUNT; i++ ) {
+			int64_t *udiff_tmp=&udiff_arr[i];
+
+			// Get time
+			usleep(100); // Increase stability of measures : less preempted during time measures
+			gettimeof_wr(&tv_tai,pps);
+			gettimeofday(&tv_host, NULL);
+
+			// Calculate difference
+			*udiff_tmp=(tv_host.tv_sec-tv_tai.tv_sec)*1000000;
+			if ( tv_host.tv_usec > tv_tai.tv_usec ) {
+				*udiff_tmp+=tv_host.tv_usec-tv_tai.tv_usec;
+			} else {
+				*udiff_tmp-=tv_tai.tv_usec-tv_host.tv_usec;
+			}
+			udiff_sum+=*udiff_tmp;
+		}
+		udiff=udiff_sum/STAT_SAMPLE_COUNT;
+		if ( udiff_ref==0) {
+			udiff_ref=udiff_last=udiff;
+		}
+
+		printf("%03d.%06d %6li %6li\n",
+			   (int)(udiff/1000000),
+			   abs(udiff%1000000),
+			   (long) (udiff_last-udiff),
+			   (long) (udiff_ref-udiff)
+			   );
+		udiff_last=udiff;
+
+		sleep(1);
+	}
+
+	return 0;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -352,9 +522,15 @@ int main(int argc, char **argv)
 		return wrdate_get(pps, tohost);
 	}
 
+	if (!strcmp(cmd, "stat")) {
+		/* parse the optional "tohost" argument */
+		return wrdate_stat(pps);
+	}
+
 	/* only other command is "set", with one argument */
 	if (strcmp(cmd, "set") || optind != argc - 1)
 		help(argv[0]);
+
 
 	return wrdate_set(pps, argv[optind]);
 }

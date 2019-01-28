@@ -3,4 +3,4 @@
 	url = git://github.com/rubini/mini-rpc.git
 [submodule "userspace/ppsi"]
 	path = userspace/ppsi
-	url = git://ohwr.org/white-rabbit/ppsi.git
+	url = ../ppsi.git

@@ -1,0 +1,4 @@
+# Allow all users to be sudo
+# The assumption is that every user which is able to login can become sudo.
+# Please limit users using LDAP filter mechanism
+ALL ALL=(ALL) ALL

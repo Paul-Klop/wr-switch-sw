@@ -8,6 +8,7 @@
 #define START_CNT_SYSLOGD "/tmp/start_cnt_syslogd"
 #define START_CNT_WRSWATCHDOG "/tmp/start_cnt_wrs_watchdog"
 #define START_CNT_LLDPD "/tmp/start_cnt_lldpd"
+#define START_CNT_LDAP "/tmp/start_cnt_ldap"
 
 static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHAL),
@@ -19,6 +20,7 @@ static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntSyslogd),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntWrsWatchdog),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntLldpd),
+	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntLdap),
 };
 
 struct wrsStartCnt_s wrsStartCnt_s;
@@ -77,6 +79,7 @@ time_t wrsStartCnt_data_fill(void){
 	read_start_count(START_CNT_SYSLOGD, &wrsStartCnt_s.wrsStartCntSyslogd);
 	read_start_count(START_CNT_WRSWATCHDOG, &wrsStartCnt_s.wrsStartCntWrsWatchdog);
 	read_start_count(START_CNT_LLDPD, &wrsStartCnt_s.wrsStartCntLldpd);
+	read_start_count(START_CNT_LDAP, &wrsStartCnt_s.wrsStartCntLdap);
 
 	/* there was an update, return current time */
 	return time_update;

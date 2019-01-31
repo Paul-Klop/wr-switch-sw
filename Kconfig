@@ -170,7 +170,94 @@ config HOSTNAME_STRING
 	help
 	  Use this string as a static hostname of the switch.
 
+menu "Authorization and authentication"
+
+config ROOT_ACCESS_DISABLE
+	bool "Disable root access via ssh"
+	help
+	  Used by ssh
+
+config LDAP_ENABLE
+	bool "Enable LDAP authorization"
+	help
+	  Enable LDAP authorization. Used by ssh.
+
+config LDAP_SERVER
+	string "LDAP server"
+	depends on LDAP_ENABLE
+	help
+	  LDAP server(s) e.g. ldap://xldap.cern.ch
+
+config LDAP_SEARCH_BASE
+	string "LDAP search base"
+	depends on LDAP_ENABLE
+	help
+	  LDAP search base e.g. dc=cern,dc=ch
+
+choice
+	prompt "LDAP filter"
+	depends on LDAP_ENABLE
+	default LDAP_FILTER_NONE
+
+config LDAP_FILTER_NONE
+	bool "Don't apply filter to LDAP"
+	help
+	  Allow all LDAP users to log in.
+
+config LDAP_FILTER_EGROUP
+	bool "Apply e-group filter to LDAP"
+	help
+	  Allow logins only from an e-group defined in CONFIG_LDAP_FILTER_EGROUP_STR
+	  This option is CERN specific.
+
+config LDAP_FILTER_CUSTOM
+	bool "Apply custom filter to LDAP"
+	help
+	  Provide custom filtering string for LDAP authorization.
+
+endchoice
+
+config LDAP_FILTER_EGROUP_STR
+	string "LDAP e-group"
+ 	depends on LDAP_FILTER_EGROUP
+	help
+	  LDAP's e-group for authorization. This option is CERN specific.
+
+config LDAP_FILTER_CUSTOM_STR
+	string "LDAP access filter string"
+	depends on LDAP_FILTER_CUSTOM
+	help
+	  Custom string with a filter for LDAP authorization:
+	  (memberOf=CN=white-rabbit-switch-root,OU=e-groups,OU=Workgroups,DC=cern,DC=ch)
+
+choice
+	prompt "Authorization method"
+	depends on LDAP_ENABLE
+	default AUTH_KRB5
+
+config AUTH_LDAP
+	bool "Enable LDAP authentication"
+	depends on LDAP_ENABLE
+	help
+	  Used by ssh for authentication
+
+config AUTH_KRB5
+	bool "Enable Kerberos authentication"
+	depends on LDAP_ENABLE
+	help
+	  Used by ssh for authentication
+
+endchoice
+
+config AUTH_KRB5_SERVER
+	string "Kerberos server"
+ 	depends on AUTH_KRB5
+	help
+	  Server name of Kerberos. Usually it is in capital letters.
+	  For CERN, please use CERN.CH
+
 menu "Root Password"
+
 
 config ROOT_PWD_IS_ENCRYPTED
 	bool "Should this file include an encripted root password?"
@@ -195,11 +282,12 @@ config ROOT_PWD_CYPHER
 	depends on ROOT_PWD_IS_ENCRYPTED
 	help
 	  The actual pre-encrypted string. This is stored at run time
-	  into /etc/passwd, for ssh authenticazion. To create the
+	  into /etc/passwd, for ssh authentication. To create the
 	  string, please run "mkpasswd --method=md5 <password>"
 
 endmenu
 
+endmenu # "Authorization and authentication"
 
 config NTP_SERVER
 	string "IP address of local NTP server (empty for none)"

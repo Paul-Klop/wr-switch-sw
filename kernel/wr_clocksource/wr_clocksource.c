@@ -119,7 +119,9 @@ DEFINE_SPINLOCK(wrcs_lock);
 
 static cycle_t wrcs_read(struct clocksource *cs)
 {
-	static uint32_t offset, last, this;
+	static uint32_t offset, last, this, adjustOffset;
+	static char cntWasNeg;
+	int32_t ticksCounter;
 	unsigned long flags;
 
 	wrcs_do_stats();
@@ -133,15 +135,25 @@ static cycle_t wrcs_read(struct clocksource *cs)
 	 */
 	spin_lock_irqsave(&wrcs_lock, flags);
 
-	this = readl(&wrcs_ppsg->CNTR_NSEC);
-	if ( this > NSEC_PER_SEC ) {
-		/* it means that the value is negative and an adjustment is in progress */
-		this=0; /* We freeze then the time */
+	ticksCounter = readl(&wrcs_ppsg->CNTR_NSEC);
+	if ( (ticksCounter & 0x8000000)!=0 ) {
+		// Negative value
+		ticksCounter|= 0xF0000000;
+		if ( ! cntWasNeg ) {
+			/* Jump from positive to negative counter value */
+			adjustOffset+=-ticksCounter;
+			adjustOffset%=WRCS_FREQUENCY;
+			cntWasNeg=1;
+		}
 	} else {
-		if (this < last)
-			offset += WRCS_FREQUENCY;
-		last = this;
+		/* the counter is positive */
+		cntWasNeg=0;
 	}
+	this=(ticksCounter+adjustOffset)%WRCS_FREQUENCY;
+	if ( this < last) {
+		offset += WRCS_FREQUENCY;
+	}
+	last = this;
 	spin_unlock_irqrestore(&wrcs_lock, flags);
 	return offset + this;
 }

@@ -38,8 +38,6 @@ cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib
 rm -f $TMPFS/etc/init.d/*
 rm -f $TMPFS/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
 # remove symlink from the buildroot
-rm -rf $TMPFS/etc/dropbear
-mkdir -p $TMPFS/etc/dropbear; chown -R root:root $TMPFS/etc/dropbear
 
 cp -r $rootfs_override/* $TMPFS
 # remove leftovers from on-going edits in rootfs_override

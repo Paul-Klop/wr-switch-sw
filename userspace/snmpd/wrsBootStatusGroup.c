@@ -101,11 +101,11 @@ struct wrs_usd_item {
  * - positive exp describe exact number of expected processes
  * - negative exp describe minimum number of expected processes. Usefull for
  *   processes that is hard to predict number of their instances. For example
- *   new dropbear process is spawned at ssh login.
+ *   new sshd process is spawned at ssh login.
  */
 static struct wrs_usd_item userspace_daemons[] = {
-	[0] = {.key = "/usr/sbin/dropbear", .exp = -1}, /* expect at least one
-							 * dropbear process */
+	[0] = {.key = "/usr/sbin/sshd", .exp = -1}, /* expect at least one
+						     * sshd process */
 	[1] = {"/wr/bin/wrsw_hal", 2}, /* two wrsw_hal instances */
 	[2] = {"/wr/bin/wrsw_rtud", 1},
 	[3] = {"/wr/bin/ppsi", 1},

@@ -32,7 +32,7 @@ ROOTFS_INITRAMFS="$WRS_OUTPUT_DIR/images/wrs-initramfs.gz"
 
 cat > $TMPSCRIPT << EOF
 mkdir -p $TMPFS/wr
-cp -r $rootfs_vanilla/* $TMPFS
+cp -r --preserve=mode $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
 cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib
 rm -f $TMPFS/etc/init.d/*

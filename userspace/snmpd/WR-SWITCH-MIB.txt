@@ -27,7 +27,9 @@ wrSwitchMIB MODULE-IDENTITY
                  "
     REVISION     "201807181400Z"
     DESCRIPTION
-        "Add wrsStartCntLldpd"
+        "Add wrsStartCntLldpd
+        Add wrsPortStatusMonitor
+        "
 
     REVISION     "201602171600Z"
     DESCRIPTION
@@ -1970,7 +1972,8 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpGbE      INTEGER,
         wrsPortStatusSfpError    INTEGER,
         wrsPortStatusPtpTxFrames Counter32,
-        wrsPortStatusPtpRxFrames Counter32
+        wrsPortStatusPtpRxFrames Counter32,
+        wrsPortStatusMonitor     INTEGER
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -2106,6 +2109,18 @@ wrsPortStatusPtpRxFrames OBJECT-TYPE
             "Number of received PTP frames per port (for all PPSI instances
              running on particular port"
     ::= { wrsPortStatusEntry 14 }
+
+wrsPortStatusMonitor OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        enable(1),
+                        disable(2)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "If disable, SNMP will not generate any errors for this port."
+    ::= { wrsPortStatusEntry 15 }
 
 -- wrsPstatsHCTable (.7.7)
 wrsPstatsHCTable OBJECT-TYPE

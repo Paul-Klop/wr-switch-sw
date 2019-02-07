@@ -23,9 +23,13 @@
 #define WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE 1	/* error */
 #define WRS_PORT_STATUS_SFP_GBE_LINK_GBE 2	/* ok */
 
+#define WRS_PORT_STATUS_MONITOR_ENABLE HAL_PORT_MONITOR_ENABLE
+#define WRS_PORT_STATUS_MONITOR_DISABLE HAL_PORT_MONITOR_DISABLE
+
 #define WRS_PORT_STATUS_SFP_DOM_ENABLE        1
 #define WRS_PORT_STATUS_SFP_DOM_DISABLE       2
 #define WRS_PORT_STATUS_SFP_DOM_NOT_SUPPORTED 3
+
 struct wrsPortStatusTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
@@ -43,6 +47,7 @@ struct wrsPortStatusTable_s {
 	int wrsPortStatusSfpError;
 	unsigned long wrsPortStatusPtpTxFrames;
 	unsigned long wrsPortStatusPtpRxFrames;
+	int wrsPortStatusMonitor; /* Ignore errors on this port */
 	int wrsPortStatusSfpDom;
 	int wrsPortStatusSfpTemp;
 	int wrsPortStatusSfpVcc;

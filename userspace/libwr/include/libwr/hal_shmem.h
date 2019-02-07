@@ -17,6 +17,10 @@
 #define READ_SFP_DIAG_ENABLE 1
 #define READ_SFP_DIAG_DISABLE 0
 
+/* Monitor port in SNMP */
+#define HAL_PORT_MONITOR_ENABLE 1
+#define HAL_PORT_MONITOR_DISABLE 2
+
 #define DEFAULT_T2_PHASE_TRANS 0
 #define DEFAULT_T4_PHASE_TRANS 0
 
@@ -109,6 +113,10 @@ struct hal_port_state {
 
 	/* whether SFP has diagnostic Monitoring capability */
 	int has_sfp_diag;
+
+	/* whether the port shall be monitored by SNMP */
+	int monitor;
+
 };
 
 struct hal_temp_sensors {
@@ -119,7 +127,8 @@ struct hal_temp_sensors {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 11 /* Version 11, changed wrs_shm_head */
+#define HAL_SHMEM_VERSION 12 /* Version 12, added monitor to
+				struct hal_port_state */
 
 struct hal_shmem_header {
 	int nports;

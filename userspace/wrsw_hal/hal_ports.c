@@ -209,6 +209,30 @@ static int hal_port_init(int index)
 		p->fiber_index = 0;
 	}
 
+	/* Enable port monitoring by default */
+	p->monitor = HAL_PORT_MONITOR_ENABLE;
+	sprintf(key,"PORT%02i_INST%02i_MONITOR",port_i,i);
+	if ((retValue = libwr_cfg_get(key)) == NULL ) {
+		pr_error("port %i (%s): no key \"%s\" specified. Default to"
+			 " monitor=y.\n",
+			 port_i, p->name,key);
+	} else {
+		if (!strcasecmp(retValue, "n")) {
+			p->monitor = HAL_PORT_MONITOR_DISABLE;
+			pr_info("port %i (%s): monitor=n (%i)\n", port_i,
+				p->name, p->monitor);
+		} else if (!strcasecmp(retValue, "y")) {
+			p->monitor = HAL_PORT_MONITOR_ENABLE;
+			pr_info("port %i (%s): monitor=y (%i)\n", port_i,
+				p->name, p->monitor);
+		} else {
+			/* error */
+			pr_error("port %i (%s): not supported \"monitor\" "
+				 "value, default to y\n",
+				 port_i, p->name);
+		}
+	}
+
 	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
 	/* FIXME: this address should come from the driver header */

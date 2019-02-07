@@ -253,9 +253,12 @@
       \item Check your network layout and the WR Switch configuration. If you
         have some non-WR devices connected to ports of the WR Switch (e.g.
         computer sending/receiving only data, without the need of
-        synchronization), these ports should have their role in the timing
+        synchronization), for firmware versions up to 5.0.1
+        these ports should have their role in the timing
         configuration set to \emph{non-wr} to avoid PTP traffic or \emph{none}
-        to disable PTP traffic at all.
+        to disable PTP traffic at all. For newer releases the parameter
+        \emph{monitor} shall be set to \emph{n} to ignore all errors on
+        a given port.
       \item Check the status of a WR device connected to the reported port.
       \item Restart the switch.
       \item If the problem persists, please contact WR experts for in-depth
@@ -285,8 +288,10 @@
         wri2}
       \item If the reported port is intended to be used with WR not compatible
         equipment (e.g. using a copper SFP module), to avoid SNMP errors set
-        this port to \emph{non-wr}. To disable PTP traffic on this port set it
-        to \emph{none}.
+        on this port the \emph{role} to \emph{non-wr} or set \emph{monitor=y}
+        (firmware after 5.0.1). To disable WR traffic on this port set
+        the \emph{role} to \emph{non-wr}, to disable PTP traffic set to
+        \emph{none}.
       \item Otherwise, you should use a WR-supported SFP module and make sure it
         is declared together with calibration values in the WRS configuration.
     \end{pck_proc}
@@ -631,6 +636,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpError.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPtpTxFrames.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPtpRxFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusMonitor.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpDom.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTemp.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpVcc.<n>}{}

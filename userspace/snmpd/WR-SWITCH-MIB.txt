@@ -27,8 +27,9 @@ wrSwitchMIB MODULE-IDENTITY
                  "
     REVISION     "201807181400Z"
     DESCRIPTION
-        "Add wrsStartCntLldpd"
+        "Add wrsStartCntLldpd
         Add in wrsPortStatusTable:
+         - wrsPortStatusMonitor
          - wrsPortStatusSfpDom
          - wrsPortStatusSfpTemp
          - wrsPortStatusSfpVcc
@@ -1979,7 +1980,7 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpError    INTEGER,
         wrsPortStatusPtpTxFrames Counter32,
         wrsPortStatusPtpRxFrames Counter32,
-        wrsPortStatusDummy       INTEGER, -- reserved for wrsPortStatusMonitor
+        wrsPortStatusMonitor     INTEGER,
         wrsPortStatusSfpDom      INTEGER,
         wrsPortStatusSfpTemp     INTEGER,
         wrsPortStatusSfpVcc      INTEGER,
@@ -2122,6 +2123,18 @@ wrsPortStatusPtpRxFrames OBJECT-TYPE
              running on particular port"
     ::= { wrsPortStatusEntry 14 }
 
+wrsPortStatusMonitor OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        enable(1),
+                        disable(2)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "If disable, SNMP will not generate any errors for this port."
+    ::= { wrsPortStatusEntry 15 }
+
 wrsPortStatusSfpDom    OBJECT-TYPE
     SYNTAX             INTEGER {
                            na(0),
@@ -2132,7 +2145,7 @@ wrsPortStatusSfpDom    OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "If disable, SNMP will not generate any errors for this port."
+            "SFP plugged into a given port has extra monitoring (DOM) capabilities."
     ::= { wrsPortStatusEntry 16 }
 
 wrsPortStatusSfpTemp   OBJECT-TYPE

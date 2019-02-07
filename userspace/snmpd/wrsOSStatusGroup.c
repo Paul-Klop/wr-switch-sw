@@ -114,7 +114,7 @@ time_t wrsOSStatus_data_fill(void)
 	}
 	if (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_CHECK_ERROR) {
 		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Unable to read status file for wrsBootConfigStatus\n",
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Config file is not valid or too short (less than 200 characters)\n",
 			 slog_obj_name);
 	}
 

@@ -8,6 +8,7 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
 	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED, wrsPtpInstanceIndex), /* not reported */
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePort),
+	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePortName),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceName),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceState),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceStateNext),
@@ -19,14 +20,14 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePeerVid),
 };
 
-static int32_t int_saturate(int64_t value)
+static inline struct hal_port_state *pp_wrs_lookup_port(char *name)
 {
-	if (value >= INT32_MAX)
-		return INT32_MAX;
-	else if (value <= INT32_MIN)
-		return INT32_MIN;
+	int i;
 
-	return value;
+	for (i = 0; i < hal_nports_local; i++)
+		if (hal_ports[i].in_use &&!strcmp(name, hal_ports[i].name))
+                        return hal_ports + i;
+	return NULL;
 }
 
 time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
@@ -38,7 +39,8 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	static int n_rows_local = 0;
 	struct wrsPtpInstanceTable_s *i_a;
 	struct pp_instance *ppsi_i;
-	char *ppsi_iface_name;
+	char *tmp_name;
+	struct hal_port_state *p;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -71,30 +73,36 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 
 	while (1) {
 		ii = wrs_shm_seqbegin(ppsi_head);
-		/* Match port name with interface name of ppsi instance.
-		 * More than one ppsi_iface_name can match to
-		 * wrsPortStatusTable_array[i].wrsPortStatusPortName, but only one can
-		 * match way round */
 		for (i = 0; i < *ppsi_ppi_nlinks; i++) {
+
 			ppsi_i = ppsi_ppi + i;
 			/* (ppsi_ppi + i)->iface_name is a pointer in
 			 * shmem, so we have to follow it
-			 * NOTE: ppi->cfg.port_name cannot be used instead,
+			 * NOTE: ppsi_i->cfg.port_name cannot be used instead,
 			 * because it is not used when ppsi is configured from
 			 * cmdline */
-			i_a[i].wrsPtpInstancePort = ppsi_i->port_idx + 1;
-			ppsi_iface_name = (char *) wrs_shm_follow(ppsi_head,
+
+			tmp_name = (char *) wrs_shm_follow(ppsi_head,
 					       ppsi_i->port_name);
-			strncpy(i_a[i].wrsPtpInstanceName, ppsi_iface_name, 12);
+			strncpy(i_a[i].wrsPtpInstanceName, tmp_name, 12);
 			i_a[i].wrsPtpInstanceName[11] = '\0';
-			
+
+			tmp_name = (char *) wrs_shm_follow(ppsi_head,
+					       ppsi_i->iface_name);
+			strncpy(i_a[i].wrsPtpInstancePortName, tmp_name, 12);
+			i_a[i].wrsPtpInstancePortName[11] = '\0';
+
+			p = pp_wrs_lookup_port(tmp_name);
+			if (p)
+				i_a[i].wrsPtpInstancePort = p->hw_index + 1;
+
 			i_a[i].wrsPtpInstanceState = ppsi_i->state;
 			i_a[i].wrsPtpInstanceStateNext = ppsi_i->next_state;
 			i_a[i].wrsPtpInstanceRole = ppsi_i->role + 1;
 			i_a[i].wrsPtpInstanceMechanism = ppsi_i->mech + 1;
 			i_a[i].wrsPtpInstanceProto = ppsi_i->proto + 1;
 			i_a[i].wrsPtpInstanceExt = ppsi_i->cfg.ext + 1;
-			
+
 			memcpy(i_a[i].wrsPtpInstancePeerMac, ppsi_i->peer, ETH_ALEN);
 			i_a[i].wrsPtpInstancePeerVid = ppsi_i->peer_vid;
 		}

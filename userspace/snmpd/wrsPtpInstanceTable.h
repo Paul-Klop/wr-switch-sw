@@ -9,8 +9,8 @@ struct wrsPtpInstanceTable_s {
 	uint32_t wrsPtpInstanceIndex;		/* not reported, index fields has t o be marked
 				 * as not-accessible in MIB */
 	int wrsPtpInstancePort;	/* port on which ptp instance is running (index+1) */
-	char wrsPtpInstanceName[12];	/* port name on which ptp instance is
-					 * running */
+	char wrsPtpInstancePortName[12];/* port name on which ptp instance is running (wriX) */
+	char wrsPtpInstanceName[12];	/* Instance name */
 	int wrsPtpInstanceState;
 	int wrsPtpInstanceStateNext;
 	int wrsPtpInstanceRole;

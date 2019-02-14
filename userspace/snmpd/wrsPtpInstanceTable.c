@@ -123,14 +123,6 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	return time_cur;
 }
 
-#define TT_OID WRSPTPINSTANCETABLE_OID
-#define TT_PICKINFO wrsPtpInstanceTable_pickinfo
-#define TT_DATA_FILL_FUNC wrsPtpInstanceTable_data_fill
-#define TT_DATA_ARRAY wrsPtpInstanceTable_array
-#define TT_GROUP_NAME "wrsPtpInstanceTable"
-#define TT_INIT_FUNC init_wrsPtpInstanceTable
-#define TT_CACHE_TIMEOUT WRSPTPINSTANCETABLE_CACHE_TIMEOUT
-
 /* global variable to keep number of rows, filled by cache function
  * one for each table */
 static unsigned int t_n_rows; /* template n_rows */
@@ -243,8 +235,8 @@ table_handler(netsnmp_mib_handler          *handler,
 		table_info = netsnmp_extract_table_info(request);
 		subid = table_info->colnum - 1;
 
-		pi = TT_PICKINFO + subid;
-		ptr = (void *)(TT_DATA_ARRAY + row) + pi->offset;
+		pi = wrsPtpInstanceTable_pickinfo + subid;
+		ptr = (void *)(wrsPtpInstanceTable_array + row) + pi->offset;
 		/* snmp_set_var_typed_value function does not support counter64
 		 * as a uint64_t, but as a struct counter64. Their binary
 		 * representation differs by order of 32bit words. We fill
@@ -265,13 +257,13 @@ table_handler(netsnmp_mib_handler          *handler,
 
 static int table_cache_load(netsnmp_cache *cache, void *vmagic)
 {
-	TT_DATA_FILL_FUNC(&t_n_rows);
+	wrsPtpInstanceTable_data_fill(&t_n_rows);
 	return 0;
 }
 
-void TT_INIT_FUNC(void)
+void init_wrsPtpInstanceTable(void)
 {
-	const oid wrsTT_oid[] = { TT_OID };
+	const oid wrsTT_oid[] = { WRSPTPINSTANCETABLE_OID };
 	netsnmp_table_registration_info *table_info;
 	netsnmp_iterator_info *iinfo;
 	netsnmp_handler_registration *reginfo;
@@ -285,7 +277,7 @@ void TT_INIT_FUNC(void)
 
 	/* first column is index, but don't return it, it is only for MIB */
 	table_info->min_column = 3;
-	table_info->max_column = ARRAY_SIZE(TT_PICKINFO);
+	table_info->max_column = ARRAY_SIZE(wrsPtpInstanceTable_pickinfo);
 
 	/* Iterator info */
 	iinfo  = SNMP_MALLOC_TYPEDEF(netsnmp_iterator_info);
@@ -297,15 +289,15 @@ void TT_INIT_FUNC(void)
 	iinfo->table_reginfo        = table_info;
 
 	/* register the table */
-	reginfo = netsnmp_create_handler_registration(TT_GROUP_NAME,
+	reginfo = netsnmp_create_handler_registration("wrsPtpInstanceTable",
 						      table_handler,
 						      wrsTT_oid,
 						      OID_LENGTH(wrsTT_oid),
 						      HANDLER_CAN_RONLY);
 	netsnmp_register_table_iterator(reginfo, iinfo);
-
+ 
 	netsnmp_inject_handler(reginfo,
-			netsnmp_get_cache_handler(TT_CACHE_TIMEOUT,
+			netsnmp_get_cache_handler(WRSPTPINSTANCETABLE_CACHE_TIMEOUT,
 						  table_cache_load, NULL,
 						  wrsTT_oid,
 						  OID_LENGTH(wrsTT_oid)));

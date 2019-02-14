@@ -2627,22 +2627,28 @@ wrsPtpInstanceEntry OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "An entry containing pstats counters"
-    INDEX   { wrsPtpInstanceIndex }
+    INDEX   { wrsPtpInstancePortIndex, wrsPtpInstanceOnPortIndex }
     ::= { wrsPtpInstanceTable 1 }
 
 WrsPtpInstanceEntry ::=
     SEQUENCE {
-        wrsPtpInstanceIndex              Unsigned32,
-        wrsPtpInstancePort               Integer,
+        wrsPtpInstancePortIndex          Unsigned32,
+        wrsPtpInstanceOnPortIndex        Unsigned32,
+        wrsPtpInstancePort               INTEGER,
+        wrsPtpInstancePortInstance       INTEGER,
+        wrsPtpInstancePortName           DisplayString,
         wrsPtpInstanceName               DisplayString,
         wrsPtpInstanceState              INTEGER,
         wrsPtpInstanceStateNext          INTEGER,
         wrsPtpInstanceRole               INTEGER,
         wrsPtpInstanceMechanism          INTEGER,
-        wrsPtpInstanceProto              INTEGER
+        wrsPtpInstanceProto              INTEGER,
+        wrsPtpInstanceExt                INTEGER,
+        wrsPtpInstancePeerMac            PhysAddress,
+        wrsPtpInstancePeerVid            INTEGER,
     }
 
-wrsPtpInstanceIndex OBJECT-TYPE
+wrsPtpInstancePortIndex OBJECT-TYPE
     SYNTAX         Unsigned32
     MAX-ACCESS     not-accessible
     STATUS         current
@@ -2650,13 +2656,29 @@ wrsPtpInstanceIndex OBJECT-TYPE
             "Index for wrsPtpInstanceTable"
     ::= { wrsPtpInstanceEntry 1 }
 
+wrsPtpInstanceOnPortIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPtpInstanceTable"
+    ::= { wrsPtpInstanceEntry 2 }
+
 wrsPtpInstancePort OBJECT-TYPE
-    SYNTAX         Integer
+    SYNTAX         INTEGER
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Port number on which an instance is running"
-    ::= { wrsPtpInstanceEntry 2 }
+    ::= { wrsPtpInstanceEntry 3 }
+
+wrsPtpInstancePortInstance OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Index of an instance running on a port"
+    ::= { wrsPtpInstanceEntry 4 }
 
 wrsPtpInstancePortName OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..12))
@@ -2664,7 +2686,7 @@ wrsPtpInstancePortName OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Port name of port"
-    ::= { wrsPtpInstanceEntry 3 }
+    ::= { wrsPtpInstanceEntry 5 }
 
 wrsPtpInstanceName OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..12))
@@ -2672,7 +2694,7 @@ wrsPtpInstanceName OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Name of an instance"
-    ::= { wrsPtpInstanceEntry 4 }
+    ::= { wrsPtpInstanceEntry 6 }
 
 wrsPtpInstanceState OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -2709,7 +2731,7 @@ wrsPtpInstanceState OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Name of instance"
-    ::= { wrsPtpInstanceEntry 5 }
+    ::= { wrsPtpInstanceEntry 7 }
 
 wrsPtpInstanceStateNext OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -2746,7 +2768,7 @@ wrsPtpInstanceStateNext OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Name of instance"
-    ::= { wrsPtpInstanceEntry 6 }
+    ::= { wrsPtpInstanceEntry 8 }
 
 wrsPtpInstanceRole OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -2759,7 +2781,7 @@ wrsPtpInstanceRole OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Role of instance"
-    ::= { wrsPtpInstanceEntry 7 }
+    ::= { wrsPtpInstanceEntry 9 }
 
 wrsPtpInstanceMechanism OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -2771,7 +2793,7 @@ wrsPtpInstanceMechanism OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Mechanism used by an instance"
-    ::= { wrsPtpInstanceEntry 8 }
+    ::= { wrsPtpInstanceEntry 10 }
 
 wrsPtpInstanceProto OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -2784,7 +2806,7 @@ wrsPtpInstanceProto OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Protocol used by an instance"
-    ::= { wrsPtpInstanceEntry 9 }
+    ::= { wrsPtpInstanceEntry 11 }
 
 wrsPtpInstanceExt OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -2796,7 +2818,7 @@ wrsPtpInstanceExt OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Extension used by an instance"
-    ::= { wrsPtpInstanceEntry 10 }
+    ::= { wrsPtpInstanceEntry 12 }
 
 wrsPtpInstancePeerMac  OBJECT-TYPE
     SYNTAX             PhysAddress
@@ -2804,7 +2826,7 @@ wrsPtpInstancePeerMac  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "VID used by an instance"
-    ::= { wrsPtpInstanceEntry 11 }
+    ::= { wrsPtpInstanceEntry 13 }
 
 wrsPtpInstancePeerVid  OBJECT-TYPE
     SYNTAX             Integer
@@ -2812,7 +2834,7 @@ wrsPtpInstancePeerVid  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "VID used by an instance"
-    ::= { wrsPtpInstanceEntry 12 }
+    ::= { wrsPtpInstanceEntry 14 }
 
 --wrsNetworking
 --Configuration

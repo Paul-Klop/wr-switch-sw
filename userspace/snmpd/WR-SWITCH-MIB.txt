@@ -2646,6 +2646,8 @@ WrsPtpInstanceEntry ::=
         wrsPtpInstanceExt                INTEGER,
         wrsPtpInstancePeerMac            PhysAddress,
         wrsPtpInstancePeerVid            INTEGER,
+        wrsPtpInstanceVlanNum            INTEGER,
+        wrsPtpInstanceVlanListStr        INTEGER,
     }
 
 wrsPtpInstancePortIndex OBJECT-TYPE
@@ -2835,6 +2837,22 @@ wrsPtpInstancePeerVid  OBJECT-TYPE
     DESCRIPTION
             "VID used by an instance"
     ::= { wrsPtpInstanceEntry 14 }
+
+wrsPtpInstanceVlanNum  OBJECT-TYPE
+    SYNTAX             Integer
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Number of VLANs used by an instance"
+    ::= { wrsPtpInstanceEntry 15 }
+
+wrsPtpInstanceVlanListStr  OBJECT-TYPE
+    SYNTAX             Integer
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Coma separated list of VLANs used by an instance"
+    ::= { wrsPtpInstanceEntry 16 }
 
 --wrsNetworking
 --Configuration

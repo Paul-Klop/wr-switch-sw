@@ -20,6 +20,8 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceExt),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePeerMac),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePeerVid),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceVlanNum),
+	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceVlanListStr),
 };
 
 static inline struct hal_port_state *pp_wrs_lookup_port(char *name)
@@ -46,6 +48,8 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	int phys_port;
 	int last_port = 0;
 	int instance_on_port = 0;
+	char *tmpstr_p;
+	int vlan_i;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -109,7 +113,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 				
 				last_port = phys_port;
 			}
-			
+
 			i_a[i].wrsPtpInstancePortInstance = instance_on_port;
 
 			i_a[i].wrsPtpInstanceState = ppsi_i->state;
@@ -121,6 +125,29 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 
 			memcpy(i_a[i].wrsPtpInstancePeerMac, ppsi_i->peer, ETH_ALEN);
 			i_a[i].wrsPtpInstancePeerVid = ppsi_i->peer_vid;
+
+			i_a[i].wrsPtpInstanceVlanNum = ppsi_i->nvlans;
+			tmpstr_p = i_a[i].wrsPtpInstanceVlanListStr;
+			for (vlan_i = 0; vlan_i < ppsi_i->nvlans; vlan_i++){
+				int ret_len;
+				int str_space_left;
+
+				str_space_left = WRSPTPINSTANCEVLANLISTSTRLEN - (tmpstr_p - i_a[i].wrsPtpInstanceVlanListStr);
+				ret_len = snprintf(tmpstr_p, str_space_left, "%d,", ppsi_i->vlans[vlan_i]);
+				tmpstr_p += ret_len;
+			}
+			if (ppsi_i->nvlans) {
+				/* remove trailing comma */
+				int list_len;
+				char *last_char;
+
+				list_len = strnlen(i_a[i].wrsPtpInstanceVlanListStr,
+						   WRSPTPINSTANCEVLANLISTSTRLEN);
+				
+				last_char = &i_a[i].wrsPtpInstanceVlanListStr[list_len - 1];
+				if (*last_char == ',')
+					*last_char = 0;
+			}
 		}
 
 		retries++;

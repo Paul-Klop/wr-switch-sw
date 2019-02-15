@@ -4,6 +4,11 @@
 #define WRSPTPINSTANCETABLE_CACHE_TIMEOUT 5
 #define WRSPTPINSTANCETABLE_OID WRS_OID, 7, 8
 
+/* Maximum lenth of vlans list. The worst case is the maximum number of vlans
+ * for the instance times the maximum lenght of a vlan (4) + 1 for coma
+ */
+#define WRSPTPINSTANCEVLANLISTSTRLEN (CONFIG_VLAN_ARRAY_SIZE * 5)
+
 
 struct wrsPtpInstanceTable_s {
 	uint32_t wrsPtpInstancePortIndex;		/* not reported, index fields has t o be marked
@@ -21,11 +26,10 @@ struct wrsPtpInstanceTable_s {
 	int wrsPtpInstanceExt;
 	char wrsPtpInstancePeerMac[ETH_ALEN];
 	int wrsPtpInstancePeerVid;
-	/* vlans: */
-	/* Number of VLANs nvlans*/
-	/* List (Table?) of VLANs? */
-	/* flags? */
-
+	int wrsPtpInstanceVlanNum;
+	/* wrsPtpInstanceVlanListStr is implemented as a comma separated list
+	 * because SNMP does not allow table within table */
+	char wrsPtpInstanceVlanListStr[WRSPTPINSTANCEVLANLISTSTRLEN];
 };
 
 extern struct wrsPtpInstanceTable_s wrsPtpInstanceTable_array[PP_MAX_LINKS];

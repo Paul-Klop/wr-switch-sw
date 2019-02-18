@@ -37,6 +37,7 @@ wrSwitchMIB MODULE-IDENTITY
          - wrsPortStatusSfpTxBias
          - wrsPortStatusSfpTxPower
          - wrsPortStatusSfpRxPower
+         Add wrsPtpInstanceTable
         "
 
     REVISION     "201602171600Z"
@@ -2634,10 +2635,10 @@ WrsPtpInstanceEntry ::=
     SEQUENCE {
         wrsPtpInstancePortIndex          Unsigned32,
         wrsPtpInstanceOnPortIndex        Unsigned32,
+        wrsPtpInstanceName               DisplayString,
         wrsPtpInstancePort               INTEGER,
         wrsPtpInstancePortInstance       INTEGER,
         wrsPtpInstancePortName           DisplayString,
-        wrsPtpInstanceName               DisplayString,
         wrsPtpInstanceState              INTEGER,
         wrsPtpInstanceStateNext          INTEGER,
         wrsPtpInstanceRole               INTEGER,
@@ -2666,13 +2667,21 @@ wrsPtpInstanceOnPortIndex OBJECT-TYPE
             "Index for wrsPtpInstanceTable"
     ::= { wrsPtpInstanceEntry 2 }
 
+wrsPtpInstanceName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Name of an instance"
+    ::= { wrsPtpInstanceEntry 3 }
+
 wrsPtpInstancePort OBJECT-TYPE
     SYNTAX         INTEGER
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Port number on which an instance is running"
-    ::= { wrsPtpInstanceEntry 3 }
+    ::= { wrsPtpInstanceEntry 4 }
 
 wrsPtpInstancePortInstance OBJECT-TYPE
     SYNTAX         INTEGER
@@ -2680,7 +2689,7 @@ wrsPtpInstancePortInstance OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Index of an instance running on a port"
-    ::= { wrsPtpInstanceEntry 4 }
+    ::= { wrsPtpInstanceEntry 5 }
 
 wrsPtpInstancePortName OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..12))
@@ -2688,14 +2697,6 @@ wrsPtpInstancePortName OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Port name of port"
-    ::= { wrsPtpInstanceEntry 5 }
-
-wrsPtpInstanceName OBJECT-TYPE
-    SYNTAX         DisplayString (SIZE (0..12))
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Name of an instance"
     ::= { wrsPtpInstanceEntry 6 }
 
 wrsPtpInstanceState OBJECT-TYPE

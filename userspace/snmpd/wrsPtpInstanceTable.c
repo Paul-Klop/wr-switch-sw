@@ -8,10 +8,10 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
 	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED, wrsPtpInstancePortIndex), /* not reported */
 	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED, wrsPtpInstanceOnPortIndex), /* not reported */
+	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceName),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePort),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePortInstance),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePortName),
-	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceName),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceState),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceStateNext),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceRole),

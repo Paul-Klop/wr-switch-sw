@@ -24,6 +24,12 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_COUNTER, wrsPortStatusPtpTxFrames),
 	FIELD(wrsPortStatusTable_s, ASN_COUNTER, wrsPortStatusPtpRxFrames),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusMonitor),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpDom),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpTemp),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpVcc),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpTxBias),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpTxPower),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpRxPower),
 };
 
 
@@ -132,6 +138,27 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVS,
 				port_state->calib.sfp.vendor_serial,
 				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVS));
+
+			/* Copy DOM data for SFP */
+			if (hal_shmem->read_sfp_diag) {
+				if (port_state->has_sfp_diag) {
+					wrsPortStatusTable_array[i].wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_ENABLE;
+					/* temp in C */
+					wrsPortStatusTable_array[i].wrsPortStatusSfpTemp = ntohs(*port_state->calib.sfp_dom_raw.temp)/256;
+					/* vcc in mV */
+					wrsPortStatusTable_array[i].wrsPortStatusSfpVcc = ntohs(*port_state->calib.sfp_dom_raw.vcc)/10;
+					/* tx_bias in uA */
+					wrsPortStatusTable_array[i].wrsPortStatusSfpTxBias = ntohs(*port_state->calib.sfp_dom_raw.tx_bias)*2;
+					/* tx_pow in uW */
+					wrsPortStatusTable_array[i].wrsPortStatusSfpTxPower = ntohs(*port_state->calib.sfp_dom_raw.tx_pow)/10;
+					/* rx_pow in uW */
+					wrsPortStatusTable_array[i].wrsPortStatusSfpRxPower = ntohs(*port_state->calib.sfp_dom_raw.rx_pow)/10;
+				} else {
+					wrsPortStatusTable_array[i].wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_NOT_SUPPORTED;
+				}
+			} else {
+				wrsPortStatusTable_array[i].wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_DISABLE;
+			}
 		}
 
 		retries++;

@@ -28,7 +28,14 @@ wrSwitchMIB MODULE-IDENTITY
     REVISION     "201807181400Z"
     DESCRIPTION
         "Add wrsStartCntLldpd
-        Add wrsPortStatusMonitor
+        Add in wrsPortStatusTable:
+         - wrsPortStatusMonitor
+         - wrsPortStatusSfpDom
+         - wrsPortStatusSfpTemp
+         - wrsPortStatusSfpVcc
+         - wrsPortStatusSfpTxBias
+         - wrsPortStatusSfpTxPower
+         - wrsPortStatusSfpRxPower
         "
 
     REVISION     "201602171600Z"
@@ -1973,7 +1980,13 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpError    INTEGER,
         wrsPortStatusPtpTxFrames Counter32,
         wrsPortStatusPtpRxFrames Counter32,
-        wrsPortStatusMonitor     INTEGER
+        wrsPortStatusMonitor     INTEGER,
+        wrsPortStatusSfpDom      INTEGER,
+        wrsPortStatusSfpTemp     INTEGER,
+        wrsPortStatusSfpVcc      INTEGER,
+        wrsPortStatusSfpTxBias   INTEGER,
+        wrsPortStatusSfpTxPower  INTEGER,
+        wrsPortStatusSfpRxPower  INTEGER
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -2121,6 +2134,64 @@ wrsPortStatusMonitor OBJECT-TYPE
     DESCRIPTION
             "If disable, SNMP will not generate any errors for this port."
     ::= { wrsPortStatusEntry 15 }
+
+wrsPortStatusSfpDom    OBJECT-TYPE
+    SYNTAX             INTEGER {
+                           na(0),
+                           enable(1),
+                           disable(2),
+                           domNotSupported(3)
+    }
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "If disable, SNMP will not generate any errors for this port."
+    ::= { wrsPortStatusEntry 16 }
+
+wrsPortStatusSfpTemp   OBJECT-TYPE
+    SYNTAX             INTEGER
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Temperature reported by SFP. According to SFF-8472, accuracy of
+            this value must be better than 3 degrees Celsius"
+    ::= { wrsPortStatusEntry 17 }
+
+wrsPortStatusSfpVcc    OBJECT-TYPE
+    SYNTAX             INTEGER
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Internally measured transceiver supply voltage reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 3%"
+    ::= { wrsPortStatusEntry 18 }
+
+wrsPortStatusSfpTxBias OBJECT-TYPE
+    SYNTAX             INTEGER
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Measured TX bias current in uA reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 10%"
+    ::= { wrsPortStatusEntry 19 }
+
+wrsPortStatusSfpTxPower OBJECT-TYPE
+    SYNTAX             INTEGER
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Measured TX output power in uW reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 3dB%"
+    ::= { wrsPortStatusEntry 20 }
+
+wrsPortStatusSfpRxPower OBJECT-TYPE
+    SYNTAX             INTEGER
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Measured RX output power in uW reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 3dB%"
+    ::= { wrsPortStatusEntry 21 }
 
 -- wrsPstatsHCTable (.7.7)
 wrsPstatsHCTable OBJECT-TYPE

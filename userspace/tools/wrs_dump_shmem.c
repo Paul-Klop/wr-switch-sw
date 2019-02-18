@@ -189,6 +189,19 @@ void dump_one_field(void *addr, struct dump_info *info)
 			printf("SFP in data base, ");
 		printf("\n");
 		break;
+	case dump_type_sfp_dom_temp:
+		printf("%.3f C\n", ntohs(*(short *)p)/(float)256);
+		break;
+	case dump_type_sfp_dom_voltage:
+		printf("%.3f V\n", ntohs(*(short *)p)/(float)10000);
+		break;
+	case dump_type_sfp_dom_bias_curr:
+		printf("%.3f mA\n", ntohs(*(short *)p)/(float)500);
+		break;
+	case dump_type_sfp_dom_tx_power:
+	case dump_type_sfp_dom_rx_power:
+		printf("%.3f mW\n", ntohs(*(short *)p)/(float)10000);
+		break;
 	case dump_type_port_mode:
 		switch (*(uint32_t *)p) {
 		case HEXP_PORT_MODE_WR_MASTER:
@@ -364,6 +377,13 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int,       calib.sfp.tx_wl),
 	DUMP_FIELD(int,       calib.sfp.rx_wl),
 	DUMP_FIELD(pointer,   calib.sfp.next),
+
+	/* Dump some values from the SFP's DOM area of */
+	DUMP_FIELD(sfp_dom_temp,      calib.sfp_dom_raw.temp),
+	DUMP_FIELD(sfp_dom_voltage,   calib.sfp_dom_raw.vcc),
+	DUMP_FIELD(sfp_dom_bias_curr, calib.sfp_dom_raw.tx_bias),
+	DUMP_FIELD(sfp_dom_tx_power,  calib.sfp_dom_raw.tx_pow),
+	DUMP_FIELD(sfp_dom_rx_power,  calib.sfp_dom_raw.rx_pow),
 
 	DUMP_FIELD(uint32_t, phase_val),
 	DUMP_FIELD(int, phase_val_valid),

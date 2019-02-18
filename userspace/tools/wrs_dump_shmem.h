@@ -61,6 +61,11 @@ enum dump_type {
 	dump_type_time,
 	dump_type_ip_address,
 	dump_type_sfp_flags,
+	dump_type_sfp_dom_temp,
+	dump_type_sfp_dom_voltage,
+	dump_type_sfp_dom_bias_curr,
+	dump_type_sfp_dom_tx_power,
+	dump_type_sfp_dom_rx_power,
 	dump_type_port_mode,
 	dump_type_sensor_temp,
 	/* SoftPLL's enumerations */

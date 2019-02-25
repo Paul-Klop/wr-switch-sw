@@ -361,7 +361,7 @@ function build_inst_ppsi_keys() {
 }
 
 
-globals_indexes='clock-class clock-accuracy clock-allan-variance domain-number priority1 priority2 time-source externalPortConfigurationEnabled slaveOnly'
+globals_indexes='clock-class clock-accuracy clock-allan-variance domain-number priority1 priority2 time-source externalPortConfigurationEnabled slaveOnly ptpPpsThresholdMs ptpFallbackPpsGen gmDelayToGenPpsSec forcePpsGen'
 globals_not_yet_supported='time-source'
 
 # PHYSICAL PORT PARAMETERS
@@ -466,6 +466,22 @@ if [ -n "$CONFIG_PTP_SLAVE_ONLY" ] && [ "${globals[externalPortConfigurationEnab
 	globals[slaveOnly]="$CONFIG_PTP_SLAVE_ONLY"
 else
 	globals[slaveOnly]="n"
+fi
+
+if [ -n "$CONFIG_PPSGEN_PTP_THRESHOLD_MS" ]; then
+	globals[ptpPpsThresholdMs]="$CONFIG_PPSGEN_PTP_THRESHOLD_MS"
+fi
+ 
+if [ -n "$CONFIG_PPSGEN_PTP_FALLBACK" ]; then
+	globals[ptpFallbackPpsGen]="$CONFIG_PPSGEN_PTP_FALLBACK"
+fi
+ 
+if [ -n "$CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC" ]; then
+	globals[gmDelayToGenPpsSec]="$CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC"
+fi
+  
+if [ -n "$CONFIG_PPSGEN_FORCE" ]; then
+	globals[forcePpsGen]="$CONFIG_PPSGEN_FORCE"
 fi
 
 for i_port in {01..18}; do # scan all the physical ports

@@ -533,6 +533,48 @@ config TIME_BC
 
 endchoice
 
+menu "PPS generation"
+	
+config PPSGEN_PTP_FALLBACK
+	bool "PTP fallback"
+	default N
+	help
+	  This option enables the PPS generation if a slave instance 
+	  programmed to use an extension protocol (WR, L1Sync, ...) is falling back
+	  to PTP communication only. 
+	
+config PPSGEN_PTP_THRESHOLD_MS
+	int "PTP threshold (ms)"
+	default 500
+	range 1 1000
+	help
+	  This option defines the threshold corresponding to the offset from the 
+	  master used to start the generation of the PPS. It is  either used by a PTP slave 
+	  instance or a instance using a protocol extension but going into the fallback PTP mode 
+	  and with the PTP fallback option active. 
+	  A 0 value means that the PPS will be not generated for the considerated cases. 
+	  When the PPS is generated, it can be also disabled when the offset from master becomes greater
+	  than the threshold value + 20%
+	
+config PPSGEN_GM_DELAY_TO_GEN_PPS_SEC
+	int "Grand Master delay for PPS (sec)"
+	default 0
+	range 0 1000
+	help
+		This option allows a boundary/ordinary clock to generate PPS when it becomes Grand Master (GM) by BMCA. Becoming GM
+		by BMCA might be a transitory situation during a network discovery. The PPS must be activated only when all this 
+		transitory phase is terminated. This option then allows to define a delay in seconds to respect before 
+		generating the PPS when a GM by BMCA is detected.  
+		A 0 value desactivate this feature.
+		
+config PPSGEN_FORCE
+	bool "Force PPS for testing purpose"
+	default N
+	help
+	  This option enables the PPS generation for all cases. It should only be used for testing purpose. 
+
+endmenu
+
 choice
 	prompt "PTP Port Assignment"
 	default PTP_PORT_PARAMS

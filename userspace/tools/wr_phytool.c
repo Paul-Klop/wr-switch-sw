@@ -452,6 +452,27 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 	}
 }
 
+char * getRtsTimingMode(int mode) {
+	static struct {
+		char *name;
+		int mode;
+	} *m, modes[] = {
+		{"TIME_GM", RTS_MODE_GM_EXTERNAL},
+		{"TIME_FM", RTS_MODE_GM_FREERUNNING},
+		{"TIME_BC", RTS_MODE_BC},
+		{"TIME_DS", RTS_MODE_DISABLED},
+		{"???????",-1}
+	};
+
+	m=modes;
+	do {
+		if ( m->mode==mode )
+			break;
+		m++;
+	} while (m->mode!=-1);
+	return m->name;
+}
+
 void rt_command(int ep, int argc, char *argv[])
 {
 /* ep is 0..17 */
@@ -473,7 +494,7 @@ void rt_command(int ep, int argc, char *argv[])
 	{
 		printf("RTS State Dump [%d physical ports]:\n",
 		       hal_nports_local);
-		printf("CurrentRef: %d Mode: %d Flags: %x\n", pstate.current_ref, pstate.mode, pstate.flags);
+		printf("CurrentRef: %d Mode: %s (%d) Flags: %x\n", pstate.current_ref, getRtsTimingMode(pstate.mode), pstate.mode, pstate.flags);
 		for (i = 0; i < hal_nports_local; i++)
 			printf("wri%-2d: setpoint: %-8dps current: %-8dps "
 			       "loopback: %-8dps flags: %x\n", i + 1,
@@ -483,28 +504,27 @@ void rt_command(int ep, int argc, char *argv[])
 			       pstate.channels[i].flags);
 	} else if (!strcmp(argv[3], "lock"))
 	{
-		int i;
 		printf("locking to: port %d wri%d\n", ep + 1, ep + 1);
-		for(i=0;i<100;i++)
-		{
-			rts_get_state(&pstate);
-			printf("setmode rv %d\n", rts_set_mode(RTS_MODE_BC));
-			printf("lock rv %d\n", rts_lock_channel(ep, 0));
-		}
-	} else if (!strcmp(argv[3], "master"))
+		rts_get_state(&pstate);
+		printf("setmode rv %d\n", rts_set_mode(RTS_MODE_BC));
+		printf("lock rv %d\n", rts_lock_channel(ep, 0));
+	} else if (!strcmp(argv[3], "fr"))
 	{
-		int i;
-		printf("Enabling free-running master mode\n");
-		for(i=0;i<10;i++)
-		{
-				printf("rv: %d\n", rts_set_mode(RTS_MODE_GM_FREERUNNING));
-		}
-//		rts_lock_channel(ep);
+		printf("Enabling free-running master timing mode\n");
+		printf("rv: %d\n", rts_set_mode(RTS_MODE_GM_FREERUNNING));
 	}
-	else if (!strcmp(argv[3], "track"))
+	else if (!strcmp(argv[3], "gm"))
+	{
+		printf("Enabling grand master timing mode\n");
+		printf("rv: %d\n", rts_set_mode(RTS_MODE_GM_EXTERNAL));
+	}
+	else if (!strcmp(argv[3], "ds"))
+	{
+		printf("Disable timing mode\n");
+		printf("rv: %d\n", rts_set_mode(RTS_MODE_DISABLED));
+	}else if (!strcmp(argv[3], "track"))
 	{
 		printf("Enabling ptracker @ port %d (wri%d)\n", ep + 1, ep + 1);
-
 		rts_enable_ptracker(ep, 1);
 	}
 }
@@ -559,7 +579,7 @@ struct {
 	{
 	"rt",
 	"",
-	"RT subsystem command [show,lock,master,gm]",
+	"RT subsystem command [show,lock,[gm,fr,ds],track]",
 	rt_command},
 	{NULL}
 

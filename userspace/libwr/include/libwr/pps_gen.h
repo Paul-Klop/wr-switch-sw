@@ -42,4 +42,14 @@ int shw_pps_gen_in_term_read(void);
 /* Enables PPS_IN 50Ohm termination based on dot-config option */
 int shw_pps_gen_in_term_init(void);
 
+/* Get the timing mode state */
+int shw_pps_get_timing_mode_state(void);
+
+/* Get the timing mode */
+int shw_pps_get_timing_mode(void);
+
+/* Set the timing mode */
+int shw_pps_set_timing_mode(int tm);
+
+
 #endif /* __LIBWR_PPS_GEN_H */

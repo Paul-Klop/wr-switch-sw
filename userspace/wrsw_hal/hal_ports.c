@@ -54,8 +54,8 @@ static struct hal_port_state *ports;
 static int hal_port_fd;
 
 /* RT subsystem PLL state, polled regularly via mini-ipc */
-static struct rts_pll_state hal_port_rts_state;
-static int hal_port_rts_state_valid = 0;
+struct rts_pll_state hal_port_rts_state;
+int hal_port_rts_state_valid = 0;
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
@@ -336,15 +336,14 @@ int hal_port_pshifter_busy()
 
 /* Updates the current value of the phase shift on a given
  * port. Called by the main update function regularly. */
-static void poll_rts_state(void)
+int hal_port_poll_rts_state(void)
 {
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
-	if (libwr_tmo_expired(&hal_port_tmo_rts)) {
-		hal_port_rts_state_valid = rts_get_state(hs) < 0 ? 0 : 1;
-		if (!hal_port_rts_state_valid)
-			printf("rts_get_state failure, weird...\n");
-	}
+	hal_port_rts_state_valid = rts_get_state(hs) < 0 ? 0 : 1;
+	if (!hal_port_rts_state_valid)
+		printf("rts_get_state failure, weird...\n");
+	return hal_port_rts_state_valid;
 }
 
 static uint32_t pcs_readl(struct hal_port_state * p, int reg)
@@ -374,8 +373,10 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 		if (p->locked) {
 			pr_info("Switching RTS to use local reference\n");
 			if (hal_get_timing_mode()
-			    != HAL_TIMING_MODE_GRAND_MASTER)
-				rts_set_mode(RTS_MODE_GM_FREERUNNING);
+			    != HAL_TIMING_MODE_GRAND_MASTER) {
+				shw_pps_set_timing_mode(HAL_TIMING_MODE_FREE_MASTER);
+				hal_update_timing_mode();
+			}
 		}
 
 		/* turn off synced LED */
@@ -621,7 +622,6 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 /* detects insertion/removal of SFP transceivers */
 static void hal_port_poll_sfp(void)
 {
-	if (libwr_tmo_expired(&hal_port_tmo_sfp)) {
 		uint32_t mask = shw_sfp_module_scan();
 		static int old_mask = 0;
 
@@ -645,7 +645,6 @@ static void hal_port_poll_sfp(void)
 			}
 		}
 		old_mask = mask;
-	}
 }
 
 /* Executes the port FSM for all ports. Called regularly by the main loop. */
@@ -654,11 +653,13 @@ void hal_port_update_all()
 	int i;
 
 	/* poll_rts_state does not write to shmem */
-	poll_rts_state();
+	if (libwr_tmo_expired(&hal_port_tmo_rts))
+		hal_port_poll_rts_state();
 
 	/* lock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-	hal_port_poll_sfp();
+	if (libwr_tmo_expired(&hal_port_tmo_sfp))
+		hal_port_poll_sfp();
 
 	for (i = 0; i < HAL_MAX_PORTS; i++)
 		if (ports[i].in_use)
@@ -713,25 +714,24 @@ int hal_port_start_lock(const char *port_name, int priority)
 {
 	struct hal_port_state *p = hal_lookup_port(ports, hal_port_nports,
 						   port_name);
+	int ret=-1;
 
-	if (!p)
-		return -1;
-
-	/* can't lock to a disconnected port */
-	if (p->state != HAL_PORT_STATE_UP)
-		return -1;
-
-	/* lock shmem */
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-	/* fixme: check the main FSM state before */
-	p->state = HAL_PORT_STATE_LOCKING;
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+	if (!p && p->state != HAL_PORT_STATE_UP )
+		return -1; /* can't lock to a disconnected port */
 
 	pr_info("Locking to port: %s\n", port_name);
 
-	rts_set_mode(RTS_MODE_BC);
+	hal_port_poll_rts_state(); // update rts state
+	if ( (hal_get_timing_mode()==HAL_TIMING_MODE_BC)  &&
+			(ret=rts_lock_channel(p->hw_index, 0))>0 ) {
+		/* lock shmem */
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+		/* fixme: check the main FSM state before */
+		p->state = HAL_PORT_STATE_LOCKING;
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+	}
+	return ret;
 
-	return rts_lock_channel(p->hw_index, 0); /* 0 or -1 already */
 }
 
 /* Returns 1 if the port is locked */
@@ -750,7 +750,8 @@ int hal_port_check_lock(const char *port_name)
 	if (hs->delock_count > 0)
 		return 0;
 
-	return (hs->current_ref == p->hw_index &&
+	return ( hs->mode==RTS_MODE_BC &&
+		hs->current_ref == p->hw_index &&
 		(hs->flags & RTS_DMTD_LOCKED) &&
 		(hs->flags & RTS_REF_LOCKED));
 }
@@ -765,12 +766,6 @@ int hal_port_reset(const char *port_name)
 
 	if (p->state != HAL_PORT_STATE_LINK_DOWN
 	    && p->state != HAL_PORT_STATE_DISABLED) {
-		if (p->locked) {
-			pr_info("Switching RTS to use local reference\n");
-			if (hal_get_timing_mode()
-			    != HAL_TIMING_MODE_GRAND_MASTER)
-				rts_set_mode(RTS_MODE_GM_FREERUNNING);
-		}
 
 		/* turn off synced LED */
 		set_led_synced(p->hw_index, 0);
@@ -1052,3 +1047,5 @@ static int try_open_ppsi_shmem(void)
 
 	return 1;
 }
+
+

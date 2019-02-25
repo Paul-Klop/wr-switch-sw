@@ -1064,3 +1064,37 @@ config RTU_HP_MASK_VAL
 endmenu
 
 source Kconfig_vlans.in
+
+choice
+	prompt "Compilation optimization"
+    
+    config OPTIMIZATION_SPEED
+        boolean "Execution time (-O2)"
+        help
+           GCC performs nearly all supported optimizations that do not involve a space-speed tradeoff.
+           
+     config OPTIMIZATION_SIZE_SPEED
+        boolean "Size and execution time (-Os)"
+        help
+           Optimize for size. Enables all -O2 optimizations except those that often increase code size.
+           
+     config OPTIMIZATION_DEBUGGING
+        boolean "Debugging (-Og -ggdb)"
+        help
+           Should be the optimization level of choice for the standard edit-compile-debug cycle
+
+     config OPTIMIZATION_NONE_DEBUGGING
+        boolean "Debugging without optimization(-ggdb)"
+        help
+           Compile without optimization and with debug informations 
+endchoice
+
+config OPTIMIZATION
+	string
+	default "-Os" if OPTIMIZATION_SIZE_SPEED
+	default "-O2" if OPTIMIZATION_SPEED
+	default "-Og -ggdb" if OPTIMIZATION_DEBUGGING
+	default "-ggdb" if OPTIMIZATION_NONE_DEBUGGING
+	default ""
+
+

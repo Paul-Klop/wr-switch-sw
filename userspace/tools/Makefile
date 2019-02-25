@@ -1,3 +1,7 @@
+
+# We are now Kconfig-based
+-include ../../.config
+
 TOOLS = rtu_stat wr_mon wr_phytool wrs_pps_control spll_dbg_proxy load-lm32 load-virtex com
 TOOLS += mapper wmapper
 TOOLS += wrs_version wr_date lm32-vuart wrs_pstats
@@ -28,7 +32,10 @@ OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
 # LOTs of includes
-CFLAGS =  -O2 -g -Wall \
+export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
+
+CFLAGS += $(CFLAGS_OPTIMIZATION)
+CFLAGS += -Wall \
 		-Wstrict-prototypes \
 		-I$(LINUX)/arch/arm/mach-at91/include \
 		-I../wrsw_rtud \

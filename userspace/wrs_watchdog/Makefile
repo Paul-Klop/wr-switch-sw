@@ -1,4 +1,7 @@
 
+# We are now Kconfig-based
+-include ../../.config
+
 OBJS = wrs_watchdog.o
 
 BINARY = wrs_watchdog
@@ -16,7 +19,10 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-CFLAGS = -O -g -Wall \
+export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
+
+CFLAGS += $(CFLAGS_OPTIMIZATION)
+CFLAGS = -Wall \
 	-Wstrict-prototypes \
 	-I../include \
 	-I../libwr/include \

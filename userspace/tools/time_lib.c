@@ -38,7 +38,7 @@ char * timeToString(struct pp_time *time, char *buf) {
 		}
 		nanos = scaled_nsecs >> TIME_FRACBITS;
 		picos = ((scaled_nsecs & TIME_FRACMASK) * 1000 + TIME_ROUNDING_VALUE)
-				>> TIME_INTERVAL_FRACBITS;
+				>> TIME_FRACBITS;
 		sprintf(buf,"%c%" PRId64 ".%09" PRId64 "%03" PRId64,
 			sign,secs,nanos,picos);
 	} else {

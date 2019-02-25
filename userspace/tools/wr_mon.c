@@ -79,7 +79,7 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.ipc_cmd_tacking=-1, /* Invalid */
 		},
 
-#if CONFIG_EXT_WR == 1
+#if CONFIG_HAS_EXT_WR
 		[PPSI_EXT_WR] = {
 				.valid=1,
 				.ext_name="White-Rabbit",
@@ -89,7 +89,7 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.track_onoff = 1,
 		},
 #endif
-#if CONFIG_EXT_L1SYNC == 1
+#if CONFIG_HAS_EXT_L1SYNC
 		[PPSI_EXT_L1S] = {
 				.valid=1,
 				.ext_name="L1Sync",
@@ -173,7 +173,7 @@ static char *pp_instance_state_to_name[PP_INSTANCE_STATE_MAX] = {
 
 #define EMPTY_EXTENSION_STATE_NAME "          "
 
-#if CONFIG_EXT_L1SYNC == 1
+#if CONFIG_HAS_EXT_L1SYNC
 static char * l1e_instance_extension_state[]={
 		[__L1SYNC_MISSING   ] = "??????????",
 		[L1SYNC_DISABLED    ] = "DISABLED  ",
@@ -185,6 +185,13 @@ static char * l1e_instance_extension_state[]={
 #define L1S_INSTANCE_EXTENSION_STATE_MAX (sizeof (l1e_instance_extension_state)/sizeof(char *) )
 
 #endif
+
+static char *prot_link_state_name[]={
+		"PDETECT", /* Checking if the peer instance is using the same protocol */
+		"IN_PROG", /* Right protocol detected. Try to establish the link with peer instance */
+		"LINKED ", /* Link with peer well established */
+		"FAILURE" /* Impossible to connect correctly to a peer instance */
+};
 
 /* prototypes */
 int read_instances(void);
@@ -526,9 +533,9 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_WHITE, "%3d\n", *p);
 		}
 
-		term_cprintf(C_CYAN, "----- HAL ---|--------------------------------- PPSI -------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT states    | Pro | VLANs\n");
-		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+----------------------+-----+------\n");
+		term_cprintf(C_CYAN, "----- HAL ---|---------------------------------- PPSI --------------------------------------------------------\n");
+		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |       PTP/EXT/PLINK states   | Pro | VLANs\n");
+		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+------------------------------+-----+------\n");
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -539,6 +546,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 		char if_name[10];
 		int print_port = 0;
 		int instance_port = 0;
+		int color;
 
 		snprintf(if_name, 10, "wri%d", i + 1);
 
@@ -640,7 +648,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 						switch (ppi->protocol_extension ) {
 						case PPSI_EXT_WR :
 							break;
-#if CONFIG_EXT_L1SYNC == 1
+#if CONFIG_HAS_EXT_L1SYNC
 						case PPSI_EXT_L1S :
 						{
 							portDS_t *portDS;
@@ -658,7 +666,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 						}
 #endif
 						}
-						term_cprintf(C_GREEN, "%s",extension_state_name);
+						term_cprintf(C_GREEN, "%s/%s",extension_state_name,prot_link_state_name[ppi->link_state]);
 					} // else {
 //						term_cprintf(C_WHITE, "                  ");
 //						term_cprintf(C_CYAN, "|");
@@ -676,7 +684,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 					} else {
 						term_cprintf(C_WHITE, "?");
 					}
-					term_cprintf(C_WHITE, "-%c",pe_info->short_ext_name);
+					color=ppi->protocol_extension!=PPSI_EXT_NONE && !ppi->ext_enabled ? C_RED : C_WHITE;
+					term_cprintf(color, "-%c",pe_info->short_ext_name);
 
 					nvlans = ppi->nvlans;
 					term_cprintf(C_CYAN, " | ");
@@ -690,7 +699,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 			}
 			if (!instance_port || !ppsi_alive) {
 				term_cprintf(C_WHITE, " -- ");
-				term_cprintf(C_CYAN, "|              |            |                   |                      |     |");
+				term_cprintf(C_CYAN, "|              |            |                   |                              |     |");
 			}
 			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
@@ -722,13 +731,13 @@ void show_servo(struct inst_servo_t *servo, int alive)
 	struct wr_servo_state * wr_servo;
 	char buf[128];
 	struct l1e_servo_state * l1e_servo;
-	int proto_extension=servo->ppi->protocol_extension;
+	int proto_extension=servo->ppi->ext_enabled ? servo->ppi->protocol_extension : PPSI_EXT_NONE;
 	struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
 
-	wr_servo= (servo->ppi->protocol_extension==PPSI_EXT_WR) ?
+	wr_servo= (servo->ppi->protocol_extension==PPSI_EXT_WR && servo->ppi->ext_enabled) ?
 			( struct wr_servo_state * ) servo->servo_ext_snapshot : NULL;
 
-	l1e_servo= (servo->ppi->protocol_extension==PPSI_EXT_L1S) ?
+	l1e_servo= (servo->ppi->protocol_extension==PPSI_EXT_L1S && servo->ppi->ext_enabled) ?
 			( struct l1e_servo_state * ) servo->servo_ext_snapshot : NULL;
 
 	if (mode == SHOW_GUI) {

@@ -1041,30 +1041,6 @@ config READ_SFP_DIAG_ENABLE
 	help
 	  Let HAL to read Diagnostic Monitoring from SFP's eeprom.
 
-endmenu # "Developer options"
-
-menu "RTU HP mask"
-
-config RTU_HP_MASK_ENABLE
-	bool "Set custom High Priority mask in RTU"
-	default n
-	help
-	  Set the mask which priorities are considered High Priority (this
-	  only concerns the traffic which is fast-forwarded).
-
-
-config RTU_HP_MASK_VAL
-	string "HP mask"
-	default 0
-	depends on RTU_HP_MASK_ENABLE
-	help
-	  Mask with priorities (eg. 0x9 => priority 4 and 0 are considered HP)
-
-
-endmenu
-
-source Kconfig_vlans.in
-
 choice
 	prompt "Compilation optimization"
     
@@ -1091,10 +1067,34 @@ endchoice
 
 config OPTIMIZATION
 	string
-	default "-Os" if OPTIMIZATION_SIZE_SPEED
-	default "-O2" if OPTIMIZATION_SPEED
+	default "-Os -ggdb" if OPTIMIZATION_SIZE_SPEED
+	default "-O2 -ggdb" if OPTIMIZATION_SPEED
 	default "-Og -ggdb" if OPTIMIZATION_DEBUGGING
 	default "-ggdb" if OPTIMIZATION_NONE_DEBUGGING
-	default ""
+	default "-ggdb"
+
+endmenu # "Developer options"
+
+menu "RTU HP mask"
+
+config RTU_HP_MASK_ENABLE
+	bool "Set custom High Priority mask in RTU"
+	default n
+	help
+	  Set the mask which priorities are considered High Priority (this
+	  only concerns the traffic which is fast-forwarded).
+
+
+config RTU_HP_MASK_VAL
+	string "HP mask"
+	default 0
+	depends on RTU_HP_MASK_ENABLE
+	help
+	  Mask with priorities (eg. 0x9 => priority 4 and 0 are considered HP)
+
+
+endmenu
+
+source Kconfig_vlans.in
 
 

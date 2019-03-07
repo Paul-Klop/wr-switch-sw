@@ -10,8 +10,8 @@
 
 */
 
-#ifndef __WBGEN2_REGDEFS_ENDPOINT-MDIO_WB
-#define __WBGEN2_REGDEFS_ENDPOINT-MDIO_WB
+#ifndef __WBGEN2_REGDEFS_ENDPOINT_MDIO_WB
+#define __WBGEN2_REGDEFS_ENDPOINT_MDIO_WB
 
 #ifdef __KERNEL__
 #include <linux/types.h>

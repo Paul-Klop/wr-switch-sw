@@ -226,7 +226,13 @@ static int libwr_cfg_read_kconfig(struct kc **all_configs,
 	if (!f)
 		return -1;
 	while (fgets(s, sizeof(s), f)) {
-		if (sscanf(s, "source %s", name) == 1) {
+		char *ss=s;
+
+		/* Remove leading spaces */
+		while ( *ss==' ' || *ss=='\t')
+			ss++;
+
+		if (sscanf(ss, "source %s", name) == 1) {
 			/* Recursive call for sourced files */
 			ret = libwr_cfg_read_kconfig(all_configs,
 						     kconfig_dirname, name,
@@ -234,7 +240,7 @@ static int libwr_cfg_read_kconfig(struct kc **all_configs,
 			if (ret)
 				break;
 		}
-		if (sscanf(s, "config %s", name) != 1)
+		if (sscanf(ss, "config %s", name) != 1)
 			continue;
 		kc = malloc(sizeof(*kc));
 		if (!kc) {

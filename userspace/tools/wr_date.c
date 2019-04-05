@@ -129,7 +129,7 @@ int wrdate_get(struct PPSG_WB *pps, int tohost)
 	unsigned long taih, tail, nsec, tmp1, tmp2;
 	uint64_t tai;
 	time_t t;
-	struct timeval tv;
+	struct timeval hw,sw;
 	struct tm tm;
 	char utcs[64], tais[64];
 	int tai_offset;
@@ -137,10 +137,10 @@ int wrdate_get(struct PPSG_WB *pps, int tohost)
 	tai_offset = get_kern_leaps();
 
 	if (opt_not) {
-		gettimeofday(&tv, NULL);
+		gettimeofday(&sw, NULL);
 		taih = 0;
-		tail = tv.tv_sec + tai_offset;
-		nsec = tv.tv_usec * 1000;
+		tail = sw.tv_sec + tai_offset;
+		nsec = sw.tv_usec * 1000;
 	} else {
 		taih = pps->CNTR_UTCHI;
 
@@ -151,25 +151,33 @@ int wrdate_get(struct PPSG_WB *pps, int tohost)
 			tmp2 = pps->CNTR_UTCLO;
 		} while((tmp1 != taih) || (tmp2 != tail));
 	}
+	gettimeofday(&sw, NULL);
 
 	tai = (uint64_t)(taih) << 32 | tail;
 
 	/* Before printing (which takes time), set host time if so asked to */
 	if (tohost) {
-		tv.tv_sec = tai - tai_offset;
-		tv.tv_usec = nsec / 1000;
-		if (settimeofday(&tv, NULL))
+		hw.tv_sec = tai - tai_offset;
+		hw.tv_usec = nsec / 1000;
+		if (settimeofday(&hw, NULL))
 			fprintf(stderr, "wr_date: settimeofday(): %s\n",
 				strerror(errno));
 	}
 
-	t = tai; localtime_r(&t, &tm);
+	t = tai; gmtime_r(&t, &tm);
 	strftime(tais, sizeof(tais), "%Y-%m-%d %H:%M:%S", &tm);
-	t -= tai_offset; localtime_r(&t, &tm);
+	t -= tai_offset; gmtime_r(&t, &tm);
 	strftime(utcs, sizeof(utcs), "%Y-%m-%d %H:%M:%S", &tm);
 	printf("%lli.%09li TAI\n"
 	       "%s.%09li TAI\n"
 	       "%s.%09li UTC\n", tai, nsec, tais, nsec, utcs, nsec);
+	if(opt_verbose)
+	{
+		gmtime_r(&(sw.tv_sec), &tm);
+		strftime(utcs, sizeof(utcs), "%Y-%m-%d %H:%M:%S", &tm);
+		printf("%s.%09li UTC (linux)\n", utcs, sw.tv_usec*1000);
+	}
+
 	return 0;
 }
 

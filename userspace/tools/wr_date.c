@@ -82,9 +82,25 @@ int wrdate_cfgfile(char *fname)
 	return 0;
 }
 
+
+int get_kern_leaps(void)
+{
+	struct timex tx = {0};
+	int *p;
+	if (adjtimex(&tx) < 0) {
+		fprintf(stderr, "%s: adjtimex(): %s\n", prgname,
+			strerror(errno));
+			return 0;
+	}
+
+	p = (int *)(&tx.stbcnt) + 1;
+	return *p;
+	//return t.tai;
+}
+
+
 int wrdate_get(struct PPSG_WB *pps, int tohost)
 {
-	int fix_host_tai(void); /* defined later */
 	unsigned long taih, tail, nsec, tmp1, tmp2;
 	uint64_t tai;
 	time_t t;
@@ -93,7 +109,7 @@ int wrdate_get(struct PPSG_WB *pps, int tohost)
 	char utcs[64], tais[64];
 	int tai_offset;
 
-	tai_offset = fix_host_tai();
+	tai_offset = get_kern_leaps();
 
 	if (opt_not) {
 		gettimeofday(&tv, NULL);

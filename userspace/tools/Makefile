@@ -18,6 +18,9 @@ TOOLS += utc_leap_test
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+SCP             ?= scp -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+SCP_DEV         ?= root@wrsdev
+SCP_TARGET      ?= /wr
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -91,6 +94,9 @@ clean:
 install: all
 	install -d $(WR_INSTALL_ROOT)/bin
 	install $(TOOLS) $(WR_INSTALL_ROOT)/bin
+
+scp: all
+	$(SCP) $(TOOLS) $(SCP_DEV):$(SCP_TARGET)/bin/
 
 mkpasswd: mkpasswd.o utils.o
 	${CC} -o $@ $^ $(LDFLAGS) -lcrypt

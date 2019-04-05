@@ -28,6 +28,7 @@
 
 /* Address for hardware, from nic-hardware.h */
 #define FPGA_BASE_PPSG  0x10010500
+#define PPSG_STEP_IN_NS 16 /* we count a 16.5MHz */
 
 extern int init_module(void *module, unsigned long len, const char *options);
 extern int delete_module(const char *module, unsigned int flags);
@@ -47,6 +48,7 @@ void help(char *prgname)
 		"    set <value>     set WR time to scalar seconds\n"
 		"    set host        set TAI from current host time\n"
 		"    stat            print statistics between TAI (WR time) and linux UTC\n"
+		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
 /*		"    set ntp:<ip>    set from specified ntp server\n" */
 		, WRDATE_CFG_FILE);
@@ -82,6 +84,29 @@ int wrdate_cfgfile(char *fname)
 	return 0;
 }
 
+
+/* This returns wr time, used for syncing to a second transition */
+uint64_t gettimeof_wr(struct timeval *tv, struct PPSG_WB *pps)
+{
+	uint32_t tai_h,tai_l,nsec, tmp1, tmp2;
+	uint64_t tai;
+
+	tai_h = pps->CNTR_UTCHI;
+
+	do {
+		tai_l = pps->CNTR_UTCLO;
+		nsec = pps->CNTR_NSEC * PPSG_STEP_IN_NS;
+		tmp1 = pps->CNTR_UTCHI;
+		tmp2 = pps->CNTR_UTCLO;
+	} while((tmp1 != tai_h) || (tmp2 != tai_l));
+
+	tai = (uint64_t)(tai_h) << 32 | tai_l;
+
+	tv->tv_sec = tai;
+	tv->tv_usec = nsec / 1000;
+
+	return tai;
+}
 
 int get_kern_leaps(void)
 {
@@ -148,19 +173,81 @@ int wrdate_get(struct PPSG_WB *pps, int tohost)
 	return 0;
 }
 
-/* This returns wr time, used for syncing to a second transition */
-void gettimeof_wr(struct timeval *tv, struct PPSG_WB *pps)
-{
-	unsigned long tail, nsec, tmp2;
 
-	/* FIXME: not 2038-clean */
-	do {
-		tail = pps->CNTR_UTCLO;
-		nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
-		tmp2 = pps->CNTR_UTCLO;
-	} while(tmp2 != tail);
-	tv->tv_sec = tail;
-	tv->tv_usec = nsec / 1000;
+/**
+ * Function to subtract timeval in a robust way
+ *
+ * In order to properly print the result on screen you can use:
+ *
+ *     int neg=timeval_subtract(&diff, &a, &b);
+ *     printf("%c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+ *
+ * @ref: https://stackoverflow.com/questions/15846762/timeval-subtract-explanation
+ * @note for safety reason a copy of x,y is used internally so x,y are never modified
+ * @param[inout] result A pointer on a timeval structure where the result will be stored.
+ * @param[in] x A pointer on x timeval struct
+ * @param[in] y A pointer on y timeval struct
+ * @return 1 if result is negative (seconds or useconds)
+ *
+ *
+ */
+int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
+{
+	struct timeval xx = *x;
+	struct timeval yy = *y;
+	x = &xx; y = &yy;
+
+	if (x->tv_usec > 999999)
+	{
+		x->tv_sec += x->tv_usec / 1000000;
+		x->tv_usec %= 1000000;
+	}
+
+	if (y->tv_usec > 999999)
+	{
+		y->tv_sec += y->tv_usec / 1000000;
+		y->tv_usec %= 1000000;
+	}
+
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_usec = x->tv_usec - y->tv_usec;
+
+	if(result->tv_sec>0 && result->tv_usec < 0)
+	{
+		result->tv_usec += 1000000;
+		result->tv_sec--; // borrow
+	}
+	else if(result->tv_sec<0 && result->tv_usec > 0)
+	{
+		result->tv_usec -= 1000000;
+		result->tv_sec++; // borrow
+	}
+
+	return (result->tv_sec < 0) || (result->tv_usec<0);
+}
+
+
+
+int wrdate_diff(struct PPSG_WB *pps)
+{
+	struct timeval sw, hw, diff;
+	int neg=0;
+
+	gettimeof_wr(&hw, pps);
+	gettimeofday(&sw, NULL);
+
+	neg=timeval_subtract(&diff, &hw, &sw);
+
+	printf("%s%c%li.%06li\n",opt_verbose?("TAI(HW)-UTC(SW): "):(""),neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+	if(opt_verbose)
+	{
+
+		hw.tv_sec-=get_kern_leaps(); //Convert HW clock from TAI to UTC
+
+		neg=timeval_subtract(&diff, &hw, &sw);
+		printf("UTC(HW)-UTC(SW): %c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+	}
+	return 0;
 }
 
 /* Fix the TAI representation looking at the leap file */
@@ -536,6 +623,10 @@ int main(int argc, char **argv)
 		else if (optind < argc)
 			help(argv[0]);
 		return wrdate_get(pps, tohost);
+	}
+
+	if (!strcmp(cmd, "diff")) {
+		return wrdate_diff(pps);
 	}
 
 	if (!strcmp(cmd, "stat")) {

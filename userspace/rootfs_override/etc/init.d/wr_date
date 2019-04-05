@@ -4,6 +4,70 @@
 /wr/bin/wr_date -n set host > /dev/null
 
 F=/etc/wr_date.conf
+CCS=/sys/bus/clocksource/devices/clocksource0/current_clocksource
+
+#Each NTP attempts last around 10s
+ntp_retries()
+{
+	S=$1
+	N=$2
+
+	for i in `seq $N` ; do # Manual retries
+		if ntpd -n -q -p $S -d; then
+			success=1
+			echo "NTP success"
+			return 0
+		else
+			echo "Retry $i/$N : NTP query failed, unable to contact server ($S)."
+		fi
+	done
+	echo "ERROR: could not reach NTP server '$S' after $N retries"
+	return 1
+}
+
+gm_wait_lock()
+{
+	gm_ntries=${1:-15}
+
+	#First check if we have configure softpll in GM mode <=> (1)
+	if /wr/bin/wrs_dump_shmem -S 2> logger | grep mode | grep -q \(1\); then
+		for i in `seq ${gm_ntries}` ; do
+			#Check if we have entered in locked state <=> (6)
+			al_state=$(/wr/bin/wrs_dump_shmem -S 2> /dev/null | grep align_state)
+			if echo ${al_state} | grep -q \(6\); then
+				return 0
+			else
+				echo "Retry $i/${gm_ntries}: GM mode but not locked! "${al_state}
+			fi
+			sleep 10
+		done
+		echo "Error: GM was not lock when setting ntp time to FPGA"
+		return 2
+	fi
+	return 1
+}
+
+ntp_to_hwclk()
+{
+	S=$1
+
+	#Check if GM mode and wait for GM lock
+	if gm_wait_lock; then
+		ntp_ntries=10
+		#Temporary disable white-rabbit as kernel clock source
+		echo "pit" > ${CCS}
+	else
+		ntp_ntries=1
+	fi
+
+	#Request NTP server and set time to FPGA is okay
+	if ntp_retries $S ${ntp_ntries}; then
+		/wr/bin/wr_date -v set host
+		date_set=1
+		#Enable back white rabbit as clock source
+		echo "white-rabbit" > ${CCS}
+	fi
+}
 
 date_set=0
 # check whether there is config file
@@ -12,17 +76,7 @@ if [ -f $F ]; then
 	S=$(grep 'ntpserver' $F | sed 's/ntpserver//' | head -n 1)
 	# check whether server found
 	if [ -n "$S" ]; then
-
-		# pick busybox ntpd explicitly, to avoid real ntpd instances
-		echo "Setting host time using ntpd"
-		busybox ntpd -n -q -p $S
-		if [ $? == 0 ]; then
-			# successful
-			echo "Date set from $S"
-			date_set=1
-			echo "Setting WR time from host time"
-			/wr/bin/wr_date set host
-		fi
+		ntp_to_hwclk "$S"
 	fi
 fi
 # if ntp failed, try to restore date saved before last reboot

@@ -12,6 +12,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/pps_gen.h>
+#include "../../kernel/wbgen-regs/ppsg-regs.h"
 #include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
@@ -536,7 +537,8 @@ static struct desired_state_t{
 void show_ports(int hal_alive, int ppsi_alive)
 {
 	int i, j;
-	time_t t;
+	uint32_t tai_l,tmp2,nsec;
+	struct timeval sw, hw;
 	struct timex timex_val;
 	struct tm *tm;
 	char datestr[32];
@@ -544,6 +546,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 	int vlan_i;
 	int nvlans;
 	int *p;
+
+	struct PPSG_WB *pps=(struct PPSG_WB *)(_fpga_base_virt+FPGA_BASE_PPS_GEN);
 
 	if (!hal_alive) {
 		if (mode == SHOW_GUI)
@@ -554,17 +558,26 @@ void show_ports(int hal_alive, int ppsi_alive)
 	}
 
 	if (mode == SHOW_GUI) {
-		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
-		tm = localtime(&t);
+		//First get all the times at the "same instant"
+		do {
+			tai_l = pps->CNTR_UTCLO;
+			nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
+			tmp2 = pps->CNTR_UTCLO;
+		} while((tmp2 != tai_l));
+		gettimeofday(&sw, NULL);
+
+		hw.tv_usec = nsec/1000;
+		hw.tv_sec  = (time_t)(tai_l);
+
+		tm = gmtime(&(hw.tv_sec));
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_cprintf(C_BLUE, "WR time (TAI):     ");
-		term_cprintf(C_WHITE, "%s\n", datestr);
+		term_cprintf(C_WHITE, "%s.%06li\n", datestr,hw.tv_usec);
 
-		time(&t);
-		tm = localtime(&t);
+		tm = gmtime(&(sw.tv_sec));
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_cprintf(C_BLUE, "Switch time (UTC): ");
-		term_cprintf(C_WHITE, "%s", datestr);
+		term_cprintf(C_WHITE, "%s.%06li", datestr,sw.tv_usec);
 
 		term_cprintf(C_BLUE, "   Leap seconds: ");
 		if (adjtimex(&timex_val) < 0) {

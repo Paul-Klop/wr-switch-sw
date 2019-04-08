@@ -427,66 +427,73 @@ int __wrdate_internal_set(struct PPSG_WB *pps, int deep)
 
 	if ( deep > 4 )
 		return 0; /* Avoid stack overflow (recursive function) in case of error */
-	if ( deep==0 ) {
-		modRemoved=removeClockSourceModule(); // The driver must be removed otherwise the time cannot be set properly
-	}
+
 	tai_offset = fix_host_tai();
 
-	usleep(100);
-	gettimeofday(&tvh, NULL);
-	gettimeof_wr(&tvr, pps);
-
-	/* diff is the expected step to be added, so host - WR */
-	diff = tvh.tv_usec - tvr.tv_usec;
-	diff64 = tvh.tv_sec + tai_offset - tvr.tv_sec;
-	if (diff > 500 * 1000) {
-		diff64++;
-		diff -= 1000 * 1000;
-	}
-	if (diff < -500 * 1000) {
-		diff64--;
-		diff += 1000 * 1000;
-	}
-
-	/* Warn if more than 200ms away */
-	if (diff > 200 * 1000 || diff < -200 * 1000)
-		fprintf(stderr, "%s: Warning: fractional second differs by"
-			"more than 0.2 (%li ms)\n", prgname, diff / 1000);
-
-	if (opt_verbose && deep==0) {
-		printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
-		       (long)(tvh.tv_usec));
-		printf("WR   time: %9li.%06li\n", (long)(tvr.tv_sec),
-		       (long)(tvr.tv_usec));
-		printf("Fractional difference: %li usec\n", diff);
-	}
-
-	if (diff64) {
-		if (opt_verbose)
-			printf("adjusting by %lli seconds\n", diff64);
-		/* We must write a signed "adjustment" value */
-		pps->ADJ_UTCLO = diff64 & 0xffffffff;
-		pps->ADJ_UTCHI = (diff64 >> 32) & 0xff;
-		pps->ADJ_NSEC = 0;
-		asm("" : : : "memory"); /* barrier... */
-		pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
-		if ( wait_wr_adjustment(pps) )
-		__wrdate_internal_set(pps,deep+1); /* adjust the usecs */
+	if (opt_not) {
+		if (!opt_verbose) return 0;
+		printf("Nothing done: -n option selected\n");
 	} else {
-		if (opt_verbose)
-			printf("adjusting by %li usecs\n", diff);
-		pps->ADJ_UTCLO = 0;
-		pps->ADJ_UTCHI = 0;
-		pps->ADJ_NSEC = (diff*1000)/16;
-		asm("" : : : "memory"); /* barrier... */
-		pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
-		wait_wr_adjustment(pps);
-	}
 
-	if ( deep==0 && modRemoved ) {
-		installClockSourceModule();
-	}
+		if ( deep==0) {
+			modRemoved=removeClockSourceModule(); // The driver must be removed otherwise the time cannot be set properly
+		}
 
+		usleep(100);
+		gettimeofday(&tvh, NULL);
+		gettimeof_wr(&tvr, pps);
+
+		/* diff is the expected step to be added, so host - WR */
+		diff = tvh.tv_usec - tvr.tv_usec;
+		diff64 = tvh.tv_sec + tai_offset - tvr.tv_sec;
+		if (diff > 500 * 1000) {
+			diff64++;
+			diff -= 1000 * 1000;
+		}
+		if (diff < -500 * 1000) {
+			diff64--;
+			diff += 1000 * 1000;
+		}
+
+		/* Warn if more than 200ms away */
+		if (diff > 200 * 1000 || diff < -200 * 1000)
+			fprintf(stderr, "%s: Warning: fractional second differs by"
+				"more than 0.2 (%li ms)\n", prgname, diff / 1000);
+
+		if (opt_verbose && deep==0) {
+			printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
+				   (long)(tvh.tv_usec));
+			printf("WR   time: %9li.%06li\n", (long)(tvr.tv_sec),
+				   (long)(tvr.tv_usec));
+			printf("Fractional difference: %li usec\n", diff);
+		}
+
+		if (diff64) {
+			if (opt_verbose)
+				printf("adjusting by %lli seconds\n", diff64);
+			/* We must write a signed "adjustment" value */
+			pps->ADJ_UTCLO = diff64 & 0xffffffff;
+			pps->ADJ_UTCHI = (diff64 >> 32) & 0xff;
+			pps->ADJ_NSEC = 0;
+			asm("" : : : "memory"); /* barrier... */
+			pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
+			if ( wait_wr_adjustment(pps) )
+			__wrdate_internal_set(pps,deep+1); /* adjust the usecs */
+		} else {
+			if (opt_verbose)
+				printf("adjusting by %li usecs\n", diff);
+			pps->ADJ_UTCLO = 0;
+			pps->ADJ_UTCHI = 0;
+			pps->ADJ_NSEC = (diff*1000)/16;
+			asm("" : : : "memory"); /* barrier... */
+			pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
+			wait_wr_adjustment(pps);
+		}
+
+		if ( deep==0 && modRemoved ) {
+			installClockSourceModule();
+		}
+	}
 	if (opt_verbose && deep==0) {
 		usleep(100);
 		gettimeofday(&tvh, NULL);

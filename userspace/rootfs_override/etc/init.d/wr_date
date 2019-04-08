@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# First of all, run wr_date, so to fix tai_offset in the kernel
-/wr/bin/wr_date get > /dev/null
+# First of all, run wr_date -n set, so to fix tai_offset in the kernel
+/wr/bin/wr_date -n set host > /dev/null
 
 F=/etc/wr_date.conf
 

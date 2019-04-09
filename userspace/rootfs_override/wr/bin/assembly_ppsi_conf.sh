@@ -291,10 +291,6 @@ function set_profile_for_WR() {
 	local lv
 	
 	disable_L1sync $inst
-	# Egress and ingress latencies already integrated in WR calculation 
- 	for k in egressLatency ingressLatency ; do 
- 		lv="$inst[$k]"; unset ${lv}
- 	done
 }
 
 function set_profile_for_HA() {

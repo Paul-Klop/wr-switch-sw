@@ -1055,7 +1055,7 @@ choice
            Optimize for size. Enables all -O2 optimizations except those that often increase code size.
            
      config OPTIMIZATION_DEBUGGING
-        boolean "Debugging (-Og -ggdb)"
+        boolean "Debugging (-Og)"
         help
            Should be the optimization level of choice for the standard edit-compile-debug cycle
 

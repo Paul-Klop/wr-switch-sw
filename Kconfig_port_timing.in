@@ -21,7 +21,7 @@ config PORT01_IFACE
 	string "Network interface"
 	default "wri1"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT01_FIBER
 	int  "Fiber type"
@@ -76,7 +76,7 @@ config PORT01_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT01_INST01_PROFILE_HA
+    default PORT01_INST01_PROFILE_WR
     config PORT01_INST01_PROFILE_PTP
         bool "PTP"
     config PORT01_INST01_PROFILE_WR
@@ -120,14 +120,12 @@ choice
 endchoice
 
 config PORT01_INST01_EGRESS_LATENCY
-    depends on PORT01_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 223897
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT01_INST01_INGRESS_LATENCY
-    depends on PORT01_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226273
  help
@@ -291,7 +289,7 @@ config PORT01_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT01_INST02_PROFILE_HA
+    default PORT01_INST02_PROFILE_WR
     config PORT01_INST02_PROFILE_PTP
         bool "PTP"
     config PORT01_INST02_PROFILE_WR
@@ -335,14 +333,12 @@ choice
 endchoice
 
 config PORT01_INST02_EGRESS_LATENCY
-    depends on PORT01_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 223897
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT01_INST02_INGRESS_LATENCY
-    depends on PORT01_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226273
  help
@@ -485,7 +481,7 @@ config PORT02_IFACE
 	string "Network interface"
 	default "wri2"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT02_FIBER
 	int  "Fiber type"
@@ -540,7 +536,7 @@ config PORT02_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT02_INST01_PROFILE_HA
+    default PORT02_INST01_PROFILE_WR
     config PORT02_INST01_PROFILE_PTP
         bool "PTP"
     config PORT02_INST01_PROFILE_WR
@@ -583,14 +579,12 @@ choice
 endchoice
 
 config PORT02_INST01_EGRESS_LATENCY
-    depends on PORT02_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224037
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT02_INST01_INGRESS_LATENCY
-    depends on PORT02_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226377
  help
@@ -754,7 +748,7 @@ config PORT02_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT02_INST02_PROFILE_HA
+    default PORT02_INST02_PROFILE_WR
     config PORT02_INST02_PROFILE_PTP
         bool "PTP"
     config PORT02_INST02_PROFILE_WR
@@ -797,14 +791,12 @@ choice
 endchoice
 
 config PORT02_INST02_EGRESS_LATENCY
-    depends on PORT02_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224037
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT02_INST02_INGRESS_LATENCY
-    depends on PORT02_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226377
  help
@@ -947,7 +939,7 @@ config PORT03_IFACE
 	string "Network interface"
 	default "wri3"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT03_FIBER
 	int  "Fiber type"
@@ -1002,7 +994,7 @@ config PORT03_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT03_INST01_PROFILE_HA
+    default PORT03_INST01_PROFILE_WR
     config PORT03_INST01_PROFILE_PTP
         bool "PTP"
     config PORT03_INST01_PROFILE_WR
@@ -1045,14 +1037,12 @@ choice
 endchoice
 
 config PORT03_INST01_EGRESS_LATENCY
-    depends on PORT03_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224142
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT03_INST01_INGRESS_LATENCY
-    depends on PORT03_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226638
  help
@@ -1216,7 +1206,7 @@ config PORT03_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT03_INST02_PROFILE_HA
+    default PORT03_INST02_PROFILE_WR
     config PORT03_INST02_PROFILE_PTP
         bool "PTP"
     config PORT03_INST02_PROFILE_WR
@@ -1259,14 +1249,12 @@ choice
 endchoice
 
 config PORT03_INST02_EGRESS_LATENCY
-    depends on PORT03_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224142
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT03_INST02_INGRESS_LATENCY
-    depends on PORT03_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226638
  help
@@ -1409,7 +1397,7 @@ config PORT04_IFACE
 	string "Network interface"
 	default "wri4"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT04_FIBER
 	int  "Fiber type"
@@ -1464,7 +1452,7 @@ config PORT04_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT04_INST01_PROFILE_HA
+    default PORT04_INST01_PROFILE_WR
     config PORT04_INST01_PROFILE_PTP
         bool "PTP"
     config PORT04_INST01_PROFILE_WR
@@ -1507,14 +1495,12 @@ choice
 endchoice
 
 config PORT04_INST01_EGRESS_LATENCY
-    depends on PORT04_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224313
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT04_INST01_INGRESS_LATENCY
-    depends on PORT04_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226471
  help
@@ -1678,7 +1664,7 @@ config PORT04_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT04_INST02_PROFILE_HA
+    default PORT04_INST02_PROFILE_WR
     config PORT04_INST02_PROFILE_PTP
         bool "PTP"
     config PORT04_INST02_PROFILE_WR
@@ -1721,14 +1707,12 @@ choice
 endchoice
 
 config PORT04_INST02_EGRESS_LATENCY
-    depends on PORT04_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224313
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT04_INST02_INGRESS_LATENCY
-    depends on PORT04_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 226471
  help
@@ -1871,7 +1855,7 @@ config PORT05_IFACE
 	string "Network interface"
 	default "wri5"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT05_FIBER
 	int  "Fiber type"
@@ -1926,7 +1910,7 @@ config PORT05_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT05_INST01_PROFILE_HA
+    default PORT05_INST01_PROFILE_WR
     config PORT05_INST01_PROFILE_PTP
         bool "PTP"
     config PORT05_INST01_PROFILE_WR
@@ -1969,14 +1953,12 @@ choice
 endchoice
 
 config PORT05_INST01_EGRESS_LATENCY
-    depends on PORT05_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224455
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT05_INST01_INGRESS_LATENCY
-    depends on PORT05_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 227679
  help
@@ -2140,7 +2122,7 @@ config PORT05_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT05_INST02_PROFILE_HA
+    default PORT05_INST02_PROFILE_WR
     config PORT05_INST02_PROFILE_PTP
         bool "PTP"
     config PORT05_INST02_PROFILE_WR
@@ -2183,14 +2165,12 @@ choice
 endchoice
 
 config PORT05_INST02_EGRESS_LATENCY
-    depends on PORT05_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224455
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT05_INST02_INGRESS_LATENCY
-    depends on PORT05_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 227679
  help
@@ -2333,7 +2313,7 @@ config PORT06_IFACE
 	string "Network interface"
 	default "wri6"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT06_FIBER
 	int  "Fiber type"
@@ -2388,7 +2368,7 @@ config PORT06_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT06_INST01_PROFILE_HA
+    default PORT06_INST01_PROFILE_WR
     config PORT06_INST01_PROFILE_PTP
         bool "PTP"
     config PORT06_INST01_PROFILE_WR
@@ -2431,14 +2411,12 @@ choice
 endchoice
 
 config PORT06_INST01_EGRESS_LATENCY
-    depends on PORT06_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224603
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT06_INST01_INGRESS_LATENCY
-    depends on PORT06_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 227891
  help
@@ -2602,7 +2580,7 @@ config PORT06_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT06_INST02_PROFILE_HA
+    default PORT06_INST02_PROFILE_WR
     config PORT06_INST02_PROFILE_PTP
         bool "PTP"
     config PORT06_INST02_PROFILE_WR
@@ -2645,14 +2623,12 @@ choice
 endchoice
 
 config PORT06_INST02_EGRESS_LATENCY
-    depends on PORT06_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224603
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT06_INST02_INGRESS_LATENCY
-    depends on PORT06_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 227891
  help
@@ -2795,7 +2771,7 @@ config PORT07_IFACE
 	string "Network interface"
 	default "wri7"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT07_FIBER
 	int  "Fiber type"
@@ -2850,7 +2826,7 @@ config PORT07_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT07_INST01_PROFILE_HA
+    default PORT07_INST01_PROFILE_WR
     config PORT07_INST01_PROFILE_PTP
         bool "PTP"
     config PORT07_INST01_PROFILE_WR
@@ -2893,14 +2869,12 @@ choice
 endchoice
 
 config PORT07_INST01_EGRESS_LATENCY
-    depends on PORT07_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224761
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT07_INST01_INGRESS_LATENCY
-    depends on PORT07_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228055
  help
@@ -3064,7 +3038,7 @@ config PORT07_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT07_INST02_PROFILE_HA
+    default PORT07_INST02_PROFILE_WR
     config PORT07_INST02_PROFILE_PTP
         bool "PTP"
     config PORT07_INST02_PROFILE_WR
@@ -3107,14 +3081,12 @@ choice
 endchoice
 
 config PORT07_INST02_EGRESS_LATENCY
-    depends on PORT07_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224761
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT07_INST02_INGRESS_LATENCY
-    depends on PORT07_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228055
  help
@@ -3257,7 +3229,7 @@ config PORT08_IFACE
 	string "Network interface"
 	default "wri8"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT08_FIBER
 	int  "Fiber type"
@@ -3312,7 +3284,7 @@ config PORT08_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT08_INST01_PROFILE_HA
+    default PORT08_INST01_PROFILE_WR
     config PORT08_INST01_PROFILE_PTP
         bool "PTP"
     config PORT08_INST01_PROFILE_WR
@@ -3355,14 +3327,12 @@ choice
 endchoice
 
 config PORT08_INST01_EGRESS_LATENCY
-    depends on PORT08_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224898
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT08_INST01_INGRESS_LATENCY
-    depends on PORT08_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228178
  help
@@ -3526,7 +3496,7 @@ config PORT08_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT08_INST02_PROFILE_HA
+    default PORT08_INST02_PROFILE_WR
     config PORT08_INST02_PROFILE_PTP
         bool "PTP"
     config PORT08_INST02_PROFILE_WR
@@ -3569,14 +3539,12 @@ choice
 endchoice
 
 config PORT08_INST02_EGRESS_LATENCY
-    depends on PORT08_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 224898
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT08_INST02_INGRESS_LATENCY
-    depends on PORT08_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228178
  help
@@ -3719,7 +3687,7 @@ config PORT09_IFACE
 	string "Network interface"
 	default "wri9"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT09_FIBER
 	int  "Fiber type"
@@ -3774,7 +3742,7 @@ config PORT09_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT09_INST01_PROFILE_HA
+    default PORT09_INST01_PROFILE_WR
     config PORT09_INST01_PROFILE_PTP
         bool "PTP"
     config PORT09_INST01_PROFILE_WR
@@ -3817,14 +3785,12 @@ choice
 endchoice
 
 config PORT09_INST01_EGRESS_LATENCY
-    depends on PORT09_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225069
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT09_INST01_INGRESS_LATENCY
-    depends on PORT09_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228277
  help
@@ -3988,7 +3954,7 @@ config PORT09_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT09_INST02_PROFILE_HA
+    default PORT09_INST02_PROFILE_WR
     config PORT09_INST02_PROFILE_PTP
         bool "PTP"
     config PORT09_INST02_PROFILE_WR
@@ -4031,14 +3997,12 @@ choice
 endchoice
 
 config PORT09_INST02_EGRESS_LATENCY
-    depends on PORT09_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225069
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT09_INST02_INGRESS_LATENCY
-    depends on PORT09_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228277
  help
@@ -4181,7 +4145,7 @@ config PORT10_IFACE
 	string "Network interface"
 	default "wri10"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT10_FIBER
 	int  "Fiber type"
@@ -4236,7 +4200,7 @@ config PORT10_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT10_INST01_PROFILE_HA
+    default PORT10_INST01_PROFILE_WR
     config PORT10_INST01_PROFILE_PTP
         bool "PTP"
     config PORT10_INST01_PROFILE_WR
@@ -4279,14 +4243,12 @@ choice
 endchoice
 
 config PORT10_INST01_EGRESS_LATENCY
-    depends on PORT10_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225245
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT10_INST01_INGRESS_LATENCY
-    depends on PORT10_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228435
  help
@@ -4450,7 +4412,7 @@ config PORT10_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT10_INST02_PROFILE_HA
+    default PORT10_INST02_PROFILE_WR
     config PORT10_INST02_PROFILE_PTP
         bool "PTP"
     config PORT10_INST02_PROFILE_WR
@@ -4493,14 +4455,12 @@ choice
 endchoice
 
 config PORT10_INST02_EGRESS_LATENCY
-    depends on PORT10_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225245
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT10_INST02_INGRESS_LATENCY
-    depends on PORT10_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228435
  help
@@ -4643,7 +4603,7 @@ config PORT11_IFACE
 	string "Network interface"
 	default "wri11"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT11_FIBER
 	int  "Fiber type"
@@ -4698,7 +4658,7 @@ config PORT11_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT11_INST01_PROFILE_HA
+    default PORT11_INST01_PROFILE_WR
     config PORT11_INST01_PROFILE_PTP
         bool "PTP"
     config PORT11_INST01_PROFILE_WR
@@ -4741,14 +4701,12 @@ choice
 endchoice
 
 config PORT11_INST01_EGRESS_LATENCY
-    depends on PORT11_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225463
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT11_INST01_INGRESS_LATENCY
-    depends on PORT11_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228963
  help
@@ -4912,7 +4870,7 @@ config PORT11_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT11_INST02_PROFILE_HA
+    default PORT11_INST02_PROFILE_WR
     config PORT11_INST02_PROFILE_PTP
         bool "PTP"
     config PORT11_INST02_PROFILE_WR
@@ -4955,14 +4913,12 @@ choice
 endchoice
 
 config PORT11_INST02_EGRESS_LATENCY
-    depends on PORT11_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225463
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT11_INST02_INGRESS_LATENCY
-    depends on PORT11_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 228963
  help
@@ -5105,7 +5061,7 @@ config PORT12_IFACE
 	string "Network interface"
 	default "wri12"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT12_FIBER
 	int  "Fiber type"
@@ -5160,7 +5116,7 @@ config PORT12_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT12_INST01_PROFILE_HA
+    default PORT12_INST01_PROFILE_WR
     config PORT12_INST01_PROFILE_PTP
         bool "PTP"
     config PORT12_INST01_PROFILE_WR
@@ -5203,14 +5159,12 @@ choice
 endchoice
 
 config PORT12_INST01_EGRESS_LATENCY
-    depends on PORT12_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225645
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT12_INST01_INGRESS_LATENCY
-    depends on PORT12_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229107
  help
@@ -5374,7 +5328,7 @@ config PORT12_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT12_INST02_PROFILE_HA
+    default PORT12_INST02_PROFILE_WR
     config PORT12_INST02_PROFILE_PTP
         bool "PTP"
     config PORT12_INST02_PROFILE_WR
@@ -5417,14 +5371,12 @@ choice
 endchoice
 
 config PORT12_INST02_EGRESS_LATENCY
-    depends on PORT12_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225645
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT12_INST02_INGRESS_LATENCY
-    depends on PORT12_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229107
  help
@@ -5567,7 +5519,7 @@ config PORT13_IFACE
 	string "Network interface"
 	default "wri13"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT13_FIBER
 	int  "Fiber type"
@@ -5622,7 +5574,7 @@ config PORT13_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT13_INST01_PROFILE_HA
+    default PORT13_INST01_PROFILE_WR
     config PORT13_INST01_PROFILE_PTP
         bool "PTP"
     config PORT13_INST01_PROFILE_WR
@@ -5665,14 +5617,12 @@ choice
 endchoice
 
 config PORT13_INST01_EGRESS_LATENCY
-    depends on PORT13_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225801
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT13_INST01_INGRESS_LATENCY
-    depends on PORT13_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229225
  help
@@ -5836,7 +5786,7 @@ config PORT13_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT13_INST02_PROFILE_HA
+    default PORT13_INST02_PROFILE_WR
     config PORT13_INST02_PROFILE_PTP
         bool "PTP"
     config PORT13_INST02_PROFILE_WR
@@ -5879,14 +5829,12 @@ choice
 endchoice
 
 config PORT13_INST02_EGRESS_LATENCY
-    depends on PORT13_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225801
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT13_INST02_INGRESS_LATENCY
-    depends on PORT13_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229225
  help
@@ -6029,7 +5977,7 @@ config PORT14_IFACE
 	string "Network interface"
 	default "wri14"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT14_FIBER
 	int  "Fiber type"
@@ -6084,7 +6032,7 @@ config PORT14_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT14_INST01_PROFILE_HA
+    default PORT14_INST01_PROFILE_WR
     config PORT14_INST01_PROFILE_PTP
         bool "PTP"
     config PORT14_INST01_PROFILE_WR
@@ -6127,14 +6075,12 @@ choice
 endchoice
 
 config PORT14_INST01_EGRESS_LATENCY
-    depends on PORT14_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225983
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT14_INST01_INGRESS_LATENCY
-    depends on PORT14_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229463
  help
@@ -6298,7 +6244,7 @@ config PORT14_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT14_INST02_PROFILE_HA
+    default PORT14_INST02_PROFILE_WR
     config PORT14_INST02_PROFILE_PTP
         bool "PTP"
     config PORT14_INST02_PROFILE_WR
@@ -6341,14 +6287,12 @@ choice
 endchoice
 
 config PORT14_INST02_EGRESS_LATENCY
-    depends on PORT14_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 225983
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT14_INST02_INGRESS_LATENCY
-    depends on PORT14_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229463
  help
@@ -6491,7 +6435,7 @@ config PORT15_IFACE
 	string "Network interface"
 	default "wri15"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT15_FIBER
 	int  "Fiber type"
@@ -6546,7 +6490,7 @@ config PORT15_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT15_INST01_PROFILE_HA
+    default PORT15_INST01_PROFILE_WR
     config PORT15_INST01_PROFILE_PTP
         bool "PTP"
     config PORT15_INST01_PROFILE_WR
@@ -6589,14 +6533,12 @@ choice
 endchoice
 
 config PORT15_INST01_EGRESS_LATENCY
-    depends on PORT15_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226208
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT15_INST01_INGRESS_LATENCY
-    depends on PORT15_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229850
  help
@@ -6760,7 +6702,7 @@ config PORT15_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT15_INST02_PROFILE_HA
+    default PORT15_INST02_PROFILE_WR
     config PORT15_INST02_PROFILE_PTP
         bool "PTP"
     config PORT15_INST02_PROFILE_WR
@@ -6803,14 +6745,12 @@ choice
 endchoice
 
 config PORT15_INST02_EGRESS_LATENCY
-    depends on PORT15_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226208
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT15_INST02_INGRESS_LATENCY
-    depends on PORT15_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229850
  help
@@ -6953,7 +6893,7 @@ config PORT16_IFACE
 	string "Network interface"
 	default "wri16"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT16_FIBER
 	int  "Fiber type"
@@ -7008,7 +6948,7 @@ config PORT16_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT16_INST01_PROFILE_HA
+    default PORT16_INST01_PROFILE_WR
     config PORT16_INST01_PROFILE_PTP
         bool "PTP"
     config PORT16_INST01_PROFILE_WR
@@ -7051,14 +6991,12 @@ choice
 endchoice
 
 config PORT16_INST01_EGRESS_LATENCY
-    depends on PORT16_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226393
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT16_INST01_INGRESS_LATENCY
-    depends on PORT16_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229907
  help
@@ -7222,7 +7160,7 @@ config PORT16_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT16_INST02_PROFILE_HA
+    default PORT16_INST02_PROFILE_WR
     config PORT16_INST02_PROFILE_PTP
         bool "PTP"
     config PORT16_INST02_PROFILE_WR
@@ -7265,14 +7203,12 @@ choice
 endchoice
 
 config PORT16_INST02_EGRESS_LATENCY
-    depends on PORT16_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226393
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT16_INST02_INGRESS_LATENCY
-    depends on PORT16_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 229907
  help
@@ -7415,7 +7351,7 @@ config PORT17_IFACE
 	string "Network interface"
 	default "wri17"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT17_FIBER
 	int  "Fiber type"
@@ -7470,7 +7406,7 @@ config PORT17_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT17_INST01_PROFILE_HA
+    default PORT17_INST01_PROFILE_WR
     config PORT17_INST01_PROFILE_PTP
         bool "PTP"
     config PORT17_INST01_PROFILE_WR
@@ -7513,14 +7449,12 @@ choice
 endchoice
 
 config PORT17_INST01_EGRESS_LATENCY
-    depends on PORT17_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226594
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT17_INST01_INGRESS_LATENCY
-    depends on PORT17_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 230106
  help
@@ -7684,7 +7618,7 @@ config PORT17_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT17_INST02_PROFILE_HA
+    default PORT17_INST02_PROFILE_WR
     config PORT17_INST02_PROFILE_PTP
         bool "PTP"
     config PORT17_INST02_PROFILE_WR
@@ -7727,14 +7661,12 @@ choice
 endchoice
 
 config PORT17_INST02_EGRESS_LATENCY
-    depends on PORT17_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226594
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT17_INST02_INGRESS_LATENCY
-    depends on PORT17_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 230106
  help
@@ -7877,7 +7809,7 @@ config PORT18_IFACE
 	string "Network interface"
 	default "wri18"
 	help
-	  Used to set the physivcal port interface name: "wri[1-18]"
+	  Used to set the physical port interface name: "wri[1-18]"
 
 config PORT18_FIBER
 	int  "Fiber type"
@@ -7932,7 +7864,7 @@ config PORT18_INST01_MONITOR
 
 choice
     prompt "Profile"
-    default PORT18_INST01_PROFILE_HA
+    default PORT18_INST01_PROFILE_WR
     config PORT18_INST01_PROFILE_PTP
         bool "PTP"
     config PORT18_INST01_PROFILE_WR
@@ -7975,14 +7907,12 @@ choice
 endchoice
 
 config PORT18_INST01_EGRESS_LATENCY
-    depends on PORT18_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226737
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT18_INST01_INGRESS_LATENCY
-    depends on PORT18_INST01_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 230273
  help
@@ -8146,7 +8076,7 @@ config PORT18_INST02_MONITOR
 
 choice
     prompt "Profile"
-    default PORT18_INST02_PROFILE_HA
+    default PORT18_INST02_PROFILE_WR
     config PORT18_INST02_PROFILE_PTP
         bool "PTP"
     config PORT18_INST02_PROFILE_WR
@@ -8189,14 +8119,12 @@ choice
 endchoice
 
 config PORT18_INST02_EGRESS_LATENCY
-    depends on PORT18_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.egressLatency (ps)"
     default 226737
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT18_INST02_INGRESS_LATENCY
-    depends on PORT18_INST02_PROFILE_WR!=y
     int "timestampCorrectionPortDS.ingressLatency (ps)"
     default 230273
  help

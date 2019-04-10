@@ -57,7 +57,7 @@ function print_port_header() {
 	echo -e "\tstring \"Network interface\"" >>$OUTPUT_FILE
 	echo -e "\tdefault \"wri${portIdx}\"" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
-	echo -e "\t  Used to set the physivcal port interface name: \"wri[1-18]\"" >>$OUTPUT_FILE
+	echo -e "\t  Used to set the physical port interface name: \"wri[1-18]\"" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${1}_FIBER" >>$OUTPUT_FILE
 	echo -e "\tint  \"Fiber type\"" >>$OUTPUT_FILE
@@ -133,7 +133,7 @@ function print_instance_header() {
 	
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "    prompt \"Profile\"" >>$OUTPUT_FILE
-	echo -e "    default PORT${1}_INST${2}_PROFILE_HA" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_PROFILE_WR" >>$OUTPUT_FILE
 	echo -e "    config PORT${1}_INST${2}_PROFILE_PTP" >>$OUTPUT_FILE
 	echo -e "        bool \"PTP\"" >>$OUTPUT_FILE
 	echo -e "    config PORT${1}_INST${2}_PROFILE_WR" >>$OUTPUT_FILE
@@ -177,14 +177,12 @@ function print_instance_header() {
 	echo -e "endchoice" >>$OUTPUT_FILE
 	
 	echo -e "\nconfig PORT${1}_INST${2}_EGRESS_LATENCY" >>$OUTPUT_FILE
-	echo -e "    depends on PORT${1}_INST${2}_PROFILE_WR!=y" >>$OUTPUT_FILE
 	echo -e "    int \"timestampCorrectionPortDS.egressLatency (ps)\"" >>$OUTPUT_FILE
 	echo -e "    default ${tx}" >>$OUTPUT_FILE
 	echo -e " help" >>$OUTPUT_FILE
 	echo -e "	 Defines the transmission constant delay (ps)" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${1}_INST${2}_INGRESS_LATENCY" >>$OUTPUT_FILE
-	echo -e "    depends on PORT${1}_INST${2}_PROFILE_WR!=y" >>$OUTPUT_FILE
 	echo -e "    int \"timestampCorrectionPortDS.ingressLatency (ps)\"" >>$OUTPUT_FILE
 	echo -e "    default ${rx}" >>$OUTPUT_FILE
 	echo -e " help" >>$OUTPUT_FILE

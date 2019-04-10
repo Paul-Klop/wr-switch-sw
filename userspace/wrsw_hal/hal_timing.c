@@ -15,107 +15,44 @@
 #include <rt_ipc.h>
 #include <hal_exports.h>
 
-static int timing_mode;
-
-#define LOCK_TIMEOUT_EXT 60000
-#define LOCK_TIMEOUT_INT 10000
+extern struct rts_pll_state hal_port_rts_state;
+extern int hal_port_rts_state_valid;
 
 int hal_init_timing_mode(void)
 {
-	static struct {
-		char *cfgname;
-		int modevalue;
-	} *m, modes[] = {
-		{"TIME_GM", HAL_TIMING_MODE_GRAND_MASTER},
-		{"TIME_FM", HAL_TIMING_MODE_FREE_MASTER},
-		{"TIME_BC", HAL_TIMING_MODE_BC},
-		{NULL, HAL_TIMING_MODE_BC /* default */},
-	};
-
 	if (rts_connect(NULL) < 0) {
 		pr_error(
 		      "Failed to establish communication with the RT subsystem.\n");
 		return -1;
 	}
-
-	/* Read the mode from dot-config */
-	for (m = modes; m->cfgname; m++)
-		if (libwr_cfg_get(m->cfgname))
-			break;
-	timing_mode = m->modevalue;
-
-	if (!m->cfgname)
-		pr_error("%s: no config variable set, defaults used\n",
-			__func__);
 	return 0;
 }
 
 int hal_init_timing(char *filename)
 {
-	timeout_t lock_tmo;
-	/* initialize the RT Subsys */
-	switch (timing_mode) {
-	case HAL_TIMING_MODE_GRAND_MASTER:
-		rts_set_mode(RTS_MODE_GM_EXTERNAL);
-		libwr_tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
-		break;
-
-	default: /* never hit, but having it here prevents a warning */
-		pr_error("%s: Unable to determine HAL mode! Use BC as"
-			 " default\n", __func__);
-	case HAL_TIMING_MODE_FREE_MASTER:
-	case HAL_TIMING_MODE_BC:
-		rts_set_mode(RTS_MODE_GM_FREERUNNING);
-		libwr_tmo_init(&lock_tmo, LOCK_TIMEOUT_INT, 0);
-		break;
-	}
-
-	while (1) {
-		struct rts_pll_state pstate;
-
-		if (libwr_tmo_expired(&lock_tmo)) {
-			pr_error("Can't lock the PLL. "
-			      "If running in the GrandMaster mode, "
-			      "are you sure the 1-PPS and 10 MHz "
-			      "reference clock signals are properly connected?,"
-			      " retrying...\n");
-			if (timing_mode == HAL_TIMING_MODE_GRAND_MASTER) {
-				/*ups... something went wrong, try again */
-				rts_set_mode(RTS_MODE_GM_EXTERNAL);
-				libwr_tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
-			} else {
-				pr_error("Got timeout\n");
-				return -1;
-			}
-		}
-
-		if (rts_get_state(&pstate) < 0) {
-			/* Don't give up when rts_get_state fails, it may be
-			 * due to race with ppsi at boot. No problems seen
-			 * because of waiting here. */
-			pr_error("rts_get_state failed try again\n");
-			continue;
-		}
-
-		if (pstate.flags & RTS_DMTD_LOCKED) {
-			if (timing_mode == HAL_TIMING_MODE_GRAND_MASTER)
-				pr_info("GrandMaster locked to external "
-						"reference\n");
-			break;
-		}
-
-		usleep(100000);
-	}
-
-	/*
-	 * We had "timing.use_nmea", but it was hardwired to /dev/ttyS2
-	 * which is not wired out any more, so this is removed after v4.1
-	 */
-
 	return 0;
 }
 
-int hal_get_timing_mode()
+int hal_get_timing_mode(void)
 {
-	return timing_mode;
+	struct rts_pll_state *hs = &hal_port_rts_state;
+
+	if (hal_port_rts_state_valid)
+		switch (hs->mode) {
+		case RTS_MODE_GM_EXTERNAL:
+			return HAL_TIMING_MODE_GRAND_MASTER;
+		case RTS_MODE_GM_FREERUNNING:
+			return HAL_TIMING_MODE_FREE_MASTER;
+		case RTS_MODE_BC:
+			return HAL_TIMING_MODE_BC;
+		case RTS_MODE_DISABLED:
+			return HAL_TIMING_MODE_DISABLED;
+		}
+	return -1;
 }
+
+int  hal_update_timing_mode(void) {
+	return hal_port_poll_rts_state();
+}
+
+

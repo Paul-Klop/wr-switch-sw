@@ -37,6 +37,13 @@
 #define UPDATE_LINK_LEDS_PERIOD 500 /* ms */
 #define UPDATE_SFP_DOM_PERIOD 1000 /* ms */
 
+typedef struct {
+	struct pp_instance * ppi;              /* pointer to the ppi instance */
+	struct pp_servo      servo_snapshot;  /* image of a the ppsi servo */
+} inst_servo_t  ;
+
+static inst_servo_t servo;
+
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
 
@@ -47,8 +54,8 @@ static struct hal_port_state *ports;
 static int hal_port_fd;
 
 /* RT subsystem PLL state, polled regularly via mini-ipc */
-static struct rts_pll_state hal_port_rts_state;
-static int hal_port_rts_state_valid = 0;
+struct rts_pll_state hal_port_rts_state;
+int hal_port_rts_state_valid = 0;
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
@@ -56,8 +63,7 @@ static timeout_t update_sync_leds_tmo, update_link_leds_tmo;
 static timeout_t update_sfp_dom_tmo;
 static int hal_port_nports;
 
-static struct wr_servo_state *ppsi_servo;
-static struct wr_servo_state ppsi_servo_local;
+static struct pp_globals *ppg;
 static struct pp_instance *ppsi_instances;
 static struct pp_instance ppsi_instances_local[PP_MAX_LINKS];
 static struct wrs_shm_head *ppsi_head;
@@ -111,9 +117,12 @@ static int hal_port_check_presence(const char *if_name, unsigned char *mac)
 static int hal_port_init(int index)
 {
 	struct hal_port_state *p = &ports[index];
-	char name[128], s[128];
-	int val, error;
+	int i;
+	char key[128];
+	int val;
+	int wrInstanceFound=0;
 	int port_i;
+	char *retValue;
 
 	/* index is 0..17, port_i 1..18 */
 	port_i = index + 1;
@@ -121,35 +130,53 @@ static int hal_port_init(int index)
 	/* make sure the states and other variables are in their init state */
 	hal_port_reset_state(p);
 
-	/* read dot-config values for this index, starting from name */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "name", LIBWR_STRING,
-				   name, port_i);
-	if (error)
+	/* read dot-config values to get the interface name */
+	sprintf(key,"PORT%02i_IFACE",port_i);
+	if( (retValue=libwr_cfg_get(key))==NULL)
 		return -1;
-	strncpy(p->name, name, 16);
+	strncpy(p->name, retValue, 16);
 
 	/* check if the port is built into the firmware, if not, we are done */
-	if (!hal_port_check_presence(name, p->hw_addr))
+	if (!hal_port_check_presence(p->name, p->hw_addr))
 		return -1;
 
 	p->state = HAL_PORT_STATE_DISABLED;
 	p->in_use = 1;
 
+	/* Search an instance using the WR profile */
+	for (i=1; i<=2; i++) {
+		sprintf(key,"PORT%02i_INST%02i_PROFILE_WR",port_i,i);
+		if( ((retValue=libwr_cfg_get(key))!=NULL) && (*retValue=='y') ) {
+			wrInstanceFound++;
+			break; // Found
+		}
+	}
 	val = 18 * 800; /* magic default from previous code */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "tx", LIBWR_INT,
-				   &val, port_i);
-	if (error)
-		pr_error("port %i (%s): no \"tx=\" specified\n",
-			port_i, name);
-	p->calib.phy_tx_min = val;
+	if ( wrInstanceFound ) {
+		// WR instance found
+		val = 18 * 800; /* magic default from previous code */
+		for ( i=0; i<2; i++ ) {
+			char *latency=i==0 ? "EGRESS": "INGRESS";
+			uint32_t *phy_min=i==0 ? &p->calib.phy_tx_min: &p->calib.phy_rx_min;
 
-	val = 18 * 800; /* magic default from previous code */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "rx", LIBWR_INT,
-				   &val, port_i);
-	if (error)
-		pr_error("port %i (%s): no \"rx=\" specified\n",
-			port_i, name);
-	p->calib.phy_rx_min = val;
+			sprintf(key,"PORT%02i_INST%02i_%s_LATENCY",port_i,i,latency);
+			if( (retValue=libwr_cfg_get(key))==NULL ) {
+				pr_error("port %i (%s): no key \"%s\" specified\n",
+					port_i, p->name,key);
+			} else {
+				if (sscanf(retValue, "%i", &val) != 1) {
+					pr_error("port %i (%s): Invalid key \"%s\" value (%d)\n",
+						port_i, p->name, key,*retValue);
+				}
+			}
+			*phy_min = val;
+		}
+
+	} else {
+		pr_error("port %i (%s): no WhiteRabbit instance defined\n",
+			port_i, p->name);
+		p->calib.phy_tx_min = p->calib.phy_rx_min = val;
+	}
 
 	p->calib.delta_tx_board = 0; /* never set */
 	p->calib.delta_rx_board = 0; /* never set */
@@ -162,61 +189,25 @@ static int hal_port_init(int index)
 	p->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
 	p->clock_period = REF_CLOCK_PERIOD_PS;
 
-	/* enabling of ports is done by startup script */
-
-	{
-		static struct roletab { char *name; int value; } *rp, rt[] = {
-			{"auto",   HEXP_PORT_MODE_WR_M_AND_S},
-			{"master", HEXP_PORT_MODE_WR_MASTER},
-			{"slave",  HEXP_PORT_MODE_WR_SLAVE},
-			{"non-wr", HEXP_PORT_MODE_NON_WR},
-			{"none",   HEXP_PORT_MODE_NONE},
-			{NULL,     HEXP_PORT_MODE_NON_WR /* default,
-						* should exist and be last*/},
-		};
-
-		strcpy(s, "non-wr"); /* default if no string passed */
-		p->mode = HEXP_PORT_MODE_NON_WR;
-		error = libwr_cfg_convert2("PORT%02i_PARAMS", "role",
-					   LIBWR_STRING, s, port_i);
-		if (error)
-			pr_error("port %i (%s): "
-				"no \"role=\" specified\n", port_i, name);
-
-		for (rp = rt; rp->name; rp++)
-			if (!strcasecmp(s, rp->name))
-				break;
-		p->mode = rp->value;
-
-		if (!rp->name) {
-			for (rp = rt; rp->name; rp++)
-				if (p->mode == rp->value)
-					break;
-			pr_error("port %i (%s): invalid role "
-				"\"%s\" specified; using mode %s\n", port_i,
-				name, s, rp->name);
+	/* Get fiber type */
+	p->fiber_index = 0; /* Default fiber value */
+	sprintf(key,"PORT%02i_INST%02i_FIBER",port_i,i);
+	if( (retValue=libwr_cfg_get(key))==NULL ) {
+		pr_error("port %i (%s): no key \"%s\" specified. Default fiber 0\n",
+			port_i, p->name,key);
+	} else {
+		if (sscanf(retValue, "%i", &p->fiber_index) != 1) {
+			pr_error("port %i (%s): Invalid key \"%s\" value (%d). Default fiber 0\n",
+				port_i, p->name, key,*retValue);
 		}
-
-		pr_debug("Port %s: mode %s (%i)\n", p->name, rp->name,
-			 p->mode);
 	}
 
-	/* Get fiber type */
-	error = libwr_cfg_convert2("PORT%02i_PARAMS", "fiber",
-				   LIBWR_INT, &p->fiber_index, port_i);
-
-	if (error) {
-		pr_error("port %i (%s): "
-			"no \"fiber=\" specified, default fiber to 0\n",
-			port_i, name);
-		p->fiber_index = 0;
-		}
 	if (p->fiber_index > 3) {
 		pr_error("port %i (%s): "
-			"not supported \"fiber=\" value, default to 0\n",
-			port_i, name);
+			"not supported fiber value (%d), default to 0\n",
+			port_i, p->name,p->fiber_index);
 		p->fiber_index = 0;
-		}
+	}
 
 	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
@@ -345,15 +336,14 @@ int hal_port_pshifter_busy()
 
 /* Updates the current value of the phase shift on a given
  * port. Called by the main update function regularly. */
-static void poll_rts_state(void)
+int hal_port_poll_rts_state(void)
 {
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
-	if (libwr_tmo_expired(&hal_port_tmo_rts)) {
-		hal_port_rts_state_valid = rts_get_state(hs) < 0 ? 0 : 1;
-		if (!hal_port_rts_state_valid)
-			printf("rts_get_state failure, weird...\n");
-	}
+	hal_port_rts_state_valid = rts_get_state(hs) < 0 ? 0 : 1;
+	if (!hal_port_rts_state_valid)
+		printf("rts_get_state failure, weird...\n");
+	return hal_port_rts_state_valid;
 }
 
 static uint32_t pcs_readl(struct hal_port_state * p, int reg)
@@ -383,8 +373,10 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 		if (p->locked) {
 			pr_info("Switching RTS to use local reference\n");
 			if (hal_get_timing_mode()
-			    != HAL_TIMING_MODE_GRAND_MASTER)
-				rts_set_mode(RTS_MODE_GM_FREERUNNING);
+			    != HAL_TIMING_MODE_GRAND_MASTER) {
+				shw_pps_set_timing_mode(HAL_TIMING_MODE_FREE_MASTER);
+				hal_update_timing_mode();
+			}
 		}
 
 		/* turn off synced LED */
@@ -426,14 +418,17 @@ static void hal_port_fsm(struct hal_port_state * p)
 	case HAL_PORT_STATE_RESET:
 		{
 			if (link_up) {
+				uint32_t bit_slide_steps;
+
 				p->calib.tx_calibrated = 1;
 				p->calib.rx_calibrated = 1;
 				/* FIXME: use proper register names */
-				pr_info("Bitslide: %d\n",
-				      ((pcs_readl(p, 16) >> 4) & 0x1f));
+				bit_slide_steps=(pcs_readl(p, 16) >> 4) & 0x1f;
+				p->calib.bitslide_ps=bit_slide_steps*800; /* 1 step = 800ps */
+				pr_info("Bitslide: %d\n",bit_slide_steps);
+
 				p->calib.delta_rx_phy =
-				    p->calib.phy_rx_min +
-				    ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
+				    p->calib.phy_rx_min;
 				p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
 				if (0)
@@ -627,7 +622,6 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 /* detects insertion/removal of SFP transceivers */
 static void hal_port_poll_sfp(void)
 {
-	if (libwr_tmo_expired(&hal_port_tmo_sfp)) {
 		uint32_t mask = shw_sfp_module_scan();
 		static int old_mask = 0;
 
@@ -651,7 +645,6 @@ static void hal_port_poll_sfp(void)
 			}
 		}
 		old_mask = mask;
-	}
 }
 
 /* Executes the port FSM for all ports. Called regularly by the main loop. */
@@ -660,11 +653,13 @@ void hal_port_update_all()
 	int i;
 
 	/* poll_rts_state does not write to shmem */
-	poll_rts_state();
+	if (libwr_tmo_expired(&hal_port_tmo_rts))
+		hal_port_poll_rts_state();
 
 	/* lock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-	hal_port_poll_sfp();
+	if (libwr_tmo_expired(&hal_port_tmo_sfp))
+		hal_port_poll_sfp();
 
 	for (i = 0; i < HAL_MAX_PORTS; i++)
 		if (ports[i].in_use)
@@ -719,25 +714,24 @@ int hal_port_start_lock(const char *port_name, int priority)
 {
 	struct hal_port_state *p = hal_lookup_port(ports, hal_port_nports,
 						   port_name);
+	int ret=-1;
 
-	if (!p)
-		return -1;
-
-	/* can't lock to a disconnected port */
-	if (p->state != HAL_PORT_STATE_UP)
-		return -1;
-
-	/* lock shmem */
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-	/* fixme: check the main FSM state before */
-	p->state = HAL_PORT_STATE_LOCKING;
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+	if (!p && p->state != HAL_PORT_STATE_UP )
+		return -1; /* can't lock to a disconnected port */
 
 	pr_info("Locking to port: %s\n", port_name);
 
-	rts_set_mode(RTS_MODE_BC);
+	hal_port_poll_rts_state(); // update rts state
+	if ( (hal_get_timing_mode()==HAL_TIMING_MODE_BC)  &&
+			(ret=rts_lock_channel(p->hw_index, 0))>0 ) {
+		/* lock shmem */
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+		/* fixme: check the main FSM state before */
+		p->state = HAL_PORT_STATE_LOCKING;
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+	}
+	return ret;
 
-	return rts_lock_channel(p->hw_index, 0); /* 0 or -1 already */
 }
 
 /* Returns 1 if the port is locked */
@@ -756,7 +750,8 @@ int hal_port_check_lock(const char *port_name)
 	if (hs->delock_count > 0)
 		return 0;
 
-	return (hs->current_ref == p->hw_index &&
+	return ( hs->mode==RTS_MODE_BC &&
+		hs->current_ref == p->hw_index &&
 		(hs->flags & RTS_DMTD_LOCKED) &&
 		(hs->flags & RTS_REF_LOCKED));
 }
@@ -771,12 +766,6 @@ int hal_port_reset(const char *port_name)
 
 	if (p->state != HAL_PORT_STATE_LINK_DOWN
 	    && p->state != HAL_PORT_STATE_DISABLED) {
-		if (p->locked) {
-			pr_info("Switching RTS to use local reference\n");
-			if (hal_get_timing_mode()
-			    != HAL_TIMING_MODE_GRAND_MASTER)
-				rts_set_mode(RTS_MODE_GM_FREERUNNING);
-		}
 
 		/* turn off synced LED */
 		set_led_synced(p->hw_index, 0);
@@ -921,15 +910,18 @@ static void update_sync_leds(void)
 	int i;
 	static uint32_t update_count = 0;
 	static uint32_t since_last_servo_update = 0;
+	char *iface_name;
 
 	/* read servo */
 	if (read_servo())
 		return;
 
-	if (!strnlen(ppsi_servo_local.if_name, 16))
+	iface_name=servo.ppi->cfg.iface_name;
+    if (!strnlen(iface_name, 16))
 		return;
 
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
+
 		/* Check:
 		 * --port in use
 		 * --link is up
@@ -939,56 +931,80 @@ static void update_sync_leds(void)
 		 */
 		if (ports[i].in_use
 		    && state_up(ports[i].state)
-		    && !strcmp(ppsi_servo_local.if_name, ports[i].name)) {
-			if (update_count == ppsi_servo_local.update_count) {
+		    && !strcmp(iface_name, ports[i].name)) {
+			int ledValue=0; /* default value */
+
+			if (update_count == servo.servo_snapshot.update_count) {
 				if (since_last_servo_update < 7)
 					since_last_servo_update++;
 			} else {
 				since_last_servo_update = 0;
-				update_count = ppsi_servo_local.update_count;
+				update_count = servo.servo_snapshot.update_count;
 			}
+
 			/* Check:
-			* --port in slave mode
-			* --servo is in track phase
+			* --ppsi instance in slave state
+			* --servo is locked
+			* --WR of HA PTP servo
 			* --servo is updating
 			*/
-			if (ports[i].mode == HEXP_PORT_MODE_WR_SLAVE
-			    && ppsi_servo_local.state == WR_TRACK_PHASE
+			ledValue=(servo.ppi->state == PPS_SLAVE
+				&& servo.servo_snapshot.servo_locked
+				&& (servo.ppi->protocol_extension == PPSI_EXT_WR || servo.ppi->protocol_extension == PPSI_EXT_L1S)
 			    && since_last_servo_update < 7
-			    ) {
-				set_led_synced(i, 1);
-			} else {
-				set_led_synced(i, 0);
-			}
+			    ) ? 1 : 0;
+			set_led_synced(i, ledValue);
 		}
 	}
 }
 
 static int read_servo(void){
-	unsigned ii;
-	unsigned retries = 0;
 
-	/* read data, with the sequential lock to have all data consistent */
-	while (1) {
-		ii = wrs_shm_seqbegin(ppsi_head);
-		memcpy(&ppsi_servo_local, ppsi_servo, sizeof(*ppsi_servo));
-		retries++;
-		if (retries > 100)
-			return -1;
-		if (!wrs_shm_seqretry(ppsi_head, ii))
-			break; /* consistent read */
+	unsigned int i;
+
+	if ( read_ppsi_instances() )
+		return -1;
+
+	bzero(&servo.servo_snapshot,sizeof(struct pp_servo));
+
+	for (i = 0; i < ppg->nlinks; i++) {
+		struct pp_instance *ppi = &ppsi_instances_local[i];
+
+		/* we are only interested  on instances in SLAVE state */
+		if (ppi->state == PPS_SLAVE ) {
+
+			/* ppsi-servo points to instance servo data */
+			struct pp_servo *ppsi_servo = wrs_shm_follow(ppsi_head, ppi->servo);
+			if (!ppsi_servo) {
+				return -1; /* Cannot access servo data */
+			}
+
+			while (1) {
+				unsigned ii = wrs_shm_seqbegin(ppsi_head);
+				unsigned retries = 0;
+
+				memcpy(&servo.servo_snapshot, ppsi_servo, sizeof(struct pp_servo));
+				servo.ppi=ppi;
+
+				if (!wrs_shm_seqretry(ppsi_head, ii)) {
+					break; /* consistent read */
+				}
+				retries++;
+				if (retries > 100)
+					return -1;
+			}
+			return 0; /* We assume that we have only one servo */
+		}
 	}
-
-	return 0;
+	return -1; /* No active servo found */
 }
 
 static int try_open_ppsi_shmem(void)
 {
 	int ret;
-	struct pp_globals *ppg;
 	static int open_error;
 
-	if (ppsi_servo && ppsi_instances) {
+	if (ppsi_instances) {
 		/* shmem already opened */
 		return 1;
 	}
@@ -1021,13 +1037,6 @@ static int try_open_ppsi_shmem(void)
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
-	/* there is an assumption that there is only one servo in ppsi! */
-	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
-	if (!ppsi_servo) {
-		pr_error("Cannot follow ppsi_servo in shmem.\n");
-		return 0;
-	}
-
 	ppsi_instances = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 	if (!ppsi_instances) {
 		pr_error("Cannot follow pp_instances in shmem.\n");
@@ -1038,3 +1047,5 @@ static int try_open_ppsi_shmem(void)
 
 	return 1;
 }
+
+

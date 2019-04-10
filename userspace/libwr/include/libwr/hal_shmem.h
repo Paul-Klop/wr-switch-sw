@@ -39,6 +39,9 @@ typedef struct hal_port_calibration {
 	uint32_t delta_tx_phy;
 	uint32_t delta_rx_phy;
 
+	/* bit slide expresse in picos */
+	uint32_t bitslide_ps;
+
 	/* Current board routing delays (between the DDMTD inputs to
 	   the PHY clock inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;
@@ -70,9 +73,6 @@ struct hal_port_state {
 	/* file descriptor for ioctls() */
 	int fd;
 	int hw_addr_auto;
-
-	/* port timing mode (HEXP_PORT_MODE_xxxx) */
-	int mode;
 
 	/* port FSM state (HAL_PORT_STATE_xxxx) */
 	int state;

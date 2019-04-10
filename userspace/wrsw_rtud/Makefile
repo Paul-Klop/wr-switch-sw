@@ -1,4 +1,7 @@
 
+# We are now Kconfig-based
+-include ../../.config
+
 PROGRAM		= wrsw_rtud
 SRCFILES	= rtu_drv.c rtu_ext_drv.c rtu_hash.c rtu_fd.c rtud.c \
 			rtud_exports.c utils.c
@@ -17,7 +20,10 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-CFLAGS = -O2 -Wall -ggdb  \
+export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
+
+CFLAGS += $(CFLAGS_OPTIMIZATION)
+CFLAGS = -Wall  \
 	-Wstrict-prototypes \
 	-I../mini-rpc \
 	-I../include \

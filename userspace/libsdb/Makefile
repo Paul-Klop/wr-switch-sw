@@ -1,4 +1,7 @@
 
+# We are now Kconfig-based
+-include ../../.config
+
 LINUX ?= /lib/modules/$(shell uname -r)/build
 
 # If we compile for the kernel, we need to include real kernel headers.
@@ -19,7 +22,10 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 # calculate endianness at compile time
 ENDIAN := $(shell ./check-endian $(CC))
 
-CFLAGS = -Wall -ggdb -O2
+export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
+
+CFLAGS += $(CFLAGS_OPTIMIZATION)
+CFLAGS += -Wall
 CFLAGS += -I../include/linux -I../include # for <sdb.h>
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Wno-pointer-sign

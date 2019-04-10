@@ -1,4 +1,5 @@
 Kconfig
+Kconfig_port_timing.in
 Kconfig_vlans.in
 dot-config
 conf

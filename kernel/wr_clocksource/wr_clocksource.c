@@ -24,6 +24,28 @@ static __iomem struct PPSG_WB *wrcs_ppsg;
 
 static int wrcs_is_registered; /* no need for atomic_t or whatever */
 
+/* prototypes */
+static int pps_gen_busy(void);
+static cycle_t wrcs_read(struct clocksource *cs);
+
+static struct clocksource wrcs_cs = {
+	.name = "white-rabbit",
+	.rating = 450,		/* perfect... */
+	.read = wrcs_read,
+	/* no enable/disable */
+	.mask = 0xffffffff, /* We fake a 32-bit thing */
+	.max_idle_ns = 900 * 1000 * 1000, /* well, 1s... */
+	.flags = CLOCK_SOURCE_IS_CONTINUOUS,
+};
+
+
+static int pps_gen_busy(void)
+{
+	uint32_t cr = readl(&wrcs_ppsg->CR);
+	return cr & PPSG_CR_CNT_ADJ ? 0 : 1;
+}
+
+
 /* If so requested, print statistics once per second */
 static inline void wrcs_do_stats(void)
 {
@@ -46,41 +68,6 @@ static inline void wrcs_do_stats(void)
 	ncalls++;
 }
 
-DEFINE_SPINLOCK(wrcs_lock);
-
-static cycle_t wrcs_read(struct clocksource *cs)
-{
-	static uint32_t offset, last, this;
-	unsigned long flags;
-
-	wrcs_do_stats();
-
-	/* FIXME: identify a time jump by monitoring the tick counter */
-
-	/*
-	 * Turn the counter into a 32-bit one (see cs->mask below).
-	 * We reset at 0x3b9aca0, so without this we should use mask = 0x1f
-	 * and mac_idle = 32 ticks = 512ns. Unaffordable.
-	 */
-	spin_lock_irqsave(&wrcs_lock, flags);
-	this = readl(&wrcs_ppsg->CNTR_NSEC);
-	if (this < last)
-		offset += WRCS_FREQUENCY;
-	last = this;
-	spin_unlock_irqrestore(&wrcs_lock, flags);
-	return offset + this;
-}
-
-
-static struct clocksource wrcs_cs = {
-	.name = "white-rabbit",
-	.rating = 450,		/* perfect... */
-	.read = wrcs_read,
-	/* no enable/disable */
-	.mask = 0xffffffff, /* We fake a 32-bit thing */
-	.max_idle_ns = 900 * 1000 * 1000, /* well, 1s... */
-	.flags = CLOCK_SOURCE_IS_CONTINUOUS,
-};
 
 /*
  * The timer is used to check when does WR synchronize.  When that
@@ -95,7 +82,16 @@ static void wrcs_timer_fn(unsigned long unused)
 	uint32_t ticks, tai_l, tai_h;
 	int64_t tai;
 
-	/* Read ppsg, all fields consistently se we can use the value */
+	if ( pps_gen_busy() ){
+		printk(KERN_DEBUG " %s: Adjusting in progress \n",__func__);
+		/* NS counter adjustment in progress. Try later */
+		goto retryLater;
+	}
+
+	wrcs_cs.rating=450; /* Perfect */
+
+	printk(KERN_DEBUG " %s: Timer function \n",__func__);
+	/* Read ppsg, all fields consistently so we can use the value */
 	do {
 		tai_l = readl(&wrcs_ppsg->CNTR_UTCLO);
 		tai_h = readl(&wrcs_ppsg->CNTR_UTCHI);
@@ -104,14 +100,62 @@ static void wrcs_timer_fn(unsigned long unused)
 	tai = (typeof(tai))tai_h << 32 | tai_l;
 
 	/* If we are before 2010 (date +%s --date=2010-01-01), try again */
-	if (tai < 1262300400LL) {
-		mod_timer(&wrcs_timer, jiffies + HZ);
-		return;
-	}
+	if (tai < 1262300400LL)
+		goto retryLater;
 
 	clocksource_register_hz(&wrcs_cs, WRCS_FREQUENCY);
 	wrcs_is_registered = 1;
 	/* And don't restart the timer */
+	return;
+
+retryLater:;
+	wrcs_cs.rating=450; /* Perfect */
+	mod_timer(&wrcs_timer, jiffies + HZ);
+	return;
+
+}
+
+DEFINE_SPINLOCK(wrcs_lock);
+
+static cycle_t wrcs_read(struct clocksource *cs)
+{
+	static uint32_t offset, last, this, adjustOffset;
+	static char cntWasNeg;
+	int32_t ticksCounter;
+	unsigned long flags;
+
+	wrcs_do_stats();
+
+	/* FIXME: identify a time jump by monitoring the tick counter */
+
+	/*
+	 * Turn the counter into a 32-bit one (see cs->mask below).
+	 * We reset at 0x3b9aca0, so without this we should use mask = 0x1f
+	 * and mac_idle = 32 ticks = 512ns. Unaffordable.
+	 */
+	spin_lock_irqsave(&wrcs_lock, flags);
+
+	ticksCounter = readl(&wrcs_ppsg->CNTR_NSEC);
+	if ( (ticksCounter & 0x8000000)!=0 ) {
+		// Negative value
+		ticksCounter|= 0xF0000000;
+		if ( ! cntWasNeg ) {
+			/* Jump from positive to negative counter value */
+			adjustOffset+=-ticksCounter;
+			adjustOffset%=WRCS_FREQUENCY;
+			cntWasNeg=1;
+		}
+	} else {
+		/* the counter is positive */
+		cntWasNeg=0;
+	}
+	this=(ticksCounter+adjustOffset)%WRCS_FREQUENCY;
+	if ( this < last) {
+		offset += WRCS_FREQUENCY;
+	}
+	last = this;
+	spin_unlock_irqrestore(&wrcs_lock, flags);
+	return offset + this;
 }
 
 static int wrcs_init(void)

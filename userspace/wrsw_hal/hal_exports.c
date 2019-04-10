@@ -15,7 +15,6 @@
 #include <minipc.h>
 #include <libwr/shmem.h>
 
-#define HAL_EXPORT_STRUCTURES
 #include <hal_exports.h> /* for exported structs/function protos */
 
 static struct minipc_ch *hal_ch;
@@ -28,7 +27,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int rval;
 
-	pr_debug("halexp_lock_cmd: cmd=%d port=%s\n", command, port_name);
+/*	pr_debug("halexp_lock_cmd: cmd=%d port=%s\n", command, port_name); */
 
 	switch (command) {
 	case HEXP_LOCK_CMD_ENABLE_TRACKING:
@@ -78,8 +77,9 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
  * both the PLLs and the PPS Generator. */
 int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 {
-	int busy;
+	int busy,ret;
 
+	pr_debug("halexp_pps_cmd: cmd=%d\n", cmd);
 	switch (cmd) {
 		/* fixme: TODO: implement HEXP_PPSG_CMD_GET call */
 
@@ -142,6 +142,19 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 	case HEXP_PPSG_CMD_SET_VALID:
 		return shw_pps_gen_enable_output(params->pps_valid);
 
+	case HEXP_PPSG_CMD_SET_TIMING_MODE:
+		ret=shw_pps_set_timing_mode(params->timing_mode);
+		hal_update_timing_mode();
+		return ret;
+
+	case HEXP_PPSG_CMD_GET_TIMING_MODE:{
+		ret=hal_get_timing_mode();
+		printf("JCB: shw_pps_get_timing_mode() returns %d\n",ret);
+		return ret;
+	}
+
+	case HEXP_PPSG_CMD_GET_TIMING_MODE_STATE:
+		return shw_pps_get_timing_mode_state();
 	}
 	return -1;		/* fixme: real error code */
 }

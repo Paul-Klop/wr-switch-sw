@@ -31,10 +31,12 @@ int hal_port_start_lock(const char *port_name, int priority);
 int hal_port_check_lock(const char *port_name);
 int hal_port_reset(const char *port_name);
 int hal_port_enable_tracking(const char *port_name);
+int hal_port_poll_rts_state(void);
 
 int hal_init_timing_mode(void);
 int hal_init_timing(char *filename);
 int hal_get_timing_mode(void);
+int hal_update_timing_mode(void);
 int hal_port_pshifter_busy(void);
 
 #endif

@@ -1,4 +1,7 @@
 
+# We are now Kconfig-based
+-include ../../.config
+
 OBJS = hal_exports.o hal_main.o hal_ports.o hal_timing.o
 
 BINARY = wrsw_hal
@@ -16,7 +19,10 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-CFLAGS = -O -g -Wall \
+export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
+
+CFLAGS += $(CFLAGS_OPTIMIZATION)
+CFLAGS += -Wall \
 	-Wstrict-prototypes \
 	-I../include \
 	-I../libwr/include \
@@ -34,6 +40,7 @@ LDFLAGS = -L../libwr -L../mini-rpc \
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
+	pwd
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 install: all

@@ -20,6 +20,11 @@ start_counter() {
 
 start() {
  	echo -n "Starting dropbear sshd: "
+ 	# copy authorized keys if exists
+	if [ -f /usr/authorized_keys ] ; then
+		mkdir -p /root/.ssh/
+		cp /usr/authorized_keys /root/.ssh/
+	fi
 	# Make sure dropbear directory exists
 	if [ ! -d /etc/dropbear ] ; then
 		mkdir -p /etc/dropbear

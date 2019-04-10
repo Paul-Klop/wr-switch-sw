@@ -11,6 +11,7 @@
 #include <sys/time.h>
 
 #include <fpga_io.h>
+#include <rt_ipc.h>
 #include <regs/ppsg-regs.h>
 
 #include <libwr/switch_hw.h>
@@ -93,6 +94,62 @@ int shw_pps_gen_enable_output_read(void)
 
 	return escr & PPSG_ESCR_PPS_VALID ?
 		PPSG_PPS_OUT_ENABLE : PPSG_PPS_OUT_DISABLE;
+}
+
+int shw_pps_set_timing_mode(int tm) {
+	int mode=-1;
+	switch (tm) {
+	case HAL_TIMING_MODE_GRAND_MASTER:
+		mode=RTS_MODE_GM_EXTERNAL;
+		break;
+	case HAL_TIMING_MODE_FREE_MASTER:
+		mode=RTS_MODE_GM_FREERUNNING;
+		break;
+	case HAL_TIMING_MODE_BC:
+		mode=RTS_MODE_BC;
+		break;
+	default :
+		pr_error("%s: Invalid timing mode %d\n", __func__, tm);
+		return -1;
+	}
+	if ( rts_set_mode(mode)==-1)  {
+		pr_error("%s: Cannot set timing mode to %d (HAL_TIMING_...)\n", __func__, tm);
+		return -1;
+	}
+	return tm;
+}
+
+int shw_pps_get_timing_mode(void) {
+	struct rts_pll_state state;
+
+	if ( rts_get_state(&state)==-1 ) {
+		return -1;
+	}
+	switch ( state.mode ) {
+	case RTS_MODE_GM_EXTERNAL :
+		return HAL_TIMING_MODE_GRAND_MASTER;
+	break;
+	case RTS_MODE_GM_FREERUNNING :
+		return RTS_MODE_GM_FREERUNNING;
+	break;
+	case RTS_MODE_BC :
+		return HAL_TIMING_MODE_BC;
+	break;
+	case RTS_MODE_DISABLED :
+		return HAL_TIMING_MODE_DISABLED;
+	default :
+		return -1;
+	}
+}
+
+int shw_pps_get_timing_mode_state(void) {
+	struct rts_pll_state state;
+
+	if ( rts_get_state(&state)==-1 ) {
+		return -1;
+	}
+	/* In the future, we should be able to provide also the state HAL_TIMING_MODE_TMDT_HOLDOVER */
+	return (state.flags & RTS_DMTD_LOCKED) ? HAL_TIMING_MODE_TMDT_LOCKED : HAL_TIMING_MODE_TMDT_UNLOCKED;
 }
 
 void shw_pps_gen_read_time(uint64_t * seconds, uint32_t * nanoseconds)

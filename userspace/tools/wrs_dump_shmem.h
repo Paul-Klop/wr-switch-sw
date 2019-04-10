@@ -38,6 +38,7 @@ enum dump_type {
 	dump_type_uint16_t,
 	dump_type_int,
 	dump_type_unsigned_long,
+	dump_type_long_long,
 	dump_type_unsigned_char,
 	dump_type_unsigned_short,
 	dump_type_double,
@@ -52,11 +53,15 @@ enum dump_type {
 	dump_type_Integer16,
 	dump_type_UInteger8,
 	dump_type_Integer8,
+	dump_type_UInteger4,
 	dump_type_Enumeration8,
 	dump_type_Boolean,
 	dump_type_ClockIdentity,
 	dump_type_PortIdentity,
 	dump_type_ClockQuality,
+	dump_type_TimeInterval,
+	dump_type_RelativeDifference,
+	dump_type_Timestamp,
 	/* and this is ours */
 	dump_type_time,
 	dump_type_ip_address,
@@ -88,5 +93,6 @@ struct dump_info {
 	int size;  /* only for strings or binary strings */
 };
 
-void dump_many_fields(void *addr, struct dump_info *info, int ninfo);
+void dump_many_fields(void *addr, struct dump_info *info, int ninfo,
+		      char *prefix);
 int dump_ppsi_mem(struct wrs_shm_head *head);

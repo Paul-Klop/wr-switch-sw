@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 #include <sys/mman.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
@@ -16,6 +17,13 @@
 #include <libwr/util.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
+#include "time_lib.h"
+
+/*  be safe, in case some other header had them slightly differently */
+#undef container_of
+#undef offsetof
+#undef ARRAY_SIZE
+
 #include "wrs_dump_shmem.h"
 
 #define FPGA_SPLL_STAT 0x10006800
@@ -72,17 +80,44 @@ static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
 				 entries */
 
 
-void dump_one_field(void *addr, struct dump_info *info)
+#define REL_DIFF_FRACBITS 62
+#define REL_DIFF_FRACMASK 0x3fffffffffffffff
+
+void decode_relative_difference(RelativeDifference rd, int32_t *nsecs, uint64_t *sub_yocto) {
+    int64_t fraction;
+	uint64_t bitWeight=500000000000000000;
+	uint64_t mask;
+
+	*sub_yocto=0;
+	*nsecs = (int32_t)(rd >> REL_DIFF_FRACBITS);
+    fraction=(int64_t)rd & REL_DIFF_FRACMASK;
+	for (mask=(uint64_t) 1<< (REL_DIFF_FRACBITS-1);mask!=0; mask>>=1 ) {
+		if ( mask & fraction )
+			*sub_yocto+=bitWeight;
+		bitWeight/=2;
+	}
+}
+
+void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 {
 	void *p = addr + info->offset;
+	char buf[128];
 	struct pp_time *t = p;
+	RelativeDifference *rd=p;
+	Timestamp *ts=p;
+	TimeInterval *ti=p;
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
 	char format[16];
-	long nano, pico;
 	int i;
+	char pname[128];
 
-	printf("        %-30s ", info->name); /* name includes trailing ':' */
+	if (info_prefix!=NULL )
+		sprintf(pname,"%s.%s",info_prefix,info->name);
+	else
+		strcpy(pname,info->name);
+
+	printf("%-40s ", pname); /* name includes trailing ':' */
 	switch(info->type) {
 	case dump_type_char:
 		sprintf(format,"\"%%.%is\"\n", info->size);
@@ -108,6 +143,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_uint64_t:
 		printf("%lld\n", *(unsigned long long *)p);
 		break;
+	case dump_type_long_long:
 	case dump_type_Integer64:
 		printf("%lld\n", *(long long *)p);
 		break;
@@ -129,6 +165,9 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_Boolean:
 		printf("%i\n", *(unsigned char *)p);
 		break;
+	case dump_type_UInteger4:
+		printf("%i\n", *(unsigned char *)p & 0xF);
+		break;
 	case dump_type_UInteger16:
 	case dump_type_uint16_t:
 	case dump_type_unsigned_short:
@@ -146,14 +185,22 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
+
 	case dump_type_time:
-		nano = t->scaled_nsecs >> 16;
-		pico = t->scaled_nsecs & 0xffff;
-		pico = (pico * 1000) >> 16;
-		printf("correct %i: %10lli.%09li.%03li\n",
-		       !is_incorrect(t), t->secs, nano,pico);
+		printf("%s\n",timeToString(t,buf));
 		break;
 
+	case dump_type_Timestamp:
+		printf("%s\n",timestampToString(ts,buf));
+		break;
+
+	case dump_type_TimeInterval:
+		printf("%s\n",timeIntervalToString(*ti,buf));
+		break;
+
+	case dump_type_RelativeDifference:
+		printf("%s\n",relativeDifferenceToString(*rd,buf));
+		break;
 	case dump_type_ip_address:
 		for (i = 0; i < 4; i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
@@ -174,7 +221,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 		break;
 
 	case dump_type_ClockQuality:
-		printf("class %i, accuracy %02x (%i), logvariance %i\n",
+		printf("class=%i, accuracy=0x%02x (%i), logvariance=%i\n",
 		       cq->clockClass, cq->clockAccuracy, cq->clockAccuracy,
 		       cq->offsetScaledLogVariance);
 		break;
@@ -305,7 +352,8 @@ void dump_one_field(void *addr, struct dump_info *info)
 		break;
 	}
 }
-void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
+
+void dump_many_fields(void *addr, struct dump_info *info, int ninfo, char *prefix)
 {
 	int i;
 
@@ -313,8 +361,9 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 		fprintf(stderr, "dump: pointer not valid\n");
 		return;
 	}
-	for (i = 0; i < ninfo; i++)
-		dump_one_field(addr, info + i);
+	for (i = 0; i < ninfo; i++) {
+		dump_one_field(addr, info + i,prefix);
+	}
 }
 
 /* the macro below relies on an externally-defined structure type */
@@ -352,7 +401,6 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, hw_index),
 	DUMP_FIELD(int, fd),
 	DUMP_FIELD(int, hw_addr_auto),
-	DUMP_FIELD(port_mode, mode),
 	DUMP_FIELD(int, state),
 	DUMP_FIELD(int, fiber_index),
 	DUMP_FIELD(int, locked),
@@ -411,7 +459,7 @@ int dump_hal_mem(struct wrs_shm_head *head)
 	h = (void *)head + head->data_off;
 
 	/* dump hal's shmem */
-	dump_many_fields(h, hal_shmem_info, ARRAY_SIZE(hal_shmem_info));
+	dump_many_fields(h, hal_shmem_info, ARRAY_SIZE(hal_shmem_info),"HAL");
 
 	n = h->nports;
 	p = wrs_shm_follow(head, h->ports);
@@ -422,8 +470,10 @@ int dump_hal_mem(struct wrs_shm_head *head)
 	}
 
 	for (i = 0; i < n; i++, p++) {
-		printf("dump port %i\n", i + 1);
-		dump_many_fields(p, hal_port_info, ARRAY_SIZE(hal_port_info));
+		char prefix[64];
+
+		sprintf(prefix,"HAL.port.%d",i+1);
+		dump_many_fields(p, hal_port_info, ARRAY_SIZE(hal_port_info),prefix);
 	}
 	return 0;
 }
@@ -474,6 +524,7 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	struct rtu_filtering_entry *rtu_filters_cur;
 	struct rtu_vlan_table_entry *rtu_vlans;
 	int i, j;
+	char prefix[64];
 
 	if (head->version != RTU_SHMEM_VERSION) {
 		fprintf(stderr, "dump rtu: unknown version %i (known is %i)\n",
@@ -496,9 +547,9 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 			    && (!rtu_filters_cur->valid))
 				/* don't display empty entries */
 				continue;
-			printf("dump htab[%d][%d]\n", i, j);
+			sprintf(prefix,"rtu.htab.%d.%d",i,j);
 			dump_many_fields(rtu_filters_cur, htab_info,
-					 ARRAY_SIZE(htab_info));
+					 ARRAY_SIZE(htab_info),prefix);
 		}
 	}
 
@@ -507,8 +558,8 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 			    && rtu_vlans->port_mask == 0x0))
 			/* don't display empty entries */
 			continue;
-		printf("dump vlan %i\n", i);
-		dump_many_fields(rtu_vlans, vlan_info, ARRAY_SIZE(vlan_info));
+		sprintf(prefix,"rtu.vlan.%d",i);
+		dump_many_fields(rtu_vlans, vlan_info, ARRAY_SIZE(vlan_info),prefix);
 	}
 	return 0;
 }
@@ -537,8 +588,6 @@ struct dump_info spll_stats_info[] = {
 
 static int dump_spll_mem(struct spll_stats *spll)
 {
-	printf("ID: Soft PLL:\n");
-
 	/* Check magic */
 	if (spll->magic != SPLL_MAGIC) {
 		/* Wrong magic */
@@ -546,7 +595,7 @@ static int dump_spll_mem(struct spll_stats *spll)
 			spll->magic, SPLL_MAGIC);
 	}
 
-	dump_many_fields(spll, spll_stats_info, ARRAY_SIZE(spll_stats_info));
+	dump_many_fields(spll, spll_stats_info, ARRAY_SIZE(spll_stats_info),"SoftPll");
 
 	return 0; /* this is complete */
 }
@@ -656,20 +705,17 @@ int main(int argc, char **argv)
 		}
 		head = m;
 		if (!head->pidsequence) {
-			printf("ID %i (\"%s\"): no data\n",
-			       i, name_id_to_name[i]);
+			printf("shm.%d.name:       %s\n",i,name_id_to_name[i]);
+			printf("shm.%d.iterations: %d  (no data)\n",i,head->pidsequence);
 			wrs_shm_put(m);
 			continue;
 		}
+		printf("shm.%d.name:       %s\n",i,head->name);
+		printf("shm.%d.pid:        %d\n",i,head->pid);
 		if (head->pid) {
-			printf("ID %i (\"%s\"): pid %i (%s, %i iterations)\n",
-			       i, head->name, head->pid,
-			       kill(head->pid, 0) < 0 ? "dead" : "alive",
-			       head->pidsequence);
-		} else {
-			printf("ID %i (\"%s\"): no pid (after %i iterations)\n",
-			       i, head->name, head->pidsequence);
+			printf("shm.%d.status:     %s\n",i,kill(head->pid, 0) < 0 ? "dead" : "alive");
 		}
+		printf("shm.%d.iterations: %d\n",i,head->pidsequence);
 		f = name_id_to_f[i];
 
 		/* if the area-specific function fails, fall back to generic */

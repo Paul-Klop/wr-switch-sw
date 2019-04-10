@@ -82,7 +82,7 @@ function wrs_header_ports(){
 }
 
 function draw_table(){
-	$ports = shell_exec("/wr/bin/wr_mon -w | tail -20 | head -18");        
+	$ports = shell_exec("/wr/bin/wr_mon -w | tail -20 | head -18 2>/dev/null");
 	$ports = explode(PHP_EOL, $ports);
  	
 	echo  "<table id='sfp_panel' border='0' align='center' vspace='15'>";
@@ -90,10 +90,10 @@ function draw_table(){
         $cont = 0;
         for($i=0; $i<18; $i=$i+1){
                 if (strpos($ports[$i], "up")){
-                        if (!strpos($ports[$i],"Master")){
-                                $mode="master";
-                        }else{
+                        if (strpos($ports[$i],"Master") === false){
                                 $mode="slave";
+                        }else{
+                                $mode="master";
                         }
                 }
                 else $mode="linkdown";
@@ -778,6 +778,8 @@ function wrs_management(){
 		if (!strcmp($cmd, "reboot")){
 			wrs_reboot();
 		} else if (!empty($_FILES['firmware']['name'])){
+			shell_exec("rm /tmp/wrs-firmware.tar"); //Clean previously uploaded files
+			shell_exec("rm /tmp/wr-switch-sw-v*_binaries.tar"); //Clean previously uploaded files
 			$uploaddir = '/tmp/';
 			$uploadfname= basename($_FILES['firmware']['name']);
 			$uploadfile = $uploaddir . $uploadfname;
@@ -786,14 +788,14 @@ function wrs_management(){
 				echo '<p align=center ><font color="red"><br>Upgrade procedure will take place after reboot.<br>Please do not switch off the device during flashing procedure.</font></p>';
 				if ($uploadfname=="barebox.bin" || $uploadfname=="wrs-firmware.tar" || $uploadfname=="zImage")
 				{
-					rename($uploadfile, "/update/".($_FILES['firmware']['name']));
+					shell_exec("mv -f $uploadfile /update/".($_FILES['firmware']['name']));
 					//Reboot switch
 					sleep(1);
 					wrs_reboot(90); //Updating only one part of the firmware take ~90s.
 				}
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
 				{
-					rename($uploadfile, "/update/wrs-firmware.tar");
+					shell_exec("mv -f $uploadfile /update/wrs-firmware.tar");
 					//Reboot switch
 					sleep(1);
 					wrs_reboot(150); //120s should be enough but we prefer to keep safe
@@ -1336,7 +1338,7 @@ function echoSelectedClassIfRequestMatches($requestUri)
         return 'class="selected"';
 }
 
-function wrs_reboot($timeout=40){
+function wrs_reboot($timeout=60){
 	sleep(1);
 	header ('Location: reboot.php?timeout='.$timeout);
 }

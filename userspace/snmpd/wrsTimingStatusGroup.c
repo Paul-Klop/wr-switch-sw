@@ -333,7 +333,6 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	if (shmem_ready_hald()) {
 		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
 		for (i = 0; i < port_status_nrows; i++) {
-			/* wrsPortStatusMonitor value is ignored for this oid on this port */
 			/* warning N/A */
 			if (p_a[i].wrsPortStatusConfiguredMode == 0) {
 				if (t->wrsSlaveLinksStatus != WRS_SLAVE_LINK_STATUS_ERROR) {
@@ -437,7 +436,6 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 		}
 		if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
 		    && (p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
-		    && (p_a[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
 		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
 			if (wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames) {
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;

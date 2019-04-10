@@ -23,7 +23,6 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpError),
 	FIELD(wrsPortStatusTable_s, ASN_COUNTER, wrsPortStatusPtpTxFrames),
 	FIELD(wrsPortStatusTable_s, ASN_COUNTER, wrsPortStatusPtpRxFrames),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusMonitor),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpDom),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpTemp),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpVcc),
@@ -87,10 +86,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				 */
 				continue;
 			}
-
-			wrsPortStatusTable_array[i].wrsPortStatusMonitor =
-							port_state->monitor;
-
 			/* No need to copy all ports structures, only what
 			 * we're interested in.
 			 * Keep value 0 for Not available
@@ -203,7 +198,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		}
 		if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
 		    && (wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
-		    && (wrsPortStatusTable_array[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
 		    && (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
 			/* error, port is not non-wr mode and sfp not in data base */
 			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;

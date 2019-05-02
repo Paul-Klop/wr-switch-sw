@@ -55,19 +55,27 @@ char * timestampToString(struct Timestamp *time,char *buf){
 }
 
 char * relativeDifferenceToString(RelativeDifference time, char *buf ) {
-    int32_t nsecs=time >> REL_DIFF_FRACBITS;
+	char sign;
+    int32_t nsecs;
 	uint64_t sub_yocto=0;
     int64_t fraction;
 	uint64_t bitWeight=500000000000000000;
 	uint64_t mask;
 
+	if ( time<0 ) {
+		time=-time;
+		sign='-';
+	} else {
+		sign='+';
+	}
 
+	nsecs=time >> REL_DIFF_FRACBITS;
     fraction=time & REL_DIFF_FRACMASK;
 	for (mask=(uint64_t) 1<< (REL_DIFF_FRACBITS-1);mask!=0; mask>>=1 ) {
 		if ( mask & fraction )
 			sub_yocto+=bitWeight;
 		bitWeight/=2;
 	}
-	sprintf(buf,"%"PRId32".%018"PRIu64, nsecs, sub_yocto);
+	sprintf(buf,"%c%"PRId32".%018"PRIu64, sign, nsecs, sub_yocto);
 	return buf;
 }

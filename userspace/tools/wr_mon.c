@@ -822,8 +822,10 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayAsymmetry   : ");
 		term_cprintf(C_WHITE, "%16s nsec\n",   timeIntervalToString(servo->delayAsymmetry,buf));
-		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "scaledDelayCoef  : ");
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayCoefficient : ");
 		term_cprintf(C_WHITE, "%s", relativeDifferenceToString(servo->scaledDelayCoefficient,buf));
+		term_cprintf(C_BLUE,  " fpa : ");
+		term_cprintf(C_WHITE, "%lld",servo->scaledDelayCoefficient);
 		term_cprintf(C_WHITE, "\n");
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "ingressLatency   : ");
 		term_cprintf(C_WHITE, "%16s nsec\n",   timeIntervalToString(servo->ingressLatency,buf));

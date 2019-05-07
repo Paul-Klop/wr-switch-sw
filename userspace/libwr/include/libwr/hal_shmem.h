@@ -117,6 +117,11 @@ struct hal_port_state {
 	/* whether the port shall be monitored by SNMP */
 	int monitor;
 
+	/* PPSi instance information */
+	int portMode; // Instance state
+	int synchronized; // <>0 if port is synchronized
+	int portInfoUpdated; // Set to 1 when updated
+
 };
 
 struct hal_temp_sensors {

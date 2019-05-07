@@ -83,6 +83,22 @@ typedef struct {
 	uint32_t timing_mode;
 } hexp_pps_params_t;
 
+#define PORT_MODE_OTHER  0
+#define PORT_MODE_SLAVE  1
+#define PORT_MODE_MASTER 2
+
+
+typedef struct {
+		char name[16]; // Interface name
+		int  synchronized;  // <>0 : Master/Slave are synchronized
+		int  mode;          // PORT_MODE_XXXX
+}hexp_port_info_t;
+
+typedef struct {
+	int numberPortInterfaces;
+	hexp_port_info_t hIFace[HAL_MAX_PORTS];
+} hexp_port_info_params_t;
+
 /* Port modes (hal_port_state.mode) */
 #define HEXP_PORT_MODE_WR_MASTER 1
 #define HEXP_PORT_MODE_WR_SLAVE 2
@@ -98,6 +114,7 @@ typedef struct {
 
 extern struct minipc_pd __rpcdef_lock_cmd;
 extern struct minipc_pd __rpcdef_pps_cmd;
+extern struct minipc_pd __rpcdef_port_info_cmd;
 
 /* Prototypes of functions that call on rpc */
 extern int halexp_lock_cmd(const char *port_name, int command, int priority);

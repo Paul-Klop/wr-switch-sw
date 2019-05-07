@@ -159,6 +159,15 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 	return -1;		/* fixme: real error code */
 }
 
+/* Receive information about PPSi instances */
+int halexp_port_info_cmd(hexp_port_info_params_t * params)
+{
+	int i;
+	for ( i=0; i< params->numberPortInterfaces; i++ )
+		hal_update_port_info(params->hIFace[i].name, params->hIFace[i].mode, params->hIFace[i].synchronized);
+	return 1;
+}
+
 extern int hal_port_any_locked(void);
 
 static void hal_cleanup_wripc(void)
@@ -192,6 +201,18 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
+static int export_port_info_cmd(const struct minipc_pd *pd,
+			   uint32_t * args, void *ret)
+{
+	int rval;
+
+	/* First argument is command next is param structure */
+	rval = halexp_port_info_cmd((hexp_port_info_params_t *) args);
+	*(int *)ret = rval;
+	return 0;
+}
+
+
 /* Creates a wripc server and exports all public API functions */
 int hal_init_wripc(struct hal_port_state *hal_ports, char *logfilename)
 {
@@ -219,9 +240,11 @@ int hal_init_wripc(struct hal_port_state *hal_ports, char *logfilename)
 	/* fill the function pointers */
 	__rpcdef_pps_cmd.f = export_pps_cmd;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
+	__rpcdef_port_info_cmd.f = export_port_info_cmd;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
+	minipc_export(hal_ch, &__rpcdef_port_info_cmd);
 
 	/* FIXME: pll_cmd is empty anyways???? */
 

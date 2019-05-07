@@ -19,6 +19,8 @@ int hal_config_iterate(const char *section, int index,
 int hal_port_init_shmem(char *logfilename);
 int hal_port_init_wripc(char *logfilename);
 void hal_port_update_all(void);
+void hal_update_port_info(char *iface_name, int mode, int synchronized);
+
 struct hexp_port_state;
 struct hal_port_state;
 

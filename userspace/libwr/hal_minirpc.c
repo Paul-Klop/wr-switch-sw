@@ -26,3 +26,13 @@ struct minipc_pd __rpcdef_pps_cmd = {
 		 MINIPC_ARG_END,
 		 },
 };
+
+//int halexp_info_cmd(hexp_info_params_t *params);
+struct minipc_pd __rpcdef_port_info_cmd = {
+	.name = "info_cmd",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, hexp_port_info_params_t),
+		 MINIPC_ARG_END,
+		 },
+};

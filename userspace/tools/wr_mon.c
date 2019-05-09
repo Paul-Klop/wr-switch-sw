@@ -194,13 +194,12 @@ static char * wr_instance_extension_state[]={
 
 #endif
 
-static char *prot_link_state_name[]={
+static char *prot_detection_state_name[]={
 		"NONE   ", /* No meaning. No extension present */
-		"PDETECT", /* Checking if the peer instance is using the same protocol */
-		"IN_PROG", /* Right protocol detected. Try to establish the link with peer instance */
-		"LINKED ", /* Link with peer well established */
-		"PERROR ", /* Problem detected by the extension */
-		"FAILURE" /* Impossible to connect correctly to a peer instance */
+		"WA_MSG ", /* Waiting first message */
+		"PD_IPRG", /* Protocol detection  */
+		"PD_OK  ", /* Protocol detected */
+		"FAILURE" /* Protocol not detected */
 };
 
 /* prototypes */
@@ -691,7 +690,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 						}
 #endif
 						}
-						term_cprintf(C_GREEN, "%s/%s",extension_state_name,prot_link_state_name[ppi->link_state]);
+						term_cprintf(C_GREEN, "%s/%s",extension_state_name,prot_detection_state_name[ppi->pdstate]);
 					} // else {
 //						term_cprintf(C_WHITE, "                  ");
 //						term_cprintf(C_CYAN, "|");

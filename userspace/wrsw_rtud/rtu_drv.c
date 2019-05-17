@@ -616,6 +616,82 @@ int rtu_read_unrecognised_behaviour_on_port(int port)
 	return read_pcr(port) & RTU_PCR_B_UNREC ? 1 : 0;
 }
 
+
+/**
+ * \brief Enables/disables port mirroring
+ * @param ena Enable flag
+ * @return error code.
+ */
+int rtu_enable_mirroring(int ena)
+{
+	uint32_t ctr = rtu_rd(RX_CTR);
+
+	if (ena == 1)
+		ctr = ctr | RTU_RX_CTR_MR_ENA;
+	else
+		ctr = ctr & (~RTU_RX_CTR_MR_ENA);
+
+	rtu_wr(RX_CTR, ctr);
+	return 0;
+}
+
+/**
+ * \brief Configures port mirroring
+ * @param imask Ingress port mask
+ * @param emask Egress port mask
+ * @param dmask Destination port mask
+ * @return error code.
+ */
+int rtu_cfg_mirroring(int en, uint32_t imask, uint32_t emask, uint32_t dmask)
+{
+	/* write destination port mask - to which port/-s mirrored traffic will be
+	 * sent */
+	if (en == 0 || dmask != 0) {
+		rtu_wr(RX_MP_R0, 0);
+		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(dmask));
+	}
+	/* write ingress port mask - source of mirrored traffic */
+	if (en == 0 || imask != 0) {
+		rtu_wr(RX_MP_R0, RTU_RX_MP_R0_DST_SRC);
+		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(imask));
+	}
+	/* write egress port mask - source of mirrored traffic */
+	if (en == 0 || emask != 0) {
+		rtu_wr(RX_MP_R0, RTU_RX_MP_R0_DST_SRC | RTU_RX_MP_R0_RX_TX);
+		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(emask));
+	}
+
+	return 0;
+}
+
+/**
+ * \brief Gets port mirroring configuration
+ * @param en Enabled flag mirroring pointer
+ * @param imask Ingress port mask pointer
+ * @param emask Egress port mask pointer
+ * @param dmask Destination port mask pointer
+ * @return error code.
+ */
+int rtu_get_mirroring(int *en, uint32_t *imask, uint32_t *emask, uint32_t *dmask)
+{
+	/* Enabled flag */
+	if (rtu_rd(RX_CTR) & RTU_RX_CTR_MR_ENA != 0)
+		*en = 1;
+	else
+		*en = 0;
+	/* destination port mask */
+	rtu_wr(RX_MP_R0, 0);
+	*dmask = RTU_RX_MP_R1_MASK_R(rtu_rd(RX_MP_R1));
+	/* ingress port mask */
+	rtu_wr(RX_MP_R0, RTU_RX_MP_R0_DST_SRC);
+	*imask = RTU_RX_MP_R1_MASK_R(rtu_rd(RX_MP_R1));
+	/* write egress port mask - source of mirrored traffic */
+	rtu_wr(RX_MP_R0, RTU_RX_MP_R0_DST_SRC | RTU_RX_MP_R0_RX_TX);
+	*emask = RTU_RX_MP_R1_MASK_R(rtu_rd(RX_MP_R1));
+
+	return 0;
+}
+
 //---------------------------------------------
 // Private Methods
 //---------------------------------------------

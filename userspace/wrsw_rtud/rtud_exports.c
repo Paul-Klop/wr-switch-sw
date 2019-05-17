@@ -336,6 +336,43 @@ int rtudexp_vlan_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	return *p_ret;
 }
 
+int rtudexp_mirror(const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+	int oper;
+	int enable;
+	uint32_t imask, emask, dmask;
+	int *p_ret = (int *)ret;
+
+	enable = (int)args[0];
+	imask  = (int)args[1];
+	emask  = (int)args[2];
+	dmask  = (int)args[3];
+
+	*p_ret = 0;
+	pr_debug("Request for mirroring configuration\n");
+	if (imask < 0 || imask > 0x3ffff) { /* 18 ports */
+		pr_error("Wrong ingress port mask 0x%x\n", imask);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	if (emask < 0 || emask > 0x3ffff) { /* 18 ports */
+		pr_error("Wrong egress port mask 0x%x\n", emask);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	if (enable == 1 && (dmask < 1 || dmask > 0x3ffff)) { /* 18 ports */
+		pr_error("Wrong destination port mask 0x%x\n", dmask);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	rtu_enable_mirroring(0);
+	rtu_cfg_mirroring(enable, imask, emask, dmask);
+	rtu_enable_mirroring(enable);
+
+	return *p_ret;
+}
+
 int rtud_init_exports()
 {
 	rtud_ch = minipc_server_create("rtud", 0);
@@ -355,6 +392,7 @@ int rtud_init_exports()
 	MINIPC_EXP_FUNC(rtud_export_unrec, rtudexp_unrec);
 	MINIPC_EXP_FUNC(rtud_export_vlan_entry, rtudexp_vlan_entry);
 	MINIPC_EXP_FUNC(rtud_export_hp_mask, rtudexp_hp_mask);
+	MINIPC_EXP_FUNC(rtud_export_mirror, rtudexp_mirror);
 
 	return 0;
 }

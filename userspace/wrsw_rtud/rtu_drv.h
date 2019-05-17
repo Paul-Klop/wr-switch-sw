@@ -96,4 +96,9 @@ void rtu_enable_irq(void);
 void rtu_disable_irq(void);
 void rtu_clear_irq(void);
 
+// PORT MIRRORING
+int rtu_enable_mirroring(int ena);
+int rtu_cfg_mirroring(int en, uint32_t imask, uint32_t emask, uint32_t dmask);
+int rtu_get_mirroring(int *en, uint32_t *imask, uint32_t *emask, uint32_t *dmask);
+
 #endif /*__WHITERABBIT_RTU_DRV_H*/

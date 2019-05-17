@@ -700,7 +700,7 @@ int hal_port_start_lock(const char *port_name, int priority)
 
 	hal_port_poll_rts_state(); // update rts state
 	if ( (hal_get_timing_mode()==HAL_TIMING_MODE_BC)  &&
-			(ret=rts_lock_channel(p->hw_index, 0))>0 ) {
+			(ret=rts_lock_channel(p->hw_index, 0))==0 ) {
 		/* lock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 		/* fixme: check the main FSM state before */

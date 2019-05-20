@@ -12,6 +12,9 @@
 /* Maximum number of supported VLANs */
 #define NUM_VLANS               4096
 
+/* Currently only one port mirror setup is allowed */
+#define NUM_MIRROR		1
+
 #define ETH_ALEN 6
 #define ETH_ALEN_STR 18
 
@@ -124,13 +127,25 @@ struct rtu_vlan_table_entry {
 	int drop;		/* 1: drop the packet (VLAN not registered) */
 };
 
+/**
+ * \brief RTU mirroring configuration
+ */
+struct rtu_mirror_info {
+	int en;			/* Mirroring enabled flag */
+	uint32_t imask;		/* Ingress source port mask */
+	uint32_t emask;		/* Egress source port mask */
+	uint32_t dmask;		/* Destination port mask */
+};
+
 /* This is the overall structure stored in shared memory */
-#define RTU_SHMEM_VERSION 3 /* Version 3, changed wrs_shm_head */
+#define RTU_SHMEM_VERSION 4 /* Version 3, changed wrs_shm_head */
 struct rtu_shmem_header {
 	struct rtu_filtering_entry *filters;
 	struct rtu_vlan_table_entry *vlans;
+	struct rtu_mirror_info *mirror;
 	unsigned long filters_offset;
 	unsigned long vlans_offset;
+	unsigned long mirror_offset;
 };
 
 #endif /*  __LIBWR_RTU_SHMEM_H__ */

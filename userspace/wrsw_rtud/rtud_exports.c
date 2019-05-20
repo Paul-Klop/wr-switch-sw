@@ -366,9 +366,7 @@ int rtudexp_mirror(const struct minipc_pd *pd, uint32_t *args, void *ret)
 		return *p_ret;
 	}
 
-	rtu_enable_mirroring(0);
-	rtu_cfg_mirroring(enable, imask, emask, dmask);
-	rtu_enable_mirroring(enable);
+	rtu_fd_write_mirror_config(enable, imask, emask, dmask);
 
 	return *p_ret;
 }

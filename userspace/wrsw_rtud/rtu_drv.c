@@ -642,23 +642,27 @@ int rtu_enable_mirroring(int ena)
  * @param dmask Destination port mask
  * @return error code.
  */
-int rtu_cfg_mirroring(int en, uint32_t imask, uint32_t emask, uint32_t dmask)
+int rtu_cfg_mirroring(struct rtu_mirror_info *cfg)
 {
-	/* write destination port mask - to which port/-s mirrored traffic will be
-	 * sent */
-	if (en == 0 || dmask != 0) {
+	/* if mirroring disabled (en == 0) zero all masks */
+	/* if mirroring enabled (en == 1) write only non-zero masks */
+
+	/* write destination port mask - to which port/-s mirrored traffic will
+	 * be sent
+	 */
+	if (cfg->en == 0 || cfg->dmask != 0) {
 		rtu_wr(RX_MP_R0, 0);
-		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(dmask));
+		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(cfg->dmask));
 	}
 	/* write ingress port mask - source of mirrored traffic */
-	if (en == 0 || imask != 0) {
+	if (cfg->en == 0 || cfg->imask != 0) {
 		rtu_wr(RX_MP_R0, RTU_RX_MP_R0_DST_SRC);
-		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(imask));
+		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(cfg->imask));
 	}
 	/* write egress port mask - source of mirrored traffic */
-	if (en == 0 || emask != 0) {
+	if (cfg->en == 0 || cfg->emask != 0) {
 		rtu_wr(RX_MP_R0, RTU_RX_MP_R0_DST_SRC | RTU_RX_MP_R0_RX_TX);
-		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(emask));
+		rtu_wr(RX_MP_R1, RTU_RX_MP_R1_MASK_W(cfg->emask));
 	}
 
 	return 0;

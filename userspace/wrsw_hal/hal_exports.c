@@ -149,7 +149,6 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 
 	case HEXP_PPSG_CMD_GET_TIMING_MODE:{
 		ret=hal_get_timing_mode();
-		printf("JCB: shw_pps_get_timing_mode() returns %d\n",ret);
 		return ret;
 	}
 

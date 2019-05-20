@@ -276,6 +276,11 @@ int shw_sfp_header_verify(struct shw_sfp_header *head)
 		!shw_sfp_header_verify_ext(head)) ? 0 : -1;
 }
 
+static inline int getSfpTxWaveLength (struct shw_sfp_header *head) {
+	return (head->tx_wavelength[0] << 8)
+			+ head->tx_wavelength[1];
+}
+
 void shw_sfp_print_header(struct shw_sfp_header *head)
 {
 	int i;
@@ -305,8 +310,7 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	for (i = 0; i < 4; i++)
 		printf("%c", head->vendor_rev[i]);
 	printf("\n");
-	printf("TX Wavelength: %d\n", (head->tx_wavelength[0] << 8)
-	       + head->tx_wavelength[1]);
+	printf("TX Wavelength: %d\n", getSfpTxWaveLength(head));
 	printf("Options: %04X\n", ((uint16_t *) head->options)[0]);
 	printf("Bitrate (MAX): %02X\n", head->br_max);
 	printf("Bitrate (MIN): %02X\n", head->br_min);
@@ -690,9 +694,21 @@ int shw_sfp_read_db(void)
 {
 	struct shw_sfp_caldata *sfp;
 	char s[128];
-	int error, val, index;
+	int error, val, index, nbSfpEntries;
+	char *retValue;
+	char *keySfpEntries="N_SFP_ENTRIES";
 
-	for (index = 0; ; index++) {
+	/* read dot-config values to get the number of defined fibers */
+	if( (retValue=libwr_cfg_get(keySfpEntries))==NULL) {
+		pr_error("Key \"%s\" is not defined\n",keySfpEntries);
+		return -1;
+	}
+	if (sscanf(retValue, "%i", &nbSfpEntries) != 1) {
+		pr_error("Invalid key \"%s\" value (%d)\n",keySfpEntries,*retValue);
+		return -1;
+	}
+
+	for (index = 0; index<nbSfpEntries; index++) {
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "pn",
 					   LIBWR_STRING, s, index);
 		if (error)
@@ -751,6 +767,16 @@ int shw_sfp_read_db(void)
 	return 0;
 }
 
+static inline void removeTrailingSpaces(char *p, int strSize) {
+	int i;
+
+	for (i = strSize-1; i >= 0 ; i--) {
+		if (p[i] != 0x20)
+			break;
+		p[i] = 0;
+	}
+}
+
 struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 					     struct shw_sfp_header *head)
 {
@@ -760,45 +786,36 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 	char *vn = (char *)head->vendor_name;
 	char *pn = (char *)head->vendor_pn;
 	char *vs = (char *)head->vendor_serial;
-	int i;
+	int txWaveLength=getSfpTxWaveLength(head);
 
 	/* Replace spaces at the end of strings with 0 needed for
 	 * string comparison inside shw_sfp_get_cal_data.
 	 * String may contain spaces, standard says only about space padding */
-	for (i = 15; i >= 0 ; i--) {
-		if (vn[i] != 0x20)
-			break;
-		vn[i] = 0;
-	}
-	for (i = 15; i >= 0 ; i--) {
-		if (pn[i] != 0x20)
-			break;
-		pn[i] = 0;
-	}
-	for (i = 15; i >= 0 ; i--) {
-		if (vs[i] != 0x20)
-			break;
-		vs[i] = 0;
-	}
+	removeTrailingSpaces(vn,sizeof(head->vendor_name));
+	removeTrailingSpaces(pn,sizeof(head->vendor_pn));
+	removeTrailingSpaces(vs,sizeof(head->vendor_serial));
 
 	t = shw_sfp_cal_list;
 	/* In the first pass, look for serial number */
 	while (t) {
-		if (t->vendor_name[0] == 0
-		    && strncmp(pn, t->part_num, 16) == 0
-		    && t->vendor_serial[0] == 0)
-			/* matched pn, but vn and vs not defined */
-			match_pn = t;
-		else if (strncmp(vn, t->vendor_name, 16) == 0
-		    && strncmp(pn, t->part_num, 16) == 0
-		    && t->vendor_serial[0] == 0)
-			/* matched vn, pn, but vs not defined */
-			match_pn_vn = t;
-		else if (strncmp(vn, t->vendor_name, 16) == 0
-			&& strncmp(pn, t->part_num, 16) == 0
-			&& strncmp(vs, t->vendor_serial, 16) == 0)
-			/* matched vn, pn, vs */
-			return t;
+
+		if ( t->tx_wl == txWaveLength ) {
+			if (t->vendor_name[0] == 0
+				&& strncmp(pn, t->part_num, 16) == 0
+				&& t->vendor_serial[0] == 0)
+				/* matched pn, but vn and vs not defined */
+				match_pn = t;
+			else if (strncmp(vn, t->vendor_name, 16) == 0
+				&& strncmp(pn, t->part_num, 16) == 0
+				&& t->vendor_serial[0] == 0 )
+				/* matched vn, pn, but vs not defined */
+				match_pn_vn = t;
+			else if (strncmp(vn, t->vendor_name, 16) == 0
+				&& strncmp(pn, t->part_num, 16) == 0
+				&& strncmp(vs, t->vendor_serial, 16) == 0)
+				/* matched vn, pn, vs */
+				return t;
+		}
 		t = t->next;
 	}
 	if (match_pn_vn)

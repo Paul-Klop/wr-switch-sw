@@ -113,6 +113,7 @@ static int hal_port_init(int index)
 	char key[128];
 	int port_i;
 	char *retValue;
+	int maxFibers;
 
 	/* index is 0..17, port_i 1..18 */
 	port_i = index + 1;
@@ -158,8 +159,19 @@ static int hal_port_init(int index)
 				port_i, p->name, key,*retValue);
 		}
 	}
+	/* read dot-config values to get the number of defined fibers */
+	strcpy(key,"N_FIBER_ENTRIES");
+	if( (retValue=libwr_cfg_get(key))==NULL) {
+		pr_error("port %i (%s): no key \"%s\" specified\n",
+			port_i, p->name,key);
+		maxFibers=-1;
+	} else
+		if (sscanf(retValue, "%i", &maxFibers) != 1) {
+			pr_error("Invalid key \"%s\" value (%d)\n",key,*retValue);
+			maxFibers=-1;
+		}
 
-	if (p->fiber_index > 3) {
+	if (p->fiber_index > maxFibers) {
 		pr_error("port %i (%s): "
 			"not supported fiber value (%d), default to 0\n",
 			port_i, p->name,p->fiber_index);
@@ -643,8 +655,9 @@ void hal_port_update_all()
 		hal_port_poll_sfp();
 
 	for (i = 0; i < HAL_MAX_PORTS; i++)
-		if (ports[i].in_use)
+		if (ports[i].in_use) {
 			hal_port_fsm(&ports[i]);
+		}
 
 	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
 	    && libwr_tmo_expired(&update_sfp_dom_tmo)) {

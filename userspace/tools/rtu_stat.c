@@ -43,6 +43,7 @@ static struct minipc_ch *rtud_ch;
 struct wrs_shm_head *rtu_port_shmem;
 static struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
 static struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
+static struct rtu_mirror_info mirror_local;
 
 int rtudexp_clear_entries(int port, int type)
 {
@@ -332,6 +333,32 @@ int read_htab(int *read_entries)
 			empty++;
 			(*read_entries)++;
 		}
+	}
+
+	return 0;
+}
+
+int read_mirror(void)
+{
+	unsigned int ii;
+	unsigned int retries = 0;
+	struct rtu_mirror_info *mirror_shm;
+	struct rtu_shmem_header *rtu_hdr;
+
+	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
+	mirror_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->mirror);
+	if (!mirror_shm)
+		return -2;
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		memcpy(&mirror_local, mirror_shm, sizeof(*mirror_shm));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
+		usleep(1000);
 	}
 
 	return 0;
@@ -1000,6 +1027,40 @@ int main(int argc, char **argv)
 	printf("\n");
 	printf("%d active VIDs defined\n", vid_active);
 	printf("\n");
+
+	if (read_mirror()) {
+		printf("Too many retries while reading mirroring config from "
+				"RTUd shmem\n");
+		return -1;
+	}
+	printf("RTU Port Mirroring Config Dump:\n");
+	printf(" Status:  %s\n", mirror_local.en ? "Enabled" : "Disabled");
+	if (mirror_local.imask != 0) {
+		printf(" Ingress: port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.imask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("-> port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.dmask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("\n");
+	}
+	if (mirror_local.emask != 0) {
+		printf(" Egress:  port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.emask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("-> port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.dmask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("\n");
+	}
 
 	return 0;
 }

@@ -161,6 +161,7 @@ static char *pp_instance_state_to_name[] = {
 	[PPS_PASSIVE] =           "PASSIVE   ",
 	[PPS_UNCALIBRATED] =      "UNCALIBRAT",
 	[PPS_SLAVE] =             "SLAVE     ",
+	NULL
 	};
 
 #define EMPTY_EXTENSION_STATE_NAME "          "
@@ -172,11 +173,29 @@ static char * l1e_instance_extension_state[]={
 		[L1SYNC_IDLE        ] = "IDLE      ",
 		[L1SYNC_LINK_ALIVE  ] = "LINK ALIVE",
 		[L1SYNC_CONFIG_MATCH] = "CFG MATCH ",
-		[L1SYNC_UP          ] = "UP        "
+		[L1SYNC_UP          ] = "UP        ",
+		NULL
 };
 #define L1S_INSTANCE_EXTENSION_STATE_MAX (sizeof (l1e_instance_extension_state)/sizeof(char *) )
 
 #endif
+
+static char * timind_mode_state[] = {
+		[TM_GRAND_MASTER]=     "GM",
+		[TM_FREE_MASTER]=      "FR",
+		[TM_BOUNDARY_CLOCK]=   "BC",
+		[TM_DISABLED]=         "--",
+		NULL
+	};
+
+static char * pll_locking_state[] = {
+		[TM_LOCKING_STATE_NONE]=     "NONE    ",
+		[TM_LOCKING_STATE_LOCKING]=  "LOCKING ",
+		[TM_LOCKING_STATE_LOCKED]=   "LOCKED  ",
+		[TM_LOCKING_STATE_HOLDOVER]= "HOLDOVER",
+		[TM_LOCKING_STATE_ERROR]=    "ERROR   ",
+		NULL
+	};
 
 #if CONFIG_HAS_EXT_WR
 static char * wr_instance_extension_state[]={
@@ -189,6 +208,7 @@ static char * wr_instance_extension_state[]={
 		[WRS_CALIBRATED] =        "WR_CAL-ED ",
 		[WRS_RESP_CALIB_REQ] =    "WR_RSP_CAL",
 		[WRS_WR_LINK_ON] =        "WR_LINK_ON",
+		NULL
 };
 #define WR_INSTANCE_EXTENSION_STATE_MAX (sizeof (wr_instance_extension_state)/sizeof(char *) )
 
@@ -205,6 +225,18 @@ static char *prot_detection_state_name[]={
 /* prototypes */
 int read_instances(void);
 
+char *getStateAsString(char *p[], int index) {
+	int i,len;
+	char *errMsg="?????????????????????";
+
+	len=strlen(p[0]);
+	for (i=0; ;i++) {
+		if ( p[i]==NULL )
+			return errMsg+strlen(errMsg)-len;
+		if ( i==index)
+			return p[index];
+	}
+}
 
 int64_t interval_to_picos(TimeInterval interval)
 {
@@ -532,15 +564,20 @@ void show_ports(int hal_alive, int ppsi_alive)
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_cprintf(C_BLUE, "Switch time (UTC): ");
-		term_cprintf(C_WHITE, "%s\n", datestr);
+		term_cprintf(C_WHITE, "%s", datestr);
 
-		term_cprintf(C_BLUE, "Leap seconds: ");
+		term_cprintf(C_BLUE, "   Leap seconds: ");
 		if (adjtimex(&timex_val) < 0) {
 			term_cprintf(C_WHITE, "error\n");
 		} else {
 			p = (int *)(&timex_val.stbcnt) + 1;
 			term_cprintf(C_WHITE, "%3d\n", *p);
 		}
+
+		term_cprintf(C_BLUE, "TimingMode: ");
+		term_cprintf(C_WHITE, "%s",getStateAsString(timind_mode_state,ppg->timingMode));
+		term_cprintf(C_BLUE, "    PLL locking state: ");
+		term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,ppg->timingModeLockingState));
 
 		term_cprintf(C_CYAN, "----- HAL ---|---------------------------------- PPSI --------------------------------------------------------\n");
 		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |       PTP/EXT/PLINK states   | Pro | VLANs\n");
@@ -643,16 +680,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 								 p[0], p[1], p[2], p[3],
 								 p[4], p[5]);
 						term_cprintf(C_CYAN, "| ");
-						if (ppi->state < PP_INSTANCE_STATE_MAX) {
-							/* Known state */
-							term_cprintf(C_GREEN, "%s/",
-								pp_instance_state_to_name[ppi->state]);
-						} else {
-							/* Unknown ptp state */
-							term_cprintf(C_GREEN,
-								"unkn(%3i)",
-								ppi->state);
-						}
+						term_cprintf(C_GREEN, "%s/",getStateAsString(pp_instance_state_to_name,ppi->state));
 						/* print extension state */
 						switch (ppi->protocol_extension ) {
 #if CONFIG_HAS_EXT_WR
@@ -660,14 +688,13 @@ void show_ports(int hal_alive, int ppsi_alive)
 						{
 							portDS_t *portDS;
 
-							extension_state_name="????????? ";
+							extension_state_name=getStateAsString(wr_instance_extension_state,-1); // Default value
+
 							if ( (portDS = wrs_shm_follow(ppsi_head, ppi->portDS) ) ) {
 								struct wr_dsport *extPortDS;
 
-								if ( (extPortDS = wrs_shm_follow(ppsi_head, portDS->ext_dsport) ) ) {
-									if ( extPortDS->state <= WR_INSTANCE_EXTENSION_STATE_MAX )
-										extension_state_name=wr_instance_extension_state[extPortDS->state];
-								}
+								if ( (extPortDS = wrs_shm_follow(ppsi_head, portDS->ext_dsport) ) )
+										extension_state_name=getStateAsString(wr_instance_extension_state,extPortDS->state);
 							}
 							break;
 						}
@@ -677,20 +704,19 @@ void show_ports(int hal_alive, int ppsi_alive)
 						{
 							portDS_t *portDS;
 
-							extension_state_name="????????? ";
+							extension_state_name=getStateAsString(l1e_instance_extension_state,-1); // Default value
 							if ( (portDS = wrs_shm_follow(ppsi_head, ppi->portDS) ) ) {
 								l1e_ext_portDS_t *extPortDS;
 
 								if ( (extPortDS = wrs_shm_follow(ppsi_head, portDS->ext_dsport) ) ) {
-									if ( extPortDS->basic.L1SyncState <= L1S_INSTANCE_EXTENSION_STATE_MAX )
-										extension_state_name=l1e_instance_extension_state[extPortDS->basic.L1SyncState];
+										extension_state_name=getStateAsString(l1e_instance_extension_state,extPortDS->basic.L1SyncState);
 								}
 							}
 							break;
 						}
 #endif
 						}
-						term_cprintf(C_GREEN, "%s/%s",extension_state_name,prot_detection_state_name[ppi->pdstate]);
+						term_cprintf(C_GREEN, "%s/%s",extension_state_name,getStateAsString(prot_detection_state_name,ppi->pdstate));
 					} // else {
 //						term_cprintf(C_WHITE, "                  ");
 //						term_cprintf(C_CYAN, "|");
@@ -729,7 +755,6 @@ void show_ports(int hal_alive, int ppsi_alive)
 		} else if (mode & WEB_INTERFACE) {
 			printf("%s ", state_up(port_state->state)
 				? "up" : "down");
-			// JCB mode is per instance // printf("%s ", if_mode);
 			printf("%s ", port_state->locked
 				? "Locked" : "NoLock");
 			printf("%s ", port_state->calib.rx_calibrated
@@ -738,7 +763,6 @@ void show_ports(int hal_alive, int ppsi_alive)
 		} else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
-			// JCB mode is per instance // printf("mode:%s ", if_mode);
 			printf("lock:%d ", port_state->locked);
 			print_port = 0;
 		}

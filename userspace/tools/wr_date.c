@@ -86,7 +86,7 @@ int wrdate_cfgfile(char *fname)
 
 
 /* This returns wr time, used for syncing to a second transition */
-uint64_t gettimeof_wr(struct timeval *tv, struct PPSG_WB *pps)
+uint64_t gettimeof_wr(struct timeval *tv, volatile struct PPSG_WB *pps)
 {
 	uint32_t tai_h,tai_l,nsec, tmp1, tmp2;
 	uint64_t tai;
@@ -124,7 +124,7 @@ int get_kern_leaps(void)
 }
 
 
-int wrdate_get(struct PPSG_WB *pps, int tohost)
+int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 {
 	unsigned long taih, tail, nsec, tmp1, tmp2;
 	uint64_t tai;
@@ -236,7 +236,7 @@ int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *
 
 
 
-int wrdate_diff(struct PPSG_WB *pps)
+int wrdate_diff(volatile struct PPSG_WB *pps)
 {
 	struct timeval sw, hw, diff;
 	int neg=0;
@@ -416,7 +416,7 @@ int installClockSourceModule(void) {
 }
 
 /* This sets WR time from host time */
-int __wrdate_internal_set(struct PPSG_WB *pps, int deep)
+int wrdate_internal_set(volatile struct PPSG_WB *pps, int deep)
 
 {
 	struct timeval tvh, tvr; /* host, rabbit */
@@ -513,7 +513,7 @@ int wrdate_internal_set(struct PPSG_WB *pps) {
 }
 
 /* Frontend to the set mechanism: parse the argument */
-int wrdate_set(struct PPSG_WB *pps, char *arg)
+int wrdate_set(volatile struct PPSG_WB *pps, char *arg)
 {
 	char *s;
 	unsigned long t; /* WARNING: 64 bit */
@@ -595,7 +595,7 @@ int main(int argc, char **argv)
 {
 	int c, tohost = 0;
 	char *cmd;
-	struct PPSG_WB *pps;
+	volatile struct PPSG_WB *pps;
 
 	prgname = argv[0];
 

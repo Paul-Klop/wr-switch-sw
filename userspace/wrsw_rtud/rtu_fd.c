@@ -94,6 +94,11 @@ static unsigned long aging_time = DEFAULT_AGING_TIME;
 static struct rtu_vlan_table_entry *vlan_tab;
 
 /**
+ * Mirror of port mirroring configuration
+ */
+static struct rtu_mirror_info *mirror_cfg;
+
+/**
  * \brief Mutex used to synchronise concurrent access to the filtering database.
  */
 static pthread_mutex_t fd_mutex;
@@ -110,6 +115,7 @@ static int hw_request(int type, struct rtu_addr addr,
 
 static void clean_fd(void);
 static void clean_vd(void);
+static void clean_mc(void);
 
 static void rtu_hw_commit(void);
 static void rtu_fd_commit(void);
@@ -200,7 +206,31 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 				(sizeof(*vlan_tab) * NUM_VLANS + 7) & ~7;
 	}
 
-	if ((!rtu_htab) || (!vlan_tab)) {
+	if (!rtu_hdr->mirror) {
+		/* for first RTUd run */
+		pr_info("Allocating a new, port mirroring config\n");
+		mirror_cfg = wrs_shm_alloc(rtu_port_shmem,
+					sizeof(*mirror_cfg) * NUM_MIRROR);
+		rtu_hdr->mirror = mirror_cfg;
+		rtu_hdr->mirror_offset =
+				(void *)mirror_cfg - (void *)rtu_port_shmem;
+		pr_debug("Clean vlan database.\n");
+		clean_mc();		/* clean port mirroring config */
+	} else {
+		pr_info("Using existing port mirroring config.\n");
+		/* next RTUd runs */
+		rtu_hdr->mirror =
+				(void *)rtu_port_shmem + rtu_hdr->mirror_offset;
+		mirror_cfg = (void *)rtu_hdr->mirror;
+		/* move data_size to have have similar behavior like
+		 * wrs_shm_alloc, needed for future allocations
+		 * force 8-alignment
+		 */
+		rtu_port_shmem->data_size +=
+				(sizeof(*mirror_cfg) * NUM_MIRROR + 7) & ~7;
+	}
+
+	if ((!rtu_htab) || (!vlan_tab) || (!mirror_cfg)) {
 		pr_error("%s: Cannot allocate mem in shmem\n", __func__);
 		return -1;
 	}
@@ -504,6 +534,23 @@ static void clean_vd(void)
 }
 
 /**
+ * Port mirroring config initialization (disabled by default).
+ */
+static void clean_mc(void)
+{
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+
+	mirror_cfg[0].en = 0;
+	mirror_cfg[0].imask = 0x0;
+	mirror_cfg[0].emask = 0x0;
+	mirror_cfg[0].dmask = 0x0;
+
+	rtu_enable_mirroring(mirror_cfg[0].en);
+	rtu_cfg_mirroring(mirror_cfg);
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+}
+
+/**
  * \brief Updates the age of filtering entries accessed in the last period.
  */
 static void rtu_fd_age_update(void)
@@ -775,5 +822,25 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 	vlan_tab[vid].prio = prio;
 
 	rtu_write_vlan_entry(vid, &vlan_tab[vid]);
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+}
+
+void rtu_fd_write_mirror_config(int en, uint32_t imask, uint32_t emask,
+		uint32_t dmask)
+{
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+
+	mirror_cfg[0].en = en;
+	/* update masks in SHM only if non-zero, or if disabling mirroring */
+	if (en == 0 || imask != 0)
+		mirror_cfg[0].imask = imask;
+	if (en == 0 || emask != 0)
+		mirror_cfg[0].emask = emask;
+	if (en == 0 || dmask != 0)
+		mirror_cfg[0].dmask = dmask;
+
+	rtu_enable_mirroring(0);
+	rtu_cfg_mirroring(mirror_cfg);
+	rtu_enable_mirroring(en);
 	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }

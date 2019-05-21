@@ -43,6 +43,7 @@ static struct minipc_ch *rtud_ch;
 struct wrs_shm_head *rtu_port_shmem;
 static struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
 static struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
+static struct rtu_mirror_info mirror_local;
 
 int rtudexp_clear_entries(int port, int type)
 {
@@ -177,6 +178,11 @@ void show_help(char *prgname)
 	fprintf(stderr, "   vlan <vid> <fid> <port_mask> [<drop>, <prio>, <has_prio>, <prio_override>]:\n"
 			"                                Add VLAN entry with vid, fid, mask and drop flag;\n"
 			"                                write mask=0x0 and drop=1 to remove the VLAN\n");
+	fprintf(stderr, "   mirror ingress <src_port> <dst_port>: Enable mirroring of ingress traffic\n"
+			"                                         from src_port to dst_port\n");
+	fprintf(stderr, "   mirror egress  <src_port> <dst_port>: Enable mirroring of egress traffic\n"
+			"                                         from src_port to dst_port\n");
+	fprintf(stderr, "   mirror off:      Turn off port mirroring\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Where:\n");
 	fprintf(stderr, "   <mac>           MAC address to be used in the RTU rule;\n"
@@ -332,6 +338,32 @@ int read_htab(int *read_entries)
 	return 0;
 }
 
+int read_mirror(void)
+{
+	unsigned int ii;
+	unsigned int retries = 0;
+	struct rtu_mirror_info *mirror_shm;
+	struct rtu_shmem_header *rtu_hdr;
+
+	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
+	mirror_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->mirror);
+	if (!mirror_shm)
+		return -2;
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		memcpy(&mirror_local, mirror_shm, sizeof(*mirror_shm));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	return 0;
+}
+
 int open_rtu_shm(void)
 {
 	int n_wait = 0;
@@ -399,6 +431,96 @@ int read_port_mask(char *mask, int nports)
 		return i;
 	}
 	return -1;
+}
+
+int port_to_mask(char *port, int nports)
+{
+	int portnum;
+
+	portnum = read_port(port, nports);
+	if (portnum >= 0)
+		return 1 << (portnum-1);
+	else
+		return -1;
+}
+
+int set_mirroring(int nports, int argc, char **argv)
+{
+	int val, ret;
+	int imask, emask, dmask;
+	int s_port, d_port;
+
+	/* mirror ingress <src_port> <dst_port> */
+	/* mirror egress  <src_port> <dst_port> */
+	/* mirror off */
+	/* mirror <imask> <emask> <dmask> */
+
+	/*------------------------------------------*/
+	/* mirror off                               */
+	if (argc == 1 && !strcmp(argv[0], "off")) {
+		printf("Turning off port mirroring\n");
+		ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_mirror,
+				&val, 0, 0, 0, 0);
+
+	/*------------------------------------------*/
+	/* ingress <src_port> <dst_port>            */
+	} else if (argc == 3 && !strcmp(argv[0], "ingress")) {
+		s_port = read_port(argv[1], nports);
+		if (s_port < 0)
+			return s_port;
+		imask = 1 << (s_port - 1);
+		d_port = read_port(argv[2], nports);
+		if (d_port < 0)
+			return d_port;
+		dmask = 1 << (d_port - 1);
+
+		printf("Configuring ingress mirroring from port %d to port "
+			       "%d\n", s_port, d_port);
+		ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_mirror,
+				&val, 1, imask, 0, dmask);
+
+	/*------------------------------------------*/
+	/* egress <src_port> <dst_port>             */
+	} else if (argc == 3 && !strcmp(argv[0], "egress")) {
+		s_port = read_port(argv[1], nports);
+		if (s_port < 0)
+			return s_port;
+		emask = 1 << (s_port - 1);
+		d_port = read_port(argv[2], nports);
+		if (d_port < 0)
+			return d_port;
+		dmask = 1 << (d_port - 1);
+
+		printf("Configuring egress mirroring from port %d to port %d\n",
+				s_port, d_port);
+		ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_mirror,
+				&val, 1, 0, emask, dmask);
+
+	/*------------------------------------------*/
+	/* advanced usecase                         */
+	/* mirror <imask> <emask> <dmask>           */
+	} else if (argc == 3) {
+		imask = read_port_mask(argv[0], nports);
+		emask = read_port_mask(argv[1], nports);
+		dmask = read_port_mask(argv[2], nports);
+		if (imask < 0 || emask < 0 || dmask < 0) {
+			fprintf(stderr, "Mirror: incorrect mask\n");
+			return -1;
+		}
+		printf("Configuring mirroring with custom masks: ingress 0x%05X"
+			       " egress 0x%05X destination 0x%05X\n", imask,
+			       emask, dmask);
+		ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_mirror,
+				&val, 1, imask, emask, dmask);
+
+	/*------------------------------------------*/
+	/* incorrect parameters                     */
+	} else {
+		fprintf(stderr, "Mirror: incorrect parameters\n");
+		return -1;
+	}
+
+	return (ret < 0) ? ret : 1;
 }
 
 int main(int argc, char **argv)
@@ -819,6 +941,10 @@ int main(int argc, char **argv)
 			printf("Vlan command error\n");
 			exit(1);
 		}
+/* ****************** mirror ************************************************ */
+	} else if (argc >= 3 && !strcmp(argv[1], "mirror")) {
+		/* pass only parameters to mirror command */
+		isok = set_mirroring(nports, argc-2, argv+2);
 	} else if (argc >= 2
 		   && !strcmp(argv[1], "list"))
 		isok = 1;
@@ -901,6 +1027,40 @@ int main(int argc, char **argv)
 	printf("\n");
 	printf("%d active VIDs defined\n", vid_active);
 	printf("\n");
+
+	if (read_mirror()) {
+		printf("Too many retries while reading mirroring config from "
+				"RTUd shmem\n");
+		return -1;
+	}
+	printf("RTU Port Mirroring Config Dump:\n");
+	printf(" Status:  %s\n", mirror_local.en ? "Enabled" : "Disabled");
+	if (mirror_local.imask != 0) {
+		printf(" Ingress: port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.imask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("-> port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.dmask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("\n");
+	}
+	if (mirror_local.emask != 0) {
+		printf(" Egress:  port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.emask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("-> port ");
+		for (i = 0; i < nports; ++i) {
+			if ((mirror_local.dmask & (1 << i)) != 0)
+				printf("%d ", i + 1);
+		}
+		printf("\n");
+	}
 
 	return 0;
 }

@@ -133,4 +133,17 @@ struct minipc_pd rtud_export_hp_mask = {
 		 },
 };
 
+/* Export of a function to configure port mirroring in rtu */
+struct minipc_pd rtud_export_mirror = {
+	.name = "mirror",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* enable */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* ingress mask */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* egress mask */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* destination mask */
+		MINIPC_ARG_END,
+	},
+};
+
 #endif

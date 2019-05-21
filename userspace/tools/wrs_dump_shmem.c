@@ -518,12 +518,22 @@ struct dump_info vlan_info[] = {
 	DUMP_FIELD(int, drop),
 };
 
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct rtu_mirror_info
+struct dump_info mirror_info[] = {
+	DUMP_FIELD(int, en),
+	DUMP_FIELD(uint32_t, imask),
+	DUMP_FIELD(uint32_t, emask),
+	DUMP_FIELD(uint32_t, dmask),
+};
+
 int dump_rtu_mem(struct wrs_shm_head *head)
 {
 	struct rtu_shmem_header *rtu_h;
 	struct rtu_filtering_entry *rtu_filters;
 	struct rtu_filtering_entry *rtu_filters_cur;
 	struct rtu_vlan_table_entry *rtu_vlans;
+	struct rtu_mirror_info *rtu_mirror;
 	int i, j;
 	char prefix[64];
 
@@ -535,8 +545,9 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	rtu_h = (void *)head + head->data_off;
 	rtu_filters = wrs_shm_follow(head, rtu_h->filters);
 	rtu_vlans = wrs_shm_follow(head, rtu_h->vlans);
+	rtu_mirror = wrs_shm_follow(head, rtu_h->mirror);
 
-	if ((!rtu_filters) || (!rtu_vlans)) {
+	if ((!rtu_filters) || (!rtu_vlans) || (!rtu_mirror)) {
 		fprintf(stderr, "dump rtu: cannot follow pointer in shm\n");
 		return -1;
 	}
@@ -562,6 +573,11 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 		sprintf(prefix,"rtu.vlan.%d",i);
 		dump_many_fields(rtu_vlans, vlan_info, ARRAY_SIZE(vlan_info),prefix);
 	}
+
+	sprintf(prefix, "rtu.mirror");
+	dump_many_fields(rtu_mirror, mirror_info, ARRAY_SIZE(mirror_info),
+			prefix);
+
 	return 0;
 }
 

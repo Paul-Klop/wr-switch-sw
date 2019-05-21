@@ -3,6 +3,7 @@ menu "SFP and Media Timing Configuration"
 config N_SFP_ENTRIES
 	int "Number of SFP entries in SFP configuration DB"
 	range 0  18
+	default  6
 	help
 	This parameter defines the number of SFP entries
 	that can be set in the configuration database
@@ -393,6 +394,7 @@ endmenu
 config N_FIBER_ENTRIES
 	int "Number of fiber entries in fiber configuration DB"
 	range 0  18
+	default  4
 	help
 	This parameter defines the number of fiber entries
 	that can be set in the configuration database

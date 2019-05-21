@@ -40,6 +40,9 @@ Kconfig: $(WRS_BASE_DIR)/../Kconfig
 Kconfig_port_timing.in: $(WRS_BASE_DIR)/../Kconfig_port_timing.in
 	cp $^ $@
 
+Kconfig_sfp_fiber.in: $(WRS_BASE_DIR)/../Kconfig_sfp_fiber.in
+	cp $^ $@
+
 Kconfig_vlans.in: $(WRS_BASE_DIR)/../Kconfig_vlans.in
 	cp $^ $@
 

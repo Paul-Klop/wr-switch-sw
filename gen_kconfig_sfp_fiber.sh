@@ -39,6 +39,7 @@ function print_sfp_header() {
 	echo -e "\nconfig N_SFP_ENTRIES" >>$OUTPUT_FILE
 	echo -e "\tint \"Number of SFP entries in SFP configuration DB\"" >>$OUTPUT_FILE
 	echo -e "\trange 0  $maxSfp" >>$OUTPUT_FILE
+	echo -e "\tdefault  $nbSfp" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
 	echo -e "\tThis parameter defines the number of SFP entries" >>$OUTPUT_FILE
 	echo -e "\tthat can be set in the configuration database" >>$OUTPUT_FILE
@@ -94,6 +95,7 @@ function print_fiber_header() {
 	echo -e "\nconfig N_FIBER_ENTRIES" >>$OUTPUT_FILE
 	echo -e "\tint \"Number of fiber entries in fiber configuration DB\"" >>$OUTPUT_FILE
 	echo -e "\trange 0  $maxFiber" >>$OUTPUT_FILE
+	echo -e "\tdefault  $nbFiber" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
 	echo -e "\tThis parameter defines the number of fiber entries" >>$OUTPUT_FILE
 	echo -e "\tthat can be set in the configuration database" >>$OUTPUT_FILE

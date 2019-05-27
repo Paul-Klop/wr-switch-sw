@@ -16,6 +16,8 @@
 #include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
+#include <ppsi-wrs.h>
+
 
 #include "term.h"
 #include <time_lib.h>
@@ -128,12 +130,13 @@ int mode = SHOW_GUI;
 static struct minipc_ch *ptp_ch;
 
 static struct wrs_shm_head *hal_head;
-static struct hal_port_state *hal_ports;
+struct hal_port_state *hal_ports;
 /* local copy of port state */
 static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
+static void *ppg_arch;
 static 	defaultDS_t *defaultDS;
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
@@ -182,19 +185,19 @@ static char * l1e_instance_extension_state[]={
 #endif
 
 static char * timind_mode_state[] = {
-		[TM_GRAND_MASTER]=     "GM",
-		[TM_FREE_MASTER]=      "FR",
-		[TM_BOUNDARY_CLOCK]=   "BC",
-		[TM_DISABLED]=         "--",
+		[WRH_TM_GRAND_MASTER]=     "GM",
+		[WRH_TM_FREE_MASTER]=      "FR",
+		[WRH_TM_BOUNDARY_CLOCK]=   "BC",
+		[WRH_TM_DISABLED]=         "--",
 		NULL
 	};
 
 static char * pll_locking_state[] = {
-		[TM_LOCKING_STATE_NONE]=     "NONE    ",
-		[TM_LOCKING_STATE_LOCKING]=  "LOCKING ",
-		[TM_LOCKING_STATE_LOCKED]=   "LOCKED  ",
-		[TM_LOCKING_STATE_HOLDOVER]= "HOLDOVER",
-		[TM_LOCKING_STATE_ERROR]=    "ERROR   ",
+		[WRH_TM_LOCKING_STATE_NONE]=     "NONE    ",
+		[WRH_TM_LOCKING_STATE_LOCKING]=  "LOCKING ",
+		[WRH_TM_LOCKING_STATE_LOCKED]=   "LOCKED  ",
+		[WRH_TM_LOCKING_STATE_HOLDOVER]= "HOLDOVER",
+		[WRH_TM_LOCKING_STATE_ERROR]=    "ERROR   ",
 		NULL
 	};
 
@@ -505,6 +508,10 @@ void init_shm(void)
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
+	/* Access to ppg arch data */
+	if ( ppg->arch_data!=NULL)
+		ppg_arch=wrs_shm_follow(ppsi_head, ppg->arch_data);
+
 	/* Access to defaultDS data */
 	defaultDS = wrs_shm_follow(ppsi_head, ppg->defaultDS);
 	if (!defaultDS) {
@@ -571,13 +578,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 		tm = gmtime(&(hw.tv_sec));
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time (TAI):     ");
-		term_cprintf(C_WHITE, "%s.%06li\n", datestr,hw.tv_usec);
-
-		tm = gmtime(&(sw.tv_sec));
-		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "Switch time (UTC): ");
-		term_cprintf(C_WHITE, "%s.%06li", datestr,sw.tv_usec);
+		term_cprintf(C_BLUE, "WR time (TAI)    : ");
+		term_cprintf(C_WHITE, "%s.%06li", datestr,hw.tv_usec);
 
 		term_cprintf(C_BLUE, "   Leap seconds: ");
 		if (adjtimex(&timex_val) < 0) {
@@ -587,11 +589,27 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_WHITE, "%3d\n", *p);
 		}
 
-		term_cprintf(C_BLUE, "TimingMode: ");
-		term_cprintf(C_WHITE, "%s",getStateAsString(timind_mode_state,ppg->timingMode));
-		term_cprintf(C_BLUE, "    PLL locking state: ");
-		term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,ppg->timingModeLockingState));
+		tm = gmtime(&(sw.tv_sec));
+		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
+		term_cprintf(C_BLUE, "Switch time (UTC): ");
+		term_cprintf(C_WHITE, "%s.%06li", datestr,sw.tv_usec);
 
+		term_cprintf(C_BLUE, "   TAI-UTC     : ");
+		{
+			struct timeval diff;
+			int neg=0;
+
+			neg=timeval_subtract(&diff, &hw, &sw);
+			term_cprintf(C_WHITE, "%c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+
+		}
+
+		if ( ppsi_alive && ppg_arch!=NULL) {
+			term_cprintf(C_BLUE, "TimingMode: ");
+			term_cprintf(C_WHITE, "%s",getStateAsString(timind_mode_state,((wrs_arch_data_t *)ppg_arch)->timingMode));
+			term_cprintf(C_BLUE, "    PLL locking state: ");
+			term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
+		}
 		term_cprintf(C_CYAN, "----- HAL ---|---------------------------------- PPSI --------------------------------------------------------\n");
 		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |       PTP/EXT/PLINK states   | Pro | VLANs\n");
 		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+------------------------------+-----+------\n");

@@ -1,10 +1,10 @@
 #!/bin/sh
 
-# First of all, run wr_date -n set, so to fix tai_offset in the kernel
+# First of all, run 'wr_date -n set host', so to fix tai_offset in the kernel. Does not set the time
 /wr/bin/wr_date -n set host > /dev/null
 
 F=/etc/wr_date.conf
-CCS=/sys/bus/clocksource/devices/clocksource0/current_clocksource
+#CCS=/sys/bus/clocksource/devices/clocksource0/current_clocksource
 
 #Each NTP attempts last around 10s
 ntp_retries()
@@ -25,47 +25,22 @@ ntp_retries()
 	return 1
 }
 
-gm_wait_lock()
-{
-	gm_ntries=${1:-15}
-
-	#First check if we have configure softpll in GM mode <=> (1)
-	if /wr/bin/wrs_dump_shmem -S 2> logger | grep mode | grep -q \(1\); then
-		for i in `seq ${gm_ntries}` ; do
-			#Check if we have entered in locked state <=> (6)
-			al_state=$(/wr/bin/wrs_dump_shmem -S 2> /dev/null | grep align_state)
-			if echo ${al_state} | grep -q \(6\); then
-				return 0
-			else
-				echo "Retry $i/${gm_ntries}: GM mode but not locked! "${al_state}
-			fi
-			sleep 10
-		done
-		echo "Error: GM was not lock when setting ntp time to FPGA"
-		return 2
-	fi
-	return 1
-}
-
 ntp_to_hwclk()
 {
 	S=$1
+	ntp_ntries=1
 
-	#Check if GM mode and wait for GM lock
-	if gm_wait_lock; then
+# Get timing mode: Get it from dot-config ad wr_date is started before PPSi
+	TM=`grep -e '^CONFIG_TIME_' /wr/etc/dot-config | sed 's/^CONFIG_TIME_\(.*\)[=].*/\1/'`
+	
+	if [ "$TM" == "GM" ] ; then  
 		ntp_ntries=10
-		#Temporary disable white-rabbit as kernel clock source
-		echo "pit" > ${CCS}
-	else
-		ntp_ntries=1
 	fi
-
+		
 	#Request NTP server and set time to FPGA is okay
 	if ntp_retries $S ${ntp_ntries}; then
 		/wr/bin/wr_date -v set host
 		date_set=1
-		#Enable back white rabbit as clock source
-		echo "white-rabbit" > ${CCS}
 	fi
 }
 

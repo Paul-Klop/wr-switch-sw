@@ -79,3 +79,56 @@ char * relativeDifferenceToString(RelativeDifference time, char *buf ) {
 	sprintf(buf,"%c%"PRId32".%018"PRIu64, sign, nsecs, sub_yocto);
 	return buf;
 }
+
+/**
+ * Function to subtract timeval in a robust way
+ *
+ * In order to properly print the result on screen you can use:
+ *
+ *     int neg=timeval_subtract(&diff, &a, &b);
+ *     printf("%c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+ *
+ * @ref: https://stackoverflow.com/questions/15846762/timeval-subtract-explanation
+ * @note for safety reason a copy of x,y is used internally so x,y are never modified
+ * @param[inout] result A pointer on a timeval structure where the result will be stored.
+ * @param[in] x A pointer on x timeval struct
+ * @param[in] y A pointer on y timeval struct
+ * @return 1 if result is negative (seconds or useconds)
+ *
+ *
+ */
+int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
+{
+	struct timeval xx = *x;
+	struct timeval yy = *y;
+	x = &xx; y = &yy;
+
+	if (x->tv_usec > 999999)
+	{
+		x->tv_sec += x->tv_usec / 1000000;
+		x->tv_usec %= 1000000;
+	}
+
+	if (y->tv_usec > 999999)
+	{
+		y->tv_sec += y->tv_usec / 1000000;
+		y->tv_usec %= 1000000;
+	}
+
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_usec = x->tv_usec - y->tv_usec;
+
+	if(result->tv_sec>0 && result->tv_usec < 0)
+	{
+		result->tv_usec += 1000000;
+		result->tv_sec--; // borrow
+	}
+	else if(result->tv_sec<0 && result->tv_usec > 0)
+	{
+		result->tv_usec -= 1000000;
+		result->tv_sec++; // borrow
+	}
+
+	return (result->tv_sec < 0) || (result->tv_usec<0);
+}
+

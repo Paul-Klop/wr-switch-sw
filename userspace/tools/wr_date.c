@@ -18,7 +18,9 @@
 #include <sys/time.h>
 #include <sys/timex.h>
 #include "../../kernel/wbgen-regs/ppsg-regs.h"
+#include <libwr/softpll_export.h>
 #include <libwr/util.h>
+#include <time_lib.h>
 
 #ifndef MOD_TAI
 #define MOD_TAI 0x80
@@ -46,7 +48,7 @@ void help(char *prgname)
 		"    get             print WR time to stdout\n"
 		"    get tohost      print WR time and set system time\n"
 		"    set <value>     set WR time to scalar seconds\n"
-		"    set host        set TAI from current host time\n"
+		"    set host        set TAI from current host time.\n"
 		"    stat            print statistics between TAI (WR time) and linux UTC\n"
 		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
@@ -182,80 +184,33 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 }
 
 
-/**
- * Function to subtract timeval in a robust way
- *
- * In order to properly print the result on screen you can use:
- *
- *     int neg=timeval_subtract(&diff, &a, &b);
- *     printf("%c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
- *
- * @ref: https://stackoverflow.com/questions/15846762/timeval-subtract-explanation
- * @note for safety reason a copy of x,y is used internally so x,y are never modified
- * @param[inout] result A pointer on a timeval structure where the result will be stored.
- * @param[in] x A pointer on x timeval struct
- * @param[in] y A pointer on y timeval struct
- * @return 1 if result is negative (seconds or useconds)
- *
- *
- */
-int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
-{
-	struct timeval xx = *x;
-	struct timeval yy = *y;
-	x = &xx; y = &yy;
-
-	if (x->tv_usec > 999999)
-	{
-		x->tv_sec += x->tv_usec / 1000000;
-		x->tv_usec %= 1000000;
-	}
-
-	if (y->tv_usec > 999999)
-	{
-		y->tv_sec += y->tv_usec / 1000000;
-		y->tv_usec %= 1000000;
-	}
-
-	result->tv_sec = x->tv_sec - y->tv_sec;
-	result->tv_usec = x->tv_usec - y->tv_usec;
-
-	if(result->tv_sec>0 && result->tv_usec < 0)
-	{
-		result->tv_usec += 1000000;
-		result->tv_sec--; // borrow
-	}
-	else if(result->tv_sec<0 && result->tv_usec > 0)
-	{
-		result->tv_usec -= 1000000;
-		result->tv_sec++; // borrow
-	}
-
-	return (result->tv_sec < 0) || (result->tv_usec<0);
-}
-
-
-
-int wrdate_diff(volatile struct PPSG_WB *pps)
-{
-	struct timeval sw, hw, diff;
+int __wrdate_diff(volatile struct PPSG_WB *pps,struct timeval *ht, struct timeval *wt) {
+	struct timeval diff;
 	int neg=0;
 
-	gettimeof_wr(&hw, pps);
-	gettimeofday(&sw, NULL);
-
-	neg=timeval_subtract(&diff, &hw, &sw);
+	neg=timeval_subtract(&diff, wt, ht);
 
 	printf("%s%c%li.%06li\n",opt_verbose?("TAI(HW)-UTC(SW): "):(""),neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
 	if(opt_verbose)
 	{
 
-		hw.tv_sec-=get_kern_leaps(); //Convert HW clock from TAI to UTC
+		wt->tv_sec-=get_kern_leaps(); //Convert HW clock from TAI to UTC
 
-		neg=timeval_subtract(&diff, &hw, &sw);
+		neg=timeval_subtract(&diff, wt, ht);
 		printf("UTC(HW)-UTC(SW): %c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
 	}
 	return 0;
+
+}
+
+int wrdate_diff(volatile struct PPSG_WB *pps)
+{
+	struct timeval ht, wt;
+
+	gettimeof_wr(&wt, pps);
+	gettimeofday(&ht, NULL);
+
+	return __wrdate_diff(pps,&ht, &wt);
 }
 
 /* Fix the TAI representation looking at the leap file */
@@ -333,7 +288,7 @@ int fix_host_tai(void)
 
 #define ADJ_SEC_ITER 10
 
-static int wait_wr_adjustment(struct PPSG_WB *pps)
+static int wait_wr_adjustment(volatile struct PPSG_WB *pps)
 {
 	int count=0;
 
@@ -407,6 +362,10 @@ int installClockSourceModule(void) {
     }
     ret=1;
 
+    if (opt_verbose) {
+  	  printf("Driver module "CLOCK_SOURCE_MODULE_NAME" installed.\n");
+    }
+
     out:;
     if ( fd >=0 )
     	close(fd);
@@ -416,7 +375,7 @@ int installClockSourceModule(void) {
 }
 
 /* This sets WR time from host time */
-int wrdate_internal_set(volatile struct PPSG_WB *pps, int deep)
+int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int deep)
 
 {
 	struct timeval tvh, tvr; /* host, rabbit */
@@ -465,7 +424,7 @@ int wrdate_internal_set(volatile struct PPSG_WB *pps, int deep)
 				   (long)(tvh.tv_usec));
 			printf("WR   time: %9li.%06li\n", (long)(tvr.tv_sec),
 				   (long)(tvr.tv_usec));
-			printf("Fractional difference: %li usec\n", diff);
+			__wrdate_diff(pps,&tvh,&tvr);
 		}
 
 		if (diff64) {
@@ -477,9 +436,9 @@ int wrdate_internal_set(volatile struct PPSG_WB *pps, int deep)
 			pps->ADJ_NSEC = 0;
 			asm("" : : : "memory"); /* barrier... */
 			pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
-			if ( wait_wr_adjustment(pps) )
-			__wrdate_internal_set(pps,deep+1); /* adjust the usecs */
-		} else {
+			if ( wait_wr_adjustment(pps) && !adjSecOnly )
+					__wrdate_internal_set(pps,0,deep+1); /* adjust the usecs */
+		} else if ( !adjSecOnly ) {
 			if (opt_verbose)
 				printf("adjusting by %li usecs\n", diff);
 			pps->ADJ_UTCLO = 0;
@@ -503,36 +462,106 @@ int wrdate_internal_set(volatile struct PPSG_WB *pps, int deep)
 		       (long)(tvh.tv_usec));
 		printf("WR   time: %9li.%06li\n", (long)(tvr.tv_sec),
 		       (long)(tvr.tv_usec));
+		__wrdate_diff(pps,&tvh,&tvr);
 	}
 	return 0;
 }
 
 /* This sets WR time from host time */
-int wrdate_internal_set(struct PPSG_WB *pps) {
-	return __wrdate_internal_set(pps,0);
+int wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly) {
+	return __wrdate_internal_set(pps,adjSecOnly,0);
+}
+
+/* This sets WR time from host time for grand master mode
+ * For a GM we adjust only the seconds part of the time.
+ */
+#define FULL_SEC (1000*1000) /* 1000 ms */
+#define HALF_SEC (FULL_SEC/2) /* 500 ms */
+#define LOW_LIMIT_HALF_SEC (300*1000) /* 300 ms */
+#define HIGH_LIMIT_HALF_SEC (700*1000) /* 300 ms */
+
+int wrdate_internal_set_gm(volatile struct PPSG_WB *pps) {
+
+	if (opt_verbose ) {
+		printf("Set WR time for grand master.\n");
+	}
+	/* We try to set the seconds between to PPS ticks */
+	while (1==1) {
+		struct timeval wt;
+
+		gettimeof_wr(&wt, pps);
+		if ( wt.tv_usec>LOW_LIMIT_HALF_SEC && wt.tv_usec<HIGH_LIMIT_HALF_SEC ) {
+			wrdate_internal_set(pps,1);
+			return 0;
+		} else {
+			useconds_t usec;
+
+			usec= ( wt.tv_usec>HALF_SEC ) ?
+					(FULL_SEC-wt.tv_usec)+HALF_SEC :
+					HALF_SEC-wt.tv_usec;
+
+			usleep(usec);
+		}
+	}
+	return 0;
+}
+
+#define SPLL_MAGIC 0x5b1157a7
+#define FPGA_SPLL_STAT 0x10006800
+
+int getTimingMode(void) {
+	static struct spll_stats *spll_stats_p;
+
+	if ( spll_stats_p==NULL ) {
+		spll_stats_p = create_map(FPGA_SPLL_STAT,sizeof(*spll_stats_p));
+		if ( spll_stats_p==NULL ) {
+			fprintf(stderr, "Cannot create map to Soft Pll stats\n");
+			return -1;
+		}
+		if (spll_stats_p->magic != SPLL_MAGIC) {
+			/* Wrong magic */
+			fprintf(stderr, "Soft PLL: unknown magic %x (known is %x)\n",
+					spll_stats_p->magic, SPLL_MAGIC);
+			return -1;
+		}
+	}
+	return spll_stats_p->mode;
 }
 
 /* Frontend to the set mechanism: parse the argument */
-int wrdate_set(volatile struct PPSG_WB *pps, char *arg)
+int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 {
 	char *s;
 	unsigned long t; /* WARNING: 64 bit */
 	struct timeval tv;
 
+	if (!strcmp(argv[0], "host")) {
+		switch (getTimingMode()) {
+		case SPLL_MODE_GRAND_MASTER:
+			return wrdate_internal_set_gm(pps);
+		case SPLL_MODE_FREE_RUNNING_MASTER :
+		case SPLL_MODE_DISABLED :
+			return wrdate_internal_set(pps,0);
+			break;
+		case SPLL_MODE_SLAVE :
+			fprintf(stderr, "Slave timing mode: WR time cannot be set!!!\n");
+			return -1;
+		default:
+			fprintf(stderr, "Cannot read Soft PLL timing mode. WR time cannot be set.\n");
+			return -1;
+		}
+	}
 
-	if (!strcmp(arg, "host"))
-		return wrdate_internal_set(pps);
-
-	s = strdup(arg);
-	if (sscanf(arg, "%li%s", &t, s) == 1) {
+	s = strdup(argv[0]);
+	if (sscanf(argv[0], "%li%s", &t, s) == 1) {
 		tv.tv_sec = t;
 		tv.tv_usec = 0;
 		if (settimeofday(&tv, NULL) < 0) {
 			fprintf(stderr, "%s: settimeofday(%s): %s\n",
-				prgname, arg, strerror(errno));
+				prgname, argv[0], strerror(errno));
 			exit(1);
 		}
-		return wrdate_internal_set(pps);
+		return wrdate_internal_set(pps,0);
 	}
 
 	/* FIXME: other time formats */
@@ -543,7 +572,7 @@ int wrdate_set(volatile struct PPSG_WB *pps, char *arg)
 /* Print statistics between TAI and UTC dates */
 #define STAT_SAMPLE_COUNT 20
 
-int wrdate_stat(struct PPSG_WB *pps)
+int wrdate_stat(volatile struct PPSG_WB *pps)
 {
 	int udiff_ref=0,udiff_last;
 
@@ -649,10 +678,10 @@ int main(int argc, char **argv)
 		return wrdate_stat(pps);
 	}
 
-	/* only other command is "set", with one argument */
-	if (strcmp(cmd, "set") || optind != argc - 1)
+	/* only other command is "set", with one on more arguments */
+	if (strcmp(cmd, "set") || optind > argc - 1)
 		help(argv[0]);
 
 
-	return wrdate_set(pps, argv[optind]);
+	return wrdate_set(pps, argc-optind,&argv[optind]);
 }

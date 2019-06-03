@@ -1,0 +1,11 @@
+#%PAM-1.0
+# auth line to be replaced by startup scripts
+auth       required     /lib/security/pam_unix.so shadow nodelay
+account    required     /lib/security/pam_nologin.so
+account    required     /lib/security/pam_unix.so
+# account line to be replaced by startup scripts
+password   required     /lib/security/pam_unix.so shadow nullok use_authtok
+session    required     /lib/security/pam_unix.so
+session    required     /lib/security/pam_limits.so
+# session line to be replaced by startup scripts
+session    required     /lib/security/pam_mkhomedir.so skel=/etc/skel umask=0022

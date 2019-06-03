@@ -1,0 +1,92 @@
+From 4a5dae02798200481775d6d8ba4a6c8f0a629544 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Wed, 5 Sep 2018 17:21:24 +0200
+Subject: [PATCH] add libpam-krb5
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ package/Config.in                    |  1 +
+ package/libpam-krb5/Config.in        | 21 +++++++++++++++++++++
+ package/libpam-krb5/libpam-krb5.hash |  6 ++++++
+ package/libpam-krb5/libpam-krb5.mk   | 16 ++++++++++++++++
+ 4 files changed, 44 insertions(+)
+ create mode 100644 package/libpam-krb5/Config.in
+ create mode 100644 package/libpam-krb5/libpam-krb5.hash
+ create mode 100644 package/libpam-krb5/libpam-krb5.mk
+
+diff --git a/package/Config.in b/package/Config.in
+index b5583da..8b43b7c 100644
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -1208,6 +1208,7 @@ if BR2_PACKAGE_LINUX_PAM
+ comment "linux-pam plugins"
+ 	source "package/libpam-radius-auth/Config.in"
+ 	source "package/libpam-tacplus/Config.in"
++	source "package/libpam-krb5/Config.in"
+ endif
+ 	source "package/liquid-dsp/Config.in"
+ 	source "package/lttng-libust/Config.in"
+diff --git a/package/libpam-krb5/Config.in b/package/libpam-krb5/Config.in
+new file mode 100644
+index 0000000..7845e6c
+--- /dev/null
++++ b/package/libpam-krb5/Config.in
+@@ -0,0 +1,21 @@
++config BR2_PACKAGE_LIBPAM_KRB5
++	bool "libpam-krb5"
++	# needs fork()
++	depends on BR2_USE_MMU
++	depends on !BR2_STATIC_LIBS
++	help
++	  This package provides PAM plugin for kerberos.
++	  https://www.eyrie.org/~eagle/software/pam-krb5/
++
++	  Kerberos is a system for authenticating users and services
++	  on a network. Kerberos is a trusted third-party service.
++	  That means that there is a third party (the Kerberos server)
++	  that is trusted by all the entities on the network (users
++	  and services, usually called "principals"). This is the MIT
++	  reference implementation of Kerberos V5.
++
++	  https://web.mit.edu/kerberos/
++
++comment "libpam-krb5 needs a toolchain w/ dynamic library"
++	depends on BR2_USE_MMU
++	depends on BR2_STATIC_LIBS
+diff --git a/package/libpam-krb5/libpam-krb5.hash b/package/libpam-krb5/libpam-krb5.hash
+new file mode 100644
+index 0000000..650ea5a
+--- /dev/null
++++ b/package/libpam-krb5/libpam-krb5.hash
+@@ -0,0 +1,6 @@
++# Locally calculated after checking pgp signature
++sha256	3abb458b4b3aa200d414bd2b859b3daabddd55954f753c988b41cedf95932649	pam-krb5-4.8.tar.gz
++
++# Hash for license file:
++sha256	65e1a886587af0b0af4d7e9aae8618fe80e1276cc62117ff548ae69d0f1e9be3	LICENSE
++
+diff --git a/package/libpam-krb5/libpam-krb5.mk b/package/libpam-krb5/libpam-krb5.mk
+new file mode 100644
+index 0000000..5fa5fb2
+--- /dev/null
++++ b/package/libpam-krb5/libpam-krb5.mk
+@@ -0,0 +1,16 @@
++################################################################################
++#
++# libpam-krb5
++#
++################################################################################
++
++LIBPAM_KRB5_VERSION = 4.8
++LIBPAM_KRB5_SITE = https://archives.eyrie.org/software/kerberos
++LIBPAM_KRB5_SOURCE = pam-krb5-$(LIBPAM_KRB5_VERSION).tar.gz
++# LIBPAM_KRB5_SUBDIR = src
++LIBPAM_KRB5_LICENSE = MIT?
++LIBPAM_KRB5_LICENSE_FILES = LICENSE
++LIBPAM_KRB5_DEPENDENCIES = linux-pam
++LIBPAM_KRB5_INSTALL_STAGING = YES
++
++$(eval $(autotools-package))
+-- 
+1.9.1
+

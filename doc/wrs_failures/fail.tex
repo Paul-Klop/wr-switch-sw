@@ -660,7 +660,7 @@ list of faults leading to a data error.
 				The idea is to reboot the system if it was not able to boot correctly.
 				Then we use the scratchpad registers of the processor to keep
 				the boot count. If the value of this counter is more than X we stop
-				rebooting and try to have a system running with at least \emph{dropbear}
+				rebooting and try to have a system running with at least \emph{sshd}
 				for SSH and \emph{net-snmp} to allow remote diagnostics. If on the other
 				hand the switch has booted correctly, we set the boot count to 0.
 		\end{pck_descr}
@@ -709,6 +709,7 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntWrsWatchdog}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntLldpd}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL}\\
+				\snmpadd{WR-SWITCH-MIB::wrsStartCntLdap}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} \\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
@@ -732,12 +733,13 @@ list of faults leading to a data error.
 				Less critical processes (Restarting them and Warning generation is
 				enough):
 				\begin{itemize}
-					\item \emph{dropbear}
+					\item \emph{sshd}
 					\item \emph{udhcpc}
 					\item \emph{rsyslogd}
 					\item \emph{snmpd}
 					\item \emph{lighttpd}
 					\item \emph{lldpd}
+					\item \emph{nslcd} (LDAP)
 					\item \emph{TRUd/eRSTPd} -- not yet implemented
 				\end{itemize}
 

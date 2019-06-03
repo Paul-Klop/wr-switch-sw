@@ -296,3 +296,6 @@ if grep -q initrd= /proc/cmdline; then
     rm /etc/init.d/wrs-boot-procedure;
     cp -a /usr/etc/* /etc
 fi
+
+# create dir for home dirs
+mkdir -p /tmp/home

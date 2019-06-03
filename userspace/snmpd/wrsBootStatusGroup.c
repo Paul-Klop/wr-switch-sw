@@ -96,16 +96,17 @@ struct wrs_usd_item {
 #define UDI_HTTP 4 /* index of web server in userspace_daemons array */
 #define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
 #define UDI_LLDP 8 /* index of LLDP in userspace_daemons array */
+#define UDI_NSLCD 9 /* index of NSLCD (LDAP) in userspace_daemons array */
 /* user space daemon list */
 /* - key contain process name reported by ps command
  * - positive exp describe exact number of expected processes
  * - negative exp describe minimum number of expected processes. Usefull for
  *   processes that is hard to predict number of their instances. For example
- *   new dropbear process is spawned at ssh login.
+ *   new sshd process is spawned at ssh login.
  */
 static struct wrs_usd_item userspace_daemons[] = {
-	[0] = {.key = "/usr/sbin/dropbear", .exp = -1}, /* expect at least one
-							 * dropbear process */
+	[0] = {.key = "/usr/sbin/sshd", .exp = -1}, /* expect at least one
+						     * sshd process */
 	[1] = {"/wr/bin/wrsw_hal", 2}, /* two wrsw_hal instances */
 	[2] = {"/wr/bin/wrsw_rtud", 1},
 	[3] = {"/wr/bin/ppsi", 1},
@@ -116,6 +117,8 @@ static struct wrs_usd_item userspace_daemons[] = {
 	[6] = {"/usr/sbin/snmpd", 1},
 	[7] = {"/wr/bin/wrs_watchdog", 1},
 	[UDI_LLDP] = {"/usr/sbin/lldpd", 1}, /* LLDP can be disabled in
+						dot-config */
+	[UDI_NSLCD] = {"/usr/sbin/nslcd", 1}, /* nslcd/LDAP can be disabled in
 						dot-config */
 };
 
@@ -495,6 +498,15 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 		daemon_array[UDI_LLDP].exp = 0;
 		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
 			 " CONFIG_LLDPD_DISABLE=y in dot-config\n");
+	}
+
+	daemon_array[UDI_NSLCD].exp = 0;
+	tmp = libwr_cfg_get("LDAP_ENABLE");
+	if (tmp && !strcmp(tmp, "y")) {
+		/* SNMP should not expect nslcd/LDAP to be running */
+		daemon_array[UDI_NSLCD].exp = 1;
+		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+			 "no CONFIG_LDAP_ENABLE in dot-config\n");
 	}
 }
 

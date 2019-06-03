@@ -28,6 +28,7 @@ wrSwitchMIB MODULE-IDENTITY
     REVISION     "201807181400Z"
     DESCRIPTION
         "Add wrsStartCntLldpd
+        Add wrsStartCntLdap
         Add in wrsPortStatusTable:
          - wrsPortStatusMonitor
          - wrsPortStatusSfpDom
@@ -1165,6 +1166,14 @@ wrsStartCntLldpd OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Number of LLDP daemon starts"
+    ::= { wrsStartCntGroup 9 }
+
+wrsStartCntLdap OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of LDAP daemon starts"
     ::= { wrsStartCntGroup 9 }
 
 -- wrsSpllState (.7.3)

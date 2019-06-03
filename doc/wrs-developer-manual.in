@@ -1914,8 +1914,10 @@ switch. Check is done every 10 seconds. As for now supervised processes are:
 @t{ppsi},
 @t{wrs_watchdog},
 @t{lighttpd},
-@t{dropbear},
-@t{snmpd}.
+@t{sshd},
+@t{snmpd},
+@t{lldpd},
+@t{nslcd}.
 
 In case any of the supervised processes does not run anymore (because of a crash,
 exit etc.), @t{monit} restarts missing process. If 5 restarts of a particular

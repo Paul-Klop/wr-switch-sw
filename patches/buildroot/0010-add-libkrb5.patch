@@ -1,0 +1,131 @@
+From f6ac6fde47cedd2b0a92412b39f9b9a014d637a7 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Tue, 4 Sep 2018 10:48:30 +0200
+Subject: [PATCH] add libkrb5
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ package/Config.in            |  1 +
+ package/libkrb5/Config.in    | 18 ++++++++++++++++
+ package/libkrb5/libkrb5.hash |  5 +++++
+ package/libkrb5/libkrb5.mk   | 59 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 83 insertions(+)
+ create mode 100644 package/libkrb5/Config.in
+ create mode 100644 package/libkrb5/libkrb5.hash
+ create mode 100644 package/libkrb5/libkrb5.mk
+
+diff --git a/package/Config.in b/package/Config.in
+index 529ad33..b5583da 100644
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -1084,6 +1084,7 @@ menu "Networking"
+ 	source "package/libidn/Config.in"
+ 	source "package/libiscsi/Config.in"
+ 	source "package/libldns/Config.in"
++	source "package/libkrb5/Config.in"
+ 	source "package/libmbus/Config.in"
+ 	source "package/libmemcached/Config.in"
+ 	source "package/libmicrohttpd/Config.in"
+diff --git a/package/libkrb5/Config.in b/package/libkrb5/Config.in
+new file mode 100644
+index 0000000..2e24c87
+--- /dev/null
++++ b/package/libkrb5/Config.in
+@@ -0,0 +1,18 @@
++config BR2_PACKAGE_LIBKRB5
++	bool "libkrb5"
++	# needs fork()
++	depends on BR2_USE_MMU
++	depends on !BR2_STATIC_LIBS
++	help
++	  Kerberos is a system for authenticating users and services
++	  on a network. Kerberos is a trusted third-party service.
++	  That means that there is a third party (the Kerberos server)
++	  that is trusted by all the entities on the network (users
++	  and services, usually called "principals"). This is the MIT
++	  reference implementation of Kerberos V5.
++
++	  https://web.mit.edu/kerberos/
++
++comment "libkrb5 needs a toolchain w/ dynamic library"
++	depends on BR2_USE_MMU
++	depends on BR2_STATIC_LIBS
+diff --git a/package/libkrb5/libkrb5.hash b/package/libkrb5/libkrb5.hash
+new file mode 100644
+index 0000000..2980947
+--- /dev/null
++++ b/package/libkrb5/libkrb5.hash
+@@ -0,0 +1,5 @@
++# Locally calculated after checking pgp signature
++sha256	214ffe394e3ad0c730564074ec44f1da119159d94281bbec541dc29168d21117	krb5-1.16.1.tar.gz
++
++# Hash for license file:
++sha256	58534f00ed877fd32936fcab094f49d399aeef7716393204d8028c4b89050c82	NOTICE
+diff --git a/package/libkrb5/libkrb5.mk b/package/libkrb5/libkrb5.mk
+new file mode 100644
+index 0000000..d9d7160
+--- /dev/null
++++ b/package/libkrb5/libkrb5.mk
+@@ -0,0 +1,59 @@
++################################################################################
++#
++# libkrb5
++#
++################################################################################
++
++LIBKRB5_VERSION_MAJOR = 1.16
++LIBKRB5_VERSION = $(LIBKRB5_VERSION_MAJOR).1
++LIBKRB5_SITE = https://web.mit.edu/kerberos/dist/krb5/$(LIBKRB5_VERSION_MAJOR)
++LIBKRB5_SOURCE = krb5-$(LIBKRB5_VERSION).tar.gz
++LIBKRB5_SUBDIR = src
++LIBKRB5_LICENSE = MIT
++LIBKRB5_LICENSE_FILES = NOTICE
++LIBKRB5_DEPENDENCIES = host-bison
++LIBKRB5_INSTALL_STAGING = YES
++
++# The configure script uses AC_TRY_RUN tests to check for those values,
++# which doesn't work in a cross-compilation scenario. Therefore,
++# we feed the configure script with the correct answer for those tests
++LIBKRB5_CONF_ENV = \
++	ac_cv_printf_positional=yes \
++	ac_cv_func_regcomp=yes \
++	krb5_cv_attr_constructor_destructor=yes,yes
++
++# Never use the host packages
++LIBKRB5_CONF_OPTS = \
++	--without-system-db \
++	--without-system-et \
++	--without-system-ss \
++	--without-system-verto \
++	--without-tcl \
++	--disable-rpath
++
++ifeq ($(BR2_PACKAGE_OPENLDAP),y)
++LIBKRB5_CONF_OPTS += --with-ldap
++LIBKRB5_DEPENDENCIES += openldap
++else
++LIBKRB5_CONF_OPTS += --without-ldap
++endif
++
++ifeq ($(BR2_PACKAGE_LIBEDIT),y)
++LIBKRB5_CONF_OPTS += --with-libedit
++LIBKRB5_DEPENDENCIES += libedit
++else
++LIBKRB5_CONF_OPTS += --without-libedit
++endif
++
++ifeq ($(BR2_PACKAGE_READLINE),y)
++LIBKRB5_CONF_OPTS += --with-readline
++LIBKRB5_DEPENDENCIES += readline
++else
++LIBKRB5_CONF_OPTS += --without-readline
++endif
++
++ifneq ($(BR2_TOOLCHAIN_HAS_THREADS),y)
++LIBKRB5_CONF_OPTS += --disable-thread-support
++endif
++
++$(eval $(autotools-package))
+-- 
+1.9.1
+

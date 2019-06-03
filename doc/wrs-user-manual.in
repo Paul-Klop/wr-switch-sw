@@ -573,6 +573,41 @@ appropriate way, before the respective service is started.
 	(@t{CONFIG_HOSTNAME_DHCP}) or use a predefined value
 	(@t{CONFIG_HOSTNAME_STATIC}) defined in option @t{CONFIG_HOSTNAME_STRING}.
 
+@item CONFIG_ROOT_ACCESS_DISABLE
+
+	Disable root access via ssh. With this option enabled it is still
+	possible to use sudo to get root privileges.
+
+@item CONFIG_LDAP_ENABLE
+@itemx CONFIG_LDAP_SERVER
+@itemx CONFIG_LDAP_SEARCH_BASE
+@itemx CONFIG_LDAP_FILTER_NONE
+@itemx CONFIG_LDAP_FILTER_EGROUP
+@itemx CONFIG_LDAP_FILTER_CUSTOM
+@itemx CONFIG_LDAP_FILTER_EGROUP_STR
+@itemx CONFIG_LDAP_FILTER_CUSTOM_STR
+
+        Set of options related to providing an authorization via LDAP for ssh.
+        To be able to use LDAP please enable an option @t{CONFIG_LDAP_ENABLE},
+        provide LDAP server (@t{CONFIG_LDAP_SERVER}) and the search base
+        (@t{CONFIG_LDAP_SEARCH_BASE}). It is possible to limit the access
+        to a particular e-group used at CERN (@t{CONFIG_LDAP_FILTER_EGROUP}
+        to enable and @t{CONFIG_LDAP_FILTER_EGROUP_STR} to provide
+        the e-group's name) or to provide the custom filtering string
+        (@t{CONFIG_LDAP_FILTER_CUSTOM} to enable and
+        @t{CONFIG_LDAP_FILTER_CUSTOM_STR} to provide the filter).
+        For more information please refer to the @i{Kconfig}'s help.
+
+
+@item CONFIG_AUTH_LDAP
+@itemx CONFIG_AUTH_KRB5
+@itemx CONFIG_AUTH_KRB5_SERVER
+
+        Choose the authentication method. @t{CONFIG_AUTH_LDAP} for LDAP
+        authentication, @t{CONFIG_AUTH_LDAP} for Kerberos authentication.
+        For the later one it is obligatory to specify Kerberos Realm
+        @t{CONFIG_AUTH_KRB5_SERVER}.
+
 @item CONFIG_ROOT_PWD_IS_ENCRYPTED
 @itemx CONFIG_ROOT_PWD_CLEAR
 @itemx CONFIG_ROOT_PWD_CYPHER

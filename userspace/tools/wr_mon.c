@@ -229,6 +229,21 @@ static char *prot_detection_state_name[]={
 /* prototypes */
 int read_instances(void);
 
+static inline int extensionStateColor( struct pp_instance *ppi) {
+	if ( ppi->protocol_extension==PPSI_EXT_NONE) {
+		return C_GREEN; /* No extension */
+	}
+	switch (ppi->extState) {
+	case PP_EXSTATE_ACTIVE :
+		return C_GREEN;
+	case PP_EXSTATE_PTP :
+		return C_WHITE;
+	case PP_EXSTATE_DISABLE :
+	default:
+		return C_RED;
+	}
+}
+
 char *getStateAsString(char *p[], int index) {
 	int i,len;
 	char *errMsg="?????????????????????";
@@ -765,7 +780,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 					} else {
 						term_cprintf(C_WHITE, "?");
 					}
-					color=ppi->protocol_extension!=PPSI_EXT_NONE && !ppi->ext_enabled ? C_RED : C_WHITE;
+					color=extensionStateColor(ppi);
 					term_cprintf(color, "-%c",pe_info->short_ext_name);
 
 					nvlans = ppi->nvlans;
@@ -812,15 +827,15 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 	char buf[128];
 	wrh_servo_t * l1e_servo;
-	int proto_extension=servo->ppi->ext_enabled ? servo->ppi->protocol_extension : PPSI_EXT_NONE;
+	int proto_extension=servo->ppi->extState!=PP_EXSTATE_DISABLE ? servo->ppi->protocol_extension : PPSI_EXT_NONE;
 	struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
 
-	wr_servo= (servo->ppi->protocol_extension==PPSI_EXT_WR && servo->ppi->ext_enabled) ?
+	wr_servo= (servo->ppi->protocol_extension==PPSI_EXT_WR && servo->ppi->extState==PP_EXSTATE_ACTIVE) ?
 			( wrh_servo_t* ) servo->servo_ext_snapshot : NULL;
 	if ( wr_servo ) {
 		wr_servo_ext= &((struct wr_data *)wr_servo)->servo_ext;
 	}
-	l1e_servo= (servo->ppi->protocol_extension==PPSI_EXT_L1S && servo->ppi->ext_enabled) ?
+	l1e_servo= (servo->ppi->protocol_extension==PPSI_EXT_L1S && servo->ppi->extState==PP_EXSTATE_ACTIVE) ?
 			( wrh_servo_t * ) servo->servo_ext_snapshot : NULL;
 
 	if (mode == SHOW_GUI) {

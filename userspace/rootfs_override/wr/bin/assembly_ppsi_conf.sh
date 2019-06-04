@@ -385,6 +385,7 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [L1SYNC_OPT_PARAMS_ENABLED]="l1SyncOptParamsEnabled" [L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED]="l1SyncTimestampsCorrectedTxEnabled" \
 [L1SYNC_TX_COHERENCY_IS_REQUIRED]="l1SyncTxCoherencyIsRequired" \
 [L1SYNC_RX_COHERENCY_IS_REQUIRED]="l1SyncRxCoherencyIsRequired" [L1SYNC_CONGRUENCY_IS_REQUIRED]="l1SyncCongruencyIsRequired" \
+[_VLAN]="vlan" \
 )'
 
 inst_dotc_keys="${!inst_dotc_ppsi_key_mapping[@]}"

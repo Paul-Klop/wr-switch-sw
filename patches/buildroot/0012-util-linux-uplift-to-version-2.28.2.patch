@@ -1,0 +1,38 @@
+From 0ac0b7ea8ea26d0637aeb0c046e936e71e283b45 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Wed, 5 Jun 2019 10:22:51 +0200
+Subject: [PATCH] util-linux uplift to version 2.28.2
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ package/util-linux/util-linux.hash | 4 ++--
+ package/util-linux/util-linux.mk   | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/package/util-linux/util-linux.hash b/package/util-linux/util-linux.hash
+index de60823..340ee94 100644
+--- a/package/util-linux/util-linux.hash
++++ b/package/util-linux/util-linux.hash
+@@ -1,2 +1,2 @@
+-# From https://www.kernel.org/pub/linux/utils/util-linux/v2.27/sha256sums.asc
+-sha256 0a818fcdede99aec43ffe6ca5b5388bff80d162f2f7bd4541dca94fecb87a290  util-linux-2.27.1.tar.xz
++# From https://www.kernel.org/pub/linux/utils/util-linux/v2.28/sha256sums.asc
++sha256 b89d37146f20bede93a42c847bce881a17e6dbd8066ff2db2bee733fa409f0cd  util-linux-2.28.2.tar.xz
+diff --git a/package/util-linux/util-linux.mk b/package/util-linux/util-linux.mk
+index 7342174..da03c99 100644
+--- a/package/util-linux/util-linux.mk
++++ b/package/util-linux/util-linux.mk
+@@ -4,8 +4,8 @@
+ #
+ ################################################################################
+ 
+-UTIL_LINUX_VERSION = $(UTIL_LINUX_VERSION_MAJOR).1
+-UTIL_LINUX_VERSION_MAJOR = 2.27
++UTIL_LINUX_VERSION = $(UTIL_LINUX_VERSION_MAJOR).2
++UTIL_LINUX_VERSION_MAJOR = 2.28
+ UTIL_LINUX_SOURCE = util-linux-$(UTIL_LINUX_VERSION).tar.xz
+ UTIL_LINUX_SITE = $(BR2_KERNEL_MIRROR)/linux/utils/util-linux/v$(UTIL_LINUX_VERSION_MAJOR)
+ 
+-- 
+2.17.1
+

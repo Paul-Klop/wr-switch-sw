@@ -1,0 +1,90 @@
+From a6c9c371c49dedc2a75761eb3d1898a9cfcc7863 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Tue, 18 Jun 2019 16:47:59 +0200
+Subject: [PATCH] util-linux: allow disabling the basic set of tools
+
+Patch based on a patch from buildroot repository:
+e8ddc0de util-linux: allow disabling the basic set of tools
+
+When even a single extra util-linux utility is enabled, the default
+build and install will install many more programs, including many that
+overlap with those offered by busybox.
+
+Fix by reworking the install-utilies menu to take advantage of the new
+--disable-all-programs config option. This option make it possible to
+disable the basic set of apps, and then enable only the desired apps.
+
+Original patch by Danomi Manchego, visible at
+http://patchwork.ozlabs.org/patch/494866/
+
+Signed-off-by: Carlos Santos <casantos@datacom.ind.br>
+[Thomas/Arnout: remove the choice between all/custom/no, and simply have
+a list of options with the basic set of tools, and then one option for
+each tool. This gives the same flexibility, but avoids the choice, which
+is never nice to have.]
+Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ package/util-linux/Config.in     | 6 +-----
+ package/util-linux/util-linux.mk | 7 +------
+ 2 files changed, 2 insertions(+), 11 deletions(-)
+
+diff --git a/package/util-linux/Config.in b/package/util-linux/Config.in
+index 7d50aba..fa09384 100644
+--- a/package/util-linux/Config.in
++++ b/package/util-linux/Config.in
+@@ -37,7 +37,7 @@ config BR2_PACKAGE_UTIL_LINUX_LIBUUID
+ 	  Install libuuid.
+ 
+ config BR2_PACKAGE_UTIL_LINUX_BINARIES
+-	bool "install utilities"
++	bool "basic set"
+ 	depends on BR2_USE_MMU # fork()
+ 	select BR2_PACKAGE_UTIL_LINUX_LIBBLKID
+ 	select BR2_PACKAGE_UTIL_LINUX_LIBMOUNT
+@@ -46,8 +46,6 @@ config BR2_PACKAGE_UTIL_LINUX_BINARIES
+ 	help
+ 	  Install the basic set of util-linux binaries.
+ 
+-if BR2_PACKAGE_UTIL_LINUX_BINARIES
+-
+ config BR2_PACKAGE_UTIL_LINUX_AGETTY
+ 	bool "agetty"
+ 	help
+@@ -292,7 +290,5 @@ config BR2_PACKAGE_UTIL_LINUX_ZRAMCTL
+ 
+ endif
+ 
+-endif
+-
+ comment "util-linux needs a toolchain w/ wchar"
+ 	depends on !BR2_USE_WCHAR
+diff --git a/package/util-linux/util-linux.mk b/package/util-linux/util-linux.mk
+index 41dfc32..5b81786 100644
+--- a/package/util-linux/util-linux.mk
++++ b/package/util-linux/util-linux.mk
+@@ -66,6 +66,7 @@ UTIL_LINUX_DEPENDENCIES += $(if $(BR2_PACKAGE_LINUX_PAM),linux-pam)
+ 
+ # Disable/Enable utilities
+ UTIL_LINUX_CONF_OPTS += \
++	$(if $(BR2_PACKAGE_UTIL_LINUX_BINARIES),--enable-all-programs,--disable-all-programs) \
+ 	$(if $(BR2_PACKAGE_UTIL_LINUX_AGETTY),--enable-agetty,--disable-agetty) \
+ 	$(if $(BR2_PACKAGE_UTIL_LINUX_BFS),--enable-bfs,--disable-bfs) \
+ 	$(if $(BR2_PACKAGE_UTIL_LINUX_CHFN_CHSH),--enable-chfn-chsh,--disable-chfn-chsh) \
+@@ -131,12 +132,6 @@ else
+ HOST_UTIL_LINUX_CONF_OPTS += --disable-all-programs
+ endif
+ 
+-# Avoid building the tools if they are disabled since we can't install on
+-# a per-directory basis.
+-ifeq ($(BR2_PACKAGE_UTIL_LINUX_BINARIES),)
+-UTIL_LINUX_CONF_OPTS += --disable-all-programs
+-endif
+-
+ # Install libmount Python bindings
+ ifeq ($(BR2_PACKAGE_PYTHON)$(BR2_PACKAGE_PYTHON3),y)
+ UTIL_LINUX_CONF_OPTS += --with-python
+-- 
+2.17.1
+

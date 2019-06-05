@@ -44,8 +44,8 @@ void help(const char* pgrname)
 {
 	printf("usage: %s <command>\n", pgrname);
 	printf("available commands are:\n"
-				"   -p PCB version\n"
-				"   -s scb version (without dot in version number)\n"
+				"   -b backplane hardware version (also '-p' for WWW)\n"
+				"   -s scb hardware version (without dot in version number)\n"
 				"   -f FPGA type\n"
 				"   -F FPGA type and init status LED\n"
 				"   -g Gateware version\n"
@@ -237,6 +237,8 @@ int main(int argc, char **argv)
 	case 'f': /* Warning: this -p and -f is used by the web interface */
 		printf("%s\n", get_fpga());
 		break;
+	case 'b':
+		func='p';
 	case 'p': /* Warning: this -p and -f is used by the web interface */
 		printf("%s\n",get_shw_info(func));
 		break;
@@ -255,9 +257,17 @@ int main(int argc, char **argv)
 		break;
 	case 'a':
 		/* Warning: this with "awk '{print $4}'" is ued by the web if */
-		printf("PCB:%s, FPGA:%s; version: %s (%s); compiled at %s %s\n",
-		       get_shw_info('p'), get_fpga(),
-		       __GIT_VER__, __GIT_USR__, __DATE__, __TIME__);
+		printf("SCB HW:%s, ", sdb_get("scb_version", NULL)); 
+		/* Printing this line is intentionally divided into two printf()
+		   functions. The reason being:
+		   function get_fpga() uses sdb_get(). The sdb_get() returns
+		   static char result[] buffer. If the sdb_get() is called two
+		   times in a single printf(), both instances of sdb_get() will
+		   return the content of buffer acquired when sdb_get() was
+		   called last.
+                */
+		printf("FPGA:%s; version: %s (%s); compiled at %s %s\n",
+		       get_fpga(),__GIT_VER__, __GIT_USR__, __DATE__, __TIME__);
 		break;
 	case 's':
 		printf("%s\n", remove_dots(sdb_get("scb_version", NULL)));

@@ -1,5 +1,6 @@
 Kconfig
 Kconfig_port_timing.in
+Kconfig_sfp_fiber.in
 Kconfig_vlans.in
 dot-config
 conf

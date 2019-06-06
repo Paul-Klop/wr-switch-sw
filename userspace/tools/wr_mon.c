@@ -222,8 +222,8 @@ static char *prot_detection_state_name[]={
 		"NONE   ", /* No meaning. No extension present */
 		"WA_MSG ", /* Waiting first message */
 		"PD_IPRG", /* Protocol detection  */
-		"PD_OK  ", /* Protocol detected */
-		"FAILURE" /* Protocol not detected */
+		"EXT_ON ", /* Protocol detected */
+		"EXT_OFF" /* Protocol not detected */
 };
 
 /* prototypes */
@@ -268,6 +268,7 @@ int64_t pp_time_to_picos(struct pp_time *ts)
 		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
 }
 
+#if 0
 static double alpha_to_double(int32_t alpha) {
   double f ;
   int neg = alpha<0;
@@ -276,6 +277,7 @@ static double alpha_to_double(int32_t alpha) {
   f= (double)alpha/(double)(1LL<<FIX_ALPHA_FRACBITS);
   return  neg ? -f : f;
 }
+#endif
 
 void help(char *prgname)
 {
@@ -597,6 +599,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 		term_cprintf(C_WHITE, "%s.%06li", datestr,hw.tv_usec);
 
 		term_cprintf(C_BLUE, "   Leap seconds: ");
+		bzero(&timex_val,sizeof(timex_val));
 		if (adjtimex(&timex_val) < 0) {
 			term_cprintf(C_WHITE, "error\n");
 		} else {
@@ -626,7 +629,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
 		}
 		term_cprintf(C_CYAN, "----- HAL ---|---------------------------------- PPSI --------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |       PTP/EXT/PLINK states   | Pro | VLANs\n");
+		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States    | Pro | VLANs\n");
 		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+------------------------------+-----+------\n");
 
 	}

@@ -21,6 +21,7 @@
 #include <libwr/softpll_export.h>
 #include <libwr/util.h>
 #include <time_lib.h>
+#include <rt_ipc.h>
 
 #ifndef MOD_TAI
 #define MOD_TAI 0x80
@@ -506,26 +507,18 @@ int wrdate_internal_set_gm(volatile struct PPSG_WB *pps) {
 	return 0;
 }
 
-#define SPLL_MAGIC 0x5b1157a7
-#define FPGA_SPLL_STAT 0x10006800
-
 int getTimingMode(void) {
-	static struct spll_stats *spll_stats_p;
+	static int connected=FALSE;
+	struct rts_pll_state pstate;
 
-	if ( spll_stats_p==NULL ) {
-		spll_stats_p = create_map(FPGA_SPLL_STAT,sizeof(*spll_stats_p));
-		if ( spll_stats_p==NULL ) {
-			fprintf(stderr, "Cannot create map to Soft Pll stats\n");
+	if ( !connected ) {
+		if(	rts_connect(NULL) < 0)
 			return -1;
-		}
-		if (spll_stats_p->magic != SPLL_MAGIC) {
-			/* Wrong magic */
-			fprintf(stderr, "Soft PLL: unknown magic %x (known is %x)\n",
-					spll_stats_p->magic, SPLL_MAGIC);
-			return -1;
-		}
+		connected=TRUE;
 	}
-	return spll_stats_p->mode;
+	if (rts_get_state(&pstate)<0 )
+		return -1;
+	return pstate.mode;
 }
 
 /* Frontend to the set mechanism: parse the argument */
@@ -536,7 +529,8 @@ int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 	struct timeval tv;
 
 	if (!strcmp(argv[0], "host")) {
-		switch (getTimingMode()) {
+		int tm=getTimingMode();
+		switch (tm) {
 		case SPLL_MODE_GRAND_MASTER:
 			return wrdate_internal_set_gm(pps);
 		case SPLL_MODE_FREE_RUNNING_MASTER :
@@ -547,7 +541,7 @@ int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 			fprintf(stderr, "Slave timing mode: WR time cannot be set!!!\n");
 			return -1;
 		default:
-			fprintf(stderr, "Cannot read Soft PLL timing mode. WR time cannot be set.\n");
+			fprintf(stderr, "Cannot read Soft PLL timing mode. WR time cannot be set (ret=%d)\n",tm);
 			return -1;
 		}
 	}

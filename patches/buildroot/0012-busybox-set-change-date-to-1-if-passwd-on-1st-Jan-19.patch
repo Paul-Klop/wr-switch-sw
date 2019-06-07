@@ -1,0 +1,66 @@
+From ff20bea465a493edddb891370c44f3a98902c371 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Fri, 7 Jun 2019 13:31:55 +0200
+Subject: [PATCH] busybox: set change date to 1 if passwd on 1st Jan 1970
+
+When the update_passwd is called on a system with a date set to 1st Jan
+1970, the change date is set to 0, which has a special meaning:
+"The value 0 has a special meaning, which is that the user should change
+her pasword the next time she will log in the system."
+Thanks to this patch, when the password is changed on 1st on Jun 1970 the
+change date is set to 1.
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ ...t-0-as-date-of-last-password-change-.patch | 39 +++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+ create mode 100644 package/busybox/0009-passwd-do-not-set-0-as-date-of-last-password-change-.patch
+
+diff --git a/package/busybox/0009-passwd-do-not-set-0-as-date-of-last-password-change-.patch b/package/busybox/0009-passwd-do-not-set-0-as-date-of-last-password-change-.patch
+new file mode 100644
+index 0000000..c4e7e49
+--- /dev/null
++++ b/package/busybox/0009-passwd-do-not-set-0-as-date-of-last-password-change-.patch
+@@ -0,0 +1,39 @@
++From a5c5dc6f0b96f9ef8c567f40388d91d44aec1eb7 Mon Sep 17 00:00:00 2001
++From: Denys Vlasenko <vda.linux@googlemail.com>
++Date: Fri, 7 Jun 2019 12:29:24 +0200
++Subject: [PATCH] passwd: do not set 0 as date of last password change,
++ closes 11951
++
++function                                             old     new   delta
++update_passwd                                       1491    1505     +14
++
++Signed-off-by: Denys Vlasenko <vda.linux@googlemail.com>
++---
++ libbb/update_passwd.c | 8 +++++++-
++ 1 file changed, 7 insertions(+), 1 deletion(-)
++
++diff --git a/libbb/update_passwd.c b/libbb/update_passwd.c
++index 95423d19b..dc967683a 100644
++--- a/libbb/update_passwd.c
+++++ b/libbb/update_passwd.c
++@@ -270,10 +270,16 @@ int FAST_FUNC update_passwd(const char *filename,
++ 			if (shadow && *cp == ':') {
++ 				/* /etc/shadow's field 3 (passwd change date) needs updating */
++ 				/* move past old change date */
+++				unsigned time_days = (unsigned long)(time(NULL)) / (24*60*60);
+++
+++				if (time_days == 0) {
+++					/* 0 as change date has special meaning, avoid it */
+++					time_days = 1;
+++				}
++ 				cp = strchrnul(cp + 1, ':');
++ 				/* "name:" + "new_passwd" + ":" + "change date" + ":rest of line" */
++ 				fprintf(new_fp, "%s%s:%u%s\n", name_colon, new_passwd,
++-					(unsigned)(time(NULL)) / (24*60*60), cp);
+++					time_days, cp);
++ 			} else {
++ 				/* "name:" + "new_passwd" + ":rest of line" */
++ 				fprintf(new_fp, "%s%s%s\n", name_colon, new_passwd, cp);
++-- 
++2.17.1
++
+-- 
+2.17.1
+

@@ -268,6 +268,20 @@ int64_t pp_time_to_picos(struct pp_time *ts)
 		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
 }
 
+TimeInterval pp_time_to_interval (struct pp_time *pptime) {
+	return pptime->scaled_nsecs;
+}
+
+char *optimized_pp_time_toString(struct pp_time *pptime, char *buf ) {
+	char lbuf[128];
+
+	if ( pptime->secs )
+		sprintf(buf,"%16s sec",timeToString(pptime,lbuf));
+	else
+		sprintf(buf,"%16s nsec",timeIntervalToString(pp_time_to_interval(pptime),lbuf));
+	return buf;
+}
+
 #if 0
 static double alpha_to_double(int32_t alpha) {
   double f ;
@@ -852,6 +866,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 	}
 
 	if (mode == SHOW_GUI) {
+
 		if (!(servo->servo_snapshot.flags & PP_SERVO_FLAG_VALID)) {
 			term_cprintf(C_RED,
 				     "Master mode or sync info not valid\n");
@@ -879,7 +894,10 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString(servo->meanDelay,buf) );
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMS          : ");
-		term_cprintf(C_WHITE, "%16s sec\n",timeToString(&servo->servo_snapshot.delayMS,buf));
+		term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&servo->servo_snapshot.delayMS,buf));
+
+		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMM          : ");
+		term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&servo->servo_snapshot.delayMM,buf));
 
 		//term_cprintf(C_BLUE, "Estimated link length:     ");
 		/* (RTT - deltas) / 2 * c / ri
@@ -917,10 +935,10 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 		if ( wr_servo ) {
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
-			term_cprintf(C_WHITE, "%15.3f nsec\n",wr_servo->cur_setpoint_ps/1000.0);
+			term_cprintf(C_WHITE, "%16.3f nsec\n",wr_servo->cur_setpoint_ps/1000.0);
 
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
-			term_cprintf(C_WHITE, "%15.3f nsec\n",wr_servo->skew_ps/1000.0);
+			term_cprintf(C_WHITE, "%16.3f nsec\n",wr_servo->skew_ps/1000.0);
 		}
 
 		if ( l1e_servo ) {
@@ -940,15 +958,16 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		if ( wr_servo ) {
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Master PHY delays ");
 			term_cprintf(C_BLUE, "TX: ");
-			term_cprintf(C_WHITE, "%s sec, ", timeToString(&wr_servo_ext->delta_txm,buf));
-			term_cprintf(C_BLUE, "RX: ");
-			term_cprintf(C_WHITE, "%s sec\n", timeToString(&wr_servo_ext->delta_rxm,buf));
+			term_cprintf(C_WHITE,"%s",optimized_pp_time_toString(&wr_servo_ext->delta_txm,buf));
+			term_cprintf(C_BLUE, "  RX: ");
+			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&wr_servo_ext->delta_rxm,buf));
 
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Slave  PHY delays ");
 			term_cprintf(C_BLUE, "TX: ");
-			term_cprintf(C_WHITE, "%s sec, ", timeToString(&wr_servo_ext->delta_txs,buf));
-			term_cprintf(C_BLUE, "RX: ");
-			term_cprintf(C_WHITE, "%s sec\n",timeToString(&wr_servo_ext->delta_rxs,buf));
+			term_cprintf(C_WHITE,"%s",optimized_pp_time_toString(&wr_servo_ext->delta_txs,buf));
+			term_cprintf(C_BLUE, "  RX: ");
+			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&wr_servo_ext->delta_rxs,buf));
+			printf("\n");
 		}
 	} else {
 		/* TJP: commented out fields are present on the SPEC,

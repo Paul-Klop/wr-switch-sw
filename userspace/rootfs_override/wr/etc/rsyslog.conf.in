@@ -48,9 +48,27 @@ $PreserveFQDN on
 #$ActionQueueType LinkedList   # run asynchronously
 #$ActionResumeRetryCount -1    # infinite retries if host is down
 # remote host is: name/ip:port, e.g. 192.168.0.1:514, port optional
-##*.* @@remote-host:514
+##*.* @remote-host:514
 
+# ######### Output channel to log syslog locally ###########
+# The rsyslog feature of output channel is used, see more at:
+# https://www.rsyslog.com/doc/v8-stable/configuration/output_channels.html
+# 
+# WARNING: It is most likely that this feature will be replaced by something 
+# different in the future.
+#
+# Using this feature, syslog is written locally to file /tmp/syslog, once
+# the output file reaches configured size (i.e. ~1MB), /wr/bin/log_rotate.sh
+# script is executed. This script moves the output file giving it a different
+# name (with date in the name) and removes the oldest of such files. Once
+# the script is executed, the /tmp/syslog file is written from zero. 
+# The script keeps maximum 10 of old syslog files (with a date). 
+#
+# In total, syslog uses ~11MB (1MB for current output and 10MB for old 
+# logs) of /tmp/ space, (out of ~30MB available).
 
+$outchannel log_rotation,/tmp/syslog 1048576,/wr/bin/log_rotate.sh /tmp/syslog
+*.* :omfile:$log_rotation
 
 # ######### Receiving Messages from Remote Hosts ########## 
 # TCP Syslog Server:

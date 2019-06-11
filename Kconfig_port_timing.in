@@ -4,6 +4,7 @@ config PTP_OPT_EXT_PORT_CONFIG_ENABLED
 	default true
 	help
 	  This option is used by the high accuracy profile to force the port state.
+	  When set, BMCA is disabled.
 	  For more details please refer to the IEEE 1588-20019 (clause 17.6.2)
 
 config PTP_SLAVE_ONLY
@@ -80,9 +81,7 @@ choice
     config PORT01_INST01_PROFILE_PTP
         bool "PTP"
     config PORT01_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT01_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT01_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -293,9 +292,7 @@ choice
     config PORT01_INST02_PROFILE_PTP
         bool "PTP"
     config PORT01_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT01_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT01_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -540,9 +537,7 @@ choice
     config PORT02_INST01_PROFILE_PTP
         bool "PTP"
     config PORT02_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT02_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT02_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -752,9 +747,7 @@ choice
     config PORT02_INST02_PROFILE_PTP
         bool "PTP"
     config PORT02_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT02_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT02_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -998,9 +991,7 @@ choice
     config PORT03_INST01_PROFILE_PTP
         bool "PTP"
     config PORT03_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT03_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT03_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -1210,9 +1201,7 @@ choice
     config PORT03_INST02_PROFILE_PTP
         bool "PTP"
     config PORT03_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT03_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT03_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -1456,9 +1445,7 @@ choice
     config PORT04_INST01_PROFILE_PTP
         bool "PTP"
     config PORT04_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT04_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT04_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -1668,9 +1655,7 @@ choice
     config PORT04_INST02_PROFILE_PTP
         bool "PTP"
     config PORT04_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT04_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT04_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -1914,9 +1899,7 @@ choice
     config PORT05_INST01_PROFILE_PTP
         bool "PTP"
     config PORT05_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT05_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT05_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -2126,9 +2109,7 @@ choice
     config PORT05_INST02_PROFILE_PTP
         bool "PTP"
     config PORT05_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT05_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT05_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -2372,9 +2353,7 @@ choice
     config PORT06_INST01_PROFILE_PTP
         bool "PTP"
     config PORT06_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT06_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT06_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -2584,9 +2563,7 @@ choice
     config PORT06_INST02_PROFILE_PTP
         bool "PTP"
     config PORT06_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT06_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT06_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -2830,9 +2807,7 @@ choice
     config PORT07_INST01_PROFILE_PTP
         bool "PTP"
     config PORT07_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT07_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT07_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -3042,9 +3017,7 @@ choice
     config PORT07_INST02_PROFILE_PTP
         bool "PTP"
     config PORT07_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT07_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT07_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -3288,9 +3261,7 @@ choice
     config PORT08_INST01_PROFILE_PTP
         bool "PTP"
     config PORT08_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT08_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT08_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -3500,9 +3471,7 @@ choice
     config PORT08_INST02_PROFILE_PTP
         bool "PTP"
     config PORT08_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT08_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT08_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -3746,9 +3715,7 @@ choice
     config PORT09_INST01_PROFILE_PTP
         bool "PTP"
     config PORT09_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT09_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT09_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -3958,9 +3925,7 @@ choice
     config PORT09_INST02_PROFILE_PTP
         bool "PTP"
     config PORT09_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT09_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT09_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -4204,9 +4169,7 @@ choice
     config PORT10_INST01_PROFILE_PTP
         bool "PTP"
     config PORT10_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT10_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT10_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -4416,9 +4379,7 @@ choice
     config PORT10_INST02_PROFILE_PTP
         bool "PTP"
     config PORT10_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT10_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT10_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -4662,9 +4623,7 @@ choice
     config PORT11_INST01_PROFILE_PTP
         bool "PTP"
     config PORT11_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT11_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT11_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -4874,9 +4833,7 @@ choice
     config PORT11_INST02_PROFILE_PTP
         bool "PTP"
     config PORT11_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT11_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT11_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -5120,9 +5077,7 @@ choice
     config PORT12_INST01_PROFILE_PTP
         bool "PTP"
     config PORT12_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT12_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT12_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -5332,9 +5287,7 @@ choice
     config PORT12_INST02_PROFILE_PTP
         bool "PTP"
     config PORT12_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT12_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT12_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -5578,9 +5531,7 @@ choice
     config PORT13_INST01_PROFILE_PTP
         bool "PTP"
     config PORT13_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT13_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT13_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -5790,9 +5741,7 @@ choice
     config PORT13_INST02_PROFILE_PTP
         bool "PTP"
     config PORT13_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT13_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT13_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -6036,9 +5985,7 @@ choice
     config PORT14_INST01_PROFILE_PTP
         bool "PTP"
     config PORT14_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT14_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT14_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -6248,9 +6195,7 @@ choice
     config PORT14_INST02_PROFILE_PTP
         bool "PTP"
     config PORT14_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT14_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT14_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -6494,9 +6439,7 @@ choice
     config PORT15_INST01_PROFILE_PTP
         bool "PTP"
     config PORT15_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT15_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT15_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -6706,9 +6649,7 @@ choice
     config PORT15_INST02_PROFILE_PTP
         bool "PTP"
     config PORT15_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT15_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT15_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -6952,9 +6893,7 @@ choice
     config PORT16_INST01_PROFILE_PTP
         bool "PTP"
     config PORT16_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT16_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT16_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -7164,9 +7103,7 @@ choice
     config PORT16_INST02_PROFILE_PTP
         bool "PTP"
     config PORT16_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT16_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT16_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -7410,9 +7347,7 @@ choice
     config PORT17_INST01_PROFILE_PTP
         bool "PTP"
     config PORT17_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT17_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT17_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -7622,9 +7557,7 @@ choice
     config PORT17_INST02_PROFILE_PTP
         bool "PTP"
     config PORT17_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT17_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT17_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -7868,9 +7801,7 @@ choice
     config PORT18_INST01_PROFILE_PTP
         bool "PTP"
     config PORT18_INST01_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT18_INST01_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT18_INST01_PROFILE_CUSTOM
         bool "Custom"
 endchoice
@@ -8080,9 +8011,7 @@ choice
     config PORT18_INST02_PROFILE_PTP
         bool "PTP"
     config PORT18_INST02_PROFILE_WR
-        bool "WhiteRabbit"
-    config PORT18_INST02_PROFILE_HA
-        bool "HighAccuracy"
+        bool "White Rabbit"
     config PORT18_INST02_PROFILE_CUSTOM
         bool "Custom"
 endchoice

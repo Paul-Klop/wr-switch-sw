@@ -28,6 +28,7 @@ function print_header() {
 	echo -e "\tdefault true" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  This option is used by the high accuracy profile to force the port state." >>$OUTPUT_FILE  
+	echo -e "\t  When set, BMCA is disabled." >>$OUTPUT_FILE  
 	echo -e "\t  For more details please refer to the IEEE 1588-20019 (clause 17.6.2)" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PTP_SLAVE_ONLY" >>$OUTPUT_FILE
@@ -133,15 +134,11 @@ function print_instance_header() {
 	
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "    prompt \"Profile\"" >>$OUTPUT_FILE
-	echo -e "    default PORT${1}_INST${2}_PROFILE_WR" >>$OUTPUT_FILE
-	echo -e "    config PORT${1}_INST${2}_PROFILE_PTP" >>$OUTPUT_FILE
-	echo -e "        bool \"PTP\"" >>$OUTPUT_FILE
-	echo -e "    config PORT${1}_INST${2}_PROFILE_WR" >>$OUTPUT_FILE
-	echo -e "        bool \"WhiteRabbit\"" >>$OUTPUT_FILE
-	echo -e "    config PORT${1}_INST${2}_PROFILE_HA" >>$OUTPUT_FILE
-	echo -e "        bool \"HighAccuracy\"" >>$OUTPUT_FILE
-	echo -e "    config PORT${1}_INST${2}_PROFILE_CUSTOM" >>$OUTPUT_FILE
-	echo -e "        bool \"Custom\"" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_PROFILE_$defaultProfile" >>$OUTPUT_FILE
+	for profile in $profileList; do
+		echo -e "    config PORT${1}_INST${2}_PROFILE_$profile" >>$OUTPUT_FILE
+		echo -e "        bool \"${profileNames[$profile]}\"" >>$OUTPUT_FILE	
+	done
 	echo -e "endchoice" >>$OUTPUT_FILE
 	
 	echo -e "\nchoice" >>$OUTPUT_FILE
@@ -331,6 +328,13 @@ declare -A port_rx=(
 	[01]=226273 [02]=226377 [03]=226638 [04]=226471 [05]=227679 [06]=227891
 	[07]=228055 [08]=228178 [09]=228277 [10]=228435 [11]=228963 [12]=229107
 	[13]=229225 [14]=229463 [15]=229850 [16]=229907 [17]=230106 [18]=230273
+)
+
+# Profile configuration
+defaultProfile="WR"
+profileList="PTP WR CUSTOM"
+declare -A profileNames=(
+	[PTP]="PTP" [HA]="High Accuracy" [WR]="White Rabbit" [CUSTOM]="Custom"
 )
 
 print_header

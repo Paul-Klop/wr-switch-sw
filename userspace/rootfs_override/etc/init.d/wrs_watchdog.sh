@@ -40,7 +40,7 @@ start() {
 	    eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
 	else
 	    # not a pathname: use verbatim
-	    eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
+	    eval LOGPIPE=\" 2\>\&1 \| logger -t watchdog -p $WRS_LOG\"
 	fi
 
 	# set msg level

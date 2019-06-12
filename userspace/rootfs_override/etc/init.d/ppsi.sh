@@ -28,7 +28,7 @@ start() {
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
     else
 	# not a pathname: use verbatim
-	eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
+	eval LOGPIPE=\" 2\>\&1 \| logger -t ppsi -p $WRS_LOG\"
     fi
 
 # be carefull with pidof, no running script should have the same name as process

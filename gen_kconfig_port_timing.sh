@@ -34,7 +34,7 @@ function print_header() {
 	echo -e "\nconfig PTP_SLAVE_ONLY" >>$OUTPUT_FILE
 	echo -e "\tdepends on PTP_OPT_EXT_PORT_CONFIG_ENABLED=\"n\" " >>$OUTPUT_FILE
 	echo -e "\tbool \"slaveOnly\" " >>$OUTPUT_FILE
-	echo -e "\tdefault false" >>$OUTPUT_FILE
+	echo -e "\tdefault n" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine" >>$OUTPUT_FILE
 	echo -e "\t  which does not enable transition to MASTER state." >>$OUTPUT_FILE
@@ -155,9 +155,9 @@ function print_instance_header() {
 	echo -e "endchoice" >>$OUTPUT_FILE
 	
 	echo -e "\nconfig PORT${1}_INST${2}_ASYMMETRY_CORRECTION_ENABLE" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${1}_INST${2}_PROFILE_HA=\"n\" " >>$OUTPUT_FILE
+	echo -e "	depends on !PORT${1}_INST${2}_PROFILE_HA && !PORT${1}_INST${2}_PROFILE_WR" >>$OUTPUT_FILE
 	echo -e "    bool \"asymmetryCorrectionPortDS.enable\"" >>$OUTPUT_FILE
-	echo -e "    default true" >>$OUTPUT_FILE
+	echo -e "    default y" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  When supported, the value TRUE shall indicate that the mechanism of for the calculation" >>$OUTPUT_FILE
 	echo -e "	  of the <delayAsymmetry> for certain media is enabled on the PTP port." >>$OUTPUT_FILE

@@ -10,7 +10,7 @@ config PTP_OPT_EXT_PORT_CONFIG_ENABLED
 config PTP_SLAVE_ONLY
 	depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED="n" 
 	bool "slaveOnly" 
-	default false
+	default n
 	help
 	  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
 	  which does not enable transition to MASTER state.
@@ -100,9 +100,9 @@ choice
 endchoice
 
 config PORT01_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT01_INST01_PROFILE_HA="n" 
+	depends on !PORT01_INST01_PROFILE_HA && !PORT01_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -311,9 +311,9 @@ choice
 endchoice
 
 config PORT01_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT01_INST02_PROFILE_HA="n" 
+	depends on !PORT01_INST02_PROFILE_HA && !PORT01_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -555,9 +555,9 @@ choice
 endchoice
 
 config PORT02_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT02_INST01_PROFILE_HA="n" 
+	depends on !PORT02_INST01_PROFILE_HA && !PORT02_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -765,9 +765,9 @@ choice
 endchoice
 
 config PORT02_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT02_INST02_PROFILE_HA="n" 
+	depends on !PORT02_INST02_PROFILE_HA && !PORT02_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -1009,9 +1009,9 @@ choice
 endchoice
 
 config PORT03_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT03_INST01_PROFILE_HA="n" 
+	depends on !PORT03_INST01_PROFILE_HA && !PORT03_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -1219,9 +1219,9 @@ choice
 endchoice
 
 config PORT03_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT03_INST02_PROFILE_HA="n" 
+	depends on !PORT03_INST02_PROFILE_HA && !PORT03_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -1463,9 +1463,9 @@ choice
 endchoice
 
 config PORT04_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT04_INST01_PROFILE_HA="n" 
+	depends on !PORT04_INST01_PROFILE_HA && !PORT04_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -1673,9 +1673,9 @@ choice
 endchoice
 
 config PORT04_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT04_INST02_PROFILE_HA="n" 
+	depends on !PORT04_INST02_PROFILE_HA && !PORT04_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -1917,9 +1917,9 @@ choice
 endchoice
 
 config PORT05_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT05_INST01_PROFILE_HA="n" 
+	depends on !PORT05_INST01_PROFILE_HA && !PORT05_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -2127,9 +2127,9 @@ choice
 endchoice
 
 config PORT05_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT05_INST02_PROFILE_HA="n" 
+	depends on !PORT05_INST02_PROFILE_HA && !PORT05_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -2371,9 +2371,9 @@ choice
 endchoice
 
 config PORT06_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT06_INST01_PROFILE_HA="n" 
+	depends on !PORT06_INST01_PROFILE_HA && !PORT06_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -2581,9 +2581,9 @@ choice
 endchoice
 
 config PORT06_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT06_INST02_PROFILE_HA="n" 
+	depends on !PORT06_INST02_PROFILE_HA && !PORT06_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -2825,9 +2825,9 @@ choice
 endchoice
 
 config PORT07_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT07_INST01_PROFILE_HA="n" 
+	depends on !PORT07_INST01_PROFILE_HA && !PORT07_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -3035,9 +3035,9 @@ choice
 endchoice
 
 config PORT07_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT07_INST02_PROFILE_HA="n" 
+	depends on !PORT07_INST02_PROFILE_HA && !PORT07_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -3279,9 +3279,9 @@ choice
 endchoice
 
 config PORT08_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT08_INST01_PROFILE_HA="n" 
+	depends on !PORT08_INST01_PROFILE_HA && !PORT08_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -3489,9 +3489,9 @@ choice
 endchoice
 
 config PORT08_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT08_INST02_PROFILE_HA="n" 
+	depends on !PORT08_INST02_PROFILE_HA && !PORT08_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -3733,9 +3733,9 @@ choice
 endchoice
 
 config PORT09_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT09_INST01_PROFILE_HA="n" 
+	depends on !PORT09_INST01_PROFILE_HA && !PORT09_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -3943,9 +3943,9 @@ choice
 endchoice
 
 config PORT09_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT09_INST02_PROFILE_HA="n" 
+	depends on !PORT09_INST02_PROFILE_HA && !PORT09_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -4187,9 +4187,9 @@ choice
 endchoice
 
 config PORT10_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT10_INST01_PROFILE_HA="n" 
+	depends on !PORT10_INST01_PROFILE_HA && !PORT10_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -4397,9 +4397,9 @@ choice
 endchoice
 
 config PORT10_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT10_INST02_PROFILE_HA="n" 
+	depends on !PORT10_INST02_PROFILE_HA && !PORT10_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -4641,9 +4641,9 @@ choice
 endchoice
 
 config PORT11_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT11_INST01_PROFILE_HA="n" 
+	depends on !PORT11_INST01_PROFILE_HA && !PORT11_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -4851,9 +4851,9 @@ choice
 endchoice
 
 config PORT11_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT11_INST02_PROFILE_HA="n" 
+	depends on !PORT11_INST02_PROFILE_HA && !PORT11_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -5095,9 +5095,9 @@ choice
 endchoice
 
 config PORT12_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT12_INST01_PROFILE_HA="n" 
+	depends on !PORT12_INST01_PROFILE_HA && !PORT12_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -5305,9 +5305,9 @@ choice
 endchoice
 
 config PORT12_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT12_INST02_PROFILE_HA="n" 
+	depends on !PORT12_INST02_PROFILE_HA && !PORT12_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -5549,9 +5549,9 @@ choice
 endchoice
 
 config PORT13_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT13_INST01_PROFILE_HA="n" 
+	depends on !PORT13_INST01_PROFILE_HA && !PORT13_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -5759,9 +5759,9 @@ choice
 endchoice
 
 config PORT13_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT13_INST02_PROFILE_HA="n" 
+	depends on !PORT13_INST02_PROFILE_HA && !PORT13_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -6003,9 +6003,9 @@ choice
 endchoice
 
 config PORT14_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT14_INST01_PROFILE_HA="n" 
+	depends on !PORT14_INST01_PROFILE_HA && !PORT14_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -6213,9 +6213,9 @@ choice
 endchoice
 
 config PORT14_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT14_INST02_PROFILE_HA="n" 
+	depends on !PORT14_INST02_PROFILE_HA && !PORT14_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -6457,9 +6457,9 @@ choice
 endchoice
 
 config PORT15_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT15_INST01_PROFILE_HA="n" 
+	depends on !PORT15_INST01_PROFILE_HA && !PORT15_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -6667,9 +6667,9 @@ choice
 endchoice
 
 config PORT15_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT15_INST02_PROFILE_HA="n" 
+	depends on !PORT15_INST02_PROFILE_HA && !PORT15_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -6911,9 +6911,9 @@ choice
 endchoice
 
 config PORT16_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT16_INST01_PROFILE_HA="n" 
+	depends on !PORT16_INST01_PROFILE_HA && !PORT16_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -7121,9 +7121,9 @@ choice
 endchoice
 
 config PORT16_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT16_INST02_PROFILE_HA="n" 
+	depends on !PORT16_INST02_PROFILE_HA && !PORT16_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -7365,9 +7365,9 @@ choice
 endchoice
 
 config PORT17_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT17_INST01_PROFILE_HA="n" 
+	depends on !PORT17_INST01_PROFILE_HA && !PORT17_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -7575,9 +7575,9 @@ choice
 endchoice
 
 config PORT17_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT17_INST02_PROFILE_HA="n" 
+	depends on !PORT17_INST02_PROFILE_HA && !PORT17_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -7819,9 +7819,9 @@ choice
 endchoice
 
 config PORT18_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT18_INST01_PROFILE_HA="n" 
+	depends on !PORT18_INST01_PROFILE_HA && !PORT18_INST01_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.
@@ -8029,9 +8029,9 @@ choice
 endchoice
 
 config PORT18_INST02_ASYMMETRY_CORRECTION_ENABLE
-	depends on PORT18_INST02_PROFILE_HA="n" 
+	depends on !PORT18_INST02_PROFILE_HA && !PORT18_INST02_PROFILE_WR
     bool "asymmetryCorrectionPortDS.enable"
-    default true
+    default y
 	help
 	  When supported, the value TRUE shall indicate that the mechanism of for the calculation
 	  of the <delayAsymmetry> for certain media is enabled on the PTP port.

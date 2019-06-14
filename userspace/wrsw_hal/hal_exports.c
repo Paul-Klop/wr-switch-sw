@@ -136,8 +136,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 		   delay calculation. */
 
 	case HEXP_PPSG_CMD_POLL:
-		busy = shw_pps_gen_busy() || hal_port_pshifter_busy();
-		return busy ? 0 : 1;
+		return shw_pps_gen_busy() || hal_port_pshifter_busy();
 
 	case HEXP_PPSG_CMD_SET_VALID:
 		return shw_pps_gen_enable_output(params->pps_valid);

@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 	unsigned long aging_res = DEFAULT_AGING_RES;	// Aging resolution [sec.]
 	unsigned long aging_time = DEFAULT_AGING_TIME;	// Aging time       [sec.]
 
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_DAEMON);
 
 	/* Print RTUd's version */
 	pr_info("wrsw_rtud. Commit %s, built on " __DATE__ "\n", __GIT_VER__);

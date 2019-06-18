@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 	static timeout_t update_fan_tmo;
 	static timeout_t update_all_tmo;
 
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_DAEMON);
 
 	/* Print HAL's version */
 	pr_info("wrsw_hal. Commit %s, built on " __DATE__ "\n", __GIT_VER__);

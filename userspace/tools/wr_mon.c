@@ -1137,7 +1137,7 @@ int main(int argc, char *argv[])
 	/* try a pps_gen based approach */
 	uint64_t last_seconds = 0;
 
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_USER);
 
 	while ((opt = getopt(argc, argv, "himsoetabwqvH:")) != -1) {
 		switch(opt)

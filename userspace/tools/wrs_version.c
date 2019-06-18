@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 	char func='a';
 
 	/* argc forced to 1: -t and -v are not "terse" and "verbose" */
-	wrs_msg_init(1, argv);
+	wrs_msg_init(1, argv, LOG_USER);
 
 	if(argc>=2 && argv[1][0]=='-')
 	{

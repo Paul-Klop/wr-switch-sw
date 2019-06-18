@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
 {
 	int ret;
 
-	wrs_msg_init(argc,argv);
+	wrs_msg_init(argc,argv, LOG_DAEMON);
 
 	prgName=argv[0];
 

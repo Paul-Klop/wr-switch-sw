@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 	int opt;
 
 	/* argc forced to 1: -q and -v are not "quiet" and "verbose" */
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_USER);
 
 	assert_init(shw_pio_mmap_init());
 	shw_io_init();

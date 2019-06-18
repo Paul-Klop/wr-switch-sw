@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 	char *prgname;
 
 	wrs_msg_level = LOG_WARNING;
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_USER);
 	prgname = argv[0];
 
 	if (NPORTS > 8 * sizeof(portmask)) {

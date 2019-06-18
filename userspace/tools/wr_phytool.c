@@ -591,7 +591,7 @@ int main(int argc, char **argv)
 	int i;
 	int ep;
 
-	wrs_msg_init(1, argv); /* only use argv[0]: no cmdline */
+	wrs_msg_init(1, argv, LOG_USER); /* only use argv[0]: no cmdline */
 
 	if(argc<3)
 	{

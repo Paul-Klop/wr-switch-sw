@@ -28,13 +28,15 @@ extern void wrs_msg_filename(char *name);
 extern int wrs_msg_level; /* user can set it in main() or whatever */
 
 /* Optional: prepare all defaults. Like argv[0] to be prefixed, signals... */
-extern void wrs_msg_init(int argc, char **argv);
+extern void wrs_msg_init(int argc, char **argv, int facility);
 
 #ifdef DEBUG /* We had it, so let's keep this build-time thing */
 #  define WRS_MSG_DEFAULT_LEVEL    LOG_DEBUG
 #else
 #  define WRS_MSG_DEFAULT_LEVEL    LOG_INFO
 #endif
+
+#define WRS_MSG_DEFAULT_FACILITY LOG_USER /* User facility by default */
 
 #define WRS_MSG_DETAILS_AT  LOG_DEBUG /* >= for debug use __LINE__ */
 

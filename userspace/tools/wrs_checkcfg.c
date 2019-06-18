@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
 	int err, verbose = 0;
 
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_USER);
 
 me_lazy:
 	if (argc < 2 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {

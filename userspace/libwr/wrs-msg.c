@@ -14,6 +14,7 @@
 #endif
 
 int wrs_msg_level = WRS_MSG_DEFAULT_LEVEL;
+int wrs_msg_facility = WRS_MSG_DEFAULT_FACILITY;
 
 /* We use debug, info, warning, error and "silent" */
 static int wrs_msg_used_levels[] = {
@@ -40,7 +41,7 @@ static FILE *wrs_msg_f = (FILE *)-1; /* Means "not yet set" */
 static char *prgname; /* always print argv[0], or we get lost */
 
 /* This function is optional, up to the user whether to call it or not */
-void wrs_msg_init(int argc, char **argv)
+void wrs_msg_init(int argc, char **argv, int facility)
 {
 	int i;
 	int max = ARRAY_SIZE(wrs_msg_used_levels) - 1;
@@ -116,6 +117,7 @@ void wrs_msg_init(int argc, char **argv)
 	}
 
 	wrs_msg_level = wrs_msg_used_levels[wrs_msg_pos];
+	wrs_msg_facility = facility;
 
 	/* Prepare for run-time changes */
 	signal(SIGUSR1, wrs_msg_sighandler);
@@ -139,11 +141,11 @@ void __wrs_msg(int level, const char *func, int line, const char *fmt, ...)
 {
 	va_list args;
 	static char *header_string[] = {
-		[LOG_ALERT] = "",
-		[LOG_ERR] = "Error: ",
-		[LOG_WARNING] = "Warning: ",
-		[LOG_INFO] = "",
-		[LOG_DEBUG] = ""
+		[LOG_ALERT]   = "Alert  ",
+		[LOG_ERR]     = "Error  ",
+		[LOG_WARNING] = "Warning",
+		[LOG_INFO]    = "Info   ",
+		[LOG_DEBUG]   = "Debug  "
 	};
 
 	/* If the user didn't set the file, nor init, enforce default now */
@@ -158,7 +160,8 @@ void __wrs_msg(int level, const char *func, int line, const char *fmt, ...)
 		asprintf(&prgname, "<pid-%i>", getpid());
 
 	/* Program name and header, and possibly function and line too */
-	fprintf(wrs_msg_f, "%s: %s", prgname, header_string[level]);
+	fprintf(wrs_msg_f, "<%d>%s (%s):", (wrs_msg_facility | level),
+		header_string[level], prgname);
 	if (level >= WRS_MSG_DETAILS_AT)
 		fprintf(wrs_msg_f, "%s:%i: ", func, line);
 

@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 	struct shw_sfp_dom hal_sfp_raw_dom_lc[HAL_MAX_PORTS];
 
 
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_USER);
 	nports = 18;
 	dump_port = 1;
 

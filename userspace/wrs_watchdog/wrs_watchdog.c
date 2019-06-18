@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	wrs_msg_init(argc, argv);
+	wrs_msg_init(argc, argv, LOG_DAEMON);
 
 	if (shw_fpga_mmap_init() < 0) {
 		pr_error("%s: Can't access device memory\n", prgname);

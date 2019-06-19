@@ -21,6 +21,14 @@ if ! grep -q hwinfo /proc/mtd; then
     exit 0;
 fi
 
+if ! [ -f /wr/bin/sdb-read ]; then
+    # If for some reason sdb-read is not available, don't touch hwinfo
+    echo "/wr/bin/sdb-read not available!"
+    # save script result for snmp
+    echo "hwinfo_error" > /tmp/hwinfo_read_status
+    exit 0;
+fi
+
 # Is there sdb in there? If so, nothing to do.
 if /wr/bin/sdb-read /dev/mtd5ro > /dev/null; then
     # save script result for snmp

@@ -644,6 +644,7 @@ static void hal_port_poll_sfp(void)
 void hal_port_update_all()
 {
 	int i;
+	struct shw_sfp_dom sfp_dom_raw[HAL_MAX_PORTS];
 
 	/* poll_rts_state does not write to shmem */
 	if (libwr_tmo_expired(&hal_port_tmo_rts))
@@ -659,22 +660,43 @@ void hal_port_update_all()
 			hal_port_fsm(&ports[i]);
 		}
 
+	/* unlock shmem */
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+
 	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
 	    && libwr_tmo_expired(&update_sfp_dom_tmo)) {
+		/* get the DOM data to local memory */
+		for (i = 0; i < HAL_MAX_PORTS; i++) {
+			/* read DOM only for plugged ports with DOM
+			 * capabilities */
+			if (ports[i].in_use
+			    && ports[i].state != HAL_PORT_STATE_DISABLED
+			    && (ports[i].has_sfp_diag)) {
+				shw_sfp_update_dom(ports[i].hw_index,
+						   &sfp_dom_raw[i]);
+			}
+		}
+
+		/* lock shmem */
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+
+		/* copy the DOM from local memory to shmem */
 		for (i = 0; i < HAL_MAX_PORTS; i++) {
 			/* update DOM only for plugged ports with DOM
 			 * capabilities */
 			if (ports[i].in_use
 			    && ports[i].state != HAL_PORT_STATE_DISABLED
 			    && (ports[i].has_sfp_diag)) {
-				shw_sfp_update_dom(ports[i].hw_index,
-						  &ports[i].calib.sfp_dom_raw);
+				memcpy(&ports[i].calib.sfp_dom_raw,
+				       &sfp_dom_raw[i],
+				       sizeof(struct shw_sfp_dom));
 			}
 		}
+
+		/* unlock shmem */
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 	}
 
-	/* unlock shmem */
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
 	if (libwr_tmo_expired(&update_link_leds_tmo)) {
 		/* update color of the link LEDs */

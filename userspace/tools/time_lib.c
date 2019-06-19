@@ -1,12 +1,34 @@
-/**
- * Time to string conversion functions
+/*
+ * time_lib.c
+ *
+ * - Time to string conversion functions
+ * - Decode leap seconds file
+ *
+ *  Created on: 2019
+ *  Authors:
+ * 		- Jean-Claude BAU / CERN
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License...
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <inttypes.h>
+#include <sys/timex.h>
 #include <ppsi/ppsi.h>
 
 char * timeIntervalToString(TimeInterval time,char *buf) {
@@ -130,5 +152,115 @@ int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *
 	}
 
 	return (result->tv_sec < 0) || (result->tv_usec<0);
+}
+
+/**
+ * Get the TAI offset decoding the leap seconds file
+ * @param leapSecondsFile The leapSecond file name. Use the default one if NULL
+ * @param utc             Number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
+ * @param hasExpired      if hasExpired is not NULL, set to 1 if the file has expired
+ * @return >=0 : TAI offset
+ *          -1 : Error
+ */
+
+#define OFFSET_NTP_TIME_TO_UTC ((uint64_t)2208988800LL) /* NTP time to UTC (1900 to 1970 in seconds) */
+
+static char *defaultLeapSecondsFile = "/etc/leap-seconds.list";
+
+int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *hasExpired) {
+
+	uint64_t expirationDate, ntpTime ;
+	int tai_offset = 9; /* For the time before 1972, we consider that the offset is 9 */
+	FILE *f;
+	char line[128];
+
+	if ( leapSecondsFile == NULL )
+		leapSecondsFile=defaultLeapSecondsFile;
+
+	ntpTime = (uint64_t)utc + OFFSET_NTP_TIME_TO_UTC;
+
+	f = fopen(leapSecondsFile, "r");
+	if (!f) {
+		fprintf(stderr, "%s: Cannot open file %s: %s\n", __func__, leapSecondsFile,strerror(errno));
+		return -1;
+	}
+	/* Scan the file */
+	while (fgets(line, sizeof(line), f)) {
+		int tai;
+		uint64_t leapNtpTime;
+
+		if ( strcmp(line,"# ")==0)
+			continue; // This is a comment
+		if (sscanf(line, "#@ %" PRIu64 , &expirationDate) == 1) {
+			if ( hasExpired !=NULL )
+				*hasExpired=ntpTime>expirationDate;
+			continue;
+		}
+		if (sscanf(line, "%" PRIu64 " %i", &leapNtpTime, &tai) != 2)
+			continue;
+
+		/* check this line, and apply it if it's in the past */
+		if (leapNtpTime < ntpTime)
+			tai_offset = tai;
+		else if (leapNtpTime > ntpTime)
+			break; // File read can be aborted
+	}
+	fclose(f);
+	return tai_offset;
+}
+
+
+/**
+ * Fix the TAI representation looking at the leap file
+ * @param leapSecondsFile The leapSecond file name. Use the default one if NULL
+ * @param utc             Number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
+ * @param hasExpired      if hasExpired is not NULL, set to 1 if the file has expired
+ * @param verbose         Activate verbose mode
+ * @return >=0 : TAI offset
+ *          -1 : Error
+ */
+int fixHostTai(char *leapSecondsFile, time_t utc, int *hasExpired, int verbose)
+{
+	struct timex t;
+	int tai_offset;
+
+	/* first: get the current offset */
+	memset(&t, 0, sizeof(t));
+	if (adjtimex(&t) < 0) {
+		fprintf(stderr, "%s: adjtimex(): %s\n", __func__,
+			strerror(errno));
+		return 0;
+	}
+
+	if ( (tai_offset=getTaiOffsetFromLeapSecondsFile(NULL,utc,hasExpired))<0 ) {
+		fprintf(stderr, "%s: Cannot get TAI offset\n", __func__);
+		return 0;
+	}
+
+	if ( verbose && hasExpired && *hasExpired ) {
+		printf("Leap seconds file has expired.\n");
+	}
+
+	if (tai_offset != t.tai) {
+		if (verbose)
+			printf("Previous TAI offset: %i\n", t.tai);
+		t.constant = tai_offset;
+		t.modes = MOD_TAI;
+		if (adjtimex(&t) < 0) {
+			fprintf(stderr, "%s: adjtimex(): %s\n", __func__,
+				strerror(errno));
+			return tai_offset;
+		}
+		/* read back timex */
+		memset(&t, 0, sizeof(t));
+		if (adjtimex(&t) < 0) {
+			fprintf(stderr, "%s: adjtimex(): %s\n", __func__,
+				strerror(errno));
+			return 0;
+		}
+	}
+	if (verbose)
+		printf("Current TAI offset: %i\n", t.tai);
+	return tai_offset;
 }
 

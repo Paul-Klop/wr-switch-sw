@@ -27,7 +27,6 @@
 #define MOD_TAI 0x80
 #endif
 #define WRDATE_CFG_FILE "/etc/wr_date.conf"
-#define WRDATE_LEAP_FILE "/etc/leap-seconds.list"
 
 /* Address for hardware, from nic-hardware.h */
 #define FPGA_BASE_PPSG  0x10010500
@@ -36,7 +35,11 @@
 extern int init_module(void *module, unsigned long len, const char *options);
 extern int delete_module(const char *module, unsigned int flags);
 
-void help(char *prgname)
+static int opt_verbose, opt_force, opt_not;
+static char *opt_cfgfile = WRDATE_CFG_FILE;
+static char *prgname;
+
+void help(void)
 {
 	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
 		prgname, prgname);
@@ -45,11 +48,12 @@ void help(char *prgname)
 		"  -f       force: run even if not on a WR switch\n"
 		"  -c <cfg> configfile to use in place of the default\n"
 		"  -v       verbose: report what the program does\n"
-		"  -n       do not act in practice\n"
+		"  -n       do not act in practice - dry run\n"
 		"    get             print WR time to stdout\n"
 		"    get tohost      print WR time and set system time\n"
 		"    set <value>     set WR time to scalar seconds\n"
-		"    set host        set TAI from current host time.\n"
+		"    set host [tai]  set TAI and WR time from current host time.\n"
+		"                    if tai option is set then set only the TAI offset.\n"
 		"    stat            print statistics between TAI (WR time) and linux UTC\n"
 		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
@@ -58,9 +62,6 @@ void help(char *prgname)
 	exit(1);
 }
 
-int opt_verbose, opt_force, opt_not;
-char *opt_cfgfile = WRDATE_CFG_FILE;
-char *prgname;
 
 /* Check that we actualy are on the wr switch, exit if not */
 int wrdate_check_host(void)
@@ -214,79 +215,6 @@ int wrdate_diff(volatile struct PPSG_WB *pps)
 	return __wrdate_diff(pps,&ht, &wt);
 }
 
-/* Fix the TAI representation looking at the leap file */
-int fix_host_tai(void)
-{
-	struct timex t;
-	char s[128];
-	unsigned long long now, now_2014, leapt, expire = 0;
-	int i, *p, tai_offset = 0;
-
-	/* first: get the current offset */
-	memset(&t, 0, sizeof(t));
-	if (adjtimex(&t) < 0) {
-		fprintf(stderr, "%s: adjtimex(): %s\n", prgname,
-			strerror(errno));
-		return 0;
-	}
-
-	/*
-	 * At the very start, we believe to be Jan 1st 1970. But
-	 * what we really want is counting the tai_offset, so WR
-	 * can then set system time by itself.  And, being wrong by
-	 * 1-2 seconds is ok (system time is for log messages only),
-	 * but being off by 35 seconds is not. So let's use "35" by
-	 * default, i.e. be aware we are at least in 2014
-	 */
-	now_2014 = 1417806803; /* as I write this */
-
-	/* then, find the current time, using such offset */
-	now = time(NULL);
-	if (now < now_2014)
-		now = now_2014;
-
-	now += 2208988800LL; /* (for TAI: + utc_offset) */
-
-	FILE *f = fopen(WRDATE_LEAP_FILE, "r");
-	if (!f) {
-		fprintf(stderr, "%s: %s: %s\n", prgname, WRDATE_LEAP_FILE,
-			strerror(errno));
-		return 0;
-	}
-	while (fgets(s, sizeof(s), f)) {
-		if (sscanf(s, "#@ %lli", &expire) == 1)
-			continue;
-		if (sscanf(s, "%lli %i", &leapt, &i) != 2)
-			continue;
-		/* check this line, and apply it if it's in the past */
-		if (leapt < now)
-			tai_offset = i;
-	}
-	fclose(f);
-
-	/*
-	 * Our WRS kernel has tai support, but our compiler does not.
-	 * We are 32-bit only, and we know for sure that tai is
-	 * exactly after stbcnt. It's a bad hack, but it works
-	 */
-	p = (int *)(&t.stbcnt) + 1;
-
-	if (tai_offset != *p) {
-		if (opt_verbose)
-			printf("Previous TAI offset: %i\n", *p);
-		t.constant = tai_offset;
-		t.modes = MOD_TAI;
-		if (adjtimex(&t) < 0) {
-			fprintf(stderr, "%s: adjtimex(): %s\n", prgname,
-				strerror(errno));
-			return tai_offset;
-		}
-	}
-	if (opt_verbose)
-		printf("Current TAI offset: %i\n", *p);
-	return tai_offset;
-}
-
 #define ADJ_SEC_ITER 10
 
 static int wait_wr_adjustment(volatile struct PPSG_WB *pps)
@@ -376,25 +304,18 @@ int installClockSourceModule(void) {
 }
 
 /* This sets WR time from host time */
-int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int deep)
+int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_offset, int deep)
 
 {
 	struct timeval tvh, tvr; /* host, rabbit */
 	signed long long diff64;
 	signed long diff;
-	int tai_offset;
 	int modRemoved=0;
 
 	if ( deep > 4 )
 		return 0; /* Avoid stack overflow (recursive function) in case of error */
 
-	tai_offset = fix_host_tai();
-
-	if (opt_not) {
-		if (!opt_verbose) return 0;
-		printf("Nothing done: -n option selected\n");
-	} else {
-
+	if ( ! opt_not) {
 		if ( deep==0) {
 			modRemoved=removeClockSourceModule(); // The driver must be removed otherwise the time cannot be set properly
 		}
@@ -438,7 +359,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int deep
 			asm("" : : : "memory"); /* barrier... */
 			pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
 			if ( wait_wr_adjustment(pps) && !adjSecOnly )
-					__wrdate_internal_set(pps,0,deep+1); /* adjust the usecs */
+					__wrdate_internal_set(pps,0,tai_offset,deep+1); /* adjust the usecs */
 		} else if ( !adjSecOnly ) {
 			if (opt_verbose)
 				printf("adjusting by %li usecs\n", diff);
@@ -469,8 +390,39 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int deep
 }
 
 /* This sets WR time from host time */
-int wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly) {
-	return __wrdate_internal_set(pps,adjSecOnly,0);
+int wrdate_internal_set(volatile struct PPSG_WB *pps, int taiOnly, int adjSecOnly) {
+	int tai_offset;
+
+	if (opt_not) {
+		// Do not change the TAI but display only information if verbose is enabled
+		struct timex t;
+		int taiOffset, hasExpired;
+
+		if (!opt_verbose) return 0;
+		/* first: get the current offset */
+		memset(&t, 0, sizeof(t));
+		if (adjtimex(&t) < 0) {
+			fprintf(stderr, "%s: adjtimex(): %s\n", __func__,
+				strerror(errno));
+			return 0;
+		}
+		printf("Current TAI offset= %d\n",t.tai);
+		if ( (taiOffset=getTaiOffsetFromLeapSecondsFile(NULL,time(NULL),&hasExpired))==-1) {
+			fprintf(stderr, "%s: Cannot fix read TAI offset from leap seconds file\n" ,prgname);
+			return 0;
+		}
+		printf("TAI offset form leap seconds file= %d\n",taiOffset);
+		if ( hasExpired )
+			printf("Leap seconds file has expired!\n");
+	} else {
+		if ( (tai_offset=fixHostTai(NULL,time(NULL),NULL,opt_verbose)) == -1 ) {
+			fprintf(stderr, "%s: Cannot fix TAI offset\n" ,prgname);
+			return 0;
+		}
+	}
+	if ( taiOnly )
+		return 0;
+	return __wrdate_internal_set(pps,adjSecOnly,tai_offset,0);
 }
 
 /* This sets WR time from host time for grand master mode
@@ -481,7 +433,7 @@ int wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly) {
 #define LOW_LIMIT_HALF_SEC (300*1000) /* 300 ms */
 #define HIGH_LIMIT_HALF_SEC (700*1000) /* 300 ms */
 
-int wrdate_internal_set_gm(volatile struct PPSG_WB *pps) {
+int wrdate_internal_set_gm(volatile struct PPSG_WB *pps, int taiOnly) {
 
 	if (opt_verbose ) {
 		printf("Set WR time for grand master.\n");
@@ -492,7 +444,7 @@ int wrdate_internal_set_gm(volatile struct PPSG_WB *pps) {
 
 		gettimeof_wr(&wt, pps);
 		if ( wt.tv_usec>LOW_LIMIT_HALF_SEC && wt.tv_usec<HIGH_LIMIT_HALF_SEC ) {
-			wrdate_internal_set(pps,1);
+			wrdate_internal_set(pps,taiOnly,1);
 			return 0;
 		} else {
 			useconds_t usec;
@@ -528,38 +480,46 @@ int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 	unsigned long t; /* WARNING: 64 bit */
 	struct timeval tv;
 
-	if (!strcmp(argv[0], "host")) {
+	if (argc>=1 && !strcmp(argv[0], "host")) {
 		int tm=getTimingMode();
+		int taiOnly;
+
+		taiOnly=argc>=2 && !strcmp(argv[1], "tai");
+
 		switch (tm) {
 		case SPLL_MODE_GRAND_MASTER:
-			return wrdate_internal_set_gm(pps);
+			return wrdate_internal_set_gm(pps,taiOnly);
 		case SPLL_MODE_FREE_RUNNING_MASTER :
 		case SPLL_MODE_DISABLED :
-			return wrdate_internal_set(pps,0);
+			return wrdate_internal_set(pps,taiOnly,0);
 			break;
 		case SPLL_MODE_SLAVE :
-			fprintf(stderr, "Slave timing mode: WR time cannot be set!!!\n");
+			fprintf(stderr, "Slave timing mode: WR time and TAI offset cannot be set!!!\n");
 			return -1;
 		default:
-			fprintf(stderr, "Cannot read Soft PLL timing mode. WR time cannot be set (ret=%d)\n",tm);
+			fprintf(stderr, "Cannot read Soft PLL timing mode. WR time and TAI offset cannot be set (ret=%d)\n",tm);
 			return -1;
 		}
 	}
 
-	s = strdup(argv[0]);
-	if (sscanf(argv[0], "%li%s", &t, s) == 1) {
-		tv.tv_sec = t;
-		tv.tv_usec = 0;
-		if (settimeofday(&tv, NULL) < 0) {
-			fprintf(stderr, "%s: settimeofday(%s): %s\n",
-				prgname, argv[0], strerror(errno));
-			exit(1);
+	if ( argc>=1 ) {
+		s = strdup(argv[0]);
+		if (sscanf(argv[0], "%li%s", &t, s) == 1) {
+			tv.tv_sec = t;
+			tv.tv_usec = 0;
+			if (settimeofday(&tv, NULL) < 0) {
+				fprintf(stderr, "%s: settimeofday(%s): %s\n",
+					prgname, argv[0], strerror(errno));
+				exit(1);
+			}
+			return wrdate_internal_set(pps,1,0);
 		}
-		return wrdate_internal_set(pps,0);
-	}
 
-	/* FIXME: other time formats */
-	printf(" FIXME\n");
+		/* FIXME: other time formats */
+		printf(" FIXME\n");
+		return 0;
+	}
+	fprintf(stderr, "Missing parameter!! \n\n");
 	return 0;
 }
 
@@ -635,13 +595,14 @@ int main(int argc, char **argv)
 			break;
 		case 'n':
 			opt_not = 1;
+			printf("Dry run mode: No action will be performed\n");
 			break;
 		default:
-			help(argv[0]);
+			help();
 		}
 	}
 	if (optind > argc - 1)
-		help(argv[0]);
+		help();
 
 	cmd = argv[optind++];
 
@@ -659,7 +620,7 @@ int main(int argc, char **argv)
 		if (optind == argc - 1 && !strcmp(argv[optind], "tohost"))
 			tohost = 1;
 		else if (optind < argc)
-			help(argv[0]);
+			help();
 		return wrdate_get(pps, tohost);
 	}
 
@@ -674,7 +635,7 @@ int main(int argc, char **argv)
 
 	/* only other command is "set", with one on more arguments */
 	if (strcmp(cmd, "set") || optind > argc - 1)
-		help(argv[0]);
+		help();
 
 
 	return wrdate_set(pps, argc-optind,&argv[optind]);

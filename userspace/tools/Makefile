@@ -88,6 +88,9 @@ wr_mon: wr_mon.o term.o  time_lib.o
 wr_date: wr_date.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
+fix_tai_offset: fix_tai_offset.o time_lib.o
+	${CC} -o $@ $^ $(LDFLAGS)
+
 wr_management: wr_management.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 

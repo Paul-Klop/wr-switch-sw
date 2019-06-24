@@ -377,15 +377,21 @@ config REMOTE_SYSLOG_UDP
 
 config WRS_LOG_HAL
 	string "Logging directions for the WR hal"
-	default "daemon.info"
+	default "default_syslog"
 	help
-	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
-	  spefification like "daemon.debug". An empty strings is used
-	  to represent no logging (like /dev/null).  Please note that
-	  unknown facility names will generate a runtime error on the switch.
-	  Please note that all messages produced by the WR HAL if syslog is
-	  configured will be passed to the syslog at the same
-	  <facility>.<level>, no matter of verbosity of a message.
+	  The string can be:
+	  - a pathname (e.g. /dev/kmsg), or
+	  - a <facility>.<level> spefification like "daemon.debug", or
+	  - "default_syslog", or 
+	  - an empty string
+	  An empty string is used to represent no logging (like /dev/null).
+	  When the string is "default_syslog", messages are sent to syslog with
+	  the <facility>.<level> inheritet from the messages.
+	  When the string is "<facility>.<level>", all messages produced by
+	  the WR HAL if  syslog is configured will be passed to the syslog at 
+	  the same  <facility>.<level>, no matter of verbosity of a message.
+	  Please note that unknown facility names will generate a runtime error
+	  on the switch.
 
 config WRS_LOG_LEVEL_HAL
 	string "Logging verbosity level for the WR HAL"
@@ -406,15 +412,21 @@ config WRS_LOG_LEVEL_HAL
 
 config WRS_LOG_RTU
 	string "Logging directions for the RTU daemon"
-	default "daemon.info"
+	default "default_syslog"
 	help
-	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
-	  spefification like "daemon.debug". An empty strings is used
-	  to represent no logging (like /dev/null).  Please note that
-	  unknown facility names will generate a runtime error on the switch.
-	  Please note that all messages produced by RTU daemon if syslog is
-	  configured will be passed to the syslog at the same
-	  <facility>.<level>, no matter of verbosity of a message.
+	The string can be:
+	  - a pathname (e.g. /dev/kmsg), or
+	  - a <facility>.<level> spefification like "daemon.debug", or
+	  - "default_syslog", or 
+	  - an empty string
+	  An empty string is used to represent no logging (like /dev/null).
+	  When the string is "default_syslog", messages are sent to syslog with
+	  the <facility>.<level> inheritet from the messages.
+	  When the string is "<facility>.<level>", all messages produced by
+	  the RTU if  syslog is configured will be passed to the syslog at 
+	  the same  <facility>.<level>, no matter of verbosity of a message.
+	  Please note that unknown facility names will generate a runtime error
+	  on the switch.
 
 config WRS_LOG_LEVEL_RTU
 	string "Logging verbosity level for the RTU daemon"
@@ -484,7 +496,7 @@ config WRS_LOG_MONIT
 
 config WRS_LOG_OTHER
 	string "Logging directions for other programs"
-	default "daemon.info"
+	default "default_syslog"
 	help
 	  Redirect output from other programs.
 	  In the current version following programs uses this option:
@@ -493,10 +505,19 @@ config WRS_LOG_OTHER
 	  --wrs_custom_boot_script.sh
 	  --vlan.sh
 	  This collective entry is to avoid number of entries in dot-config.
-	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
-	  spefification like "daemon.debug". An empty strings is used
-	  to represent no logging (like /dev/null).  Please note that
-	  unknown facility names will generate a runtime error on the switch.
+	  The string can be:
+	  - a pathname (e.g. /dev/kmsg), or
+	  - a <facility>.<level> spefification like "daemon.debug", or
+	  - "default_syslog", or 
+	  - an empty string
+	  An empty string is used to represent no logging (like /dev/null).
+	  When the string is "default_syslog", messages are sent to syslog with
+	  the <facility>.<level> inheritet from the messages.
+	  When the string is "<facility>.<level>", all messages produced by
+	  the programs if  syslog is configured will be passed to the syslog at
+	  the same  <facility>.<level>, no matter of verbosity of a message.
+	  Please note that unknown facility names will generate a runtime error
+	  on the switch.
 
 config WRS_LOG_LEVEL_OTHER
 	string "Logging verbosity level for other programs"

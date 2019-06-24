@@ -38,6 +38,9 @@ start() {
 	# if a pathname, use it
 	if echo "$WRS_LOG" | grep / > /dev/null; then
 	    eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
+	elif [ "$WRS_LOG" == "default_syslog" ]; then
+	    # not a pathname: use verbatim
+	    eval LOGPIPE=\" 2\>\&1 \| logger -t watchdog --prio-prefix\"
 	else
 	    # not a pathname: use verbatim
 	    eval LOGPIPE=\" 2\>\&1 \| logger -t watchdog -p $WRS_LOG\"

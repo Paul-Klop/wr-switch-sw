@@ -28,8 +28,10 @@ start() {
     # if a pathname, use it
     if echo "$WRS_LOG" | grep / > /dev/null; then
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
-    else
+    elif [ "$WRS_LOG" == "default_syslog" ]; then
 	# not a pathname: use verbatim
+	eval LOGPIPE=\" 2\>\&1 \| logger -t vlan --prio-prefix\"
+    else
 	eval LOGPIPE=\" 2\>\&1 \| logger -t vlan -p $WRS_LOG\"
     fi
 

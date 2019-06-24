@@ -24,3 +24,8 @@ if [ -n "$boot_file" ]; then
     # received from the DHCP server.
     echo $boot_file > "$tmpdir"/dot-config_source_url
 fi
+
+# save IP@ of the boot server
+if [ -n "$siaddr" ]; then
+   echo $siaddr > "$tmpdir"/boot_server_ip
+fi

@@ -15,7 +15,8 @@ start_counter() {
 
 start() {
     # Check the configuration file: if there's no target, don't run the thing.
-    if ! grep -q '^##.*remote-host' /etc/rsyslog.conf; then
+    if ! grep -q '^##.*remote-host' /etc/rsyslog.conf -a
+       ! grep -q '^##$outchannel' /etc/rsyslog.conf; then
 	echo -n "Starting rsyslog: "
 	start-stop-daemon -q -p /var/run/rsyslogd.pid -S \
 		--exec /usr/sbin/rsyslogd

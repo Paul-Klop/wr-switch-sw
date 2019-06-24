@@ -69,8 +69,8 @@ $PreserveFQDN on
 # In total, syslog uses ~11MB (1MB for current output and 10MB for old 
 # logs) of /tmp/ space, (out of ~30MB available).
 
-$outchannel log_rotation,/tmp/syslog 1048576,/wr/bin/log_rotate.sh /tmp/syslog
-*.* :omfile:$log_rotation
+##$outchannel log_rotation,/tmp/syslog 1048576,/wr/bin/log_rotate.sh /tmp/syslog
+##*.* :omfile:$log_rotation
 
 # ######### Receiving Messages from Remote Hosts ########## 
 # TCP Syslog Server:

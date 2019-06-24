@@ -355,6 +355,14 @@ config DNS_DOMAIN
 	  If CONFIG_DNS_SERVER is being used, this option may be
 	  useful as well.
 
+config LOCAL_SYSLOG_FILE
+	string "Store WRS syslog messages locally "
+	default "/tmp/syslog"
+	help
+	  Select file to which syslog messages will be stored. 
+	  The file is rotated when reaching 1MB. If remote
+	  server is specified, the messages go to both, server and local file.
+
 config REMOTE_SYSLOG_SERVER
 	string "Send WRS syslog messages to this remote host"
 	help

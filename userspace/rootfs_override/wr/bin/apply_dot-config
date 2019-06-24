@@ -87,6 +87,14 @@ if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
     sed -i '/remote-host/ s/^##//' $T
     sed -i "s/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/" $T
 fi
+
+if [ ! -z "$CONFIG_LOCAL_SYSLOG_FILE" ]; then
+    sed -i '/$outchannel/ s/^##//' $T
+    sed -i '/omfile/ s/^##//' $T
+    sed -i "s|/tmp/syslog|$CONFIG_LOCAL_SYSLOG_FILE|" $T
+    sed -i "s|/tmp/syslog|$CONFIG_LOCAL_SYSLOG_FILE|" $T
+fi
+
 mv $T /etc/rsyslog.conf
 
 # Fix SNMP values: for all not-empty configs remove comment and replace value

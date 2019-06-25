@@ -91,5 +91,7 @@ fi
 
 # Try to get IP via dhcp if failed run dhcp client forever in background.
 # If no information how to get IP address is available use this option.
-echo "Using DHCP to get IP"
-udhcpc -b -i eth0 $DHCP_OPT_EXTRA
+echo "Using DHCP to get IP" | tee $log_output
+# redirect output from udhcpc into syslog and output about the first lease to
+# the kernel log (syslog is not started at this point)
+udhcpc -S -b -i eth0 $DHCP_OPT_EXTRA | tee $log_output

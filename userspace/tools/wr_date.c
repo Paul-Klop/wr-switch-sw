@@ -407,7 +407,7 @@ int wrdate_internal_set(volatile struct PPSG_WB *pps, int taiOnly, int adjSecOnl
 			return 0;
 		}
 		printf("Current TAI offset= %d\n",t.tai);
-		if ( (taiOffset=getTaiOffsetFromLeapSecondsFile(NULL,time(NULL),&hasExpired))==-1) {
+		if ( (taiOffset=getTaiOffsetFromLeapSecondsFile(NULL,time(NULL),NULL,&hasExpired))==-1) {
 			fprintf(stderr, "%s: Cannot fix read TAI offset from leap seconds file\n" ,prgname);
 			return 0;
 		}

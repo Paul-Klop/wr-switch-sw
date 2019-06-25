@@ -154,22 +154,25 @@ int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *
 	return (result->tv_sec < 0) || (result->tv_usec<0);
 }
 
+
 /**
  * Get the TAI offset decoding the leap seconds file
  * @param leapSecondsFile The leapSecond file name. Use the default one if NULL
  * @param utc             Number of seconds since the Epoch, 1970-01-01 00:00:00 +0000 (UTC)
+ * @param nextTai         if nextTai is not NULL, set to the next TAI in the next 12 hours
  * @param hasExpired      if hasExpired is not NULL, set to 1 if the file has expired
  * @return >=0 : TAI offset
  *          -1 : Error
  */
 
 #define OFFSET_NTP_TIME_TO_UTC ((uint64_t)2208988800LL) /* NTP time to UTC (1900 to 1970 in seconds) */
+#define TWELVE_HOURS           ((uint64_t)(60*60*12) )  /* Number of seconds in 12 hours */
 
 static char *defaultLeapSecondsFile = "/etc/leap-seconds.list";
 
-int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *hasExpired) {
+int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *nextTai,int *hasExpired ) {
 
-	uint64_t expirationDate, ntpTime ;
+	uint64_t expirationDate, ntpTime,nextNtpTime;
 	int tai_offset = 9; /* For the time before 1972, we consider that the offset is 9 */
 	FILE *f;
 	char line[128];
@@ -178,6 +181,7 @@ int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *hasE
 		leapSecondsFile=defaultLeapSecondsFile;
 
 	ntpTime = (uint64_t)utc + OFFSET_NTP_TIME_TO_UTC;
+	nextNtpTime= ntpTime + TWELVE_HOURS;
 
 	f = fopen(leapSecondsFile, "r");
 	if (!f) {
@@ -200,10 +204,16 @@ int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *hasE
 			continue;
 
 		/* check this line, and apply it if it's in the past */
-		if (leapNtpTime < ntpTime)
+		if (leapNtpTime < ntpTime) {
 			tai_offset = tai;
-		else if (leapNtpTime > ntpTime)
+			if ( nextTai )
+				*nextTai=tai;
+		}
+		else {
+			if ( nextTai && leapNtpTime<=nextNtpTime )
+				*nextTai=tai;
 			break; // File read can be aborted
+		}
 	}
 	fclose(f);
 	return tai_offset;
@@ -232,7 +242,7 @@ int fixHostTai(char *leapSecondsFile, time_t utc, int *hasExpired, int verbose)
 		return 0;
 	}
 
-	if ( (tai_offset=getTaiOffsetFromLeapSecondsFile(NULL,utc,hasExpired))<0 ) {
+	if ( (tai_offset=getTaiOffsetFromLeapSecondsFile(NULL,utc,NULL,hasExpired))<0 ) {
 		fprintf(stderr, "%s: Cannot get TAI offset\n", __func__);
 		return 0;
 	}
@@ -263,4 +273,3 @@ int fixHostTai(char *leapSecondsFile, time_t utc, int *hasExpired, int verbose)
 		printf("Current TAI offset: %i\n", t.tai);
 	return tai_offset;
 }
-

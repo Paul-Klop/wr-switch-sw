@@ -31,6 +31,6 @@ extern char * timeToString(struct pp_time *time,char *buf);
 extern char * timestampToString(struct Timestamp *time,char *buf);
 extern char * relativeDifferenceToString(RelativeDifference time, char *buf );
 extern int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
-extern int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *hasExpired);
+extern int getTaiOffsetFromLeapSecondsFile(char *leapSecondsFile, time_t utc, int *nextTai,int *hasExpired );
 extern int fixHostTai(char *leapSecondsFile, time_t utc, int *hasExpired, int verbose);
-;
+

@@ -4,7 +4,7 @@
 
 TOOLS = rtu_stat wr_mon wr_phytool wrs_pps_control spll_dbg_proxy load-lm32 load-virtex com
 TOOLS += mapper wmapper
-TOOLS += wrs_version wr_date lm32-vuart wrs_pstats
+TOOLS += wrs_version wr_date lm32-vuart wrs_pstats wrs_leapsec
 TOOLS += wrs_vlans wrs_dump_shmem
 TOOLS += sdb-read
 TOOLS += nbtee
@@ -87,6 +87,10 @@ wr_mon: wr_mon.o term.o  time_lib.o
 
 wr_date: wr_date.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
+
+wrs_leapsec: wrs_leapsec.o time_lib.o
+	${CC} -o $@ $^ $(LDFLAGS)
+
 
 fix_tai_offset: fix_tai_offset.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)

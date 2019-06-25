@@ -8,6 +8,8 @@
 #$ModLoad immark   # provides --MARK-- message capability
 $ModLoad imuxsock # provides support for local system logging (e.g. via logger command)
 $ModLoad imklog   # kernel logging (formerly provided by rklogd)
+$KLogPermitNonKernelFacility on # read messages with non kernel facility from /proc/kmsg via imklog module
+
 
 $PreserveFQDN on
 

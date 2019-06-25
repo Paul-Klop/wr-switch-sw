@@ -4,6 +4,7 @@
 #
 MONIT=/usr/bin/monit
 dotconfig=/wr/etc/dot-config
+log_output=/dev/kmsg
 
 start_counter() {
 	# increase boot counter
@@ -23,11 +24,11 @@ start() {
 	if [ -f "$dotconfig" ]; then
 		. "$dotconfig"
 	else
-		echo "$0 unable to source dot-config ($dotconfig)!"
+		echo "$0 unable to source dot-config ($dotconfig)!" | tee $log_output
 	fi
 	
 	if [ "$CONFIG_LDAP_ENABLE" != "y" ]; then
-		echo "LDAP not enabled in dot-config"
+		echo "LDAP not enabled in dot-config" | tee $log_output
 		# Unmonitor web server (nslcd), ignore all printouts
 		# from monit.
 		# Run in background since monit may wait for a timeout.
@@ -36,7 +37,7 @@ start() {
 	fi
 	
 	if [ -z "$CONFIG_LDAP_SERVER" ]; then
-		echo "Failed! LDAP server not defined"
+		echo "Failed! LDAP server not defined" | tee $log_output
 		exit 0
 	fi
 	# fill LDAP server address
@@ -44,7 +45,7 @@ start() {
 	sed -i "s,^uri CONFIG_LDAP_SERVER_ADDRESS,uri $CONFIG_LDAP_SERVER,g" /etc/nslcd.conf
 
 	if [ -z "$CONFIG_LDAP_SEARCH_BASE" ]; then
-		echo "Failed! LDAP search base not defined"
+		echo "Failed! LDAP search base not defined" | tee $log_output
 		exit 0
 	fi
 	# fill LDAP search base
@@ -55,12 +56,12 @@ start() {
 		sed -i "s/CONFIG_LDAP_FILTER//g" /etc/nslcd.conf
 	elif [ "$CONFIG_LDAP_FILTER_EGROUP" = "y" ]; then
 		if [ -z "$CONFIG_LDAP_FILTER_EGROUP_STR" ]; then
-			echo -n "Warning: CONFIG_LDAP_FILTER_EGROUP_STR empty! "
+			echo -n "Warning: CONFIG_LDAP_FILTER_EGROUP_STR empty! " | tee $log_output
 		fi
 		sed -i "s/CONFIG_LDAP_FILTER/(memberOf=CN=$CONFIG_LDAP_FILTER_EGROUP_STR,OU=e-groups,OU=Workgroups,$CONFIG_LDAP_SEARCH_BASE)/g" /etc/nslcd.conf
 	elif [ "$CONFIG_LDAP_FILTER_CUSTOM" = "y" ]; then
 		if [ -z "$CONFIG_LDAP_FILTER_CUSTOM_STR" ]; then
-			echo -n "Warning: CONFIG_LDAP_FILTER_CUSTOM_STR empty! "
+			echo -n "Warning: CONFIG_LDAP_FILTER_CUSTOM_STR empty! " | tee $log_output
 		fi
 		sed -i "s/CONFIG_LDAP_FILTER/$CONFIG_LDAP_FILTER_CUSTOM_STR/g" /etc/nslcd.conf
 	fi
@@ -74,7 +75,7 @@ start() {
 	cp -a /usr/etc/pam.d/sshd /etc/pam.d/sshd
 	if [ "$CONFIG_AUTH_KRB5" = "y" ]; then
 		if [ -z "$CONFIG_AUTH_KRB5_SERVER" ]; then
-			echo "Failed! CONFIG_AUTH_KRB5_SERVER empty!"
+			echo "Failed! CONFIG_AUTH_KRB5_SERVER empty!" | tee $log_output
 			exit 0
 		fi
 		

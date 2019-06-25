@@ -5,12 +5,13 @@
 
 dotconfig=/wr/etc/dot-config
 int_file=/etc/network/interfaces
+log_output=/dev/kmsg
 
 # no matter what we do keep lo up
 ifup lo &> /dev/null
 
 if grep -q '/ nfs' /proc/mounts; then
-	echo "Running via NFS: leaving eth0 config alone"
+	echo "Running via NFS: leaving eth0 config alone" | tee $log_output
 	exit 0
 fi
 
@@ -60,21 +61,21 @@ fi
 
 if [ "$CONFIG_HOSTNAME_STATIC" = "y" ]; then
     if [ -z "$CONFIG_HOSTNAME_STRING" ]; then
-	echo "empty CONFIG_HOSTNAME_STRING! use wrs"
+	echo "empty CONFIG_HOSTNAME_STRING! use wrs" | tee $log_output
 	CONFIG_HOSTNAME_STRING="wrs"
     fi
     /bin/hostname "$CONFIG_HOSTNAME_STRING"
-    echo "$CONFIG_HOSTNAME_STRING" > /etc/hostname
+    echo "$CONFIG_HOSTNAME_STRING"  | tee $log_output > /etc/hostname
 elif [ "$CONFIG_HOSTNAME_DHCP" = "y" ]; then
     DHCP_OPT_EXTRA="-O hostname -s /wr/bin/dhcp_extra_opt.sh"
 fi
 
 if [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
-    echo "Try DHCP to get IP"
+    echo "Try DHCP to get IP" | tee $log_output
     # try dhcp, if fail use static IP
-    udhcpc -i eth0 -n $DHCP_OPT_EXTRA
+    udhcpc -i eth0 -n $DHCP_OPT_EXTRA | tee $log_output
     if [ $? -ne 0 ]; then
-	echo "Failed to obtain IP address via DHCP, set static IP"
+	echo "Failed to obtain IP address via DHCP, set static IP" | tee $log_output
 	CONFIG_ETH0_STATIC="y"
     else
 	exit
@@ -83,7 +84,7 @@ fi
 
 if [ "$CONFIG_ETH0_STATIC" = "y" ]; then
     # ifup to use static parameters from /etc/netwrok/interfaces
-    echo "Using static IP"
+    echo "Using static IP" | tee $log_output
     ifup eth0
     exit
 fi

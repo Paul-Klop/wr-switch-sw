@@ -13,6 +13,7 @@ if [ -n "$WRS_VERBOSE" ]; then
     set -x
 fi
 
+log_output=/dev/kmsg
 
 # This kernel has no hwinfo partition (strange...)
 if ! grep -q hwinfo /proc/mtd; then
@@ -23,7 +24,7 @@ fi
 
 if ! [ -f /wr/bin/sdb-read ]; then
     # If for some reason sdb-read is not available, don't touch hwinfo
-    echo "/wr/bin/sdb-read not available!"
+    echo "Error: /wr/bin/sdb-read not available!" | tee $log_output
     # save script result for snmp
     echo "hwinfo_error" > /tmp/hwinfo_read_status
     exit 0;
@@ -41,6 +42,7 @@ echo "Creating SDB filesystem in /dev/mtd5"
 # So, we must create an sdb file, we need the template
 cp /wr/etc/sdb-for-dataflash.bin /tmp 
 if [ $? -ne 0 ] ; then
+    echo "Error: /wr/etc/sdb-for-dataflash.bin not found!" | tee $log_output
     echo "hwinfo_error" > /tmp/hwinfo_read_status
     exit 1
 fi
@@ -74,5 +76,5 @@ echo "hwinfo_ok" > /tmp/hwinfo_read_status
 
 # reboot if hw info was updated
 # Please note that reboot will take pleace after switch finishes booting
-echo -e "\n\nOrdering reboot after hwinfo update!!!\n\n"
+echo -e "\n\nOrdering reboot after hwinfo update!!!\n\n" | tee $log_output
 reboot

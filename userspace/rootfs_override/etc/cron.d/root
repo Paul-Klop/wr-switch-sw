@@ -1,0 +1,3 @@
+# run 1 time per day at 9:10. The script  leap_seconds_file_update.sh is then executed randomly in a 23 hours range 
+10 9   * * * /wr/init.d/leap_seconds_file_update.sh -r 1380
+

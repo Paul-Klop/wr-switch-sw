@@ -1,0 +1,189 @@
+#!/bin/bash
+
+# This script downloads the leap_seconds.list file.
+# At startup, this scrip must be started after the dot-config startup script
+# to be sur to use the correct version of dot-config
+# This script must be launched one time per day to search for a new leap seconds file
+
+wait_before_processing() {
+  range=$1
+  error=0
+  rangeMax=1380 # Default/max value: 23 hours
+  [[ ! "$range" =~ ^-?[0-9]+$ ]] && error=1
+  if (( error == 1 )) || (( $range < 0 )) || (( $range > $rangeMax )) ; then 
+  	range=$rangeMax
+ 	eval echo "Invalid parameter for -r option. Use default value: $rangeMax mn" $LOGPIPE
+  fi
+  sleepTimeMin=`expr ${RANDOM} % $range`
+  sleepTimeSec=`expr $sleepTimeMin \* 60`
+  /bin/sleep $sleepTimeSec
+}
+
+tmpdir="/tmp"
+prefix="leapseconds_download"
+leapSecondsFileName="leap-seconds.list"
+leapSeconds="/wr/etc/$leapSecondsFileName"
+leapSecondsSource="$tmpdir/${prefix}_source"
+leapSecondsStatus="$tmpdir/${prefix}_status"
+leapSecondsSourceUrl="$tmpdir/${prefix}_url"
+dotConfig="/wr/etc/dot-config"
+dotConfigStatus="$tmpdir/dot-config_status"
+tmpconfig="$tmpdir/$leapSecondsFileName"
+bootServerIp="$tmpdir/boot_server_ip"
+
+#
+# Apply dot-config configuration
+#
+if [ -f $dotConfig ]; then
+    # source dot-config
+    . $dotConfig
+else
+	echo "$0 unable to source dot-config ($dotConfig)!"
+fi
+
+WRS_LOG=$CONFIG_WRS_LOG_OTHER
+
+# if empty turn it to /dev/null
+if [ -z $WRS_LOG ]; then
+	WRS_LOG="/dev/null";
+fi
+# if a pathname, use it
+if echo "$WRS_LOG" | grep / > /dev/null; then
+	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
+else
+	# not a pathname: use verbatim
+	eval LOGPIPE=\" 2\>\&1 \| logger -t leap_seconds_file_update -p $WRS_LOG\"
+fi
+
+# Read options
+if [ "$#" -ge 2 ] && [ "$1" == "-r" ] ; then 
+		wait_before_processing $2
+fi
+
+# Check if leap seconds file need run-time updates
+CONFIG_LEAPSEC_URL=`echo $CONFIG_LEAPSEC_URL | tr "\t " `
+
+if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_TRY" = "y" ] \
+	|| [ -n "$CONFIG_LEAPSEC_URL" ] ; then
+    
+    # get URL via DHCP
+    if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_TRY" = "y" ] ; then
+	    echo "try_remote" > $leapSecondsSource
+	else
+	    echo "force_remote" > $leapSecondsSource
+	fi
+
+    URL="$CONFIG_LEAPSEC_URL"
+
+	# Check if the URL constans BOOTSERVER key . We need then to get the IP@ of the boot server
+	if [ "${URL/BOOTSERVER}" != "$URL" ] ; then
+		if [ -f $bootServerIp ]; then
+			bsip=`cat $bootServerIp | tr -d " \n\t"`
+		fi
+		if [ -z "$bsip" ] ; then  
+			# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
+			# from DHCP (which contain url with dot-config).
+			/sbin/udhcpc -i eth0 -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
+				-n -q -f -t 5 &>/dev/null
+		fi
+		# Try again now
+		if [ -f $bootServerIp ]; then
+			bsip=`cat $bootServerIp | tr -d " \n\t"`
+			URL=`echo $URL |  sed -e s/BOOTSERVER/$bsip/g`
+		fi
+		if [ -z "$bsip" ] ; then
+			# Cannot get the bootserver IP@
+		    echo "dhcp_error" > $leapSecondsStatus
+		    eval echo "Unable to get boot server IP. Use local leap seconds file" $LOGPIPE
+		    exit
+		fi;  
+	fi
+
+	# Check if the URL constains MACADDR key
+ 	if [ "${URL/MACADDR}" != "$URL" ] ; then
+	    macaddr=$(cat /sys/class/net/eth0/address)
+		URL=`echo $URL |  sed -e s/MACADDR/$macaddr/g`
+ 	fi
+ 	
+	# Check if the URL constains IPADDR key
+ 	if [ "${URL/IPADDR}" != "$URL" ] ; then
+    	ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+    	if [ -z "$ipaddr" ] ; then
+			# if no IP address available from barebox try to get IP from old dot-config
+			# /etc/init.d/network will run later again
+			/etc/init.d/network
+			ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+    	fi
+    	URL=`echo $URL |  sed -e s/IPADDR/$ipaddr/g`
+    fi
+    
+	# Check if the URL constains HOSTNAME key
+ 	if [ "${URL/HOSTNAME}" != "$URL" ] ; then
+	    host_name=`hostname`
+	    URL=`echo $URL |  sed -e s/HOSTNAME/$host_name/g`
+	fi
+	
+    # split the parts, as we need to handle tftp by hand
+    proto=$(echo $URL | cut -d: -f 1)
+    host=$(echo $URL | cut -d/ -f 3)
+    filename=$(echo $URL | cut -d/ -f 4-)
+
+    # save URL, to be used by SNMPd
+    echo "$URL" > $leapSecondsSourceUrl
+    rm -f $tmpconfig
+    case $proto in
+		http|ftp)
+		    wget $URL -O $tmpconfig
+		    ;;
+		tftp)
+		    tftp -g -r "$filename" -l $tmpconfig $host
+		    ;;
+		*)
+		    eval echo "Invalid URL to leap seconds file: \"$URL\""$LOGPIPE;
+		    echo "invalid_url" > $leapSecondsStatus;
+		    exit 1
+		    ;;
+    esac
+    if [ -f $tmpconfig ]; then
+		# Compare the file with the current
+		leapSecondUpdate=0 
+		for dir in /etc /usr/etc ; do
+			cmp -s $tmpconfig $dir/$leapSecondsFileName || leapSecondUpdate=1
+		done;
+	    	
+	    if [ $leapSecondUpdate == 1 ] ; then 
+			# Check file integrity (simple check) 
+			tagCount=0
+			while read a ; do 
+				if [[ "$a" =~ ^#@ ]] || [[ "$a" =~ ^#\$ ]] || [[ "$a" =~ ^#h ]]  ; then
+					tagCount=`expr $tagCount + 1 `
+				fi
+			done < $tmpconfig
+
+			if [ $tagCount == 3 ] ; then 
+				# The file seems OK
+				# The file must be copy into /etc and /wr/etc
+				for dir in /etc /usr/etc ; do
+					cp $tmpconfig $dir/$leapSecondsFileName.new    
+					mv -f $dir/$leapSecondsFileName $dir/$leapSecondsFileName.old
+					mv $dir/$leapSecondsFileName.new $dir/$leapSecondsFileName
+				done
+			    echo "updated" > $leapSecondsStatus
+			    eval echo "leap seconds file updated" $LOGPIPE 
+			else  
+			    echo "file_invalid" > $leapSecondsStatus
+			    eval echo "Errors detected. Invalid leap seconds file \"$URL\". Using local one" $LOGPIPE
+			fi
+		else
+		    echo "no_changes" > $leapSecondsStatus
+		    eval echo "No changes detected" $LOGPIPE 
+		fi
+    else
+		echo "download_error" > $leapSecondsStatus
+		eval echo "Download error of leap seconds file \"$URL\". Using local one" $LOGPIPE
+    fi
+else
+    echo "local" > $leapSecondsSource 
+    eval echo "Using local \"$leapSecondsFileName\" file" $LOGPIPE
+fi
+

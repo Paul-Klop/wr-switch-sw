@@ -21,6 +21,10 @@ config DOTCONF_INFO
 	  Free-text information about switch's dot-config. This field is
 	  for information purpose only.
 
+#
+# Select source of dot-config file
+# 
+
 choice DOTCONF_SOURCE
 	  prompt "Source for a run-time replacement of dot-config"
 	  default DOTCONF_SOURCE_TRY_DHCP
@@ -63,6 +67,45 @@ config DOTCONF_URL
 	  you configured a DNS server. The special strings HOSTNAME, IPADDR and
 	  MACADDR are substituted before retrieving the file.
 	  Example:  "tftp://morgana/wrs-config-IPADDR"
+
+#
+# Select source of leap seconds file
+# 
+choice LEAPSEC_SOURCE
+	  prompt "Source for a run-time replacement of leap seconds file"
+	  default LEAPSEC_SOURCE_LOCAL
+
+config LEAPSEC_SOURCE_LOCAL
+	bool "Use local leap seconds file"
+	help
+	  A leap seconds file (leap-seconds.list) is already present in the White Rabbit Switch.
+	  If you select this option, the leap seconds file is not replaced
+	  at run time.
+
+config LEAPSEC_SOURCE_REMOTE_FORCE
+	bool "Force remote leap seconds file"
+	help
+	  Use the URL to leap secondw file provided in LEAPSEC_URL.
+	  If the file cannot be downloaded, it will cause errors in SNMP's objects.
+
+config LEAPSEC_SOURCE_REMOTE_TRY
+	bool "Try remote leap seconds file"
+	help
+	  The same as LEAPSEC_SOURCE_REMOTE_FORCE, but this option does not
+	  cause errors in SNMP's objects if the switch fails to retrieve
+	  the URL to the leap seconds files.
+endchoice
+
+config LEAPSEC_URL
+	string "URL for a run-time replacement of leap seconds file"
+	default "ftp://ftp.nist.gov/pub/time/leap-seconds.list"
+	depends on LEAPSEC_SOURCE_REMOTE_TRY || LEAPSEC_SOURCE_REMOTE_FORCE
+	help
+	  tftp://, ftp:// or http:// URLs are allowed. Names are allowed if
+	  you configured a DNS server. The special strings HOSTNAME, BOOTSERVER, IPADDR and
+	  MACADDRare substituted before retrieving the file.
+	  Example:  "tftp://BOOTSERVER/leap-seconds.IPADDR"
+
 
 config BR2_CONFIGFILE
 	string "Configuration file for Buildroot"

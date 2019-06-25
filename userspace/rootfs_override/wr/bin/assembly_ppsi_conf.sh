@@ -13,6 +13,7 @@
 PRE_FILE="/wr/etc/ppsi-pre.conf"
 OUTPUT_FILE="/etc/ppsi.conf"
 DOTCONFIG_FILE="/wr/etc/dot-config"
+log_output=/dev/kmsg
 unset JSON_FORMAT
 
 #decode script parameters
@@ -54,10 +55,10 @@ function get_fiber_delay_coeff() {
 					IFS='=' read -a fpa <<< "$fiber_param"
 					dc=${fpa[1]}
 				 else
-					echo "$script_name: Unknown fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER"
+					echo "$script_name: Unknown fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER" | tee $log_output
 				 fi
 	      	else
-				echo "$script_name: Invalid parameter fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER"
+				echo "$script_name: Invalid parameter fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER" | tee $log_output
 		  	fi
 	    fi
 	    echo "$dc" 
@@ -324,7 +325,7 @@ function set_instance_profile() {
 		    eval ${lv}="ptp"
 			set_profile_for_PTP $inst
 		elif [ -n "$p" ]; then
-			echo "$script_name: Invalid parameter profile=\"$p\" in ${inst}"
+			echo "$script_name: Invalid parameter profile=\"$p\" in ${inst}" | tee $log_output
 			eval ${lv}="ha"
 		else
 			# default
@@ -586,7 +587,7 @@ for i_port in {01..18}; do # scan all the physical ports
 				    && [ "$ppsi_vlans" -le 4094 ] &> /dev/null; then
 					v="$inst_vn[vlan]"; eval ${v}="$ppsi_vlans"
 				else
-					echo "$script_name: Wrong value \"$ppsi_vlans\" in CONFIG_VLANS_PORT"$i_port"_VID"
+					echo "$script_name: Wrong value \"$ppsi_vlans\" in CONFIG_VLANS_PORT"$i_port"_VID" | tee $log_output
 					continue;
 				fi
 			fi

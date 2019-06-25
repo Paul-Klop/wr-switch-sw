@@ -9,6 +9,8 @@
 # When called with "local_config" parameter, files with information about
 # dotconfig source are removed (used by SNMP)
 
+log_output=/dev/kmsg
+
 # We create a temporary file in /tmp, store all files in ramdisk
 
 tmpdir=/tmp
@@ -37,7 +39,7 @@ if [ "$1" == "local_config" ]; then
 	    echo "config_ok" > "$tmpdir"/dot-config_status
 	fi
     else
-	echo "No /wr/etc/dot-config to use" >& 2
+	echo "No /wr/etc/dot-config to use" | tee $log_output >& 2
 	echo "no_config" > "$tmpdir"/dot-config_source
 	echo "config_error" > "$tmpdir"/dot-config_status
 	configured=false
@@ -133,7 +135,7 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 	    tftp -g -r "$filename" -l $tmpconfig $host
 	    ;;
 	*)
-	    echo "Invalid URL for ppsi.conf: \"$URL\"" >& 2
+	    echo "Invalid URL for ppsi.conf: \"$URL\"" | tee $log_output >& 2
 	    ;;
     esac
     if [ -f $tmpconfig ]; then
@@ -142,5 +144,5 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
     fi
 else
     # no valid PTP option keep ppsi.conf with old postfix
-    echo "No valid PTP option in dot-config!" >& 2
+    echo "No valid PTP option in dot-config!" | tee $log_output >& 2
 fi

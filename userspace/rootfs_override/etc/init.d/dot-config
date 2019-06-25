@@ -9,6 +9,13 @@
 dotconfig=/wr/etc/dot-config
 tmpconfig=/tmp/dot-config
 tmpdir=/tmp
+log_output=/dev/kmsg
+
+set -o pipefail # The return value of a pipeline is the status of
+                # the last command to exit with a non-zero status,
+                # or zero if no command exited with a non-zero status
+                # Needed for return value ($?) of xxx in "xxx | tee yyy"
+
 
 rm -f "$tmpdir"/dot-config_source
 
@@ -16,17 +23,17 @@ if [ -f $dotconfig ]; then
     # source dot-config
     . $dotconfig
     ret_source=$?
-    /wr/bin/wrs_checkcfg $dotconfig /wr/etc/Kconfig
+    /wr/bin/wrs_checkcfg $dotconfig /wr/etc/Kconfig 2>&1| tee $log_output
     ret_check=$?
     if [ $ret_source != 0 ] || [ $ret_check != 0 ]; then
 	# errors in local dot-config
 	echo "check_error" > "$tmpdir"/dot-config_status
-	echo "Errors found in local dot-config!!!" >& 2
+	echo "Errors found in local dot-config!!!" | tee $log_output >& 2
     else
 	echo "config_ok" > "$tmpdir"/dot-config_status
     fi
 else
-    echo "No /wr/etc/dot-config to use" >& 2
+    echo "No /wr/etc/dot-config to use" | tee $log_output >& 2
     echo "no_config" > "$tmpdir"/dot-config_source
     echo "config_error" > "$tmpdir"/dot-config_status
 fi
@@ -67,10 +74,10 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 	if [ -f "$tmpdir"/dot-config_source_url ]; then
 	    # replace CONFIG_DOTCONF_URL with one gotten from dhcp
 	    CONFIG_DOTCONF_URL=`cat "$tmpdir"/dot-config_source_url`
-	    echo "Got dot-config's URL ("$CONFIG_DOTCONF_URL") via DHCP" >& 2
+	    echo "Got dot-config's URL ("$CONFIG_DOTCONF_URL") via DHCP" | tee $log_output >& 2
 	else
 	    echo "dhcp_error" > "$tmpdir"/dot-config_status
-	    echo "Unable to get dot-config's URL via DHCP, using old dot-config" >& 2
+	    echo "Unable to get dot-config's URL via DHCP, using old dot-config" | tee $log_output >& 2
 	    # apply old dot-config
 	    /wr/bin/apply_dot-config
 	    exit
@@ -105,33 +112,33 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 	    tftp -g -r "$filename" -l $tmpconfig $host
 	    ;;
 	*)
-	    echo "Invalid URL for dot-config: \"$URL\"" >& 2
+	    echo "Invalid URL for dot-config: \"$URL\"" | tee $log_output >& 2
 	    ;;
     esac
     if [ -f $tmpconfig ]; then
 	# If it exists, it is not empty or too small and the checker is happy
 	# then try to source it in another shell to verify syntax
 	if [ $(cat $tmpconfig | wc -c) -gt 200 ] &&
-	    /wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig &&
+	    /wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig 2>&1| tee $log_output &&
 	    /bin/sh -c ". $tmpconfig"; then
-	    echo "Using newly-downloaded dot-config from $URL" >& 2
+	    echo "Using newly-downloaded dot-config from $URL" | tee $log_output >& 2
 	    # copy it in place to use the new file (unless it is identical)
 	    cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
 	    # info for SNMP that downloading was successful and checker is happy
 	    echo "config_ok" > "$tmpdir"/dot-config_status
 	else
 	    echo "check_error" > "$tmpdir"/dot-config_status
-	    echo "Errors found in downloaded dot-config \"$URL\", using old" >& 2
+	    echo "Errors found in downloaded dot-config \"$URL\", using old" | tee $log_output >& 2
 	fi
     else
 	echo "download_error" > "$tmpdir"/dot-config_status
-	echo "Download error for dot-config \"$URL\", using old" >& 2
+	echo "Download error for dot-config \"$URL\", using old" | tee $log_output >& 2
     fi
 elif [ "$CONFIG_DOTCONF_SOURCE_LOCAL" = "y" ]; then
     echo "local" > "$tmpdir"/dot-config_source
-    echo "Using local dot-config" >& 2
+    echo "Using local dot-config" | tee $log_output >& 2
 else
-    echo "Unknown dot-config source. Using local dot-config" >& 2
+    echo "Unknown dot-config source. Using local dot-config" | tee $log_output >& 2
 fi
 
 # Finally, apply what we have, be it old or new

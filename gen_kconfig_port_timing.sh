@@ -25,7 +25,8 @@ function print_header() {
 	echo -e "menu \"Port Timing Configuration\"" >$OUTPUT_FILE
 	echo -e "config PTP_OPT_EXT_PORT_CONFIG_ENABLED" >>$OUTPUT_FILE
 	echo -e "\tbool \"externalPortConfigurationEnabled\" " >>$OUTPUT_FILE
-	echo -e "\tdefault true" >>$OUTPUT_FILE
+	echo -e "\tdepends on TIME_BC" >>$OUTPUT_FILE
+	echo -e "\tdefault false" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  This option is used by the high accuracy profile to force the port state." >>$OUTPUT_FILE  
 	echo -e "\t  When set, BMCA is disabled." >>$OUTPUT_FILE  
@@ -165,8 +166,8 @@ function print_instance_header() {
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "    prompt \"BMCA mode\"" >>$OUTPUT_FILE
 	echo -e "    depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED!=y" >>$OUTPUT_FILE
-	echo -e "    default PORT${1}_INST${2}_BMODE_MASTER_ONLY if TIME_BC" >>$OUTPUT_FILE
-	echo -e "    default PORT${1}_INST${2}_BMODE_AUTO" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_BMODE_MASTER_ONLY if TIME_GM || TIME_FM" >>$OUTPUT_FILE
+	echo -e "    default PORT${1}_INST${2}_BMODE_AUTO if TIME_BC" >>$OUTPUT_FILE
 	echo -e "    config PORT${1}_INST${2}_BMODE_MASTER_ONLY" >>$OUTPUT_FILE
 	echo -e "        bool \"MasterOnly\"" >>$OUTPUT_FILE
 	echo -e "    config PORT${1}_INST${2}_BMODE_AUTO" >>$OUTPUT_FILE

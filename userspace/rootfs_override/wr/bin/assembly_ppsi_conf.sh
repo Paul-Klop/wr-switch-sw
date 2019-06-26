@@ -398,20 +398,22 @@ declare -A globals
 [[ "$PRE_FILE" != "" ]] && [[ -f $PRE_FILE ]] && decode_pre_file "$PRE_FILE"
 	
 
-# Use default value of clock class if not overwritten or empty string 
-if [ -v CONFIG_PTP_OPT_OVERWRITE_CLOCK_CLASS ] && [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
-	globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS"
-else
-	if [ "$CONFIG_TIME_GM" = "y" ]; then
+if [ "$CONFIG_TIME_GM" = "y" ]; then
 		globals[clock-class]=6
-	fi
-	if [ "$CONFIG_TIME_FM" = "y" ]; then
-		globals[clock-class]=52
-	fi
-	if [ "$CONFIG_TIME_BC" = "y" ]; then
-		globals[clock-class]=248
+else 
+	# Use default value of clock class if not overwritten or empty string 
+	if [ -v CONFIG_PTP_OPT_OVERWRITE_CLOCK_CLASS ] && [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
+		globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS"
+	else
+		if [ "$CONFIG_TIME_FM" = "y" ]; then
+			globals[clock-class]=52
+		fi
+		if [ "$CONFIG_TIME_BC" = "y" ]; then
+			globals[clock-class]=248
+		fi
 	fi
 fi
+
 
 if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
 	globals[clock-accuracy]="$CONFIG_PTP_OPT_CLOCK_ACCURACY"

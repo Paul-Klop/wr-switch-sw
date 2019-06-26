@@ -686,6 +686,7 @@ menu "PTP options"
 
 config PTP_OPT_OVERWRITE_CLOCK_CLASS
 	boolean "Overwrite default clock-class"
+	depends on TIME_BC || TIME_FM
 	default FALSE
 	help
 	  The clock class is automatically set depending of the timing mode.
@@ -693,8 +694,10 @@ config PTP_OPT_OVERWRITE_CLOCK_CLASS
 	   
 config PTP_OPT_CLOCK_CLASS
 	int "clock-class"
-	default 248
-	range 0 255
+	default 52  if TIME_FM
+	default 248 
+	range 128 255 if TIME_BC
+	range 52 122 if TIME_FM
 	depends on PTP_OPT_OVERWRITE_CLOCK_CLASS
 	help
 	  An attribute defining the TAI traceability, synchronization state and

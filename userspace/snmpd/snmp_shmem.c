@@ -32,13 +32,16 @@ static int init_shm_hald(void)
 	/* start printing error after 5 messages */
 	if (n_wait > 5) {
 		if (ret == WRS_SHM_OPEN_FAILED) {
-			snmp_log(LOG_ERR, "Unable to open HAL's shmem!\n");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				"Unable to open HAL's shmem!\n");
 		}
 		if (ret == WRS_SHM_WRONG_VERSION) {
-			snmp_log(LOG_ERR, "Unable to read HAL's version!\n");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				"Unable to read HAL's version!\n");
 		}
 		if (ret == WRS_SHM_INCONSISTENT_DATA) {
-			snmp_log(LOG_ERR, "Unable to read consistent data from"
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				"Unable to read consistent data from"
 				 " HAL's shmem!\n");
 		}
 	}
@@ -49,7 +52,8 @@ static int init_shm_hald(void)
 
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		snmp_log(LOG_ERR, "unknown hal's shm version %i "
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+                        "unknown hal's shm version %i "
 			 "(known is %i)\n", hal_head->version,
 			 HAL_SHMEM_VERSION);
 		return 3;
@@ -59,7 +63,8 @@ static int init_shm_hald(void)
 	/* Assume number of ports does not change in runtime */
 	hal_nports_local = hal_shmem->nports;
 	if (hal_nports_local > WRS_N_PORTS) {
-		snmp_log(LOG_ERR, "Too many ports reported by HAL. "
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, WRS_N_PORTS);
 		return 3;
@@ -68,7 +73,8 @@ static int init_shm_hald(void)
 	 * addresses. No need to re-dereference pointer at each read. */
 	hal_ports = wrs_shm_follow(hal_head, hal_shmem->ports);
 	if (!hal_ports) {
-		snmp_log(LOG_ERR, "Unalbe to follow hal_ports pointer in HAL's"
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"Unalbe to follow hal_ports pointer in HAL's"
 			 " shmem");
 		return 3;
 	}
@@ -88,13 +94,16 @@ static int init_shm_ppsi(void)
 	if (n_wait > 5) {
 		/* timeout! */
 		if (ret == WRS_SHM_OPEN_FAILED) {
-			snmp_log(LOG_ERR, "Unable to open shm for PPSI!\n");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "Unable to open shm for PPSI!\n");
 		}
 		if (ret == WRS_SHM_WRONG_VERSION) {
-			snmp_log(LOG_ERR, "Unable to read PPSI's version!\n");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "Unable to read PPSI's version!\n");
 		}
 		if (ret == WRS_SHM_INCONSISTENT_DATA) {
-			snmp_log(LOG_ERR, "Unable to read consistent data from"
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "Unable to read consistent data from"
 				 " PPSI's shmem!\n");
 		}
 	}
@@ -105,7 +114,8 @@ static int init_shm_ppsi(void)
 
 	/* check ppsi's shm version */
 	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
-		snmp_log(LOG_ERR, "unknown PPSI's shm version %i "
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+                        "unknown PPSI's shm version %i "
 			"(known is %i)\n",
 			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
 		return 3;
@@ -116,13 +126,15 @@ static int init_shm_ppsi(void)
 	ppsi_servo=NULL;
 //	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->servo);
 //	if (!ppsi_servo) {
-//		snmp_log(LOG_ERR, "Cannot follow ppsi_servo in shmem.\n");
+//		snmp_log(LOG_ERR, "SNMP: " SL_ER
+//			"Cannot follow ppsi_servo in shmem.\n");
 //		return 4;
 //	}
 
 	ppsi_ppi = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 	if (!ppsi_ppi) {
-		snmp_log(LOG_ERR, "Cannot follow ppsi_ppi in shmem.\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"Cannot follow ppsi_ppi in shmem.\n");
 		return 5;
 	}
 	/* use pointer instead of copying */
@@ -140,13 +152,16 @@ static int init_shm_rtud(void)
 	/* start printing error after 5 messages */
 	if (n_wait > 5) {
 		if (ret == WRS_SHM_OPEN_FAILED) {
-			snmp_log(LOG_ERR, "Unable to open shm for RTUd!\n");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "Unable to open shm for RTUd!\n");
 		}
 		if (ret == WRS_SHM_WRONG_VERSION) {
-			snmp_log(LOG_ERR, "Unable to read RTUd's version!\n");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "Unable to read RTUd's version!\n");
 		}
 		if (ret == WRS_SHM_INCONSISTENT_DATA) {
-			snmp_log(LOG_ERR, "Unable to read consistent data from"
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "Unable to read consistent data from"
 				 " RTUd's shmem!\n");
 		}
 	}
@@ -157,7 +172,8 @@ static int init_shm_rtud(void)
 
 	/* check rtud's shm version */
 	if (rtud_head->version != RTU_SHMEM_VERSION) {
-		snmp_log(LOG_ERR, "unknown RTUd's shm version %i "
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"unknown RTUd's shm version %i "
 			 "(known is %i)\n", rtud_head->version,
 			 RTU_SHMEM_VERSION);
 		return 3;

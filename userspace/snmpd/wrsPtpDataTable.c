@@ -66,7 +66,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 
 	/* check whether shmem is available */
 	if (!shmem_ready_ppsi()) {
-		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n", __func__);
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+		" %s: Unable to read PPSI's shmem\n",
+			__func__);
 		/* Keep one empty instance. If set to 0 all PPSI related OIDs
 		 * disappear */
 		n_rows_local = 1;
@@ -111,7 +113,8 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 //		//JCB TODO + (ppsi_servo->update_time.scaled_nsecs >> 16);
 		retries++;
 		if (retries > 100) {
-			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",
+			snmp_log(LOG_ERR,  "SNMP: " SL_ER
+				 "%s: too many retries to read PPSI\n",
 				 __func__);
 			retries = 0;
 			}

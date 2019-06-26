@@ -269,7 +269,7 @@ time_t wrsNetworkingStatus_data_fill(void)
 				port_status_n_error++;
 			}
 			if (p_a[i].wrsPortStatusSfpError == 0) {
-				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Unable to read wrsSFPsStatus "
+				snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: Unable to read wrsSFPsStatus "
 					"for port %i (wri%i)\n",
 					slog_obj_name, i + 1, i + 1);
 				port_status_n_na++;

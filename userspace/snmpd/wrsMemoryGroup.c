@@ -41,8 +41,8 @@ time_t wrsMemory_data_fill(void)
 
 	f = fopen(MEMINFO_FILE, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsMemoryGroup filed to open "
-			 MEMINFO_FILE"\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			 " wrsMemoryGroup filed to open " MEMINFO_FILE"\n");
 		/* notify snmp about error in kernel modules */
 
 		return time_update;
@@ -80,7 +80,8 @@ time_t wrsMemory_data_fill(void)
 		wrsMemory_s.wrsMemoryFree = (int) (mem_free + mem_buffers
 						   + mem_cached);
 	} else { /* if not enough entries found */
-		snmp_log(LOG_ERR, "SNMP: wrsMemoryGroup error while reading "
+		snmp_log(LOG_ERR, "SNMP:  " SL_ER
+			 " wrsMemoryGroup error while reading "
 			 "values from "MEMINFO_FILE"\n");
 	}
 

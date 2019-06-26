@@ -480,7 +480,8 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 	if (tmp && !strcmp(tmp, "y")) {
 		/* SNMP should not expect monit to be running */
 		daemon_array[UDI_MONIT].exp = 0;
-		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+		snmp_log(LOG_INFO, "SNMP: " SL_INFO
+			 " wrsBootUserspaceDaemonsMissing:"
 			 " CONFIG_MONIT_DISABLE=y in dot-config\n");
 	}
 
@@ -488,7 +489,8 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 	if (tmp && !strcmp(tmp, "y")) {
 		/* SNMP should not expect lighttpd (web server) to be running*/
 		daemon_array[UDI_HTTP].exp = 0;
-		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+		snmp_log(LOG_INFO, "SNMP: " SL_INFO
+			 " wrsBootUserspaceDaemonsMissing:"
 			 " CONFIG_HTTPD_DISABLE=y in dot-config\n");
 	}
 
@@ -496,7 +498,8 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 	if (tmp && !strcmp(tmp, "y")) {
 		/* SNMP should not expect lldpd to be running */
 		daemon_array[UDI_LLDP].exp = 0;
-		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+		snmp_log(LOG_INFO, "SNMP: " SL_INFO
+			 " wrsBootUserspaceDaemonsMissing:"
 			 " CONFIG_LLDPD_DISABLE=y in dot-config\n");
 	}
 
@@ -505,7 +508,8 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 	if (tmp && !strcmp(tmp, "y")) {
 		/* SNMP should not expect nslcd/LDAP to be running */
 		daemon_array[UDI_NSLCD].exp = 1;
-		snmp_log(LOG_INFO, "SNMP: Info wrsBootUserspaceDaemonsMissing:"
+		snmp_log(LOG_INFO, "SNMP: " SL_INFO
+			 " wrsBootUserspaceDaemonsMissing:"
 			 "no CONFIG_LDAP_ENABLE in dot-config\n");
 	}
 }

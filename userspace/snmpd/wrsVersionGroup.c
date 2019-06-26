@@ -94,7 +94,7 @@ time_t wrsVersion_data_fill(void)
 
 	f = popen(VERSION_COMMAND, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsVersion filed to execute "
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsVersion filed to execute "
 			 VERSION_COMMAND"\n");
 		/* try again next time */
 		run_once = 0;

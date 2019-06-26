@@ -32,8 +32,8 @@ static void read_start_count(char *file, uint32_t *counter)
 
 	f = fopen(file, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsStartCntGroup filed to open file "
-			 "%s\n", file);
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			 " wrsStartCntGroup filed to open file %s\n", file);
 	} else {
 		/* ignore fscanf errors */
 		fscanf(f, "%d", counter);
@@ -60,17 +60,20 @@ time_t wrsStartCnt_data_fill(void){
 	if (shmem_ready_hald()) {
 		wrsStartCnt_s.wrsStartCntHAL = hal_head->pidsequence;
 	} else {
-		snmp_log(LOG_ERR, "%s: Unable to read HAL's shmem\n", __func__);
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+                	"%s: Unable to read HAL's shmem\n", __func__);
 	}
 	if (shmem_ready_ppsi()) {
 		wrsStartCnt_s.wrsStartCntPTP = ppsi_head->pidsequence;
 	} else {
-		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n", __func__);
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"%s: Unable to read PPSI's shmem\n", __func__);
 	}
 	if (shmem_ready_rtud()) {
 		wrsStartCnt_s.wrsStartCntRTUd = rtud_head->pidsequence;
 	} else {
-		snmp_log(LOG_ERR, "%s: Unable to read rtu's shmem\n", __func__);
+		snmp_log(LOG_ERR,  "SNMP: " SL_ER
+			"%s: Unable to read rtu's shmem\n", __func__);
 	}
 
 	read_start_count(START_CNT_SSHD, &wrsStartCnt_s.wrsStartCntSshd);

@@ -27,7 +27,8 @@ time_t wrsCpuLoad_data_fill(void)
 
 	memset(&wrsCpuLoad_s, 0, sizeof(wrsCpuLoad_s));
 	if (sysinfo(&info) != 0) {
-		snmp_log(LOG_ERR, "SNMP: wrsMemoryGroup error while reading "
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			 " wrsMemoryGroup error while reading "
 			 "system statistics with function sysinfo\n");
 	}
 

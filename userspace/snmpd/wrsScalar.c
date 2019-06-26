@@ -73,8 +73,8 @@ handle_wrsScalarOne(netsnmp_mib_handler *handler,
         /*
          * we should never get here, so this is a really bad error 
          */
-        snmp_log(LOG_ERR, "unknown mode (%d) in handle_wrsScalarOne\n",
-                 reqinfo->mode);
+        snmp_log(LOG_ERR, "SNMP: " SL_ER
+                "unknown mode (%d) in handle_wrsScalarOne\n", reqinfo->mode);
         return SNMP_ERR_GENERR;
     }
 

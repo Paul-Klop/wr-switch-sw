@@ -103,11 +103,14 @@ struct pickinfo {
          snmp_log(LOG_ERR, "SNMP: " _log_type " %s\n", slog_obj_name); \
      } while (0)
 
-/* String definitions for functions SLOG* */
-#define SL_ER "Error"
-#define SL_W "Warning"
-#define SL_NA "Warning NA"
-#define SL_BUG "BUG"
+/* String definitions for functions SLOG*, the same lenght of string
+   for better visual experience... */
+#define SL_ER    "Error   "
+#define SL_W     "Warning "
+#define SL_NA    "Warn(NA)"
+#define SL_BUG   "Err(BUG)"
+#define SL_INFO  "Info    "
+#define SL_DEBUG "DEBUG   "
 
 
 #endif /* WRS_SNMP_H */

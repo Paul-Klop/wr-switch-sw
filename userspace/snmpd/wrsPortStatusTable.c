@@ -60,7 +60,8 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	/* check whether shmem is available */
 	if (!shmem_ready_hald()) {
 		/* there was an update, return current time */
-		snmp_log(LOG_ERR, "%s: Unable to read HAL shmem\n", __func__);
+		snmp_log(LOG_ERR,  "SNMP: " SL_ER
+			"%s: Unable to read HAL shmem\n", __func__);
 		n_rows_local = 0;
 		return time_cur;
 	} else {
@@ -159,7 +160,8 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 
 		retries++;
 		if (retries > 100) {
-			snmp_log(LOG_ERR, "%s: Unable to read HAL, too many retries\n",
+			snmp_log(LOG_ERR,  "SNMP: " SL_ER
+				"%s: Unable to read HAL, too many retries\n",
 				 __func__);
 			retries = 0;
 			}
@@ -209,7 +211,8 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				  slog_obj_name, i + 1, i + 1);
 		}
 
-		snmp_log(LOG_DEBUG, "reading ports name %s link %d, "
+		snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG
+			" reading ports name %s link %d, "
 			"mode %d, locked %d\n",
 			wrsPortStatusTable_array[i].wrsPortStatusPortName,
 			wrsPortStatusTable_array[i].wrsPortStatusLink,
@@ -221,7 +224,8 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	/* check whether shmem is available */
 	if (!shmem_ready_ppsi()) {
 		/* there was an update, return current time */
-		snmp_log(LOG_ERR, "%s: Unable to read PPSI shmem\n",
+		snmp_log(LOG_ERR,   "SNMP: " SL_ER
+                        "%s: Unable to read PPSI shmem\n",
 			 __func__);
 		return time_cur;
 	}
@@ -258,8 +262,9 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		}
 		retries++;
 		if (retries > 100) {
-			snmp_log(LOG_ERR, "%s: Unable to read PPSI, too many retries\n",
-					   __func__);
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 "%s: Unable to read PPSI, too many retries\n",
+				 __func__);
 			retries = 0;
 			break;
 			}

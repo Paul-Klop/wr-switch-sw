@@ -258,14 +258,14 @@ static void get_wrsSoftPLLStatus(void)
 	if (!t->wrsSoftPLLStatus) {
 		if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
-			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
 					  "SoftPLL in GrandMaster mode has unlocked from "
 					  "the external reference. Delock counter is %d\n",
 					  slog_obj_name, s->wrsSpllDelCnt);
 		}
 		if (s->wrsSpllMode == WRS_SPLL_MODE_MASTER && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
-			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
 					  "SoftPLL in Master mode has unlocked. Delock "
 					  "counter insceased by %d\n",
 					  slog_obj_name,
@@ -273,7 +273,7 @@ static void get_wrsSoftPLLStatus(void)
 		}
 		if (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
-			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
 					  "SoftPLL in Slave mode has unlocked. Delock "
 					  "counter insceased by %d\n",
 					  slog_obj_name,
@@ -284,7 +284,7 @@ static void get_wrsSoftPLLStatus(void)
 	if (!t->wrsSoftPLLStatus) {
 		if (s->wrsSpllMode == 0) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING_NA;
-			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
 					  "SoftPLL mode not set\n",
 					  slog_obj_name);
 		}
@@ -340,7 +340,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
 				}
 				/* Log always for every port */
-				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+				snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
 					  "Status of wrsPortStatusConfiguredMode not available "
 					  "for port %i (wri%i)\n",
 					  slog_obj_name, i + 1, i + 1);
@@ -350,7 +350,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
 				}
 				/* Log always for every port */
-				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+				snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
 					  "Status of wrsPortStatusLink not available "
 					  "for port %i (wri%i)\n",
 					  slog_obj_name, i + 1, i + 1);
@@ -461,7 +461,7 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_WARNING_NA;
 			}
 			/* Log always for every port */
-			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
 				  "Status of wrsPortStatusConfiguredMode not available "
 				  "for port %i (wri%i)\n",
 				  slog_obj_name, i + 1, i + 1);
@@ -474,7 +474,7 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_WARNING_NA;
 			}
 			/* Log always for every port */
-			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
 				  "Status of wrsPortStatusLink not available "
 				  "for port %i (wri%i)\n",
 				  slog_obj_name, i + 1, i + 1);

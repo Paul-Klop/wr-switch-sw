@@ -58,7 +58,8 @@ time_t wrsTemperature_data_fill(void)
 
 	if (!shmem_ready_hald()) {
 		/* Unable to open shmem, return current time */
-		snmp_log(LOG_ERR, "%s: Unable to read HAL's shmem\n", __func__);
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			" %s: Unable to read HAL's shmem\n", __func__);
 		return time_update;
 	}
 
@@ -72,8 +73,8 @@ time_t wrsTemperature_data_fill(void)
 
 		retries++;
 		if (retries > 100) {
-			snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
-				 __func__);
+			snmp_log(LOG_ERR,  "SNMP: " SL_ER
+			"%s: too many retries to read HAL\n", __func__);
 			retries = 0;
 			}
 		if (!wrs_shm_seqretry(hal_head, ii))

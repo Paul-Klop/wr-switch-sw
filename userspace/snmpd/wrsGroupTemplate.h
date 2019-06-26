@@ -25,7 +25,7 @@ static int group_handler(netsnmp_mib_handler          *handler,
 			requests->requestvb->name_length - 2];
 		obj--; /* we are 0-based */
 		if (obj < 0 || obj >= ARRAY_SIZE(GT_PICKINFO)) {
-			snmp_log(LOG_ERR,
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
 				 "wrong index (%d) in "GT_GROUP_NAME"\n",
 				 obj + 1);
 			return SNMP_ERR_GENERR;
@@ -48,8 +48,9 @@ static int group_handler(netsnmp_mib_handler          *handler,
 					 pi->type, ptr, len);
 		break;
 	default:
-		snmp_log(LOG_ERR, "unknown mode (%d) in "GT_GROUP_NAME"\n",
-			 reqinfo->mode);
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"unknown mode (%d) in "GT_GROUP_NAME"\n",
+			reqinfo->mode);
 		return SNMP_ERR_GENERR;
 	}
 	return SNMP_ERR_NOERROR;

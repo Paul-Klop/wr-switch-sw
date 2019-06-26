@@ -37,7 +37,8 @@ void init_wrsSnmp(void)
 	if (libwr_cfg_read_file(DOTCONFIG_FILE)) {
 		/* unable to read dot-config,
 		 * don't crash SNMPd, it will be reported in SNMP objects */
-		snmp_log(LOG_ERR, "SNMP: unable to read dot-config file %s\n",
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"unable to read dot-config file %s\n",
 			 DOTCONFIG_FILE);
 	}
 	init_wrsScalar();

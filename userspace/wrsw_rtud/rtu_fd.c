@@ -332,7 +332,18 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			//it means that the port moved, so we override the existing mask...
 			mask_src = 0xFFFFFFFF;	//ML: filtering on ingress is optional according to 802.1Q-2012
 			//by default it should not happen. TODO: add optional config
-			if ((ent->port_mask_dst != mask_dst)
+			
+			// Prevent overriding staticly configured entry with
+			// learned (dynamic) entry. Very marginal case that has
+			// happened...
+			if ((at_existing_entry == OVERRIDE_EXISTING_DYNAMIC) &&
+			     ent->dynamic      == RTU_ENTRY_TYPE_STATIC      &&
+			     dynamic           == RTU_ENTRY_TYPE_DYNAMIC){
+				pr_warning("Prevented updating existing static "
+				   "entry for mac %s with dynamic entry.\n",
+				   mac_to_string(mac));
+                        }
+			else if ((ent->port_mask_dst != mask_dst)
 			    || (ent->port_mask_src != mask_src)
 			    || (ent->dynamic != dynamic)) {
 				/* new entry */

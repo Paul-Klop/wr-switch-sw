@@ -40,9 +40,11 @@
 // Most of the time we would like to override the entry because the device simply moved
 // to different "location" (port) but if we want to have redundant connection, we need to 
 // actually add this port to the entry and risk having loop in the network (if the TRU is
-// not ON)
-#define OVERRIDE_EXISTING  0
-#define ADD_TO_EXISTING    1
+// not ON). On the other hand, if a static entry exists, we might not want to override
+// it by dynamic entry.
+#define OVERRIDE_EXISTING  0        // either dynamic or static (by config)
+#define ADD_TO_EXISTING    1        // to be used for redundancy (with caution)
+#define OVERRIDE_EXISTING_DYNAMIC 2 // but not static (by learning)
 
 int rtu_fd_init(uint16_t poly, unsigned long aging)
     __attribute__ ((warn_unused_result));

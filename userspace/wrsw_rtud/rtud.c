@@ -270,7 +270,7 @@ static int rtu_daemon_learning_process(void)
 			err =
 			    rtu_fd_create_entry(req.src, vid, port_map,
 						RTU_ENTRY_TYPE_DYNAMIC,
-						OVERRIDE_EXISTING);
+						OVERRIDE_EXISTING_DYNAMIC);
 			err = 0;
 			if (err == -ENOMEM) {
 				// TODO remove oldest entries (802.1D says you MAY do it)

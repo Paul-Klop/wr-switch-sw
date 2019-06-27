@@ -51,6 +51,9 @@
 #define HW_WRITE_REQ     0
 #define HW_REMOVE_REQ    1
 
+// Used for clean_*() functions
+#define SHM_NOT_LOCK 0
+#define SHM_LOCK     1
 /**
  * \brief Filtering Database entry handle.
  */
@@ -113,9 +116,9 @@ static void clean_list(struct hw_req *head);
 static int hw_request(int type, struct rtu_addr addr,
 		      struct rtu_filtering_entry *ent);
 
-static void clean_fd(void);
-static void clean_vd(void);
-static void clean_mc(void);
+static void clean_fd(int lock);
+static void clean_vd(int lock);
+static void clean_mc(int lock);
 
 static void rtu_hw_commit(void);
 static void rtu_fd_commit(void);
@@ -169,7 +172,8 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		rtu_hdr->filters_offset =
 				(void *)rtu_htab - (void *)rtu_port_shmem;
 		pr_debug("Clean filtering database.\n");
-		clean_fd();		/* clean filtering database */
+		clean_fd(SHM_NOT_LOCK); /* clean filtering database,
+						shem already locked */
 	} else {
 		pr_info("Use existing filtering table.\n");
 		/* next RTUd runs */
@@ -192,7 +196,8 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		rtu_hdr->vlans_offset =
 				(void *)vlan_tab - (void *)rtu_port_shmem;
 		pr_debug("Clean vlan database.\n");
-		clean_vd();		/* clean VLAN database */
+		clean_vd(SHM_NOT_LOCK); /* clean VLAN database,
+						shem already locked */
 	} else {
 		pr_info("Using existing vlan table.\n");
 		/* next RTUd runs */
@@ -215,7 +220,8 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		rtu_hdr->mirror_offset =
 				(void *)mirror_cfg - (void *)rtu_port_shmem;
 		pr_debug("Clean vlan database.\n");
-		clean_mc();		/* clean port mirroring config */
+		clean_mc(SHM_NOT_LOCK); /* clean port mirroring config,
+						shem already locked */
 	} else {
 		pr_info("Using existing port mirroring config.\n");
 		/* next RTUd runs */
@@ -496,24 +502,27 @@ static inline int to_mem_addr(struct rtu_addr addr)
 /**
  * Filtering database initialisation.
  */
-static void clean_fd(void)
+static void clean_fd(int lock)
 {
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+        if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	memset(rtu_htab, 0, sizeof(*rtu_htab) * HTAB_ENTRIES);
 
 	rtu_clean_htab();
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+        if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**
  * VLAN database initialisation. VLANs are initially marked as disabled.
  */
-static void clean_vd(void)
+static void clean_vd(int lock)
 {
 	int i;
 
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	rtu_clean_vlan();
 	for (i = 1; i < NUM_VLANS; i++) {
@@ -530,15 +539,17 @@ static void clean_vd(void)
 	vlan_tab[0].prio = 0;
 
 	rtu_write_vlan_entry(0, &vlan_tab[0]);
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**
  * Port mirroring config initialization (disabled by default).
  */
-static void clean_mc(void)
+static void clean_mc(int lock)
 {
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	mirror_cfg[0].en = 0;
 	mirror_cfg[0].imask = 0x0;
@@ -547,7 +558,8 @@ static void clean_mc(void)
 
 	rtu_enable_mirroring(mirror_cfg[0].en);
 	rtu_cfg_mirroring(mirror_cfg);
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**

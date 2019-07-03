@@ -881,6 +881,75 @@ config SNMP_SWCORESTATUS_DISABLE
 #	  Error if frame rate of any RX priority exceed given value.
 #
 
+menu "System clock monitor"
+
+config SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
+	depends on  NTP_SERVER != ""
+	bool "Enable system clock monitor"
+	default y
+	help
+		When set, the local system time is compared to the time 
+		returned by the NTP server (CONFIG_NTP_SERVER). If the difference
+		of time exceed a given threshold (CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD)
+		then an error will be notified to SNMP.
+
+config SNMP_SYSTEM_CLOCK_DRIFT_THOLD
+	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
+	int "Threshold level for local system clock drift (seconds)"
+	range 1 65535
+	default 3
+	help
+	  Threshold level for the local system clock drift compared to 
+	  a NTP server. The value is expressed in seconds.
+	  When the threshold exceed, warning is notified by SNMP.
+
+choice SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT
+	prompt "Unit of check interval value"
+	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
+	default SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
+	help
+	  Defines the unit used for the check interval value.
+
+config SNMP_SYSTEM_CLOCK_UNIT_MINUTES
+	bool "Minutes"
+
+config SNMP_SYSTEM_CLOCK_UNIT_HOURS
+	bool "Hours"
+
+config SNMP_SYSTEM_CLOCK_UNIT_DAYS
+	bool "Days	"	
+	
+endchoice
+
+config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
+	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_MINUTES
+	int "Interval to verify system clock (Minutes)"
+	range 1 59
+	default 10
+	help
+	  Sets the time interval between checks of the system clock. 
+	  This interval is expressed in minutes.
+
+config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
+	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_HOURS
+	int "Interval to verify system clock (Hours)"
+	range 1 23
+	default 1
+	help
+	  Sets the time interval between checks of the system clock.
+	  This interval is expressed in hours.
+
+config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
+	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_DAYS
+	int "Interval to verify system clock (Days)"
+	range 1 31 
+	default 1
+	help
+	  Sets the time interval between checks of the system clock.
+	  This interval is expressed in days
+
+endmenu
+
 endmenu
 
 menu "External clk2 clock signal configuration"

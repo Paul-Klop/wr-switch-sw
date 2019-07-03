@@ -154,3 +154,7 @@ else
     # no valid PTP option keep ppsi.conf with old postfix
     echo "No valid PTP option in dot-config!" | tee $log_output >& 2
 fi
+
+# System clock monitor: program the cron tab
+/etc/init.d/system_clock_monitor -s
+

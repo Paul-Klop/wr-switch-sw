@@ -28,7 +28,7 @@
 
 #ifndef __WBGEN2_MACROS_DEFINED__
 #define __WBGEN2_MACROS_DEFINED__
-#define WBGEN2_GEN_MASK(offset, size) (((1<<(size))-1) << (offset))
+#define WBGEN2_GEN_MASK(offset, size) (((1ULL<<(size))-1) << (offset))
 #define WBGEN2_GEN_WRITE(value, offset, size) (((value) & ((1<<(size))-1)) << (offset))
 #define WBGEN2_GEN_READ(reg, offset, size) (((reg) >> (offset)) & ((1<<(size))-1))
 #define WBGEN2_SIGN_EXTEND(value, bits) (((value) & (1<<bits) ? ~((1<<(bits))-1): 0 ) | (value))
@@ -72,20 +72,23 @@
 /* definitions for field: Sync to external PPS input in reg: External sync control register */
 #define PPSG_ESCR_SYNC                        WBGEN2_GEN_MASK(0, 1)
 
+/* definitions for field: PPS unmask output in reg: External sync control register */
+#define PPSG_ESCR_PPS_UNMASK                  WBGEN2_GEN_MASK(1, 1)
+
 /* definitions for field: PPS output valid in reg: External sync control register */
-#define PPSG_ESCR_PPS_VALID                   WBGEN2_GEN_MASK(1, 1)
+#define PPSG_ESCR_PPS_VALID                   WBGEN2_GEN_MASK(2, 1)
 
 /* definitions for field: Timecode output(UTC+cycles) valid in reg: External sync control register */
-#define PPSG_ESCR_TM_VALID                    WBGEN2_GEN_MASK(2, 1)
+#define PPSG_ESCR_TM_VALID                    WBGEN2_GEN_MASK(3, 1)
 
 /* definitions for field: Set seconds counter in reg: External sync control register */
-#define PPSG_ESCR_SEC_SET                     WBGEN2_GEN_MASK(3, 1)
+#define PPSG_ESCR_SEC_SET                     WBGEN2_GEN_MASK(4, 1)
 
 /* definitions for field: Set nanoseconds counter in reg: External sync control register */
-#define PPSG_ESCR_NSEC_SET                    WBGEN2_GEN_MASK(4, 1)
+#define PPSG_ESCR_NSEC_SET                    WBGEN2_GEN_MASK(5, 1)
 
 /* definitions for field: Enable PPS_IN 50Ohm termination in reg: External sync control register */
-#define PPSG_ESCR_PPS_IN_TERM                 WBGEN2_GEN_MASK(5, 1)
+#define PPSG_ESCR_PPS_IN_TERM                 WBGEN2_GEN_MASK(6, 1)
 
 PACKED struct PPSG_WB {
   /* [0x0]: REG Control Register */
@@ -105,5 +108,10 @@ PACKED struct PPSG_WB {
   /* [0x1c]: REG External sync control register */
   uint32_t ESCR;
 };
+
+
+#define PPSG_PERIPH_PREFIX                    "ppsg"
+#define PPSG_PERIPH_NAME                      "WR Switch PPS generator and RTC"
+#define PPSG_PERIPH_DESC                      WBGEN2_DESC("Unit generating PPS signals and acting as a UTC real-time clock")
 
 #endif

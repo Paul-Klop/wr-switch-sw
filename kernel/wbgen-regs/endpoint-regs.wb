@@ -86,6 +86,17 @@ peripheral {
 			 type = BIT;
 		};
 
+		field {
+			 name = "Generate preamble shrinkage";
+			 prefix = "TXSHRIN_en";
+			 description = "1: TX preamble shrinkage enabled\
+			                0: TX preamble shrinkage disabled";
+
+			 access_bus = READ_WRITE;
+			 access_dev = READ_ONLY;
+			 type = BIT;
+		};
+
     field {
        name = "Feature present: VLAN tagging";
        description = "1: this implementation of WR Endpoint supports VLAN processing \
@@ -129,6 +140,16 @@ peripheral {
        type = BIT;
        access_bus = READ_ONLY;
        access_dev = WRITE_ONLY;
+    };
+
+    field {
+      name = "Feature present: low phase drift calibration";
+      description = "1: this port can be calibrated for low phase uncertainty on link up\
+                     0: this is a standard WR port with regular performance";
+      prefix = "FEAT_LPC";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
     };
 	};
  
@@ -179,6 +200,24 @@ peripheral {
 				 access_dev = WRITE_ONLY;
 				 clock = "tx_clk_i";
 			};
+
+			field {
+				 name = "Start calibration of RX timestamper";
+				 prefix = "RX_CAL_START";
+				 description = "write 1: start calibration.\
+                        write 0: no effect";
+         type = MONOSTABLE;
+				 clock = "rx_clk_i";
+			};
+
+      field {
+         name = "RX timestamper calibration result flag";
+         prefix = "RX_CAL_RESULT";
+         type = BIT;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
+      };
+
 		};
 	
 		reg {
@@ -258,7 +297,6 @@ peripheral {
 					               11: unqualified port - passes all traffic regardless of VLAN configuration";
 					type = SLV;
 					size = 2;
-					align = 2;
 					prefix = "Qmode";
 					access_dev = READ_ONLY;
 					access_bus = READ_WRITE;
@@ -404,38 +442,50 @@ peripheral {
 		 prefix = "FCR";
 
 		 field {
-				name = "RX Pause enable";
-				description = "1: enable reception of pause frames and TX path throttling \
-                       0: disable reception of pause frames";
+				name = "RX Pause 802.3 enable";
+				description = "1: enable reception of pause frames defined in 802.3 (all priorities) and TX path throttling \
+                       0: disable reception of pause frames defined in 802.3";
 				prefix = "RXPAUSE";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = BIT;
-				load = LOAD_EXT;
 		 };
-
 		 field {
-				name = "TX Pause enable";
+				name = "TX Pause 802.3 enable";
 				description = "1: enable transmission of pause frames and RX path throttling \
                        0: disable transmission of pause frames";
 				prefix = "TXPAUSE";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = BIT;
-				load = LOAD_EXT;
 		 };
-
-
+		 field {
+				name = "Rx Pause 802.1Q enable";
+				description = "1: enable reception of priority-based pause frames (IEEE 802.1Q-2012 Flow Control)  \
+						0: disable reception of priority-based pause frames";
+				prefix = "RXPAUSE_802_1Q";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+		 };
+		 field {
+				name = "Tx Pause 802.1Q enable (not implemented)";
+				description = "1: enable transmission of priority-based pause frames (IEEE 802.1Q-2012) Flow Control \
+						0: disable transmission of priority-based pause frames";
+				prefix = "TXPAUSE_802_1Q";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+		 };
 		 field {
 				name = "TX pause threshold";
 				description = "Defines the percentage of space occupied in the RX buffer which triggers the transmission of a PAUSE frame. 0 = empty buffer, 255 = full buffer";
 				prefix = "TX_THR";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = SLV;
 				size = 8;
 				align = 8;
-				load = LOAD_EXT;
 		 };
 
 		 field {
@@ -443,11 +493,10 @@ peripheral {
 				description = "Defines the quanta value carried bypause frames sent by the Endpoint";
 				prefix = "TX_QUANTA";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = SLV;
 				size = 16;
 				align = 16;
-				load = LOAD_EXT;
 		 };
 	};
 
@@ -598,7 +647,7 @@ peripheral {
 				 prefix = "EN";
 				 access_dev = READ_WRITE;
 				 access_bus = READ_WRITE;
-				 load = LOAD_EXT;
+         load = LOAD_EXT;
 			};
 
 			field {
@@ -610,7 +659,7 @@ peripheral {
 				 align = 16;
 				 access_dev = READ_WRITE;
 				 access_bus = READ_WRITE;
-				 load = LOAD_EXT;
+         load = LOAD_EXT;
 			};
 	 };
 
@@ -636,30 +685,67 @@ peripheral {
 				 access_bus = READ_WRITE;
 			};
 	 };
+	
+	 reg {
+			name = "PCK Injection CTRL";
+			prefix = "INJ_CTRL";
 
+			field {
+				 name = "Config: Interframe GAP";
+				 prefix = "PIC_CONF_IFG";
+				 size = 16;
+				 type = SLV;
+				 access_dev = READ_WRITE;
+				 access_bus = READ_WRITE;
+				 load = LOAD_EXT;
+			};
 
-		ram {
-			 name = "Event counters memory";
-			 description = "RMON event counters:\
-			 0x0 : TX PCS buffer underruns\
-			 0x4 : RX PCS invalid 8b10b codes\
-			 0x8 : RX PCS sync lost events\
-			 0xc : RX PCS buffer overruns\
-			 0x10: RX CRC errors\
-			 0x14: RX valid frames\
-			 0x18: RX runt frames\
-			 0x1c: RX giant frames\
-			 0x20: RX PCS errors\
-			 0x24: RX dropped frames";
+			field {
+				 name = "Config: packet pattern sel id";
+				 prefix = "PIC_CONF_SEL";
+				 size = 3;
+				 type = SLV;
+				 access_dev = READ_WRITE;
+				 access_bus = READ_WRITE;
+				 load = LOAD_EXT;
+			};
+			field {
+				 name = "Config: valid";
+				 prefix = "PIC_CONF_VALID";
+				 type = BIT;
+				 access_dev = READ_WRITE;
+				 access_bus = READ_WRITE;
+				 load = LOAD_EXT;
+			};
+			field {
+				 name = "Mode: packet generate mode";
+				 prefix = "PIC_MODE_ID";
+				 size = 3;
+				 type = SLV;
+				 align= 4;
+				 access_dev = READ_WRITE;
+				 access_bus = READ_WRITE;
+				 load = LOAD_EXT;
+			};
 
-			 size = 32;
-			 width = 32;
-			 
-			 access_dev = READ_WRITE;
-			 access_bus = READ_WRITE;
+			field {
+				 name = "Mode: valid";
+				 prefix = "PIC_MODE_VALID";
+				 type = BIT;
+				 access_dev = READ_WRITE;
+				 access_bus = READ_WRITE;
+				 load = LOAD_EXT;
+			};
 
-			 prefix = "rmon_ram";
-		};
-
-		
+			field {
+				 name = "Frame Generation Enabled";
+				 prefix = "PIC_ENA";
+				 type = BIT;
+				 align = 4;
+				 access_dev = READ_WRITE;
+				 access_bus = READ_WRITE;
+				 load = LOAD_EXT;
+			};
+	 };
+	
 };

@@ -16,9 +16,13 @@
 #ifdef __KERNEL__
 #include <linux/types.h>
 #else
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
 #include <stdint.h>
 #endif
 
+#endif
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
@@ -52,6 +56,9 @@
 /* definitions for field: Receive path enable in reg: Endpoint Control Register */
 #define EP_ECR_RX_EN                          WBGEN2_GEN_MASK(7, 1)
 
+/* definitions for field: Generate preamble shrinkage in reg: Endpoint Control Register */
+#define EP_ECR_TXSHRIN_EN                     WBGEN2_GEN_MASK(8, 1)
+
 /* definitions for field: Feature present: VLAN tagging in reg: Endpoint Control Register */
 #define EP_ECR_FEAT_VLAN                      WBGEN2_GEN_MASK(24, 1)
 
@@ -63,6 +70,9 @@
 
 /* definitions for field: Feature present: DPI packet classifier in reg: Endpoint Control Register */
 #define EP_ECR_FEAT_DPI                       WBGEN2_GEN_MASK(27, 1)
+
+/* definitions for field: Feature present: low phase drift calibration in reg: Endpoint Control Register */
+#define EP_ECR_FEAT_LPC                       WBGEN2_GEN_MASK(28, 1)
 
 /* definitions for register: Timestamping Control Register */
 
@@ -83,7 +93,6 @@
 
 /* definitions for field: RX timestamper calibration result flag in reg: Timestamping Control Register */
 #define EP_TSCR_RX_CAL_RESULT                 WBGEN2_GEN_MASK(5, 1)
-
 
 /* definitions for register: RX Deframer Control Register */
 
@@ -189,11 +198,17 @@
 
 /* definitions for register: Flow Control Register */
 
-/* definitions for field: RX Pause enable in reg: Flow Control Register */
+/* definitions for field: RX Pause 802.3 enable in reg: Flow Control Register */
 #define EP_FCR_RXPAUSE                        WBGEN2_GEN_MASK(0, 1)
 
-/* definitions for field: TX Pause enable in reg: Flow Control Register */
+/* definitions for field: TX Pause 802.3 enable in reg: Flow Control Register */
 #define EP_FCR_TXPAUSE                        WBGEN2_GEN_MASK(1, 1)
+
+/* definitions for field: Rx Pause 802.1Q enable in reg: Flow Control Register */
+#define EP_FCR_RXPAUSE_802_1Q                 WBGEN2_GEN_MASK(2, 1)
+
+/* definitions for field: Tx Pause 802.1Q enable (not implemented) in reg: Flow Control Register */
+#define EP_FCR_TXPAUSE_802_1Q                 WBGEN2_GEN_MASK(3, 1)
 
 /* definitions for field: TX pause threshold in reg: Flow Control Register */
 #define EP_FCR_TX_THR_MASK                    WBGEN2_GEN_MASK(8, 8)
@@ -276,9 +291,35 @@
 
 /* definitions for field: DMTD Phase shift value ready in reg: DMTD Status register */
 #define EP_DMSR_PS_RDY                        WBGEN2_GEN_MASK(24, 1)
-/* definitions for RAM: Event counters memory */
-#define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */                               
-#define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */        
+
+/* definitions for register: PCK Injection CTRL */
+
+/* definitions for field: Config: Interframe GAP in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_CONF_IFG_MASK         WBGEN2_GEN_MASK(0, 16)
+#define EP_INJ_CTRL_PIC_CONF_IFG_SHIFT        0
+#define EP_INJ_CTRL_PIC_CONF_IFG_W(value)     WBGEN2_GEN_WRITE(value, 0, 16)
+#define EP_INJ_CTRL_PIC_CONF_IFG_R(reg)       WBGEN2_GEN_READ(reg, 0, 16)
+
+/* definitions for field: Config: packet pattern sel id in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_CONF_SEL_MASK         WBGEN2_GEN_MASK(16, 3)
+#define EP_INJ_CTRL_PIC_CONF_SEL_SHIFT        16
+#define EP_INJ_CTRL_PIC_CONF_SEL_W(value)     WBGEN2_GEN_WRITE(value, 16, 3)
+#define EP_INJ_CTRL_PIC_CONF_SEL_R(reg)       WBGEN2_GEN_READ(reg, 16, 3)
+
+/* definitions for field: Config: valid in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_CONF_VALID            WBGEN2_GEN_MASK(19, 1)
+
+/* definitions for field: Mode: packet generate mode in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_MODE_ID_MASK          WBGEN2_GEN_MASK(20, 3)
+#define EP_INJ_CTRL_PIC_MODE_ID_SHIFT         20
+#define EP_INJ_CTRL_PIC_MODE_ID_W(value)      WBGEN2_GEN_WRITE(value, 20, 3)
+#define EP_INJ_CTRL_PIC_MODE_ID_R(reg)        WBGEN2_GEN_READ(reg, 20, 3)
+
+/* definitions for field: Mode: valid in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_MODE_VALID            WBGEN2_GEN_MASK(23, 1)
+
+/* definitions for field: Frame Generation Enabled in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_ENA                   WBGEN2_GEN_MASK(24, 1)
 
 PACKED struct EP_WB {
   /* [0x0]: REG Endpoint Control Register */
@@ -315,10 +356,8 @@ PACKED struct EP_WB {
   uint32_t DMCR;
   /* [0x40]: REG DMTD Status register */
   uint32_t DMSR;
-  /* padding to: 32 words */
-  uint32_t __padding_0[15];
-  /* [0x80 - 0xff]: RAM Event counters memory, 32 32-bit words, 32-bit aligned, word-addressable */
-  uint32_t RMON_RAM [32];
+  /* [0x44]: REG PCK Injection CTRL */
+  uint32_t INJ_CTRL;
 };
 
 #endif

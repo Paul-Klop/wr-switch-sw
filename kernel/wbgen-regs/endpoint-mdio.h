@@ -16,9 +16,13 @@
 #ifdef __KERNEL__
 #include <linux/types.h>
 #else
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
 #include <stdint.h>
 #endif
 
+#endif
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
@@ -371,6 +375,33 @@
 #define MDIO_WR_SPEC_BSLIDE_W(value)          WBGEN2_GEN_WRITE(value, 4, 5)
 #define MDIO_WR_SPEC_BSLIDE_R(reg)            WBGEN2_GEN_READ(reg, 4, 5)
 
+/* definitions for register: MDIO Extended Control Register */
+
+/* definitions for field: Loopback - detailed in reg: MDIO Extended Control Register */
+#define MDIO_ECTRL_LPBCK_VEC_MASK             WBGEN2_GEN_MASK(0, 3)
+#define MDIO_ECTRL_LPBCK_VEC_SHIFT            0
+#define MDIO_ECTRL_LPBCK_VEC_W(value)         WBGEN2_GEN_WRITE(value, 0, 3)
+#define MDIO_ECTRL_LPBCK_VEC_R(reg)           WBGEN2_GEN_READ(reg, 0, 3)
+
+/* definitions for field: SFP TX Fault Status in reg: MDIO Extended Control Register */
+#define MDIO_ECTRL_SFP_TX_FAULT               WBGEN2_GEN_MASK(3, 1)
+
+/* definitions for field: SFP LOS in reg: MDIO Extended Control Register */
+#define MDIO_ECTRL_SFP_LOSS                   WBGEN2_GEN_MASK(4, 1)
+
+/* definitions for field: SFP TX Disable in reg: MDIO Extended Control Register */
+#define MDIO_ECTRL_SFP_TX_DISABLE             WBGEN2_GEN_MASK(5, 1)
+
+/* definitions for field: tx_prbs_sel in reg: MDIO Extended Control Register */
+#define MDIO_ECTRL_TX_PRBS_SEL_MASK           WBGEN2_GEN_MASK(8, 3)
+#define MDIO_ECTRL_TX_PRBS_SEL_SHIFT          8
+#define MDIO_ECTRL_TX_PRBS_SEL_W(value)       WBGEN2_GEN_WRITE(value, 8, 3)
+#define MDIO_ECTRL_TX_PRBS_SEL_R(reg)         WBGEN2_GEN_READ(reg, 8, 3)
+
+/* definitions for register: Low phase drift calibration status register */
+
+/* definitions for register: Low phase drift calibration control register */
+
 PACKED struct MDIO_WB {
   /* [0x0]: REG MDIO Control Register */
   uint32_t MCR;
@@ -392,6 +423,12 @@ PACKED struct MDIO_WB {
   uint32_t ESTATUS;
   /* [0x40]: REG WhiteRabbit-specific Configuration Register */
   uint32_t WR_SPEC;
+  /* [0x44]: REG MDIO Extended Control Register */
+  uint32_t ECTRL;
+  /* [0x48]: REG Low phase drift calibration status register */
+  uint32_t LPC_PHY_STAT;
+  /* [0x4c]: REG Low phase drift calibration control register */
+  uint32_t LPC_PHY_CTRL;
 };
 
 #endif

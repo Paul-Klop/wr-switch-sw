@@ -54,6 +54,13 @@ time_t wrsSpllVersion_data_fill(void)
 		/* add time after added space at the end of string */
 		strncpy_e(&wrsSpllVersion_s.wrsSpllBuildDate[len + 1], spll_stats_p->build_time, 16 - 1);
 	}
+	else
+	{
+		snmp_log(LOG_ERR, "SNMP: " SL_ER 
+			"wrsSpllVersionGroup unsupported version of spll_stats "
+			"registers (reading ver %d, supported 2 and 3) \n",
+			spll_stats_p->ver);
+	}
 	/* buil_by was introduced in version 3 */
 	if (spll_stats_p->ver == 3) {
 		strncpy_e(wrsSpllVersion_s.wrsSpllBuildBy, spll_stats_p->build_by, 32);

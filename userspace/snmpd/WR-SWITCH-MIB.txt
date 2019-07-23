@@ -1175,7 +1175,7 @@ wrsStartCntLdap OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Number of LDAP daemon starts"
-    ::= { wrsStartCntGroup 9 }
+    ::= { wrsStartCntGroup 10 }
 
 -- wrsSpllState (.7.3)
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
@@ -2615,7 +2615,7 @@ wrsPstatsHCNICTXFrames OBJECT-TYPE
 
 -- wrsPtpInstanceTable (.7.8)
 wrsPtpInstanceTable OBJECT-TYPE
-    SYNTAX      SEQUENCE OF wrsPtpInstanceEntry
+    SYNTAX      SEQUENCE OF WrsPtpInstanceEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
@@ -2633,22 +2633,35 @@ wrsPtpInstanceEntry OBJECT-TYPE
 
 WrsPtpInstanceEntry ::=
     SEQUENCE {
-        wrsPtpInstancePortIndex          Unsigned32,
-        wrsPtpInstanceOnPortIndex        Unsigned32,
-        wrsPtpInstanceName               DisplayString,
-        wrsPtpInstancePort               INTEGER,
-        wrsPtpInstancePortInstance       INTEGER,
-        wrsPtpInstancePortName           DisplayString,
-        wrsPtpInstanceState              INTEGER,
-        wrsPtpInstanceStateNext          INTEGER,
-        wrsPtpInstanceRole               INTEGER,
-        wrsPtpInstanceMechanism          INTEGER,
-        wrsPtpInstanceProto              INTEGER,
-        wrsPtpInstanceExt                INTEGER,
-        wrsPtpInstancePeerMac            PhysAddress,
-        wrsPtpInstancePeerVid            INTEGER,
-        wrsPtpInstanceVlanNum            INTEGER,
-        wrsPtpInstanceVlanListStr        INTEGER,
+        wrsPtpInstancePortIndex         Unsigned32,
+        wrsPtpInstanceOnPortIndex       Unsigned32,
+        wrsPtpInstanceName              DisplayString,
+        wrsPtpInstancePort              INTEGER,
+        wrsPtpInstancePortInstance      INTEGER,
+        wrsPtpInstancePortName          DisplayString,
+        wrsPtpInstanceState             INTEGER,
+        wrsPtpInstanceMasterOnly        INTEGER,
+        wrsPtpInstanceExtPortCfgDesSt   INTEGER,
+        wrsPtpInstanceMechanism         INTEGER,
+        wrsPtpInstanceProfile           INTEGER,
+        wrsPtpInstanceExtension         INTEGER,
+        wrsPtpInstanceAsymEnabled       INTEGER,
+        wrsPtpInstanceAsymConstAsym     INTEGER,
+        wrsPtpInstanceAsymScDelayCoef   Counter64,
+        wrsPtpInstanceAsymScDelayCoefHR DisplayString,
+        wrsPtpInstanceTSCorrEgressLat   Counter64,
+        wrsPtpInstanceTSCorrEgressLatPS Counter64,
+        wrsPtpInstanceTSCorrIngLat      Counter64,
+        wrsPtpInstanceTSCorrIngLatPS    Counter64,
+        wrsPtpInstanceTSCorrSemistLat   Counter64,
+        wrsPtpInstanceTSCorrSemistLatPS Counter64,
+        wrsPtpInstancePtpSupport        INTEGER,
+        wrsPtpInstanceExtEnabled        INTEGER,
+        wrsPtpInstanceProtoDetectState  INTEGER,
+        wrsPtpInstancePeerMac           PhysAddress,
+        wrsPtpInstancePeerVid           INTEGER,
+        wrsPtpInstanceVlanNum           INTEGER,
+        wrsPtpInstanceVlanListStr       DisplayString --check--
     }
 
 wrsPtpInstancePortIndex OBJECT-TYPE
@@ -2736,92 +2749,182 @@ wrsPtpInstanceState OBJECT-TYPE
             "Name of instance"
     ::= { wrsPtpInstanceEntry 7 }
 
-wrsPtpInstanceStateNext OBJECT-TYPE
+wrsPtpInstanceMasterOnly  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        initializing(1),
-                        faulty(2),
-                        disabled(3),
-                        listening(4),
-                        preMaster(5),
-                        master(6),
-                        passive(7),
-                        uncalibrated(8),
-                        slave(9),
-                        wrsPresent(100),
-                        wrsSLock(101),
-                        wrsMLock(102),
-                        wrsLocked(103),
-                        wrsCalibration(104),
-                        wrsCalibrated(105),
-                        wrsRespCalibReq(106),
-                        wrsWrLinkOn(107),
-                        wrPortCalibration0(108),
-                        wrPortCalibration1(109),
-                        wrPortCalibration2(110),
-                        wrPortCalibration3(111),
-                        wrPortCalibration4(112),
-                        wrPortCalibration5(113),
-                        wrPortCalibration6(114),
-                        wrPortCalibration7(115),
-                        wrPortCalibration8(116),
-                        wrsAbscal(117)
+                        x(1)
+                        --????--
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Name of instance"
+            "????"
     ::= { wrsPtpInstanceEntry 8 }
 
-wrsPtpInstanceRole OBJECT-TYPE
+wrsPtpInstanceExtPortCfgDesSt  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        auto(1),
-                        master(2),
-                        slave(3)
+                        --????--
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Role of instance"
+            "????"
     ::= { wrsPtpInstanceEntry 9 }
 
-wrsPtpInstanceMechanism OBJECT-TYPE
+wrsPtpInstanceMechanism  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        e2e(1),
-                        p2p(2),
+                        --????--
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Mechanism used by an instance"
+            "????"
     ::= { wrsPtpInstanceEntry 10 }
 
-wrsPtpInstanceProto OBJECT-TYPE
+wrsPtpInstanceProfile  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        raw(1),
-                        udp(2),
-                        vlan(3),
+                        --????--
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Protocol used by an instance"
+            "????"
     ::= { wrsPtpInstanceEntry 11 }
 
-wrsPtpInstanceExt OBJECT-TYPE
+wrsPtpInstanceExtension  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        none(1),
-                        wr(2),
+                        --????--
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Extension used by an instance"
+            "????"
     ::= { wrsPtpInstanceEntry 12 }
+
+wrsPtpInstanceAsymEnabled  OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        --????--
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 13 }
+
+wrsPtpInstanceAsymConstAsym  OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        x(1)
+                        --????--
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 14 }
+
+wrsPtpInstanceAsymScDelayCoef OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 15 }
+
+wrsPtpInstanceAsymScDelayCoefHR OBJECT-TYPE
+    SYNTAX                     DisplayString --size--
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsPtpInstanceEntry 16 }
+
+wrsPtpInstanceTSCorrEgressLat OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 17 }
+
+wrsPtpInstanceTSCorrEgressLatPS OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 18 }
+
+wrsPtpInstanceTSCorrIngLat OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 19 }
+
+wrsPtpInstanceTSCorrIngLatPS OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 20 }
+
+wrsPtpInstanceTSCorrSemistLat OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 21 }
+
+wrsPtpInstanceTSCorrSemistLatPS OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 22 }
+
+wrsPtpInstancePtpSupport  OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        --????--
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 23 }
+
+wrsPtpInstanceExtEnabled  OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        --????--
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 24 }
+
+wrsPtpInstanceProtoDetectState  OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        --????--
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "????"
+    ::= { wrsPtpInstanceEntry 25 }
+
 
 wrsPtpInstancePeerMac  OBJECT-TYPE
     SYNTAX             PhysAddress
@@ -2829,31 +2932,31 @@ wrsPtpInstancePeerMac  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "VID used by an instance"
-    ::= { wrsPtpInstanceEntry 13 }
+    ::= { wrsPtpInstanceEntry 26 }
 
 wrsPtpInstancePeerVid  OBJECT-TYPE
-    SYNTAX             Integer
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
             "VID used by an instance"
-    ::= { wrsPtpInstanceEntry 14 }
+    ::= { wrsPtpInstanceEntry 27 }
 
 wrsPtpInstanceVlanNum  OBJECT-TYPE
-    SYNTAX             Integer
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
             "Number of VLANs used by an instance"
-    ::= { wrsPtpInstanceEntry 15 }
+    ::= { wrsPtpInstanceEntry 28 }
 
 wrsPtpInstanceVlanListStr  OBJECT-TYPE
-    SYNTAX             Integer
+    SYNTAX             DisplayString --size?--
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
             "Coma separated list of VLANs used by an instance"
-    ::= { wrsPtpInstanceEntry 16 }
+    ::= { wrsPtpInstanceEntry 29 }
 
 --wrsNetworking
 --Configuration

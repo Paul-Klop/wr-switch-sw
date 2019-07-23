@@ -3,25 +3,46 @@
 #include "wrsPtpInstanceTable.h"
 
 struct wrsPtpInstanceTable_s wrsPtpInstanceTable_array[PP_MAX_LINKS];
+// global:
+// defaultDS_t:
+// --externalPortConfigurationEnabled
+// --slaveOnly
+
 
 static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
-	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED, wrsPtpInstancePortIndex), /* not reported */
-	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED, wrsPtpInstanceOnPortIndex), /* not reported */
+	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED,  wrsPtpInstancePortIndex), /* not reported */
+	FIELD(wrsPtpInstanceTable_s, ASN_UNSIGNED,  wrsPtpInstanceOnPortIndex), /* not reported */
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceName),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePort),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePortInstance),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePort),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePortInstance),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePortName),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceState),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceStateNext),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceRole),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceMechanism),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceProto),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceExt),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceState),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceMasterOnly),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtPortCfgDesSt),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceMechanism),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceProfile),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtension),
+
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceAsymEnabled),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceAsymConstAsym),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymScDelayCoef),
+	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceAsymScDelayCoefHR),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLat),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLatPS),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLat),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLatPS),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLat),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLatPS),
+
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePtpSupport),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtEnabled),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceProtoDetectState),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePeerMac),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstancePeerVid),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER, wrsPtpInstanceVlanNum),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePeerVid),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceVlanNum),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceVlanListStr),
+
 };
 
 static inline struct hal_port_state *pp_wrs_lookup_port(char *name)
@@ -44,6 +65,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	struct wrsPtpInstanceTable_s *i_a;
 	struct pp_instance *ppsi_i;
 	char *tmp_name;
+	portDS_t *portDS_i;
 	struct hal_port_state *p;
 	int phys_port;
 	int last_port = 0;
@@ -117,11 +139,29 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			i_a[i].wrsPtpInstancePortInstance = instance_on_port;
 
 			i_a[i].wrsPtpInstanceState = ppsi_i->state;
-			i_a[i].wrsPtpInstanceStateNext = ppsi_i->next_state;
-			i_a[i].wrsPtpInstanceRole = ppsi_i->role + 1;
-			i_a[i].wrsPtpInstanceMechanism = ppsi_i->mech + 1;
-			i_a[i].wrsPtpInstanceProto = ppsi_i->proto + 1;
-			i_a[i].wrsPtpInstanceExt = ppsi_i->cfg.ext + 1;
+			/* follow portDS */
+			portDS_i = (portDS_t *) wrs_shm_follow(ppsi_head,
+							       ppsi_i->portDS);
+			if (portDS_i)
+				i_a[i].wrsPtpInstanceMasterOnly = portDS_i->masterOnly;
+
+			i_a[i].wrsPtpInstanceExtPortCfgDesSt = ppsi_i->externalPortConfigurationPortDS.desiredState;
+			i_a[i].wrsPtpInstanceMechanism = ppsi_i->delayMechanism;
+			i_a[i].wrsPtpInstanceProfile = ppsi_i->cfg.profile;
+			i_a[i].wrsPtpInstanceExtension = ppsi_i->protocol_extension;
+			i_a[i].wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
+			i_a[i].wrsPtpInstanceAsymConstAsym = ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry;
+			i_a[i].wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
+			//i_a[i].wrsPtpInstanceAsymScDelayCoefHR = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient (string)
+			i_a[i].wrsPtpInstanceTSCorrEgressLat = ppsi_i->timestampCorrectionPortDS.egressLatency;
+// 			i_a[i].wrsPtpInstanceTSCorrEgressLatPS = ppsi_i->timestampCorrectionPortDS.egressLatency (ps)
+			i_a[i].wrsPtpInstanceTSCorrIngLat = ppsi_i->timestampCorrectionPortDS.ingressLatency;
+// 			i_a[i].wrsPtpInstanceTSCorrIngLatPS = ppsi_i->timestampCorrectionPortDS.ingressLatency (ps)
+			i_a[i].wrsPtpInstanceTSCorrSemistLat = ppsi_i->timestampCorrectionPortDS.semistaticLatency;
+// 			i_a[i].wrsPtpInstanceTSCorrSemistLatPS = ppsi_i->timestampCorrectionPortDS.semistaticLatency (ps)(bitslide)
+			i_a[i].wrsPtpInstancePtpSupport = ppsi_i->ptp_support;
+			i_a[i].wrsPtpInstanceExtEnabled = ppsi_i->extState;
+			i_a[i].wrsPtpInstanceProtoDetectState = ppsi_i->pdstate;
 
 			memcpy(i_a[i].wrsPtpInstancePeerMac, ppsi_i->peer, ETH_ALEN);
 			i_a[i].wrsPtpInstancePeerVid = ppsi_i->peer_vid;

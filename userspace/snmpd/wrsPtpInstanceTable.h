@@ -19,11 +19,24 @@ struct wrsPtpInstanceTable_s {
 	int wrsPtpInstancePortInstance; /* serial of instance running on a given port  */
 	char wrsPtpInstancePortName[16];/* port name on which ptp instance is running (wriX) */
 	int wrsPtpInstanceState;
-	int wrsPtpInstanceStateNext;
-	int wrsPtpInstanceRole;
-	int wrsPtpInstanceMechanism;
-	int wrsPtpInstanceProto;
-	int wrsPtpInstanceExt;
+	int wrsPtpInstanceMasterOnly;
+	int wrsPtpInstanceExtPortCfgDesSt;
+	int wrsPtpInstanceMechanism; /* ENDelayMechanism */
+	int wrsPtpInstanceProfile;
+	int wrsPtpInstanceExtension;
+	int wrsPtpInstanceAsymEnabled;
+	int wrsPtpInstanceAsymConstAsym;
+	int wrsPtpInstanceAsymScDelayCoef;
+	char wrsPtpInstanceAsymScDelayCoefHR[64];
+	int64_t wrsPtpInstanceTSCorrEgressLat;
+	int64_t wrsPtpInstanceTSCorrEgressLatPS;
+	int64_t wrsPtpInstanceTSCorrIngLat;
+	int64_t wrsPtpInstanceTSCorrIngLatPS;
+	int64_t wrsPtpInstanceTSCorrSemistLat;
+	int64_t wrsPtpInstanceTSCorrSemistLatPS;
+	int wrsPtpInstancePtpSupport;
+	int wrsPtpInstanceExtEnabled;
+	int wrsPtpInstanceProtoDetectState;
 	char wrsPtpInstancePeerMac[ETH_ALEN];
 	int wrsPtpInstancePeerVid;
 	int wrsPtpInstanceVlanNum;

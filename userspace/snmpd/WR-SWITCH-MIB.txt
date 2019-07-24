@@ -10,7 +10,7 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 IMPORTS
         OBJECT-TYPE, Integer32, Unsigned32, Counter32, Counter64,
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
-        DisplayString                         FROM SNMPv2-TC;
+        DisplayString, PhysAddress            FROM SNMPv2-TC;
 
 
 
@@ -2159,7 +2159,7 @@ wrsPortStatusSfpDom    OBJECT-TYPE
     ::= { wrsPortStatusEntry 16 }
 
 wrsPortStatusSfpTemp   OBJECT-TYPE
-    SYNTAX             INTEGER
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
@@ -2168,7 +2168,7 @@ wrsPortStatusSfpTemp   OBJECT-TYPE
     ::= { wrsPortStatusEntry 17 }
 
 wrsPortStatusSfpVcc    OBJECT-TYPE
-    SYNTAX             INTEGER
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
@@ -2177,7 +2177,7 @@ wrsPortStatusSfpVcc    OBJECT-TYPE
     ::= { wrsPortStatusEntry 18 }
 
 wrsPortStatusSfpTxBias OBJECT-TYPE
-    SYNTAX             INTEGER
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
@@ -2186,7 +2186,7 @@ wrsPortStatusSfpTxBias OBJECT-TYPE
     ::= { wrsPortStatusEntry 19 }
 
 wrsPortStatusSfpTxPower OBJECT-TYPE
-    SYNTAX             INTEGER
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
@@ -2195,7 +2195,7 @@ wrsPortStatusSfpTxPower OBJECT-TYPE
     ::= { wrsPortStatusEntry 20 }
 
 wrsPortStatusSfpRxPower OBJECT-TYPE
-    SYNTAX             INTEGER
+    SYNTAX             Integer32
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
@@ -2689,7 +2689,7 @@ wrsPtpInstanceName OBJECT-TYPE
     ::= { wrsPtpInstanceEntry 3 }
 
 wrsPtpInstancePort OBJECT-TYPE
-    SYNTAX         INTEGER
+    SYNTAX         Integer32
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
@@ -2697,7 +2697,7 @@ wrsPtpInstancePort OBJECT-TYPE
     ::= { wrsPtpInstanceEntry 4 }
 
 wrsPtpInstancePortInstance OBJECT-TYPE
-    SYNTAX         INTEGER
+    SYNTAX         Integer32
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
@@ -2764,6 +2764,7 @@ wrsPtpInstanceMasterOnly  OBJECT-TYPE
 wrsPtpInstanceExtPortCfgDesSt  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2775,6 +2776,7 @@ wrsPtpInstanceExtPortCfgDesSt  OBJECT-TYPE
 wrsPtpInstanceMechanism  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2786,6 +2788,7 @@ wrsPtpInstanceMechanism  OBJECT-TYPE
 wrsPtpInstanceProfile  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2797,6 +2800,7 @@ wrsPtpInstanceProfile  OBJECT-TYPE
 wrsPtpInstanceExtension  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2808,6 +2812,7 @@ wrsPtpInstanceExtension  OBJECT-TYPE
 wrsPtpInstanceAsymEnabled  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2895,6 +2900,7 @@ wrsPtpInstanceTSCorrSemistLatPS OBJECT-TYPE
 wrsPtpInstancePtpSupport  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2906,6 +2912,7 @@ wrsPtpInstancePtpSupport  OBJECT-TYPE
 wrsPtpInstanceExtEnabled  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only
@@ -2917,6 +2924,7 @@ wrsPtpInstanceExtEnabled  OBJECT-TYPE
 wrsPtpInstanceProtoDetectState  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
+                        x(1)
                         --????--
     }
     MAX-ACCESS     read-only

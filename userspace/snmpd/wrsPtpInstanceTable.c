@@ -25,7 +25,8 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtension),
 
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceAsymEnabled),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceAsymConstAsym),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsym),
+	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsymPS),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymScDelayCoef),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceAsymScDelayCoefHR),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLat),
@@ -35,8 +36,7 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLatPS),
 
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePtpSupport),
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtEnabled),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtState),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceProtoDetectState),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePeerMac),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePeerVid),
@@ -72,6 +72,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	int instance_on_port = 0;
 	char *tmpstr_p;
 	int vlan_i;
+        float tmp_f;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -143,25 +144,31 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			portDS_i = (portDS_t *) wrs_shm_follow(ppsi_head,
 							       ppsi_i->portDS);
 			if (portDS_i)
-				i_a[i].wrsPtpInstanceMasterOnly = portDS_i->masterOnly;
+				i_a[i].wrsPtpInstanceMasterOnly = portDS_i->masterOnly ? 2 : 1 ;
+			else 
+				i_a[i].wrsPtpInstanceMasterOnly = 0;
 
 			i_a[i].wrsPtpInstanceExtPortCfgDesSt = ppsi_i->externalPortConfigurationPortDS.desiredState;
 			i_a[i].wrsPtpInstanceMechanism = ppsi_i->delayMechanism;
-			i_a[i].wrsPtpInstanceProfile = ppsi_i->cfg.profile;
-			i_a[i].wrsPtpInstanceExtension = ppsi_i->protocol_extension;
+			i_a[i].wrsPtpInstanceProfile = ppsi_i->cfg.profile + 1;
+			i_a[i].wrsPtpInstanceExtension = ppsi_i->protocol_extension+1;
 			i_a[i].wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
 			i_a[i].wrsPtpInstanceAsymConstAsym = ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry;
+			i_a[i].wrsPtpInstanceAsymConstAsymPS = (int64_t)((((float)ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
-			//i_a[i].wrsPtpInstanceAsymScDelayCoefHR = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient (string)
+			tmpstr_p = i_a[i].wrsPtpInstanceAsymScDelayCoefHR;
+			tmp_f    = ((float)ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient)/((1<<62));
+			snprintf(tmpstr_p, 64, "%f,", tmp_f);
+			
 			i_a[i].wrsPtpInstanceTSCorrEgressLat = ppsi_i->timestampCorrectionPortDS.egressLatency;
-// 			i_a[i].wrsPtpInstanceTSCorrEgressLatPS = ppsi_i->timestampCorrectionPortDS.egressLatency (ps)
+			i_a[i].wrsPtpInstanceTSCorrEgressLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.egressLatency)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceTSCorrIngLat = ppsi_i->timestampCorrectionPortDS.ingressLatency;
-// 			i_a[i].wrsPtpInstanceTSCorrIngLatPS = ppsi_i->timestampCorrectionPortDS.ingressLatency (ps)
+			i_a[i].wrsPtpInstanceTSCorrIngLatPS = (int64_t)((((float)ppsi_i->timestampCorrectionPortDS.ingressLatency)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceTSCorrSemistLat = ppsi_i->timestampCorrectionPortDS.semistaticLatency;
-// 			i_a[i].wrsPtpInstanceTSCorrSemistLatPS = ppsi_i->timestampCorrectionPortDS.semistaticLatency (ps)(bitslide)
-			i_a[i].wrsPtpInstancePtpSupport = ppsi_i->ptp_support;
-			i_a[i].wrsPtpInstanceExtEnabled = ppsi_i->extState;
-			i_a[i].wrsPtpInstanceProtoDetectState = ppsi_i->pdstate;
+			i_a[i].wrsPtpInstanceTSCorrSemistLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.semistaticLatency)/(1<<16))*1000);
+
+			i_a[i].wrsPtpInstanceProtoDetectState = ppsi_i->pdstate+1;
+			i_a[i].wrsPtpInstanceExtState = ppsi_i->extState+1;
 
 			memcpy(i_a[i].wrsPtpInstancePeerMac, ppsi_i->peer, ETH_ALEN);
 			i_a[i].wrsPtpInstancePeerVid = ppsi_i->peer_vid;

@@ -2646,7 +2646,8 @@ WrsPtpInstanceEntry ::=
         wrsPtpInstanceProfile           INTEGER,
         wrsPtpInstanceExtension         INTEGER,
         wrsPtpInstanceAsymEnabled       INTEGER,
-        wrsPtpInstanceAsymConstAsym     INTEGER,
+        wrsPtpInstanceAsymConstAsym     Counter64,
+        wrsPtpInstanceAsymConstAsymPS   Counter64,
         wrsPtpInstanceAsymScDelayCoef   Counter64,
         wrsPtpInstanceAsymScDelayCoefHR DisplayString,
         wrsPtpInstanceTSCorrEgressLat   Counter64,
@@ -2655,13 +2656,12 @@ WrsPtpInstanceEntry ::=
         wrsPtpInstanceTSCorrIngLatPS    Counter64,
         wrsPtpInstanceTSCorrSemistLat   Counter64,
         wrsPtpInstanceTSCorrSemistLatPS Counter64,
-        wrsPtpInstancePtpSupport        INTEGER,
-        wrsPtpInstanceExtEnabled        INTEGER,
         wrsPtpInstanceProtoDetectState  INTEGER,
+        wrsPtpInstanceExtState          INTEGER,
         wrsPtpInstancePeerMac           PhysAddress,
         wrsPtpInstancePeerVid           INTEGER,
         wrsPtpInstanceVlanNum           INTEGER,
-        wrsPtpInstanceVlanListStr       DisplayString --check--
+        wrsPtpInstanceVlanListStr       DisplayString
     }
 
 wrsPtpInstancePortIndex OBJECT-TYPE
@@ -2723,25 +2723,7 @@ wrsPtpInstanceState OBJECT-TYPE
                         master(6),
                         passive(7),
                         uncalibrated(8),
-                        slave(9),
-                        wrsPresent(100),
-                        wrsSLock(101),
-                        wrsMLock(102),
-                        wrsLocked(103),
-                        wrsCalibration(104),
-                        wrsCalibrated(105),
-                        wrsRespCalibReq(106),
-                        wrsWrLinkOn(107),
-                        wrPortCalibration0(108),
-                        wrPortCalibration1(109),
-                        wrPortCalibration2(110),
-                        wrPortCalibration3(111),
-                        wrPortCalibration4(112),
-                        wrPortCalibration5(113),
-                        wrPortCalibration6(114),
-                        wrPortCalibration7(115),
-                        wrPortCalibration8(116),
-                        wrsAbscal(117)
+                        slave(9)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -2752,185 +2734,194 @@ wrsPtpInstanceState OBJECT-TYPE
 wrsPtpInstanceMasterOnly  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        x(1)
-                        --????--
+                        disabled(1),
+                        enabled(2)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "MasterOnly feature enabled/disabled"
     ::= { wrsPtpInstanceEntry 8 }
 
 wrsPtpInstanceExtPortCfgDesSt  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        x(1)
-                        --????--
+                        initializing(1),
+                        faulty(2),
+                        disabled(3),
+                        listening(4),
+                        preMaster(5),
+                        master(6),
+                        passive(7),
+                        uncalibrated(8),
+                        slave(9)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "DesiredState to be used if/when externalPortConfiguration feature is enabled"
     ::= { wrsPtpInstanceEntry 9 }
 
 wrsPtpInstanceMechanism  OBJECT-TYPE
-    SYNTAX         INTEGER {
+    SYNTAX         INTEGER { --- see ppsi/include/ppsi/ieee1588_types.h
                         na(0),
-                        x(1)
-                        --????--
+                        e2e(1),
+                        p2p(2),
+                        commonP2P(3),
+                        special(4),
+                        noMechanism(254)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "Delay Mechanism type used by PTP Instance"
     ::= { wrsPtpInstanceEntry 10 }
 
 wrsPtpInstanceProfile  OBJECT-TYPE
-    SYNTAX         INTEGER {
+    SYNTAX         INTEGER {              -- ppsi/include/ppsi/ppsi.h
                         na(0),
-                        x(1)
-                        --????--
+                        defaultPTP(1),    -- PPSI_PROFILE_PTP
+                        whiteRabbit(2),   -- PPSI_PROFILE_WR
+                        highAccuracy(3),  -- PPSI_PROFILE_HA
+                        custom(4)         -- PPSI_PROFILE_CUSTOM
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "Profile/Extension configured on a PTP Instance"
     ::= { wrsPtpInstanceEntry 11 }
 
 wrsPtpInstanceExtension  OBJECT-TYPE
-    SYNTAX         INTEGER {
+    SYNTAX         INTEGER {               --ppsi/include/ppsi/ppsi.h
                         na(0),
-                        x(1)
-                        --????--
+                        none(1),           -- PPSI_EXT_NONE
+                        whiteRabbit(2),    -- PPSI_EXT_WR
+                        l1Sync(3)          -- PPSI_EXT_L1S
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "Extension used on the PTP Instance"
     ::= { wrsPtpInstanceEntry 12 }
 
 wrsPtpInstanceAsymEnabled  OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        x(1)
-                        --????--
+                        disabled(1),
+                        enabled(2)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "Asymmetry Corrections enabled/disabled on the PTP Instance"
     ::= { wrsPtpInstanceEntry 13 }
 
 wrsPtpInstanceAsymConstAsym  OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        na(0),
-                        x(1)
-                        --????--
-    }
+    SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "Constant Asymmetry in scaled nanoseconds"
     ::= { wrsPtpInstanceEntry 14 }
+
+wrsPtpInstanceAsymConstAsymPS  OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Constant Asymmetry in picoseconds"
+    ::= { wrsPtpInstanceEntry 15 }
 
 wrsPtpInstanceAsymScDelayCoef OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 15 }
+            "Scaled Relative Delay Coefficient"
+    ::= { wrsPtpInstanceEntry 16 }
 
 wrsPtpInstanceAsymScDelayCoefHR OBJECT-TYPE
-    SYNTAX                     DisplayString --size--
+    SYNTAX                     DisplayString (SIZE (0..64))
     MAX-ACCESS                 read-only
     STATUS                     current
     DESCRIPTION
-        "The software version, as returned from 'git describe' at build time"
-    ::= { wrsPtpInstanceEntry 16 }
+        "Relative Delay Coefficient in a floating form"
+    ::= { wrsPtpInstanceEntry 17 }
 
 wrsPtpInstanceTSCorrEgressLat OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 17 }
+            "Egress Latency (Tx Fixed Delay) in scaled nanoseconds"
+    ::= { wrsPtpInstanceEntry 18 }
 
 wrsPtpInstanceTSCorrEgressLatPS OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 18 }
+            "Egress Latency (Tx Fixed Delay) in picoseconds"
+    ::= { wrsPtpInstanceEntry 19 }
 
 wrsPtpInstanceTSCorrIngLat OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 19 }
+            "Ingress Latency (Rx Fixed Delay) in scaled nanoseconds"
+    ::= { wrsPtpInstanceEntry 20 }
 
 wrsPtpInstanceTSCorrIngLatPS OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 20 }
+            "Ingress Latency (Rx Fixed Delay) in picoseconds"
+    ::= { wrsPtpInstanceEntry 21 }
 
 wrsPtpInstanceTSCorrSemistLat OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 21 }
+            "Semi-static latency (bitslide) in scaled nanoseconds"
+    ::= { wrsPtpInstanceEntry 22 }
 
 wrsPtpInstanceTSCorrSemistLatPS OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
-    ::= { wrsPtpInstanceEntry 22 }
-
-wrsPtpInstancePtpSupport  OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        na(0),
-                        x(1)
-                        --????--
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "????"
+            "Semi-static latency (bitslide) in picoseconds"
     ::= { wrsPtpInstanceEntry 23 }
 
-wrsPtpInstanceExtEnabled  OBJECT-TYPE
-    SYNTAX         INTEGER {
+wrsPtpInstanceProtoDetectState  OBJECT-TYPE
+    SYNTAX         INTEGER {             -- ppsi/include/ppsi/pp-instance.h
                         na(0),
-                        x(1)
-                        --????--
+                        none(1),         -- PP_PDSTATE_NONE
+                        pWaitMsg(2),     -- PP_PDSTATE_WAIT_MSG
+                        pDetection(3),   -- PP_PDSTATE_PDETECTION
+                        pDetected(4),    -- PP_PDSTATE_PDETECTED
+                        pFailure(5)      -- PP_PDSTATE_FAILURE
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "Protocol detection state"
     ::= { wrsPtpInstanceEntry 24 }
 
-wrsPtpInstanceProtoDetectState  OBJECT-TYPE
-    SYNTAX         INTEGER {
+    wrsPtpInstanceExtState  OBJECT-TYPE
+    SYNTAX         INTEGER {         -- ppsi/include/ppsi/pp-instance.h
                         na(0),
-                        x(1)
-                        --????--
+                        disabled(1), -- PP_EXSTATE_DISABLE
+                        active(2),   -- PP_EXSTATE_ACTIVE
+                        ptp(3)       -- PP_EXSTATE_PTP
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "????"
+            "State of PTP extension (more than one are allowed per 1 physical port)"
     ::= { wrsPtpInstanceEntry 25 }
 
 
@@ -2939,7 +2930,7 @@ wrsPtpInstancePeerMac  OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "VID used by an instance"
+            "MAC used by an instance"
     ::= { wrsPtpInstanceEntry 26 }
 
 wrsPtpInstancePeerVid  OBJECT-TYPE
@@ -2959,7 +2950,7 @@ wrsPtpInstanceVlanNum  OBJECT-TYPE
     ::= { wrsPtpInstanceEntry 28 }
 
 wrsPtpInstanceVlanListStr  OBJECT-TYPE
-    SYNTAX             DisplayString --size?--
+    SYNTAX             DisplayString (SIZE (0..160)) --32*5-
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION

@@ -20,13 +20,15 @@ struct wrsPtpInstanceTable_s {
 	char wrsPtpInstancePortName[16];/* port name on which ptp instance is running (wriX) */
 	int wrsPtpInstanceState;
 	int wrsPtpInstanceMasterOnly;
+	int wrsPtpInstanceExtPortCfg;
 	int wrsPtpInstanceExtPortCfgDesSt;
 	int wrsPtpInstanceMechanism; /* ENDelayMechanism */
 	int wrsPtpInstanceProfile;
 	int wrsPtpInstanceExtension;
 	int wrsPtpInstanceAsymEnabled;
-	int wrsPtpInstanceAsymConstAsym;
-	int wrsPtpInstanceAsymScDelayCoef;
+	int64_t wrsPtpInstanceAsymConstAsym;
+	int64_t wrsPtpInstanceAsymConstAsymPS;
+	int64_t wrsPtpInstanceAsymScDelayCoef;
 	char wrsPtpInstanceAsymScDelayCoefHR[64];
 	int64_t wrsPtpInstanceTSCorrEgressLat;
 	int64_t wrsPtpInstanceTSCorrEgressLatPS;
@@ -34,8 +36,7 @@ struct wrsPtpInstanceTable_s {
 	int64_t wrsPtpInstanceTSCorrIngLatPS;
 	int64_t wrsPtpInstanceTSCorrSemistLat;
 	int64_t wrsPtpInstanceTSCorrSemistLatPS;
-	int wrsPtpInstancePtpSupport;
-	int wrsPtpInstanceExtEnabled;
+	int wrsPtpInstanceExtState;
 	int wrsPtpInstanceProtoDetectState;
 	char wrsPtpInstancePeerMac[ETH_ALEN];
 	int wrsPtpInstancePeerVid;

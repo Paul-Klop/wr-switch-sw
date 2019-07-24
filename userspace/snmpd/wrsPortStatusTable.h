@@ -37,7 +37,6 @@ struct wrsPortStatusTable_s {
 	ClockIdentity wrsPortStatusPeer;
 	/* These can't be "unsigned char" because we scanf a %i in there */
 	unsigned wrsPortStatusLink;
-	unsigned wrsPortStatusConfiguredMode;
 	unsigned wrsPortStatusLocked;
 	char wrsPortStatusSfpVN[16];	/* vendor name */
 	char wrsPortStatusSfpPN[16];	/* part name */

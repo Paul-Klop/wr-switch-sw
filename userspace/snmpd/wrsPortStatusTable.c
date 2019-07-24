@@ -12,7 +12,6 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_UNSIGNED, index), /* not reported */
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPortName),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLink),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusConfiguredMode),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLocked),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPeer),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVN),
@@ -178,7 +177,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		/* If info about wrsPortStatusSfpGbE is not filled skip further
 		 * checking. NOTE: there is no need to check the fill of others
 		 * like:
-		 * - wrsPortStatusConfiguredMode
 		 * - wrsPortStatusSfpInDB
 		 */
 		/* Don't check if WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN */
@@ -199,9 +197,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				  "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
 				  slog_obj_name, i + 1, i + 1);
 		}
-		if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
-		    && (wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
-		    && (wrsPortStatusTable_array[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
+		if ((wrsPortStatusTable_array[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
 		    && (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
 			/* error, port is not non-wr mode and sfp not in data base */
 			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
@@ -213,10 +209,9 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 
 		snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG
 			" reading ports name %s link %d, "
-			"mode %d, locked %d\n",
+			"locked %d\n",
 			wrsPortStatusTable_array[i].wrsPortStatusPortName,
 			wrsPortStatusTable_array[i].wrsPortStatusLink,
-			wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode,
 			wrsPortStatusTable_array[i].wrsPortStatusLocked);
 	}
 

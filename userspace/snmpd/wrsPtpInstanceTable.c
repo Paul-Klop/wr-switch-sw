@@ -1,5 +1,6 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
+#include "wrsPortStatusTable.h"
 #include "wrsPtpInstanceTable.h"
 
 struct wrsPtpInstanceTable_s wrsPtpInstanceTable_array[PP_MAX_LINKS];
@@ -43,7 +44,10 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceVlanNum),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceVlanListStr),
 
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceStatusError),
 };
+static char *slog_obj_name;
+static char *wrsPtpInstanceStatusError_str = "wrsPtpInstanceStatusError";
 
 static inline struct hal_port_state *pp_wrs_lookup_port(char *name)
 {
@@ -64,6 +68,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	static int n_rows_local = 0;
 	struct wrsPtpInstanceTable_s *i_a;
 	struct pp_instance *ppsi_i;
+	struct wrsPortStatusTable_s *p_a;
 	char *tmp_name;
 	portDS_t *portDS_i;
 	struct hal_port_state *p;
@@ -73,6 +78,8 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	char *tmpstr_p;
 	int vlan_i;
         float tmp_f;
+	int bc_has_slave = 0;
+	slog_obj_name = wrsPtpInstanceStatusError_str;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -89,6 +96,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	memset(&wrsPtpInstanceTable_array, 0, sizeof(wrsPtpInstanceTable_array));
 
 	i_a = wrsPtpInstanceTable_array;
+	p_a = wrsPortStatusTable_array;
 
 	/* check whether shmem is available */
 	if (!shmem_ready_ppsi() && !ppsi_ppi_nlinks) {
@@ -195,6 +203,72 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 				if (*last_char == ',')
 					*last_char = 0;
 			}
+			
+			if (shmem_ready_hald())
+                        {
+				i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_OK;
+
+				if ((p_a[phys_port].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
+				    (p_a[phys_port].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP))
+				{
+					if ((i_a[i].wrsPtpInstanceState == PPS_SLAVE ||
+					     i_a[i].wrsPtpInstanceState == PPS_UNCALIBRATED) &&
+					    (hal_shmem->hal_mode        == HAL_TIMING_MODE_GRAND_MASTER))
+					{
+						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							 "In Grand Master mode, instance %d on port %d (%s) "
+							 "is in SLAVE or UNCALIBRATED state.\n",
+							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
+					}
+					if ((i_a[i].wrsPtpInstanceState == PPS_SLAVE ||
+					     i_a[i].wrsPtpInstanceState == PPS_UNCALIBRATED) &&
+					    (hal_shmem->hal_mode        == HAL_TIMING_MODE_FREE_MASTER)) // THIS is wrogn
+					{
+						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							 "In Free Running mode, instance %d on port %d (%s) "
+							 "is in SLAVE or UNCALIBRATED state.\n",
+							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
+					}
+				}
+				if((p_a[phys_port].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP) &&
+				   (i_a[i].wrsPtpInstanceState == PPS_SLAVE))
+				{
+					bc_has_slave = 1;
+				}
+				if ((p_a[phys_port].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
+				    (hal_shmem->hal_mode == HAL_TIMING_MODE_BC) &&
+				    (i_a[i].wrsPtpInstanceExtPortCfgDesSt == PPS_SLAVE))
+				{
+					if(i_a[i].wrsPtpInstanceState != PPS_DISABLED &&
+					   i_a[i].wrsPtpInstanceState != PPS_SLAVE)
+					{
+						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							 "In Boundary Clock mode, External Port Configuration is enabled "
+							 "and desiredState is set to SLAVE but instance %d on port %d (%s) "
+							 "is not in SLAVE state.\n",
+							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
+					}
+					if(p_a[phys_port].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)
+					{
+						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							 "In Boundary Clock mode, External Port Configuration is enabled "
+							 "and desiredState is set to SLAVE on instance %d, yet port %d (%s) "
+							 "is DOWN.\n",
+							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
+					}
+				}
+			}
+		}
+		if(hal_shmem->hal_mode == HAL_TIMING_MODE_BC && bc_has_slave == 0)
+		{
+			i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				"In Boundary Clock mode, there is no port in SLAVE state\n",
+				slog_obj_name);
 		}
 
 		retries++;

@@ -9,6 +9,12 @@
  */
 #define WRSPTPINSTANCEVLANLISTSTRLEN (CONFIG_VLAN_ARRAY_SIZE * 5)
 
+#define WRS_SLAVE_LINK_STATUS_OK 1		/* ok */
+#define WRS_SLAVE_LINK_STATUS_ERROR 2		/* error */
+#define WRS_SLAVE_LINK_STATUS_WARNING_NA 4 /* warning, at least one field is
+					  * equal to 0 (NA),shouldn't happen in
+					  * normal operation */
+
 
 struct wrsPtpInstanceTable_s {
 	uint32_t wrsPtpInstancePortIndex;		/* not reported, index fields has t o be marked
@@ -44,6 +50,7 @@ struct wrsPtpInstanceTable_s {
 	/* wrsPtpInstanceVlanListStr is implemented as a comma separated list
 	 * because SNMP does not allow table within table */
 	char wrsPtpInstanceVlanListStr[WRSPTPINSTANCEVLANLISTSTRLEN];
+        int wrsPtpInstanceStatusError;
 };
 
 extern struct wrsPtpInstanceTable_s wrsPtpInstanceTable_array[PP_MAX_LINKS];

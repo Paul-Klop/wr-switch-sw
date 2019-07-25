@@ -1753,7 +1753,8 @@ WrsPtpDataEntry ::=
         wrsPtpServoStateErrCnt  Counter32,
         wrsPtpClockOffsetErrCnt Counter32,
         wrsPtpRTTErrCnt         Counter32,
-        wrsPtpServoUpdateTime   Counter64
+        wrsPtpServoUpdateTime   Counter64,
+        wrsPtpServoExt          INTEGER
     }
 
 wrsPtpDataIndex OBJECT-TYPE
@@ -1955,6 +1956,19 @@ wrsPtpServoUpdateTime OBJECT-TYPE
     DESCRIPTION
             "TAI Nanosecond of the last servo's update"
     ::= { wrsPtpDataEntry 23 }
+
+wrsPtpServoExt OBJECT-TYPE
+    SYNTAX INTEGER {
+                na(0),
+                none(1),
+                wr(2),
+                l1Sync(3)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Extension with which the servo runs."
+    ::= { wrsPtpDataEntry 24 }
 
 -- wrsPortStatusTable (.7.6)
 wrsPortStatusTable OBJECT-TYPE

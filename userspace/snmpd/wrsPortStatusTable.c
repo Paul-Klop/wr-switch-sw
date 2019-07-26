@@ -190,6 +190,21 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		  * port down, is set above
 		  * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
 		wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
+		
+		snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG
+			" reading ports name %s link %d, "
+			"locked %d\n",
+			wrsPortStatusTable_array[i].wrsPortStatusPortName,
+			wrsPortStatusTable_array[i].wrsPortStatusLink,
+			wrsPortStatusTable_array[i].wrsPortStatusLocked);
+		
+		if (wrsPortStatusTable_array[i].wrsPortStatusMonitor == WRS_PORT_STATUS_MONITOR_DISABLE)
+		{
+			snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG " ignoring any "
+				"problems on port %s as monitoring is disabled\n",
+				wrsPortStatusTable_array[i].wrsPortStatusPortName;
+			continue;
+		}
 		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {
 			/* error, SFP is not 1 GbE */
 			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
@@ -197,8 +212,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				  "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
 				  slog_obj_name, i + 1, i + 1);
 		}
-		if ((wrsPortStatusTable_array[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
-		    && (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
+		if (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE) {
 			/* error, port is not non-wr mode and sfp not in data base */
 			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
 			snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
@@ -207,12 +221,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				  slog_obj_name, i + 1, i + 1);
 		}
 
-		snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG
-			" reading ports name %s link %d, "
-			"locked %d\n",
-			wrsPortStatusTable_array[i].wrsPortStatusPortName,
-			wrsPortStatusTable_array[i].wrsPortStatusLink,
-			wrsPortStatusTable_array[i].wrsPortStatusLocked);
 	}
 
 	retries = 0;

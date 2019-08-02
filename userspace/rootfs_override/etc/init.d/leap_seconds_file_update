@@ -5,6 +5,28 @@
 # to be sur to use the correct version of dot-config
 # This script must be launched one time per day to search for a new leap seconds file
 
+#
+# Write message to file
+# $1: Message 
+# $2: Output file
+
+write_msg() {
+  msg=$1
+  of=$2
+  
+  oft="$of.old"
+  # If old file exists then remove it 
+  if [ -f $oft ] ; then
+     rm -f $oft
+  fi
+  # if file exists then rename it 
+  if [ -f $of ] ; then
+  	mv $of $oft
+  fi
+  # create the file
+  echo "$msg" > $of
+}
+
 wait_before_processing() {
   range=$1
   error=0
@@ -68,9 +90,9 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
     
     # get URL via DHCP
     if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_TRY" = "y" ] ; then
-	    echo "try_remote" > $leapSecondsSource
+	    write_msg "try_remote" $leapSecondsSource
 	else
-	    echo "force_remote" > $leapSecondsSource
+	    write_msg "force_remote" $leapSecondsSource
 	fi
 
     URL="$CONFIG_LEAPSEC_URL"
@@ -93,7 +115,7 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
 		fi
 		if [ -z "$bsip" ] ; then
 			# Cannot get the bootserver IP@
-		    echo "dhcp_error" > $leapSecondsStatus
+		    write_msg "dhcp_error" $leapSecondsStatus
 		    eval echo "Unable to get boot server IP. Use local leap seconds file" $LOGPIPE
 		    exit
 		fi;  
@@ -129,7 +151,7 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
     filename=$(echo $URL | cut -d/ -f 4-)
 
     # save URL, to be used by SNMPd
-    echo "$URL" > $leapSecondsSourceUrl
+    write_msg "$URL" $leapSecondsSourceUrl
     rm -f $tmpconfig
     case $proto in
 		http|ftp)
@@ -140,7 +162,7 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
 		    ;;
 		*)
 		    eval echo "Invalid URL to leap seconds file: \"$URL\""$LOGPIPE;
-		    echo "invalid_url" > $leapSecondsStatus;
+		    write_msg "invalid_url" $leapSecondsStatus;
 		    exit 1
 		    ;;
     esac
@@ -168,22 +190,22 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
 					mv -f $dir/$leapSecondsFileName $dir/$leapSecondsFileName.old
 					mv $dir/$leapSecondsFileName.new $dir/$leapSecondsFileName
 				done
-			    echo "updated" > $leapSecondsStatus
+			    write_msg "updated" $leapSecondsStatus
 			    eval echo "leap seconds file updated" $LOGPIPE 
 			else  
-			    echo "file_invalid" > $leapSecondsStatus
+			    write_msg "file_invalid" $leapSecondsStatus
 			    eval echo "Errors detected. Invalid leap seconds file \"$URL\". Using local one" $LOGPIPE
 			fi
 		else
-		    echo "no_changes" > $leapSecondsStatus
+		    write_msg "no_changes" $leapSecondsStatus
 		    eval echo "No changes detected" $LOGPIPE 
 		fi
     else
-		echo "download_error" > $leapSecondsStatus
+		write_msg "download_error" $leapSecondsStatus
 		eval echo "Download error of leap seconds file \"$URL\". Using local one" $LOGPIPE
     fi
 else
-    echo "local" > $leapSecondsSource 
+    write_msg "local" $leapSecondsSource 
     eval echo "Using local \"$leapSecondsFileName\" file" $LOGPIPE
 fi
 

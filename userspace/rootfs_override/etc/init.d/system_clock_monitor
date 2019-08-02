@@ -19,6 +19,28 @@ pidKillDaemon=0
 verbose=0
 
 #
+# Write message to file
+# $1: Message 
+# $2: Output file
+
+writeMsg() {
+  msg=$1
+  of=$2
+  
+  oft="$of.old"
+  # If old file exists then remove it 
+  if [ -f $oft ] ; then
+     rm -f $oft
+  fi
+  # if file exists then rename it 
+  if [ -f $of ] ; then
+  	mv $of $oft
+  fi
+  # create the file
+  echo "$msg" > $of
+}
+
+#
 # Print message if verbose is set
 #
 debug () {
@@ -152,11 +174,11 @@ read_ntp_server()
 				compareToThreshold alarmState $offset $ltThreshold
 				if (( $alarmState == 1 )) ; then
 					# Exceeded Threshold  
-					echo "exceeded_threshold" > $systemClockMonitoringStatus
+					writeMsg "exceeded_threshold" $systemClockMonitoringStatus
 				else
-					echo "no_error" > $systemClockMonitoringStatus				
+					writeMsg "no_error"  $systemClockMonitoringStatus				
 				fi
-				echo  $offset > $systemClockMonitoringDrift
+				writeMsg  $offset $systemClockMonitoringDrift
 				eval $__result="0"
 				return
 			fi
@@ -226,8 +248,8 @@ if [ "$#" -eq 1 ] && [ "$1" == "-s" ] ; then
 					setCronConfig "$entry" 
 				else
  					eval echo "Invalid unit for system clock check interval." $LOGPIPE
-					echo "config_error" > $systemClockMonitoringStatus
-					echo "0" > $systemClockMonitoringDrift
+					writeMsg "config_error" $systemClockMonitoringStatus
+					writeMsg "0" $systemClockMonitoringDrift
 					exit 1
 				fi 
 			fi 
@@ -256,22 +278,22 @@ if [ "$CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED" = "y" ] ; then
 		
 	if [ -z  "$threshold" ] ; then 
 		eval echo "System clock drift threshold not set." $LOGPIPE
-		echo "config_error" > $systemClockMonitoringStatus
-		echo "0" > $systemClockMonitoringDrift
+		writeMsg "config_error" $systemClockMonitoringStatus
+		writeMsg "0" $systemClockMonitoringDrift
 		exit 1
 	fi
 	
 	if [ -z "$ntpServer" ]; then
 		eval echo "Empty NTP server name" $LOGPIPE
-		echo "config_error" > $systemClockMonitoringStatus
-		echo "0" > $systemClockMonitoringDrift
+		writeMsg "config_error" $systemClockMonitoringStatus
+		writeMsg "0" $systemClockMonitoringDrift
 		exit 1
 	fi
 
 	read_ntp_server result $threshold $ntpServer
 	if (( result != 0 )) ; then
-		echo "ntp_error" > $systemClockMonitoringStatus
-		echo "0" > $systemClockMonitoringDrift
+		writeMsg "ntp_error" $systemClockMonitoringStatus
+		writeMsg "0" $systemClockMonitoringDrift
 		exit 1
 	fi
 fi

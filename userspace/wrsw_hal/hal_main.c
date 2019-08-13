@@ -22,11 +22,38 @@
 #include <libwr/timeout.h>
 
 #include "wrsw_hal.h"
+#include "hal_timer.h"
 #include <rt_ipc.h>
 
 #define MAX_CLEANUP_CALLBACKS 16
-#define UPDATE_FAN_PERIOD 500
-#define UPDATE_ALL_PERIOD 100
+
+typedef enum {
+	TMO_UPDATE_ALL=0,
+	TMO_UPDATE_FAN,
+	TMO_COUNT
+}main_tmo_id_t;
+
+static void cb_timer_update_fan(int timerId);
+static void cb_timer_update_all(int timerId);
+
+/* Polling timeouts (RT Subsystem & SFP detection) */
+static timer_parameter_t _timerParameters[] = {
+		{
+				.id=TMO_UPDATE_ALL,
+				.tmoMs=100, // 100ms
+				.repeat=1,
+				.cb=cb_timer_update_all
+		},
+		{
+				.id=TMO_UPDATE_FAN,
+				.tmoMs=500, // 500ms
+				.repeat=1,
+				.cb=cb_timer_update_fan
+		},
+};
+
+#define MAIN_TIMER_COUNT (sizeof(_timerParameters)/sizeof(timer_parameter_t))
+
 
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
@@ -223,11 +250,25 @@ static void hal_parse_cmdline(int argc, char *argv[])
 	}
 }
 
+static void cb_timer_update_fan(int timerId) {
+	struct hal_temp_sensors temp_sensors; /* local copy of temperatures */
+
+	/* Update fans and get temperatures values. Don't write
+	* temperatures directly to the shmem to reduce the
+	* critical section of shmem */
+	shw_update_fans(&temp_sensors);
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+	memcpy(&hal_shmem->temp, &temp_sensors,
+	       sizeof(temp_sensors));
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+}
+
+static void cb_timer_update_all(int timerId) {
+	hal_port_update_all();
+}
+
 int main(int argc, char *argv[])
 {
-	struct hal_temp_sensors temp_sensors; /* local copy of temperatures */
-	static timeout_t update_fan_tmo;
-	static timeout_t update_all_tmo;
 
 	wrs_msg_init(argc, argv, LOG_DAEMON);
 
@@ -246,8 +287,7 @@ int main(int argc, char *argv[])
 	if (hal_init())
 		exit(1);
 
-	libwr_tmo_init(&update_fan_tmo, UPDATE_FAN_PERIOD, 1);
-	libwr_tmo_init(&update_all_tmo, UPDATE_ALL_PERIOD, 1);
+	timerInit(_timerParameters,MAIN_TIMER_COUNT);
 
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
@@ -263,19 +303,8 @@ int main(int argc, char *argv[])
 	for (;;) {
 		hal_update_wripc(25 /* max ms delay */);
 
-		if (libwr_tmo_expired(&update_all_tmo))
-			hal_port_update_all();
-
-		if (libwr_tmo_expired(&update_fan_tmo)) {
-			/* Update fans and get temperatures values. Don't write
-			* temperatures directly to the shmem to reduce the
-			* critical section of shmem */
-			shw_update_fans(&temp_sensors);
-			wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-			memcpy(&hal_shmem->temp, &temp_sensors,
-			       sizeof(temp_sensors));
-			wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
-		}
+		// Check main timers and call callback if timeout expires
+		timerScan(_timerParameters,MAIN_TIMER_COUNT);
 	}
 
 	hal_shutdown();

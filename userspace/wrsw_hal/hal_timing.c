@@ -11,12 +11,10 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/timeout.h>
 
-#include "wrsw_hal.h"
-#include <rt_ipc.h>
 #include <hal_exports.h>
+#include "wrsw_hal.h"
+#include "hal_ports.h"
 
-extern struct rts_pll_state hal_port_rts_state;
-extern int hal_port_rts_state_valid;
 
 int hal_init_timing_mode(void)
 {
@@ -35,9 +33,9 @@ int hal_init_timing(char *filename)
 
 int hal_get_timing_mode(void)
 {
-	struct rts_pll_state *hs = &hal_port_rts_state;
+	struct rts_pll_state *hs = getRtsStatePtr();
 
-	if (hal_port_rts_state_valid)
+	if (isRtsStateValid())
 		switch (hs->mode) {
 		case RTS_MODE_GM_EXTERNAL:
 			return HAL_TIMING_MODE_GRAND_MASTER;
@@ -51,8 +49,10 @@ int hal_get_timing_mode(void)
 	return -1;
 }
 
-int  hal_update_timing_mode(void) {
-	return hal_port_poll_rts_state();
+int  hal_set_timing_mode(uint32_t tm) {
+	int ret=shw_pps_set_timing_mode(tm);
+	hal_port_poll_rts_state();
+	return ret;
 }
 
 

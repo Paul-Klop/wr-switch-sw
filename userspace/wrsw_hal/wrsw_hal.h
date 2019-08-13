@@ -38,7 +38,7 @@ int hal_port_poll_rts_state(void);
 int hal_init_timing_mode(void);
 int hal_init_timing(char *filename);
 int hal_get_timing_mode(void);
-int hal_update_timing_mode(void);
+int hal_set_timing_mode(uint32_t tm);
 int hal_port_pshifter_busy(void);
 
 #endif

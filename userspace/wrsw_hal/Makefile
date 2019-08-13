@@ -2,7 +2,9 @@
 # We are now Kconfig-based
 -include ../../.config
 
-OBJS = hal_exports.o hal_main.o hal_ports.o hal_timing.o
+OBJS = hal_exports.o hal_main.o hal_ports.o hal_timing.o \
+	hal_port_gen_fsm.o hal_port_fsm.o hal_port_fsm_tx.o hal_port_fsm_rx.o  hal_port_fsm_pll.o\
+	hal_port_leds.o hal_timer.o
 
 BINARY = wrsw_hal
 

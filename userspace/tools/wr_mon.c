@@ -666,7 +666,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 		if (mode == SHOW_GUI) {
 			/* check if link is up */
-			if (state_up(port_state->state))
+			if (state_up(port_state))
 				term_cprintf(C_GREEN, " %-5s", if_name);
 			else
 				term_cprintf(C_RED, "*%-5s", if_name);
@@ -816,7 +816,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 			}
 			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
-			printf("%s ", state_up(port_state->state)
+			printf("%s ", state_up(port_state)
 				? "up" : "down");
 			printf("%s ", port_state->locked
 				? "Locked" : "NoLock");
@@ -825,7 +825,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 				? "Calibrated" : "Uncalibrated");
 		} else if (print_port) {
 			printf("port:%s ", if_name);
-			printf("lnk:%d ", state_up(port_state->state));
+			printf("lnk:%d ", state_up(port_state));
 			printf("lock:%d ", port_state->locked);
 			print_port = 0;
 		}

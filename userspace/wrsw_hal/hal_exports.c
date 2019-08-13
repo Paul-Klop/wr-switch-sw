@@ -77,7 +77,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
  * both the PLLs and the PPS Generator. */
 int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 {
-	int busy,ret;
+	int ret;
 
 	pr_debug("halexp_pps_cmd: cmd=%d\n", cmd);
 	switch (cmd) {
@@ -142,9 +142,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 		return shw_pps_gen_enable_output(params->pps_valid);
 
 	case HEXP_PPSG_CMD_SET_TIMING_MODE:
-		ret=shw_pps_set_timing_mode(params->timing_mode);
-		hal_update_timing_mode();
-		return ret;
+		return hal_set_timing_mode(params->timing_mode);
 
 	case HEXP_PPSG_CMD_GET_TIMING_MODE:{
 		ret=hal_get_timing_mode();

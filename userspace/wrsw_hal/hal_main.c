@@ -64,6 +64,7 @@ static char *dotconfigname = "/wr/etc/dot-config";
 
 struct hal_shmem_header *hal_shmem;
 struct wrs_shm_head *hal_shmem_hdr;
+struct hal_temp_sensors temp_sensors;
 
 /* Adds a function to be called during the HAL shutdown. */
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
@@ -251,7 +252,6 @@ static void hal_parse_cmdline(int argc, char *argv[])
 }
 
 static void cb_timer_update_fan(int timerId) {
-	struct hal_temp_sensors temp_sensors; /* local copy of temperatures */
 
 	/* Update fans and get temperatures values. Don't write
 	* temperatures directly to the shmem to reduce the
@@ -265,6 +265,11 @@ static void cb_timer_update_fan(int timerId) {
 
 static void cb_timer_update_all(int timerId) {
 	hal_port_update_all();
+}
+
+int hal_get_fpga_temperature(void)
+{
+	return temp_sensors.fpga;
 }
 
 int main(int argc, char *argv[])

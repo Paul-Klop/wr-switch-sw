@@ -16,6 +16,6 @@ extern void led_init_all_ports(struct hal_port_state *ps );
 extern void led_set_wrmode(int portIndex, int val);
 extern void led_link_update(struct hal_port_state *port);
 extern void led_set_synched(int portIndex, int val);
-extern void led_sync_update(struct hal_port_state *port );
+extern void led_synched_update(struct hal_port_state *port );
 
 #endif

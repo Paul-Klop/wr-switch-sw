@@ -3,6 +3,7 @@
 #include <libwr/hal_shmem.h>
 
 #include "hal_ports.h"
+#include "hal_timing.h"
 #include "hal_port_fsm_pllP.h"
 
 /**
@@ -27,7 +28,6 @@ static int _hal_port_pll_state_unlocked(void *vpfg, int eventMsk, int isNewState
 static int _hal_port_pll_state_locked(void *vpfg, int eventMsk, int isNewState);
 static int _hal_port_pll_state_locking(void *vpfg, int eventMsk, int isNewState);
 
-static int _check_pll_lock(struct hal_port_state *ps);
 
 static halPortStateTable_t _fsmStateTable[] =
 {
@@ -157,11 +157,11 @@ static int _buildEvents(void * vpfg) {
 	int portEventMask=HAL_PORT_PLL_EVENT_TIMER;
 	int tm;
 
-	tm=	hal_get_timing_mode();
+	tm=	hal_tmg_get_mode();
 
 	ps->locked=0;
 	if ( tm == HAL_TIMING_MODE_BC) {
-		int locked=_check_pll_lock(ps);
+		int locked=hal_port_check_lock(ps);
 		if ( locked >=0 ) {
 			ps->locked = locked;
 			portEventMask|= locked ?
@@ -199,26 +199,3 @@ int  hal_port_pll_state_fsm( struct hal_port_state * ps ) {
 	return hal_port_generic_fsm(&_portFsm);
 }
 
-
-extern struct rts_pll_state hal_port_rts_state;
-extern int hal_port_rts_state_valid;
-
-/* Returns 1 if the port is locked, 0 if unlocked, -1 in case of error */
-static int _check_pll_lock(struct hal_port_state *ps)
-{
-	struct rts_pll_state *hs = getRtsStatePtr();
-
-	if (!ps)
-		return -1;
-
-	if (!isRtsStateValid())
-		return -1;
-
-	if (hs->delock_count > 0)
-		return -1;
-
-	return ( hs->mode==RTS_MODE_BC &&
-		hs->current_ref == ps->hw_index &&
-		(hs->flags & RTS_DMTD_LOCKED) &&
-		(hs->flags & RTS_REF_LOCKED));
-}

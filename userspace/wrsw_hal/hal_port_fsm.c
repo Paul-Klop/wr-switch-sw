@@ -14,10 +14,11 @@
 #include <linux/if.h>
 
 #include <rt_ipc.h>
-#include <hal_exports.h>
+
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
 
+#include "hal_exports.h"
 #include "hal_ports.h"
 #include "hal_port_leds.h"
 #include "hal_port_gen_fsm.h"
@@ -25,8 +26,7 @@
 #include "hal_port_fsm_rx.h"
 #include "hal_port_fsm_tx.h"
 #include "hal_port_fsm_pll.h"
-
-#include "wrsw_hal.h"
+#include "hal_timing.h"
 
 
 /**
@@ -262,7 +262,7 @@ static  int _builPortEvents(void * vpfg) {
 		portEventMask |= HAL_PORT_EVENT_RESET;
 		ps->evt_reset=0;
 	}
-	portEventMask |= ps->calib.sfpPresent  ?
+	portEventMask |= ps->sfpPresent  ?
 			HAL_PORT_EVENT_SFP_INSERTED : HAL_PORT_EVENT_SFP_REMOVED;
 	return portEventMask;
 }
@@ -357,8 +357,8 @@ static void _init_port(struct hal_port_state * ps)
 static void _unlock_port( struct hal_port_state * ps)
 {
 
-	if ( hal_get_timing_mode()==HAL_TIMING_MODE_BC ) {
-		hal_set_timing_mode(HAL_TIMING_MODE_FREE_MASTER);
+	if ( hal_tmg_get_mode()==HAL_TIMING_MODE_BC ) {
+		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
 	}
 
 	// Disable tracker

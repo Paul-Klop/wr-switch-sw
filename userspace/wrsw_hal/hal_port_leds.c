@@ -99,7 +99,7 @@ void led_link_update(struct hal_port_state *ps) {
 }
 
 
-void led_sync_update(struct hal_port_state *ps )
+void led_synched_update(struct hal_port_state *ps )
 {
 	int i;
 

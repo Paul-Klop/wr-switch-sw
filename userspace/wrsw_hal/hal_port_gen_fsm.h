@@ -13,7 +13,7 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/hal_shmem.h>
 
-#define FSM_GEN_DEBUG 1
+#define FSM_GEN_DEBUG 0
 
 
 #define FSM_SET_FCT_NAME(name) .fct=name, .fctName=#name

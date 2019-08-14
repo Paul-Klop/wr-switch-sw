@@ -16,6 +16,7 @@
 #include <linux/if.h>
 
 /* LOTs of hardware includes */
+#include <rt_ipc.h>
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/pio.h>
@@ -23,22 +24,16 @@
 #include <libwr/shmem.h>
 #include <libwr/config.h>
 #include <libwr/timeout.h>
+#include <libwr/hal_shmem.h>
 
 #include <ppsi/ppsi.h>
-#include "wrsw_hal.h"
-#include <rt_ipc.h>
-#include <hal_exports.h>
-#include <libwr/hal_shmem.h>
 #include "driver_stuff.h"
+#include "hal_exports.h"
 #include "hal_timer.h"
 #include "hal_port_fsm.h"
 #include "hal_port_leds.h"
 #include "hal_ports.h"
-
-typedef struct {
-	struct pp_instance * ppi;              /* pointer to the ppi instance */
-	struct pp_servo      servo_snapshot;  /* image of a the ppsi servo */
-} inst_servo_t  ;
+#include "hal_timing.h"
 
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
@@ -97,19 +92,8 @@ static timer_parameter_t _timerParameters[] = {
 				.cb=_cb_port_update_link_leds
 		},
 };
+
 #define PORT_TIMER_COUNT (sizeof(_timerParameters)/sizeof(timer_parameter_t))
-
-int hal_port_check_lock(const char *port_name);
-
-int hal_port_any_locked(void)
-{
-	if (!isRtsStateValid())
-		return -1;
-	if (getRtsState().current_ref == REF_NONE)
-		return -1;
-
-	return getRtsState().current_ref;
-}
 
 /* checks if the port is supported by the FPGA firmware */
 static int hal_port_check_presence(const char *if_name, unsigned char *mac)
@@ -215,14 +199,14 @@ static int hal_port_init(struct hal_port_state *ps, int index)
 
 /* Interates via all the ports defined in the config file and
  * intializes them one after another. */
-int hal_port_init_shmem(char *logfilename)
+int hal_port_shmem_init(char *logfilename)
 {
 	int index;
 	char *ret;
 	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
-	timerInit(_timerParameters,PORT_TIMER_COUNT);
+	timer_init(_timerParameters,PORT_TIMER_COUNT);
 
 	/* Open a single raw socket for accessing the MAC addresses, etc. */
 	halPorts.hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
@@ -261,7 +245,7 @@ int hal_port_init_shmem(char *logfilename)
 
 	/* We are done, mark things as valid */
 	hal_shmem->nports = halPorts.numberOfPorts ;
-	hal_shmem->hal_mode = hal_get_timing_mode();
+	hal_shmem->hal_mode = hal_tmg_get_mode();
 
 	ret = libwr_cfg_get("READ_SFP_DIAG_ENABLE");
 	if (ret && !strcmp(ret, "y")) {
@@ -280,10 +264,10 @@ int hal_port_init_shmem(char *logfilename)
 	return 0;
 }
 
-int hal_port_init_wripc(char *logfilename)
+int hal_port_wripc_init(char *logfilename)
 {
 	/* Create a WRIPC server for HAL public API */
-	return hal_init_wripc(halPorts.ports, logfilename);
+	return hal_wripc_init(halPorts.ports, logfilename);
 }
 
 
@@ -299,9 +283,6 @@ int hal_port_pshifter_busy()
 		    hs->channels[hs->current_ref].
 		    flags & CHAN_SHIFTING ? 1 : 0;
 
-		if (0)
-			pr_info("PSBusy %d, flags %x\n", busy,
-			      hs->channels[hs->current_ref].flags);
 		return busy;
 	}
 
@@ -386,7 +367,7 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 		memset(&ps->calib.sfp, 0, sizeof(ps->calib.sfp));
 	}
 
-	ps->calib.sfpPresent=1;
+	ps->sfpPresent=1;
 	shw_sfp_set_tx_disable(ps->hw_index, 0);
 	/* Copy the strings anyways, for informative value in shmem */
 	strncpy(ps->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
@@ -437,12 +418,11 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 
 static void hal_port_remove_sfp(struct hal_port_state * ps)
 {
-//	hal_port_link_down(p, 0);
 	/* clean SFP's details when removing SFP */
 	memset(&ps->calib.sfp, 0, sizeof(ps->calib.sfp));
 	memset(&ps->calib.sfp_header_raw, 0, sizeof(struct shw_sfp_header));
 	memset(&ps->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
-	ps->has_sfp_diag=ps->calib.sfpPresent=0;
+	ps->has_sfp_diag=ps->sfpPresent=0;
 }
 
 /* detects insertion/removal of SFP transceivers */
@@ -483,6 +463,8 @@ static void hal_port_poll_sfp(void)
 static void _cb_port_poll_rts_state(int timerId){
 	/* poll_rts_state does not write to shmem */
 	hal_port_poll_rts_state();
+	// Update timing mode
+	hal_shmem->hal_mode = hal_tmg_get_mode();
 }
 
 static void _cb_port_poll_sfp(int timerId){
@@ -501,7 +483,7 @@ static void _cb_port_poll_sfp_dom(int timerId){
 			/* read DOM only for plugged ports with DOM
 			 * capabilities */
 			if (ps->in_use
-			    && ps->calib.sfpPresent
+			    && ps->sfpPresent
 			    && ps->has_sfp_diag) {
 				shw_sfp_update_dom(ps->hw_index,
 						   &sfp_dom_raw[i]);
@@ -518,7 +500,7 @@ static void _cb_port_poll_sfp_dom(int timerId){
 			/* update DOM only for plugged ports with DOM
 			 * capabilities */
 			if (ps->in_use
-			    && ps->calib.sfpPresent
+			    && ps->sfpPresent
 			    &&  ps->has_sfp_diag) {
 				memcpy(&halPorts.ports[i].calib.sfp_dom_raw,
 				       &sfp_dom_raw[i],
@@ -534,7 +516,7 @@ static void _cb_port_poll_sfp_dom(int timerId){
 
 static void _cb_port_update_sync_leds(int timerId){
 	/* update LEDs of synced ports */
-	led_sync_update(halPorts.ports);
+	led_synched_update(halPorts.ports);
 }
 
 static void _cb_port_update_link_leds(int timerId){
@@ -545,7 +527,7 @@ static void _cb_port_update_link_leds(int timerId){
 /* Executes the port FSM for all ports. Called regularly by the main loop. */
 void hal_port_update_all()
 {
-	timerScan(_timerParameters,PORT_TIMER_COUNT);
+	timer_scan(_timerParameters,PORT_TIMER_COUNT);
 
 	/* lock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
@@ -577,49 +559,35 @@ int hal_port_start_lock(const char *port_name, int priority)
 
 	ps->evt_lock=1;
 	return 0;
+}
 
-	#if 0
-	int ret=-1;
+/* Returns 1 if the port is locked, 0 if unlocked, -1 in case of error */
+int hal_port_check_lock(const struct hal_port_state *ps)
+{
+	struct rts_pll_state *hs = getRtsStatePtr();
 
+	if (!ps)
+		return -1;
 
-	if (!p && p->state != HAL_PORT_STATE_UP )
-		return -1; /* can't lock to a disconnected port */
+	if (!isRtsStateValid())
+		return -1;
 
-	pr_info("Locking to port: %s\n", port_name);
+	if (hs->delock_count > 0)
+		return -1;
 
-	hal_port_poll_rts_state(); // update rts state
-	if ( (hal_get_timing_mode()==HAL_TIMING_MODE_BC)  &&
-			(ret=rts_lock_channel(p->hw_index, 0))==0 ) {
-		/* lock shmem */
-		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-		/* fixme: check the main FSM state before */
-		p->state = HAL_PORT_STATE_LOCKING;
-		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
-	}
-	return ret;
-#endif
+	return ( hs->mode==RTS_MODE_BC &&
+		hs->current_ref == ps->hw_index &&
+		(hs->flags & RTS_DMTD_LOCKED) &&
+		(hs->flags & RTS_REF_LOCKED));
 }
 
 /* Returns 1 if the port is locked */
-int hal_port_check_lock(const char *port_name)
+int hal_port_check_lock_by_name(const char *port_name)
 {
-	const struct hal_port_state *p = hal_lookup_port(halPorts.ports,
+	const struct hal_port_state *ps = hal_lookup_port(halPorts.ports,
 			halPorts.numberOfPorts, port_name);
-	struct rts_pll_state *hs = getRtsStatePtr();
 
-	if (!p)
-		return 0; /* was -1, but it would confuse the caller */
-
-	if (! isRtsStateValid() )
-		return 0;
-
-	if (hs->delock_count > 0)
-		return 0;
-
-	return ( hs->mode==RTS_MODE_BC &&
-		hs->current_ref == p->hw_index &&
-		(hs->flags & RTS_DMTD_LOCKED) &&
-		(hs->flags & RTS_REF_LOCKED));
+	return hal_port_check_lock(ps);
 }
 
 int hal_port_reset(const char *port_name)
@@ -632,29 +600,9 @@ int hal_port_reset(const char *port_name)
 
 	ps->evt_reset=1;
 	return 0;
-#if 0
-	if (p->state != HAL_PORT_STATE_LINK_DOWN
-	    && p->state != HAL_PORT_STATE_DISABLED) {
-
-		/* turn off synced LED */
-		led_set_sync(p->hw_index, 0);
-
-		/* turn off link/wrmode LEDs */
-		led_set_wrmode(p->hw_index, SFP_LED_WRMODE_OFF);
-		hal_port_reset_state(p);
-		p->state = HAL_PORT_STATE_RESET;
-
-		rts_enable_ptracker(p->hw_index, 0);
-		pr_info("%s: link down\n", p->name);
-
-		return 1;
-	}
-
-	return 0;
-#endif
 }
 
-void hal_update_port_info(char *iface_name, int mode, int synchronized){
+void hal_port_update_info(char *iface_name, int mode, int synchronized){
 
 	int i;
 	struct hal_port_state *ps=halPorts.ports;

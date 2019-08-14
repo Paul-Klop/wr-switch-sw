@@ -20,7 +20,7 @@ typedef struct {
 }timer_parameter_t;
 
 
-extern void timerInit(timer_parameter_t *p,int nbTimers);
-extern void timerScan(timer_parameter_t *p,int nbTimers);
+extern void timer_init(timer_parameter_t *p,int nbTimers);
+extern void timer_scan(timer_parameter_t *p,int nbTimers);
 
 #endif

@@ -23,6 +23,8 @@ typedef struct {
 
 }hal_ports_t;
 
+typedef void (*hal_cleanup_callback_t)(void);
+
 
 #define isRtsStateValid() halPorts.rts_state_valid
 #define setRtsStateValidity(value) halPorts.rts_state_valid=(value)
@@ -33,8 +35,23 @@ typedef struct {
 extern hal_ports_t halPorts;
 
 extern int hal_port_poll_rts_state(void);
-extern int hal_port_poll_rts_state(void);
-extern int hal_get_timing_mode(void);
+extern int hal_port_start_lock(const char *port_name, int priority);
+extern int hal_port_enable_tracking(const char *port_name);
+extern int hal_port_check_lock(const struct hal_port_state *ps);
+extern int hal_port_check_lock_by_name(const char *port_name);
+extern int hal_port_reset(const char *port_name);
+extern int hal_port_pshifter_busy(void);
+extern void hal_port_update_info(char *iface_name, int mode, int synchronized);
+extern void hal_port_update_all(void);
+extern int hal_port_shmem_init(char *logfilename);
+extern int hal_port_wripc_init(char *logfilename);
 extern int rts_lock_channel(int channel, int priority);
+
+extern int hal_wripc_init(struct hal_port_state *hal_ports, char *logfilename);
+extern int hal_wripc_update(int ms_timeout);
+
+extern int hal_check_running(void);
+
+extern int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
 
 #endif

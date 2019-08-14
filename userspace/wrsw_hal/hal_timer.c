@@ -10,7 +10,7 @@
 
 #include "hal_timer.h"
 
-void timerInit(timer_parameter_t *p,int nbTimers) {
+void timer_init(timer_parameter_t *p,int nbTimers) {
 	int index;
 
 	for ( index=0; index < nbTimers; index++ ) {
@@ -20,7 +20,7 @@ void timerInit(timer_parameter_t *p,int nbTimers) {
 }
 
 
-void timerScan(timer_parameter_t *p,int nbTimers) {
+void timer_scan(timer_parameter_t *p,int nbTimers) {
 	int index;
 
 	for ( index=0; index < nbTimers; index++ ) {

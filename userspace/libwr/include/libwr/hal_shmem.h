@@ -59,7 +59,6 @@ typedef struct hal_port_calibration {
 	struct shw_sfp_caldata sfp;
 	struct shw_sfp_header sfp_header_raw;
 	struct shw_sfp_dom sfp_dom_raw;
-	int sfpPresent;
 } hal_port_calibration_t;
 
 typedef struct {
@@ -114,6 +113,8 @@ struct hal_port_state {
 
 	/* whether SFP has diagnostic Monitoring capability */
 	int has_sfp_diag;
+	/* True if SFP is inserted */
+	int sfpPresent;
 
 	/* whether the port shall be monitored by SNMP */
 	int monitor;

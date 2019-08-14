@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <rt_ipc.h>
+
 #include <libwr/wrs-msg.h>
 #include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
@@ -21,9 +23,9 @@
 #include <libwr/util.h>
 #include <libwr/timeout.h>
 
-#include "wrsw_hal.h"
+#include "hal_ports.h"
 #include "hal_timer.h"
-#include <rt_ipc.h>
+#include "hal_timing.h"
 
 #define MAX_CLEANUP_CALLBACKS 16
 
@@ -141,16 +143,14 @@ static int hal_init(void)
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
 
-	/* read timing mode from dot-config */
-	assert_init(hal_init_timing_mode());
+	/* Init timing part */
+	assert_init(hal_tmg_init(logfilename));
 
 	/* Initialize HAL's shmem - see hal_ports.c */
-	assert_init(hal_port_init_shmem(logfilename));
-
-	assert_init(hal_init_timing(logfilename));
+	assert_init(hal_port_shmem_init(logfilename));
 
 	/* Initialize IPC/RPC - see hal_ports.c */
-	assert_init(hal_port_init_wripc(logfilename));
+	assert_init(hal_port_wripc_init(logfilename));
 
 	//everything is fine up to here, we can blink green LED
 	shw_io_write(shw_io_led_state_o, 0);
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
 	if (hal_init())
 		exit(1);
 
-	timerInit(_timerParameters,MAIN_TIMER_COUNT);
+	timer_init(_timerParameters,MAIN_TIMER_COUNT);
 
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
@@ -301,10 +301,10 @@ int main(int argc, char *argv[])
 	 */
 
 	for (;;) {
-		hal_update_wripc(25 /* max ms delay */);
+		hal_wripc_update(25 /* max ms delay */);
 
 		// Check main timers and call callback if timeout expires
-		timerScan(_timerParameters,MAIN_TIMER_COUNT);
+		timer_scan(_timerParameters,MAIN_TIMER_COUNT);
 	}
 
 	hal_shutdown();

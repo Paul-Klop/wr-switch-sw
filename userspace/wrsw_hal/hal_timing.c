@@ -11,12 +11,11 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/timeout.h>
 
-#include <hal_exports.h>
-#include "wrsw_hal.h"
+#include "hal_exports.h"
 #include "hal_ports.h"
 
 
-int hal_init_timing_mode(void)
+int hal_tmg_init(const char * logfilename)
 {
 	if (rts_connect(NULL) < 0) {
 		pr_error(
@@ -26,12 +25,7 @@ int hal_init_timing_mode(void)
 	return 0;
 }
 
-int hal_init_timing(char *filename)
-{
-	return 0;
-}
-
-int hal_get_timing_mode(void)
+int hal_tmg_get_mode(void)
 {
 	struct rts_pll_state *hs = getRtsStatePtr();
 
@@ -49,7 +43,7 @@ int hal_get_timing_mode(void)
 	return -1;
 }
 
-int  hal_set_timing_mode(uint32_t tm) {
+int  hal_tmg_set_mode(uint32_t tm) {
 	int ret=shw_pps_set_timing_mode(tm);
 	hal_port_poll_rts_state();
 	return ret;

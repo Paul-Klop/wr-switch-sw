@@ -6,16 +6,16 @@
 #include <signal.h>
 #include <string.h>
 
+#include <rt_ipc.h>
+#include <minipc.h>
+
 #include <libwr/wrs-msg.h>
 #include <libwr/pps_gen.h> /* for direct access to DMPLL and PPS generator */
-
-#include "wrsw_hal.h"
-#include <rt_ipc.h>
-
-#include <minipc.h>
 #include <libwr/shmem.h>
 
-#include <hal_exports.h> /* for exported structs/function protos */
+#include "hal_exports.h" /* for exported structs/function protos */
+#include "hal_ports.h"
+#include "hal_timing.h"
 
 static struct minipc_ch *hal_ch;
 static struct hal_port_state *ports;
@@ -55,11 +55,11 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		   has already locked to and stabilized the reference
 		   frequency */
 	case HEXP_LOCK_CMD_CHECK:
-		rval = hal_port_check_lock(port_name);
+		rval = hal_port_check_lock_by_name(port_name);
 
 		if (rval > 0)
 			return HEXP_LOCK_STATUS_LOCKED;
-		else if (!rval)
+		else if ( rval==0 )
 			return HEXP_LOCK_STATUS_BUSY;
 		else
 			return HEXP_LOCK_STATUS_NONE;
@@ -142,10 +142,10 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 		return shw_pps_gen_enable_output(params->pps_valid);
 
 	case HEXP_PPSG_CMD_SET_TIMING_MODE:
-		return hal_set_timing_mode(params->timing_mode);
+		return hal_tmg_set_mode(params->timing_mode);
 
 	case HEXP_PPSG_CMD_GET_TIMING_MODE:{
-		ret=hal_get_timing_mode();
+		ret=hal_tmg_get_mode();
 		return ret;
 	}
 
@@ -160,11 +160,9 @@ int halexp_port_info_cmd(hexp_port_info_params_t * params)
 {
 	int i;
 	for ( i=0; i< params->numberPortInterfaces; i++ )
-		hal_update_port_info(params->hIFace[i].name, params->hIFace[i].mode, params->hIFace[i].synchronized);
+		hal_port_update_info(params->hIFace[i].name, params->hIFace[i].mode, params->hIFace[i].synchronized);
 	return 1;
 }
-
-extern int hal_port_any_locked(void);
 
 static void hal_cleanup_wripc(void)
 {
@@ -210,7 +208,7 @@ static int export_port_info_cmd(const struct minipc_pd *pd,
 
 
 /* Creates a wripc server and exports all public API functions */
-int hal_init_wripc(struct hal_port_state *hal_ports, char *logfilename)
+int hal_wripc_init(struct hal_port_state *hal_ports, char *logfilename)
 {
 	static FILE *f;
 
@@ -252,7 +250,7 @@ int hal_init_wripc(struct hal_port_state *hal_ports, char *logfilename)
 }
 
 /* wripc update function, must be called in the main program loop */
-int hal_update_wripc(int ms_timeout)
+int hal_wripc_update(int ms_timeout)
 {
 	minipc_server_action(hal_ch, ms_timeout);
 	return 0;

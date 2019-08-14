@@ -5,7 +5,7 @@
       <vertices xsi:type="sgraph:Entry" xmi:id="_uf588LdfEemzI5ZuGbnP4A">
         <outgoingTransitions xmi:id="_ugB4wLdfEemzI5ZuGbnP4A" specification="" target="_uf8ZMLdfEemzI5ZuGbnP4A"/>
       </vertices>
-      <vertices xsi:type="sgraph:State" xmi:id="_uf8ZMLdfEemzI5ZuGbnP4A" specification="entry / port.lpcSupport=false&#xA;&#xA;" name="HAL_PORT_STATE_INIT" incomingTransitions="_ugB4wLdfEemzI5ZuGbnP4A">
+      <vertices xsi:type="sgraph:State" xmi:id="_uf8ZMLdfEemzI5ZuGbnP4A" specification="entry / port.lpdcSupport=false&#xA;&#xA;" name="HAL_PORT_STATE_INIT" incomingTransitions="_ugB4wLdfEemzI5ZuGbnP4A">
         <regions xmi:id="_gj7iwLeKEemUVuDCbi9APQ" name="TX_SETUP">
           <vertices xsi:type="sgraph:Entry" xmi:id="_sPl4oLeKEemUVuDCbi9APQ">
             <outgoingTransitions xmi:id="_TqqU0LeLEemUVuDCbi9APQ" specification="" target="_tLh8cLeKEemUVuDCbi9APQ"/>

@@ -53,5 +53,8 @@ extern int hal_wripc_update(int ms_timeout);
 extern int hal_check_running(void);
 
 extern int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
+extern int pcs_writel(struct hal_port_state *p, uint16_t value, int reg);
+extern int pcs_readl(struct hal_port_state * p, int reg, uint32_t *value);
+
 
 #endif

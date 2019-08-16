@@ -6,10 +6,17 @@
  *
  *
  */
-#include <hal_exports.h>
-#include <libwr/hal_shmem.h>
 
+#include <rt_ipc.h>
+
+#include <libwr/hal_shmem.h>
+#include <libwr/config-lpcalib.h>
+
+#include "hal_exports.h"
 #include "hal_port_gen_fsm.h"
+#include "driver_stuff.h"
+#include "hal_main.h"
+#include "hal_ports.h"
 #include "hal_port_fsm_txP.h"
 
 /**
@@ -17,6 +24,7 @@
  * States :
  *    - HAL_PORT_TX_SETUP_STATE_START:
  *    	Inital state
+ *    - .....
  *    - HAL_PORT_TX_SETUP_STATE_DONE:
  *    	TX setup terminated
  * Events :
@@ -26,6 +34,10 @@
 /* external prototypes */
 static  int _buildEvents(void * vpfg);
 static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewState);
+static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNewState);
+static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState);
+static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState);
+static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState);
 static int _hal_port_tx_setup_state_done(void *vpfg, int eventMsk, int isNewState);
 
 static halPortStateTable_t _fsmStateTable[] =
@@ -33,6 +45,22 @@ static halPortStateTable_t _fsmStateTable[] =
 		{ .state=HAL_PORT_TX_SETUP_STATE_START,
 				.stateName="START",
 				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_start)
+		},
+		{ .state=HAL_PORT_TX_SETUP_STATE_RESET_PCS,
+				.stateName="RESET_PCS",
+				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_reset_pcs)
+		},
+		{ .state=HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE,
+				.stateName="MEASURE_PHASE",
+				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_measure_phase)
+		},
+		{ .state=HAL_PORT_TX_SETUP_STATE_WAIT_LOCK,
+				.stateName="WAIT_LOCK",
+				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_wait_lock)
+		},
+		{ .state=HAL_PORT_TX_SETUP_STATE_VALIDATE,
+				.stateName="VALIDATE",
+				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_validate)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_DONE,
 				.stateName="DONE",
@@ -55,6 +83,26 @@ static halPortFsmGen_t _portFsm = {
 		.pe=_fsmEvtTable
 };
 
+//TODO-ML: the below structure is redundant, consider reogranization to use
+//         hal_port_rts_state
+static struct rts_pll_state _pll_state;
+/* path to the file where Low Phase Drift calib parameters are stored */
+static char *_calibrationFileName = "/update/tx_phase_cal.conf";
+struct config_file *_calibrationConfig; // Calibration config form file
+
+static __inline__ void updatePllState(struct hal_port_state * ps) {
+	if (ps->hw_index == 0)
+	{
+		// update PLL state once for all ports
+		rts_get_state(&_pll_state);
+	}
+}
+
+/* prototypes */
+static void _update_tx_calibration_file(void);
+static void _update_tx_calibration_file(void);
+static void _set_tx_calibration_data(struct hal_port_state * ps );
+static int _within_range(int x, int minval, int maxval, int wrap);
 /*
  * START state
  *
@@ -67,14 +115,169 @@ static halPortFsmGen_t _portFsm = {
 static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
 
-	if ( isNewState )  {
-		ps->lpdc.isSupported=0; // Not yet supported
-	}
+
 	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
 		return 0;
+	} else {
+		// LPDC support
+		halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
+
+		txSetup->attempts=0;
+		txSetup->expected_phase = 0;
+		txSetup->expected_phase_valid = 0;
+		txSetup->tollerance = 300;
+		txSetup->update_cnt = 0;
+		txSetup->cal_saved_phase_valid = 0;
+		txSetup->cal_saved_phase = 0;
+		txSetup->cal_file_updated = 0;
+		_set_tx_calibration_data(ps);
+
+		_pll_state.channels[ps->hw_index].flags = 0;
+
+		rts_enable_ptracker(ps->hw_index, 0);
+
+		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
+			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+			      MDIO_LPC_CTRL);
+		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 	}
+	return 0;
+}
+
+/*
+ * RESET_PCS state
+ *
+ *
+ */
+static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState) {
+	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+
+	rts_enable_ptracker(ps->hw_index, 0);
+	pcs_writel(ps, MDIO_LPC_CTRL_RESET_TX |
+		      MDIO_LPC_CTRL_RESET_RX |
+		      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+		      MDIO_LPC_CTRL);
+	shw_udelay(1);
+	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
+		      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+		      MDIO_LPC_CTRL);
+
+	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_LOCK);
+	return 0;
+}
+
+/*
+ * WAIT_LOCK state
+ *
+ *
+ */
+static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState) {
+	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+	uint32_t value;
+
+	if ( pcs_readl(ps, MDIO_LPC_STAT,&value)>=0 ) {
+		if ( (value & MDIO_LPC_STAT_RESET_TX_DONE)!=0 ) {
+			ps->lpdc.txSetup->attempts++;
+			rts_enable_ptracker(ps->hw_index, 1);
+			_pll_state.channels[ps->hw_index].flags = 0;
+
+			_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE);
+		}
+	}
+	return 0;
+}
+
+/*
+ * MEASURE_PHASE state
+ *
+ *
+ */
+static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
+	halPortLpdcTx_t * txSetup;
+
+	updatePllState(ps);
+	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY))
+		return 0; // keep waiting
+
+	txSetup = ps->lpdc.txSetup;
+	int phase = _pll_state.channels[ps->hw_index].phase_loopback;
+	txSetup->measured_phase = phase;
+
+	if (!txSetup->expected_phase_valid) {
+		if (txSetup->cal_saved_phase_valid) {
+			pr_info("Using phase from file :%d\n", txSetup->cal_saved_phase);
+			txSetup->expected_phase = txSetup->cal_saved_phase;
+		} else {
+			int phi = phase;
+
+			do // find the phase bin right after the rising parallel clock edge
+			{
+				txSetup->expected_phase = phi;
+				phi -= 800;
+			} while (phi > 0);
+		}
+		txSetup->expected_phase_valid = 1;
+	}
+
+	int phase_min = txSetup->expected_phase - txSetup->tollerance;
+	int phase_max = txSetup->expected_phase + txSetup->tollerance;
+
+	//TODO-ML: change to name of interface, remove two phases
+	pr_info("TX Calibration: upd port %d phase %d %d after %d "
+			"attempts target %d tollerance %d (temp = %.3f degC)\n",
+			ps->hw_index, txSetup->measured_phase, txSetup->measured_phase,
+			txSetup->attempts, txSetup->expected_phase, txSetup->tollerance,
+			hal_get_fpga_temperature() / 256.0);
+
+	if (_within_range(phase, phase_min, phase_max, 16000)) {
+		int i;
+
+		pr_info("FIX port %d phase %d after %d attempts "
+				"(temp = %.3f degC)\n", ps->hw_index, txSetup->measured_phase,
+				txSetup->attempts, hal_get_fpga_temperature() / 256.0);
+		rts_enable_ptracker(ps->hw_index, 0);
+		rts_enable_ptracker(ps->hw_index, 1);
+
+		for (i = 0; i < RTS_PLL_CHANNELS; i++)
+			_pll_state.channels[i].flags = 0;
+
+		_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_VALIDATE);
+	} else
+		_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
+
+	return 0;
+}
+
+/*
+ * Validate state
+ *
+ *
+ */
+static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
+	halPortLpdcTx_t *txSetup;
+
+	updatePllState(ps);
+	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY))
+		return 0; // keep waiting
+
+	txSetup = ps->lpdc.txSetup;
+	txSetup->measured_phase = _pll_state.channels[ps->hw_index].phase_loopback;
+	pr_info("Port %d: TX calibration complete\n", ps->hw_index + 1);
+	rts_enable_ptracker(ps->hw_index, 0);
+
+	// enable the PCS on the port
+	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
+		      MDIO_LPC_CTRL_TX_ENABLE |
+		      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
+		      MDIO_LPC_CTRL);
+
+	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
+	_update_tx_calibration_file();
+
 	return 0;
 }
 
@@ -98,6 +301,15 @@ void hal_port_tx_setup_init_fsm(struct hal_port_state * ps ) {
 	_portFsm.st=&ps->lpdc.txSetupStates;
 	ps->lpdc.txSetupStates.state=-1;
 	_fireState(&_portFsm,HAL_PORT_TX_SETUP_STATE_START);
+
+	// Read calibration file, if it exists
+	_calibrationConfig = cfg_load(_calibrationFileName, 0);
+	if ( _calibrationConfig )
+		cfg_close(_calibrationConfig);
+	else
+		pr_info("Can't load TX phase calibration data file: %s\n",
+				_calibrationFileName);
+
 }
 
 /* FSM state machine for TX setup on a given port
@@ -112,3 +324,113 @@ int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps ) {
 	_portFsm.st=&ps->lpdc.txSetupStates;
 	return hal_port_generic_fsm(&_portFsm);
 }
+
+/* if config is present then update the calibration data */
+static void _set_tx_calibration_data(struct hal_port_state * ps )
+{
+	if ( _calibrationConfig ) {
+		char key_name[80];
+		int value;
+		snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d",
+				ps->hw_index);
+
+		if ( cfg_get_int(_calibrationConfig, key_name, &value)) {
+			//TODO-ML: change to name
+			printf("cal: %d %d\n", ps->hw_index, value);
+			ps->lpdc.txSetup->cal_saved_phase = value;
+			ps->lpdc.txSetup->cal_saved_phase_valid = 1;
+			ps->lpdc.txSetup->cal_file_updated = 1;
+		}
+	}
+}
+
+static int file_exists(const char *filename)
+{
+	FILE *f = fopen(filename, "r");
+
+	if (f != NULL)
+	{
+		fclose(f);
+		return 1;
+	}
+
+	return 0;
+}
+
+static void _update_tx_calibration_file(void)
+{
+	int i;
+	struct hal_port_state * ps=&halPorts.ports[0];
+
+	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		if (ps->in_use && ps->lpdc.isSupported &&
+		    ps->lpdc.txSetup->cal_file_updated )
+			return;
+		ps++;
+	}
+
+	if (file_exists(_calibrationFileName))
+	{
+		//pr_info("TX phase calibration data already exists, no need to update\n");
+		return;
+	}
+
+	struct config_file *cfg = cfg_load(_calibrationFileName, 1);
+
+	ps=&halPorts.ports[0];
+	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		if (ps->in_use && ps->lpdc.isSupported)
+		{
+			char key_name[80];
+			snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d", ps->hw_index);
+			cfg_set_int(cfg, key_name, ps->lpdc.txSetup->measured_phase);
+		}
+		ps++;
+	}
+
+	pr_info( "Writing TX phase calibration data to %s\n", _calibrationFileName );
+	cfg_save( cfg, _calibrationFileName );
+	cfg_close(cfg);
+
+	ps=&halPorts.ports[0];
+	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		if (ps->in_use && ps->lpdc.isSupported)
+			ps->lpdc.txSetup->cal_file_updated = 1;
+		ps++;
+	}
+}
+
+//min -269 max 331 x 9631 Rv 1
+static int _within_range(int x, int minval, int maxval, int wrap)
+{
+	int rv;
+
+	printf("min %d max %d x %d ", minval, maxval, x);
+
+	while (maxval >= wrap)
+		maxval -= wrap;
+
+	while (maxval < 0)
+		maxval += wrap;
+
+	while (minval >= wrap)
+		minval -= wrap;
+
+	while (minval < 0)
+		minval += wrap;
+
+	while (x < 0)
+		x += wrap;
+
+	while (x >= wrap)
+		x -= wrap;
+
+	if (maxval > minval)
+		rv = (x >= minval && x <= maxval) ? 1 : 0;
+	else
+		rv = (x >= minval || x <= maxval) ? 1 : 0;
+
+	return rv;
+}
+
+

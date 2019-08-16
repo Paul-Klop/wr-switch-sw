@@ -5,6 +5,8 @@
 #include <libwr/sfp_lib.h>
 #include <string.h>
 
+#include "timeout.h"
+
 /* Port state machine states */
 typedef enum {
 	HAL_PORT_STATE_INIT=0,
@@ -61,15 +63,37 @@ typedef struct hal_port_calibration {
 	struct shw_sfp_dom sfp_dom_raw;
 } hal_port_calibration_t;
 
+/* States used by the generic FSM */
 typedef struct {
 	int state;
 	int nextState;
 } halPortFsmState_t;
 
+/* Low Phase Drift Calibration for tx */
+typedef struct {
+	int attempts;
+	int cal_saved_phase;
+	int cal_saved_phase_valid;
+	int cal_file_updated;
+	int measured_phase;
+	int expected_phase;
+	int tollerance;
+	int update_cnt;
+	int expected_phase_valid;
+}halPortLpdcTx_t;
+
+/* Low Phase Drift Calibration for rx */
+typedef struct {
+	timeout_t link_timeout;
+	int attempts;
+}halPortLpdcRx_t;
+
 typedef struct {
 	int isSupported; /* Set if Low Phase Drift Calibration is supported */
 	halPortFsmState_t txSetupStates;
 	halPortFsmState_t rxSetupStates;
+	halPortLpdcTx_t *txSetup;
+	halPortLpdcRx_t *rxSetup;
 }halPortLPDC_t; /* data for Low phase drift calibration */
 
 
@@ -144,7 +168,7 @@ struct hal_temp_sensors {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 13 /* Version 13, HAL code review */
+#define HAL_SHMEM_VERSION 14 /* Version 13, HAL with PLDC */
 
 struct hal_shmem_header {
 	int nports;

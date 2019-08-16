@@ -16,6 +16,9 @@
 typedef enum {
 HAL_PORT_RX_SETUP_STATE_START=0,
 HAL_PORT_RX_SETUP_STATE_CALIB_NO_LPDC,
+HAL_PORT_RX_SETUP_STATE_RESET_PCS,
+HAL_PORT_RX_SETUP_STATE_WAIT_LOCK,
+HAL_PORT_RX_SETUP_STATE_VALIDATE,
 HAL_PORT_RX_SETUP_STATE_DONE
 } hapPortRxSetupState_t;
 
@@ -23,7 +26,9 @@ typedef enum
 {
 HAL_PORT_RX_SETUP_EVENT_TIMER=(1<<0),
 HAL_PORT_RX_SETUP_EVENT_LINK_UP=(1<<1),
-HAL_PORT_RX_SETUP_EVENT_LINK_DOWN=(1<<2)
+HAL_PORT_RX_SETUP_EVENT_LINK_DOWN=(1<<2),
+HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP=(1<<3),
+HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED=(1<<4)
 }halPortRxSetupEventMask_t ;
 
 static	__inline__ int _isHalRxSetupEventTimer(halPortRxSetupEventMask_t eventMsk) {
@@ -36,6 +41,14 @@ static	__inline__ int _isHalRxSetupEventLinkDown(halPortRxSetupEventMask_t event
 
 static	__inline__ int _isHalRxSetupEventLinkUp(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_LINK_UP;
+}
+
+static	__inline__ int _isHalRxSetupEventEarlyLinkUp(halPortRxSetupEventMask_t eventMsk) {
+	return eventMsk & HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP;
+}
+
+static	__inline__ int _isHalRxSetupEventRxAligned(halPortRxSetupEventMask_t eventMsk) {
+	return eventMsk & HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED;
 }
 
 #endif

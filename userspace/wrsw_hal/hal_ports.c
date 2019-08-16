@@ -95,6 +95,9 @@ static timer_parameter_t _timerParameters[] = {
 
 #define PORT_TIMER_COUNT (sizeof(_timerParameters)/sizeof(timer_parameter_t))
 
+/* prototypes */
+static int hal_port_check_lpdc_support(struct hal_port_state * ps);
+
 /* checks if the port is supported by the FPGA firmware */
 static int hal_port_check_presence(const char *if_name, unsigned char *mac)
 {
@@ -130,7 +133,13 @@ static int hal_port_init(struct hal_port_state *ps, int index)
 		return -1;
 
 	ps->in_use = 1;
+	ps->lpdc.isSupported = hal_port_check_lpdc_support(ps);
 
+	if ( ps->lpdc.isSupported ) {
+		// Allocate memory for tx/rx setup
+		ps->lpdc.txSetup = malloc(sizeof(halPortLpdcTx_t));
+		ps->lpdc.rxSetup = malloc(sizeof(halPortLpdcRx_t));
+	}
 	/* get the number of a port from notation wriX */
 	sscanf(ps->name + 3, "%d", &ps->hw_index);
 	/* hw_index is 0..17, p->name wri1..18 */
@@ -262,6 +271,83 @@ int hal_port_shmem_init(char *logfilename)
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
 	return 0;
+}
+
+int pcs_writel(struct hal_port_state *ps, uint16_t value, int reg)
+{
+	struct ifreq ifr;
+	uint32_t rv;
+
+	strncpy(ifr.ifr_name, ps->name, sizeof(ifr.ifr_name));
+
+	rv = NIC_WRITE_PHY_CMD(reg, value);
+	ifr.ifr_data = (void *)&rv;
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCPHYREG, &ifr) < 0)
+	{
+		pr_error("%s: ioctl failed writing at register adress %d\n",
+				__func__,reg);
+		return -1;
+	};
+
+	return 0;
+}
+
+int pcs_readl(struct hal_port_state * p, int reg, uint32_t *value)
+{
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
+
+	*value = NIC_READ_PHY_CMD(reg);
+	ifr.ifr_data = (void *)value;
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCPHYREG, &ifr) < 0) {
+		pr_error("%s: ioctl failed reading register at address %d\n",
+				__func__, reg);
+		return -1;
+	}
+
+	*value=NIC_RESULT_DATA(*value);
+	return 0;
+}
+
+static uint32_t ep_read(struct hal_port_state * p, int reg_addr, uint32_t *value)
+{
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
+
+	*value = reg_addr;
+	ifr.ifr_data = (void *) value;
+	pr_info("raw fd %d name %s\n", halPorts.hal_port_fd, ifr.ifr_name);
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCREADREG, &ifr) < 0) {
+		pr_error("%s: ioctl failed reading register at address %d\n", __func__,reg_addr);
+		return -1;
+	}
+	pr_info("ep_read: reg %d data %x\n", reg_addr, *value);
+	return 0;
+}
+
+/* checks if the port supports Low Phase Drift Calibration*/
+static int hal_port_check_lpdc_support(struct hal_port_state * ps)
+{
+
+	uint32_t rv;
+
+	if ( ep_read(ps, EP_ECR_ADDR,&rv)<0 ) {
+		pr_error("Cannot detects supports for Low Phase Drift Calibration "
+				"at port %s\n", ps->name);
+		return 0;
+	} else {
+		if (rv & EP_ECR_FEAT_LPC) {
+			pr_info("Supports for Low Phase Drift Calibration detected"
+					"at port %s\n", ps->name);
+			return 1;
+		} else {
+			pr_info("NO supports for Low Phase Drift Calibration detected"
+					"at port %s\n", ps->name);
+			return 0;
+		}
+	}
 }
 
 int hal_port_wripc_init(char *logfilename)

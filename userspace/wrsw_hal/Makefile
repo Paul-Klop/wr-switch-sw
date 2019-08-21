@@ -1,3 +1,4 @@
+-include ../Makefile.specific
 
 # We are now Kconfig-based
 -include ../../.config

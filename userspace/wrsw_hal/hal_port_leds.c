@@ -95,7 +95,7 @@ void led_link_update(struct hal_port_state *ps) {
 	if (portIndex >= HAL_MAX_PORTS)
 		return;
 
-	_leds.sync_leds_map[portIndex] = value;
+	_leds.sync_leds_map_to_update[portIndex] = value;
 }
 
 

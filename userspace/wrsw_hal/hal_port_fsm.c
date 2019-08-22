@@ -183,6 +183,11 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
 		_reset_port(ps);
 		/* Init the rx state machine */
 		hal_port_rx_setup_init_fsm(ps);
+
+                /* Turn off both leds when detecting link down. The WRMODE led
+                   might be overriden later by the rx_setup_state_fsm*/
+                led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
+                led_set_synched(ps->hw_index, 0);
 	}
 
 	/* if final state reached for tx setup state machine then
@@ -342,9 +347,9 @@ static void _reset_port(struct hal_port_state * ps)
 	ps->tx_cal_pending = 0;
 	ps->rx_cal_pending = 0;
 
-	/* Set link/wrmode LEDs to other. Master/slave
+	/* Turn off link/wrmode LED. Master/slave
 	 * color is set in the different place */
-	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OTHER);
+	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 	/* turn off synced LED */
 	led_set_synched(ps->hw_index, 0);
 

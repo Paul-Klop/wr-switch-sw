@@ -30,7 +30,7 @@ int hal_port_generic_fsm( halPortFsmGen_t *pfg) {
 			while (pt->state!=-1 ) {
 				if (pt->state==_getState(pfg) ) {
 					if ( FSM_GEN_DEBUG && pt->fctName!=NULL)
-						printf("%s.%s:  Calling %s (newState=%d, evts=%s),\n",
+						pr_debug("%s.%s:  Calling %s (newState=%d, evts=%s),\n",
 								pfg->ps->name,pfg->fsm_name,
 								pt->fctName, isNewState,evtStr);
 					ret=(*pt->fct)(pfg,portEventMask,isNewState);

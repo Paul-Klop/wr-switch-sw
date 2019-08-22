@@ -297,7 +297,7 @@ int hal_port_poll_rts_state(void)
 
 	setRtsStateValidity( rts_get_state(hs) < 0 ? 0 : 1);
 	if (! isRtsStateValid() )
-		printf("rts_get_state failure, weird...\n");
+		pr_warning("rts_get_state failure, weird...\n");
 	return isRtsStateValid();
 }
 

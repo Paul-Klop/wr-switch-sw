@@ -226,8 +226,8 @@ static int _hal_port_state_link_up(void *vpfg, int eventMsk, int isNewState) {
 		struct channel *ch=&getRtsState().channels[ps->hw_index];
 		ps->phase_val = ch->phase_loopback;
 		ps->phase_val_valid =ch->flags & CHAN_PMEAS_READY ? 1 : 0;
-		if (ps->hw_index==0 ) //JCB
-			printf("Phase=%d valid=%d\n",ps->phase_val,ps->phase_val_valid);
+		pr_debug("wri%d: phase=%d valid=%d\n",ps->hw_index+1,
+			ps->phase_val,ps->phase_val_valid);
 	}
 
 	// Run PLL state machine

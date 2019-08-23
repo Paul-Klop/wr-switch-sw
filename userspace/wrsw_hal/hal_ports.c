@@ -312,7 +312,6 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 	memset(&shdr, 0, sizeof(struct shw_sfp_header));
 	memset(&ps->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
 	err = shw_sfp_read_verify_header(ps->hw_index, &shdr);
-	memcpy(&ps->calib.sfp_header_raw, &shdr, sizeof(struct shw_sfp_header));
 	if (err == -2) {
 		pr_error("%s SFP module not inserted. Failed to read SFP "
 			 "configuration header\n", ps->name);
@@ -320,8 +319,12 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 	} else if (err < 0) {
 		pr_error("Failed to read SFP configuration header for %s\n",
 			 ps->name);
-		return;
+		/* Clear any mess that was wrongly read to make sure that
+		   the SFP will be unrecognized. */
+		memset(&shdr, 0, sizeof(struct shw_sfp_header));
 	}
+	memcpy(&ps->calib.sfp_header_raw, &shdr, sizeof(struct shw_sfp_header));
+
 	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
 	    && shdr.diagnostic_monitoring_type & SFP_DIAGNOSTIC_IMPLEMENTED) {
 		pr_info("SFP Diagnostic Monitoring implemented in SFP plugged"

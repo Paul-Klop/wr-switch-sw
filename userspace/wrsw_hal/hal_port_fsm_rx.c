@@ -290,11 +290,15 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
  *
  */
 static int _hal_port_rx_setup_state_done(void *vpfg, int eventMsk, int isNewState) {
+	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
 
-	if ( !_isHalRxSetupEventEarlyLinkUp(eventMsk)) {
-		// Port went done
-		_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_START);
-		return 0;
+	/* earlyLinkUp detection only if LPDC support */
+	if ( ps->lpdc.isSupported ) {
+		if ( !_isHalRxSetupEventEarlyLinkUp(eventMsk)) {
+			// Port went done
+			_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_START);
+			return 0;
+                }
 	}
 	if ( _isHalRxSetupEventLinkDown(eventMsk) ) {
 		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_START);

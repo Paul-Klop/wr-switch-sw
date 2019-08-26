@@ -159,6 +159,8 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 int halexp_port_info_cmd(hexp_port_info_params_t * params)
 {
 	int i;
+	/* TODO: Improve/implement handling of many PPSi instances on a 
+	   single physical port (see more info in hal_port_update_info() */
 	for ( i=0; i< params->numberPortInterfaces; i++ )
 		hal_port_update_info(params->hIFace[i].name, params->hIFace[i].mode, params->hIFace[i].synchronized);
 	return 1;

@@ -615,6 +615,15 @@ void hal_port_update_info(char *iface_name, int mode, int synchronized){
 		return;
 	}
 
+	/* TODO: Improve/implement handling of many instances on a single 
+	   physical port. Currently, the PPSi instance with the greatest
+	   index will override any preceeding instances on a give physical
+	   port. Very likely, a table with counter of instances per physical
+	   port could be done. If the counter is greater than 1, the arbiration
+	   kicks in. In such case, we could follow what was implemente 
+	   previously, namely an Instance in PTP SLAVE state has precedence.
+	   TO BE DISCUSSED.
+        */
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
 
 		if (ps->in_use &&

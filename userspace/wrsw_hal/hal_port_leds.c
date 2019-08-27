@@ -19,6 +19,17 @@ static struct Leds {
 	unsigned char link_leds_map[HAL_MAX_PORTS];
 } _leds;
 
+static int led_blink_state = 0;
+
+/* flip state of the leds to blink */
+void led_blink_state_change(void) {
+	led_blink_state = 1 - led_blink_state;
+}
+
+/* state of blinking led (on/off) */
+int led_get_blink_state(void) {
+	return led_blink_state;
+}
 
 void led_init_all_ports(struct hal_port_state *ps ) {
 	int i;
@@ -49,7 +60,8 @@ void led_link_update(struct hal_port_state *ps) {
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
 
 		unsigned char value=_leds.link_leds_map_to_update[i];
-		if ( value != _leds.link_leds_map[i]) {
+		if ( value != _leds.link_leds_map[i] ||
+		     value == SFP_LED_WRMODE_TX_CALIB /* always update to blink*/) {
 			_leds.link_leds_map[i]=value;
 
 			/* update the LED, don't forget to turn off LEDs if needed */
@@ -66,6 +78,16 @@ void led_link_update(struct hal_port_state *ps) {
 				break;
 			case SFP_LED_WRMODE_MASTER:
 				shw_sfp_set_generic(i, 1,SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
+				break;
+                        case SFP_LED_WRMODE_TX_CALIB:
+				if(led_get_blink_state()){ // SFP_LED_WRMODE_OTHER
+					shw_sfp_set_generic(i, 0, SFP_LED_WRMODE1);
+					shw_sfp_set_generic(i, 1, SFP_LED_WRMODE2);
+				}
+				else { // SFP_LED_WRMODE_OFF
+					shw_sfp_set_generic(i, 0,
+					SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
+                                }
 				break;
 			case SFP_LED_WRMODE_OFF :
 				shw_sfp_set_generic(i, 0,
@@ -87,6 +109,7 @@ void led_link_update(struct hal_port_state *ps) {
 		port++;
 #endif
 	}
+	led_blink_state_change();
 }
 
 /* to avoid i2c transfers to set the synced LEDs, cache their state */

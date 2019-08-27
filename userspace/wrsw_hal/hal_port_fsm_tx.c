@@ -15,6 +15,7 @@
 #include "hal_exports.h"
 #include "hal_port_gen_fsm.h"
 #include "driver_stuff.h"
+#include "hal_port_leds.h"
 #include "hal_main.h"
 #include "hal_ports.h"
 #include "hal_port_fsm_txP.h"
@@ -115,7 +116,6 @@ static int _within_range(int x, int minval, int maxval, int wrap);
 static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
 
-
 	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
@@ -141,6 +141,9 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
 			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
 			      MDIO_LPC_CTRL);
+
+		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_TX_CALIB);
+
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 	}
 	return 0;
@@ -274,6 +277,8 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 		      MDIO_LPC_CTRL_TX_ENABLE |
 		      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
 		      MDIO_LPC_CTRL);
+
+	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 
 	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
 	_update_tx_calibration_file();

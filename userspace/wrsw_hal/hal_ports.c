@@ -31,6 +31,7 @@
 #include "hal_exports.h"
 #include "hal_timer.h"
 #include "hal_port_fsm.h"
+#include "hal_port_fsm_tx.h"
 #include "hal_port_leds.h"
 #include "hal_ports.h"
 #include "hal_timing.h"
@@ -58,6 +59,7 @@ static void _cb_port_poll_sfp(int timerId);
 static void _cb_port_poll_sfp_dom(int timerId);
 static void _cb_port_update_sync_leds(int timerId);
 static void _cb_port_update_link_leds(int timerId);
+
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timer_parameter_t _timerParameters[] = {
@@ -246,6 +248,7 @@ int hal_port_shmem_init(char *logfilename)
 		if (hal_port_init(&halPorts.ports[index],index) < 0)
 			break;
 	hal_port_state_fsm_init(halPorts.ports); // Init fsm
+	hal_port_tx_setup_init(halPorts.ports); // Global init for tx_setup
 	led_init_all_ports(halPorts.ports); // Reset all leds
 	halPorts.numberOfPorts = index;
 

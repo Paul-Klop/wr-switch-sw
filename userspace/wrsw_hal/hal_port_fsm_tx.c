@@ -102,7 +102,7 @@ static __inline__ void updatePllState(struct hal_port_state * ps) {
 /* prototypes */
 static void _update_tx_calibration_file(void);
 static void _update_tx_calibration_file(void);
-static void _set_tx_calibration_data(struct hal_port_state * ps );
+static void _load_tx_calibration_file(struct hal_port_state * ps);
 static int _within_range(int x, int minval, int maxval, int wrap);
 /*
  * START state
@@ -129,10 +129,6 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 		txSetup->expected_phase_valid = 0;
 		txSetup->tollerance = 300;
 		txSetup->update_cnt = 0;
-		txSetup->cal_saved_phase_valid = 0;
-		txSetup->cal_saved_phase = 0;
-		txSetup->cal_file_updated = 0;
-		_set_tx_calibration_data(ps);
 
 		_pll_state.channels[ps->hw_index].flags = 0;
 
@@ -300,21 +296,29 @@ static  int _buildEvents(void *vpfg) {
 	return HAL_PORT_TX_SETUP_EVENT_TIMER;
 }
 
+/* Initialize tx_setup - this is a global init,
+   executed once for all ports/FSMs */
+void hal_port_tx_setup_init(struct hal_port_state * ps ) {
+	int index;
+	struct hal_port_state * _ps = ps;
+
+	/* check whether there is any port that supports LPDC,
+	   if there is such port, load the tx calibration file.*/
+	for (index = 0; index < HAL_MAX_PORTS; index++){
+		if(_ps->in_use && _ps->lpdc.isSupported){
+			load_tx_calibration_file(ps);
+			break;
+		}
+		_ps++;
+        }
+}
+
 /* Init the TX SETUP FSM on a given port */
 void hal_port_tx_setup_init_fsm(struct hal_port_state * ps ) {
 	_portFsm.ps=ps;
 	_portFsm.st=&ps->lpdc.txSetupStates;
 	ps->lpdc.txSetupStates.state=-1;
 	_fireState(&_portFsm,HAL_PORT_TX_SETUP_STATE_START);
-
-	// Read calibration file, if it exists
-	_calibrationConfig = cfg_load(_calibrationFileName, 0);
-	if ( _calibrationConfig )
-		cfg_close(_calibrationConfig);
-	else
-		pr_info("Can't load TX phase calibration data file: %s\n",
-				_calibrationFileName);
-
 }
 
 /* FSM state machine for TX setup on a given port
@@ -329,24 +333,42 @@ int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps ) {
 	_portFsm.st=&ps->lpdc.txSetupStates;
 	return hal_port_generic_fsm(&_portFsm);
 }
-
 /* if config is present then update the calibration data */
-static void _set_tx_calibration_data(struct hal_port_state * ps )
-{
-	if ( _calibrationConfig ) {
-		char key_name[80];
-		int value;
-		snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d",
+static void _load_tx_calibration_file(struct hal_port_state * ps) {
+
+	int i = 0;
+	// Read calibration file, if it exists
+	_calibrationConfig = cfg_load(_calibrationFileName, 0);
+
+
+	if ( !_calibrationConfig ) {
+		pr_info("Can't load TX phase calibration data file: %s\n",
+			_calibrationFileName);
+		return;
+        }
+
+	pr_info("Loading LPCD config data from %s\n", _calibrationFileName);
+
+	for (i = 0; i < HAL_MAX_PORTS; i++){
+		if (ps->in_use && ps->lpdc.isSupported)
+		{
+			char key_name[80];
+			int value;
+			snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d", 
 				ps->hw_index);
 
-		if ( cfg_get_int(_calibrationConfig, key_name, &value)) {
-			//TODO-ML: change to name
-			printf("cal: %d %d\n", ps->hw_index, value);
-			ps->lpdc.txSetup->cal_saved_phase = value;
-			ps->lpdc.txSetup->cal_saved_phase_valid = 1;
-			ps->lpdc.txSetup->cal_file_updated = 1;
+			if(cfg_get_int( _calibrationConfig, key_name, &value) )
+			{
+				//TODO-ML: change to name
+				pr_info("cal: %d %d\n", ps->hw_index, value);
+				ps->lpdc.txSetup->cal_saved_phase = value;
+				ps->lpdc.txSetup->cal_saved_phase_valid = 1;
+				ps->lpdc.txSetup->cal_file_updated = 1;
+			}
 		}
+		ps++;
 	}
+	cfg_close(_calibrationConfig);
 }
 
 static int file_exists(const char *filename)

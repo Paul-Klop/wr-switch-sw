@@ -410,7 +410,7 @@ static int _within_range(int x, int minval, int maxval, int wrap)
 {
 	int rv;
 
-	printf("min %d max %d x %d ", minval, maxval, x);
+	printf("min %d max %d x %d \n", minval, maxval, x);
 
 	while (maxval >= wrap)
 		maxval -= wrap;

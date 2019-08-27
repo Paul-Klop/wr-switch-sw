@@ -174,21 +174,13 @@ static int _hal_port_rx_setup_state_calib_no_lpdc(void *vpfg, int eventMsk, int 
 		uint32_t bit_slide_steps;
 
 		if ( pcs_readl(ps, 16,&bit_slide_steps)  >=0 ) {
-
 			bit_slide_steps= (bit_slide_steps>> 4) & 0x1f;
-			ps->calib.tx_calibrated = 1;
-			ps->calib.rx_calibrated = 1;
 			/* FIXME: use proper register names */
 			ps->calib.bitslide_ps=bit_slide_steps*(uint32_t)800; /* 1 step = 800ps */
-			pr_info("%s:%s: bitslide= %u\n",__func__,ps->name,bit_slide_steps);
-
-			ps->calib.delta_rx_phy = ps->calib.phy_rx_min;
-			ps->calib.delta_tx_phy = ps->calib.phy_tx_min;
-
-			ps->tx_cal_pending = 0;
-			ps->rx_cal_pending = 0;
 			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_DONE);
 		}
+		else
+			pr_warning("Cannot read bitslide in NO-LPDC mode, retrying...\n");
 	}
 	return 0;
 }

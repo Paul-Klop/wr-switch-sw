@@ -180,7 +180,7 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
 	}
 
 	if ( isNewState )  {
-		_reset_port(ps);
+ 		_reset_port(ps);// clears ps->tx_cal_pending & ps->calib*, except ps->calib.bitslide_ps
 		/* Init the rx state machine */
 		hal_port_rx_setup_init_fsm(ps);
 
@@ -188,12 +188,26 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
                    might be overriden later by the rx_setup_state_fsm*/
                 led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
                 led_set_synched(ps->hw_index, 0);
+
+		/* bitslide is measured, if appropriate, in hal_port_rx_setup_state_fsm()*/
+		ps->calib.bitslide_ps = 0;
 	}
 
 	/* if final state reached for tx setup state machine then
 	 *     we can go LINK_UP state
 	 */
 	if (hal_port_rx_setup_state_fsm(ps)==1 ) {
+
+		/* any calibration, if any, has been done*/
+		ps->calib.tx_calibrated = 1;
+		ps->calib.rx_calibrated = 1;
+		ps->calib.delta_rx_phy = ps->calib.phy_rx_min;
+		ps->calib.delta_tx_phy = ps->calib.phy_tx_min;
+		ps->tx_cal_pending = 0;
+		ps->rx_cal_pending = 0;
+		/* bitslide was obtained in hal_port_rx_setup_state_fsm() */
+		pr_info("%s:%s: bitslide= %u [ps]\n",__func__,ps->name,ps->calib.bitslide_ps);
+
 		_fireState(vpfg,HAL_PORT_STATE_LINK_UP);
 		return 0;
 	}

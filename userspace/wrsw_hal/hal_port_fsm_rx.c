@@ -116,7 +116,8 @@ static struct rts_pll_state _pll_state;
 
 
 static __inline__ void updatePllState(struct hal_port_state * ps) {
-	if (ps->hw_index == 0)
+	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	if (ps->hw_index == gl->firstLpdcPort)
 	{
 		// update PLL state once for all ports
 		rts_get_state(&_pll_state);
@@ -144,6 +145,7 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 			halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 			rxSetup->attempts=0;
+			rts_enable_ptracker(ps->hw_index, 0);
 			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_RESET_PCS);
 		}
 	} else {

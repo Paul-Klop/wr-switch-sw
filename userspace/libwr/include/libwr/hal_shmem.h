@@ -74,7 +74,6 @@ typedef struct {
 	int attempts;
 	int cal_saved_phase;
 	int cal_saved_phase_valid;
-	int cal_file_updated;
 	int measured_phase;
 	int expected_phase;
 	int tollerance;
@@ -93,6 +92,7 @@ struct halGlobalLPDC {
 	int numberOfTxSetupDonePorts;
 	int firstLpdcPort;
 	int lastLpdcPort;
+	int calFileSynced;
 }; /* Global data for Low phase drift calibration */
 
 typedef struct {

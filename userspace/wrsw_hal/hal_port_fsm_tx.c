@@ -111,8 +111,7 @@ static __inline__ int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
 }
 
 /* prototypes */
-static void _update_tx_calibration_file(void);
-static void _update_tx_calibration_file(void);
+static void _write_tx_calibration_file(struct hal_port_state * _ps);
 static void _load_tx_calibration_file(struct hal_port_state * ps);
 static int _within_range(int x, int minval, int maxval, int wrap);
 /*
@@ -290,7 +289,7 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
 	txSetupDone(ps);
 	if(txSetupDoneOnAllPorts(ps))
-		_update_tx_calibration_file();
+		_write_tx_calibration_file(ps);
 
 	return 0;
 }
@@ -354,6 +353,7 @@ void hal_port_tx_setup_init(struct hal_port_state * ps,  struct halGlobalLPDC *g
 		/* fill in the global structure */
 		globalLpdc->numberOfLpdcPorts = numberOfLpdcPorts;
 		globalLpdc->numberOfTxSetupDonePorts = 0;
+		globalLpdc->calFileSynced = 0;
 		globalLpdc->firstLpdcPort = firstLpdcPort;
 		globalLpdc->lastLpdcPort = lastLpdcPort;
 		pr_info("WR switch supports LPDC on %d ports ("
@@ -391,6 +391,8 @@ int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps ) {
 static void _load_tx_calibration_file(struct hal_port_state * ps) {
 
 	int i = 0;
+	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+
 	// Read calibration file, if it exists
 	_calibrationConfig = cfg_load(_calibrationFileName, 0);
 
@@ -398,6 +400,7 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 	if ( !_calibrationConfig ) {
 		pr_info("Can't load TX phase calibration data file: %s\n",
 			_calibrationFileName);
+		gl->calFileSynced = 0;
 		return;
         }
 
@@ -417,11 +420,11 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 				pr_info("cal: %d %d\n", ps->hw_index, value);
 				ps->lpdc.txSetup->cal_saved_phase = value;
 				ps->lpdc.txSetup->cal_saved_phase_valid = 1;
-				ps->lpdc.txSetup->cal_file_updated = 1;
 			}
 		}
 		ps++;
 	}
+	gl->calFileSynced = 1;
 	cfg_close(_calibrationConfig);
 }
 
@@ -438,27 +441,25 @@ static int file_exists(const char *filename)
 	return 0;
 }
 
-static void _update_tx_calibration_file(void)
+static void _write_tx_calibration_file(struct hal_port_state * _ps)
 {
 	int i;
-	struct hal_port_state * ps=&halPorts.ports[0];
+	struct hal_port_state * ps=_ps;
+	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
 
-	for (i = 0; i < HAL_MAX_PORTS; i++) {
-		if (ps->in_use && ps->lpdc.isSupported &&
-		    ps->lpdc.txSetup->cal_file_updated )
-			return;
-		ps++;
-	}
+	if(gl->calFileSynced)
+		return;
 
 	if (file_exists(_calibrationFileName))
 	{
-		//pr_info("TX phase calibration data already exists, no need to update\n");
+		pr_warning("Tx calibration file exists, yet it has not been"
+		    " synched. Something seems wrong. Should not get here\n");
 		return;
 	}
 
 	struct config_file *cfg = cfg_load(_calibrationFileName, 1);
 
-	ps=&halPorts.ports[0];
+	ps=_ps;
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
 		if (ps->in_use && ps->lpdc.isSupported)
 		{
@@ -473,12 +474,7 @@ static void _update_tx_calibration_file(void)
 	cfg_save( cfg, _calibrationFileName );
 	cfg_close(cfg);
 
-	ps=&halPorts.ports[0];
-	for (i = 0; i < HAL_MAX_PORTS; i++) {
-		if (ps->in_use && ps->lpdc.isSupported)
-			ps->lpdc.txSetup->cal_file_updated = 1;
-		ps++;
-	}
+	gl->calFileSynced = 1;
 }
 
 //min -269 max 331 x 9631 Rv 1

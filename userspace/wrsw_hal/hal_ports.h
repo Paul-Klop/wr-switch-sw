@@ -21,6 +21,9 @@ typedef struct {
 	struct rts_pll_state rts_state;
 	int rts_state_valid;
 
+	/* Global information needed by LPDC (tx setup) */
+	struct halGlobalLPDC *globalLpdc;
+
 }hal_ports_t;
 
 typedef void (*hal_cleanup_callback_t)(void);

@@ -92,11 +92,22 @@ static char *_calibrationFileName = "/update/tx_phase_cal.conf";
 struct config_file *_calibrationConfig; // Calibration config form file
 
 static __inline__ void updatePllState(struct hal_port_state * ps) {
-	if (ps->hw_index == 0)
+	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	if (ps->hw_index == gl->firstLpdcPort)
 	{
 		// update PLL state once for all ports
 		rts_get_state(&_pll_state);
 	}
+}
+
+static __inline__ void txSetupDone(struct hal_port_state * ps) {
+	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	gl->numberOfTxSetupDonePorts++;
+}
+
+static __inline__ int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
+	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	return gl->numberOfTxSetupDonePorts == gl->numberOfLpdcPorts;
 }
 
 /* prototypes */
@@ -123,6 +134,7 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 	} else {
 		// LPDC support
 		halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
+		struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
 
 		txSetup->attempts=0;
 		txSetup->expected_phase = 0;
@@ -139,7 +151,6 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 			      MDIO_LPC_CTRL);
 
 		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_TX_CALIB);
-
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 	}
 	return 0;
@@ -277,7 +288,9 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 
 	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
-	_update_tx_calibration_file();
+	txSetupDone(ps);
+	if(txSetupDoneOnAllPorts(ps))
+		_update_tx_calibration_file();
 
 	return 0;
 }
@@ -296,20 +309,61 @@ static  int _buildEvents(void *vpfg) {
 	return HAL_PORT_TX_SETUP_EVENT_TIMER;
 }
 
-/* Initialize tx_setup - this is a global init,
-   executed once for all ports/FSMs */
-void hal_port_tx_setup_init(struct hal_port_state * ps ) {
+/* Initialize tx_setup-this is a global init, executed once for all ports/FSMs.
+   It includes:
+   - loading calibration file if exists
+   - initializing a global structure and filling it in - this structure is
+     needed by tx calibration only (so far)
+*/
+void hal_port_tx_setup_init(struct hal_port_state * ps,  struct halGlobalLPDC *globalLpdc) {
 	int index;
 	struct hal_port_state * _ps = ps;
+	int numberOfLpdcPorts = 0;
+	int firstLpdcPort = -1;
+	int lastLpdcPort = -1;
 
 	/* check whether there is any port that supports LPDC,
 	   if there is such port, load the tx calibration file.*/
 	for (index = 0; index < HAL_MAX_PORTS; index++){
 		if(_ps->in_use && _ps->lpdc.isSupported){
-			load_tx_calibration_file(ps);
-			break;
+
+			/* if this is the first port with LPDC support, 
+			   allocate memory for the global struct */
+			if( !globalLpdc )
+				globalLpdc = malloc(sizeof(struct halGlobalLPDC));
+
+			/* link the global structure from each port*/
+			_ps->lpdc.globalLpdc = globalLpdc;
+			
+			/* if this ist he first supporetd port, save its index*/
+			if (firstLpdcPort < 0)
+				firstLpdcPort = index;
+			
+			/*remember the index, just in case it is the last LPDC port*/
+			lastLpdcPort = index;
+			
+			/* count number of supported ports*/
+			numberOfLpdcPorts++;
 		}
 		_ps++;
+	}
+
+	/* if there are any LPDC ports, do some preparation */
+	if(globalLpdc && numberOfLpdcPorts) {
+
+		/* fill in the global structure */
+		globalLpdc->numberOfLpdcPorts = numberOfLpdcPorts;
+		globalLpdc->numberOfTxSetupDonePorts = 0;
+		globalLpdc->firstLpdcPort = firstLpdcPort;
+		globalLpdc->lastLpdcPort = lastLpdcPort;
+		pr_info("WR switch supports LPDC on %d ports ("
+		        "first port is %d, last port is %d)\n",
+		        globalLpdc->numberOfLpdcPorts,
+		        globalLpdc->firstLpdcPort,
+		        globalLpdc->lastLpdcPort);
+
+		/* load the calib file*/
+		_load_tx_calibration_file(ps);
         }
 }
 

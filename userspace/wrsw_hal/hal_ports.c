@@ -248,7 +248,7 @@ int hal_port_shmem_init(char *logfilename)
 		if (hal_port_init(&halPorts.ports[index],index) < 0)
 			break;
 	hal_port_state_fsm_init(halPorts.ports); // Init fsm
-	hal_port_tx_setup_init(halPorts.ports); // Global init for tx_setup
+	hal_port_tx_setup_init(halPorts.ports, halPorts.globalLpdc); // Global init for tx_setup
 	led_init_all_ports(halPorts.ports); // Reset all leds
 	halPorts.numberOfPorts = index;
 

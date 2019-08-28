@@ -88,14 +88,21 @@ typedef struct {
 	int attempts;
 }halPortLpdcRx_t;
 
+struct halGlobalLPDC {
+	int numberOfLpdcPorts;
+	int numberOfTxSetupDonePorts;
+	int firstLpdcPort;
+	int lastLpdcPort;
+}; /* Global data for Low phase drift calibration */
+
 typedef struct {
 	int isSupported; /* Set if Low Phase Drift Calibration is supported */
 	halPortFsmState_t txSetupStates;
 	halPortFsmState_t rxSetupStates;
 	halPortLpdcTx_t *txSetup;
 	halPortLpdcRx_t *rxSetup;
-}halPortLPDC_t; /* data for Low phase drift calibration */
-
+        struct halGlobalLPDC *globalLpdc;
+}halPortLPDC_t; /* per-port data for Low phase drift calibration */
 
 /* Internal port state structure */
 struct hal_port_state {

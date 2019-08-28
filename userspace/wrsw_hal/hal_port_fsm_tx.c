@@ -250,8 +250,7 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 		rts_enable_ptracker(ps->hw_index, 0);
 		rts_enable_ptracker(ps->hw_index, 1);
 
-		for (i = 0; i < RTS_PLL_CHANNELS; i++)
-			_pll_state.channels[i].flags = 0;
+		_pll_state.channels[ps->hw_index].flags = 0;
 
 		_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_VALIDATE);
 	} else

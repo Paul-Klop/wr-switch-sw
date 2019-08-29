@@ -92,12 +92,8 @@ static char *_calibrationFileName = "/update/tx_phase_cal.conf";
 struct config_file *_calibrationConfig; // Calibration config form file
 
 static __inline__ void updatePllState(struct hal_port_state * ps) {
-	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
-	if (ps->hw_index == gl->firstLpdcPort)
-	{
-		// update PLL state once for all ports
-		rts_get_state(&_pll_state);
-	}
+	// update PLL state once for all ports
+	rts_get_state(&_pll_state);
 }
 
 static __inline__ void txSetupDone(struct hal_port_state * ps) {

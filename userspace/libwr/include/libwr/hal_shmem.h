@@ -79,6 +79,7 @@ typedef struct {
 	int tollerance;
 	int update_cnt;
 	int expected_phase_valid;
+	timeout_t calib_timeout;
 }halPortLpdcTx_t;
 
 /* Low Phase Drift Calibration for rx */

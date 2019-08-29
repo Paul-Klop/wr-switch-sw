@@ -261,15 +261,11 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 				MDIO_LPC_CTRL);
 		pcs_writel(ps, BMCR_ANENABLE | BMCR_ANRESTART, MII_BMCR);
 		//TODO-ML: change to port name
-		pr_info("Port %d: RX calibration complete at phase %d "
-				"ps (after %d attempts).\n", ps->hw_index + 1, phase,
-				rxSetup->attempts);
-		if ( pcs_readl(ps, 0, &value)>=0 )
-			printf("MDIO_MCR %04x\n", value);
+		pr_info("wri%d: RX calibration complete at phase %d "
+				"ps (after %d attempts).\n", ps->hw_index + 1,
+				phase, rxSetup->attempts);
 		rts_enable_ptracker(ps->hw_index, 0);
-		sleep(1);
-		if ( pcs_readl(ps, 1, &value)>=0 )
-			printf("MDIO_MSR %04x\n", value);
+		sleep(1); // fixme: really needed?
 		_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_DONE);
 	}
 
@@ -290,6 +286,8 @@ static int _hal_port_rx_setup_state_done(void *vpfg, int eventMsk, int isNewStat
 	if ( ps->lpdc.isSupported ) {
 		if ( !_isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 			// Port went done
+			pr_info("rxcal: early link flag lost on port wri%d\n",
+			ps->hw_index + 1);
 			_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_START);
 			return 0;
                 }

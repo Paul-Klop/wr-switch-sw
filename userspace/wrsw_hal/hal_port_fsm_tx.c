@@ -138,7 +138,7 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 		txSetup->attempts=0;
 		txSetup->expected_phase = 0;
 		txSetup->expected_phase_valid = 0;
-		txSetup->tollerance = 300;
+		txSetup->tollerance = TX_CAL_TOLLERANCE;
 		txSetup->update_cnt = 0;
 
 		_pll_state.channels[ps->hw_index].flags = 0;
@@ -184,6 +184,7 @@ static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
  */
 static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 	uint32_t value;
 
 	if ( pcs_readl(ps, MDIO_LPC_STAT,&value)>=0 ) {
@@ -191,7 +192,9 @@ static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
 			ps->lpdc.txSetup->attempts++;
 			rts_enable_ptracker(ps->hw_index, 1);
 			_pll_state.channels[ps->hw_index].flags = 0;
-
+			libwr_tmo_init(&txSetup->calib_timeout,
+				TX_CAL_PHASE_MEAS_TIMEOUT, 1);
+			
 			_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE);
 		}
 	}
@@ -205,11 +208,19 @@ static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
  */
 static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
-	halPortLpdcTx_t * txSetup;
+	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 
 	updatePllState(ps);
-	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY))
+	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY)) {
+		if (libwr_tmo_expired(&txSetup->calib_timeout) )
+		{
+			pr_info("Port %d: tx phase measurement timeout expired,"
+			" retrying\n", ps->hw_index+1);
+			_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
+			return 0; // retry
+		}
 		return 0; // keep waiting
+        }
 
 	txSetup = ps->lpdc.txSetup;
 	int phase = _pll_state.channels[ps->hw_index].phase_loopback;
@@ -217,16 +228,17 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 
 	if (!txSetup->expected_phase_valid) {
 		if (txSetup->cal_saved_phase_valid) {
+			// got calibration file already? Aim EXACTLY for the phase
+			// bin we used in the first calibration
 			pr_info("Using phase from file :%d\n", txSetup->cal_saved_phase);
 			txSetup->expected_phase = txSetup->cal_saved_phase;
 		} else {
-			int phi = phase;
+			// First time calibrating? Give ourselves some freedom,
+			// let's say the first 1.5 ns of the 16 ns ref clock 
+			// cycle, so that we have enough setup time
 
-			do // find the phase bin right after the rising parallel clock edge
-			{
-				txSetup->expected_phase = phi;
-				phi -= 800;
-			} while (phi > 0);
+			txSetup->tollerance = TX_CAL_FIRST_CAL_TOLLERANCE;
+			txSetup->expected_phase = TX_CAL_FIRST_CAL_EXPECTED_PHASE;
 		}
 		txSetup->expected_phase_valid = 1;
 	}
@@ -480,8 +492,6 @@ static void _write_tx_calibration_file(struct hal_port_state * _ps)
 static int _within_range(int x, int minval, int maxval, int wrap)
 {
 	int rv;
-
-	printf("min %d max %d x %d \n", minval, maxval, x);
 
 	while (maxval >= wrap)
 		maxval -= wrap;

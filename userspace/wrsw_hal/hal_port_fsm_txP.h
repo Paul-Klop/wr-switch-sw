@@ -13,6 +13,13 @@
 #include <libwr/wrs-msg.h>
 #include "hal_port_gen_fsm.h"
 
+
+#define TX_CAL_PHASE_MEAS_TIMEOUT 1000 /* ms */
+
+#define TX_CAL_TOLLERANCE 300 /* ps */
+#define TX_CAL_FIRST_CAL_TOLLERANCE 750 /* ps */
+#define TX_CAL_FIRST_CAL_EXPECTED_PHASE 750 /* ps */
+
 typedef enum {
 HAL_PORT_TX_SETUP_STATE_START=0,
 HAL_PORT_TX_SETUP_STATE_RESET_PCS,

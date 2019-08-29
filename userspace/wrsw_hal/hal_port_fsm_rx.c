@@ -29,8 +29,6 @@
  * States :
  *    - HAL_PORT_RX_SETUP_STATE_START:
  *    	Inital state
- *    - HAL_PORT_RX_SETUP_STATE_CALIB_NO_LPDC :
- *      Calibration when LPDC is not supported
  *    - .....
  *    - HAL_PORT_RX_SETUP_STATE_DONE:
  *    	RX setup terminated
@@ -44,7 +42,6 @@
 /* external prototypes */
 static int _buildEvents(void * vpfg);
 static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_rx_setup_state_calib_no_lpdc(void *vpfg, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_validate(void *vpfg, int ventMsk, int isNewState);
@@ -56,10 +53,6 @@ static halPortStateTable_t _fsmStateTable[] =
 		{ .state=HAL_PORT_RX_SETUP_STATE_START,
 				.stateName="START",		
 				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_start)
-		},
-		{ .state=HAL_PORT_RX_SETUP_STATE_CALIB_NO_LPDC,
-				.stateName="CALIB_NO_LPDC",
-				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_calib_no_lpdc)
 		},
 		{ .state=HAL_PORT_RX_SETUP_STATE_RESET_PCS,
 				.stateName="RESET_PCS",
@@ -123,9 +116,10 @@ static __inline__ void updatePllState(struct hal_port_state * ps) {
 /* START state
  * (Hypothesis: LPDC support has already been determined before )
  *
- * if link up event then
- *     if LPDC is not supported then state = CALIB_NO_LPDC
- *     else state = DONE
+ * if if LPDC
+ *     start the LPDC process
+ * else
+ *     nothing to do, go to DONE and wait for link up
  * fi
  */
 static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
@@ -145,43 +139,12 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_RESET_PCS);
 		}
 	} else {
-		if ( _isHalRxSetupEventLinkUp(eventMsk) ) {
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_CALIB_NO_LPDC);
-		}
+		/* nothing to do, go waiting for link_up*/
+		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_DONE);
 	}
 	return 0;
 }
 
-/* CALIB_NO_LPDC state
- *
- * if  link down event then state = START
- * if  link up state then
- *     Calculate the bit slide.
- *     if bit slide successfully calculated then state=DONE
- * fi
-*/
-static int _hal_port_rx_setup_state_calib_no_lpdc(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-
-	if ( _isHalRxSetupEventLinkDown(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_START);
-		return 0;
-	}
-
-	if ( _isHalRxSetupEventLinkUp(eventMsk) ) {
-		uint32_t bit_slide_steps;
-
-		if ( pcs_readl(ps, 16,&bit_slide_steps)  >=0 ) {
-			bit_slide_steps= (bit_slide_steps>> 4) & 0x1f;
-			/* FIXME: use proper register names */
-			ps->calib.bitslide_ps=bit_slide_steps*(uint32_t)800; /* 1 step = 800ps */
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_DONE);
-		}
-		else
-			pr_warning("Cannot read bitslide in NO-LPDC mode, retrying...\n");
-	}
-	return 0;
-}
 
 /*
  * RESET_PCS state
@@ -269,10 +232,11 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 }
 
 /*
- * DONE state
+ * DONE state - wait for link_up
  *
- * if link down event then state=START
- * if link up event then return final state machine reached
+ * if LPDC supported
+ *    if early_link_down event then state=START
+  * if link up event then return final state machine reached
  *
  */
 static int _hal_port_rx_setup_state_done(void *vpfg, int eventMsk, int isNewState) {
@@ -287,10 +251,6 @@ static int _hal_port_rx_setup_state_done(void *vpfg, int eventMsk, int isNewStat
 			_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_START);
 			return 0;
                 }
-	}
-	if ( _isHalRxSetupEventLinkDown(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_START);
-		return 0;
 	}
 	if ( _isHalRxSetupEventLinkUp(eventMsk) ) {
 		return 1; /* Final state reached */;

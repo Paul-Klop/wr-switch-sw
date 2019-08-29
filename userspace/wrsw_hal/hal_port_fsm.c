@@ -189,8 +189,6 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
                 led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
                 led_set_synched(ps->hw_index, 0);
 
-		/* bitslide is measured, if appropriate, in hal_port_rx_setup_state_fsm()*/
-		ps->calib.bitslide_ps = 0;
 	}
 
 	/* if final state reached for tx setup state machine then
@@ -198,17 +196,28 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
 	 */
 	if (hal_port_rx_setup_state_fsm(ps)==1 ) {
 
-		/* any calibration, if any, has been done*/
-		ps->calib.tx_calibrated = 1;
-		ps->calib.rx_calibrated = 1;
-		ps->calib.delta_rx_phy = ps->calib.phy_rx_min;
-		ps->calib.delta_tx_phy = ps->calib.phy_tx_min;
-		ps->tx_cal_pending = 0;
-		ps->rx_cal_pending = 0;
-		/* bitslide was obtained in hal_port_rx_setup_state_fsm() */
-		pr_info("%s:%s: bitslide= %u [ps]\n",__func__,ps->name,ps->calib.bitslide_ps);
+		/* measure bitslide regardless of LPDC support,
+		   (if not supported, the value of the register will be zero) */
+		uint32_t bit_slide_steps;
+		if ( pcs_readl(ps, 16,&bit_slide_steps)  >=0 ) {
+			bit_slide_steps= (bit_slide_steps>> 4) & 0x1f;
+			/* FIXME: use proper register names */
+			ps->calib.bitslide_ps=bit_slide_steps*(uint32_t)800; /* 1 step = 800ps */
+			/* any calibration, if any, has been done*/
+			ps->calib.tx_calibrated = 1;
+			ps->calib.rx_calibrated = 1;
+			ps->calib.delta_rx_phy = ps->calib.phy_rx_min;
+			ps->calib.delta_tx_phy = ps->calib.phy_tx_min;
+			ps->tx_cal_pending = 0;
+			ps->rx_cal_pending = 0;
+			pr_info("%s:%s: bitslide= %u [ps]\n",__func__,
+			         ps->name,ps->calib.bitslide_ps);
+			_fireState(vpfg,HAL_PORT_STATE_LINK_UP);
+		}
+		else
+			pr_warning("Cannot read bitslide, retrying...\n");
 
-		_fireState(vpfg,HAL_PORT_STATE_LINK_UP);
+
 		return 0;
 	}
 	return 0;

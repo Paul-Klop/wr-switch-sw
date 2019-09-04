@@ -46,7 +46,7 @@ static halPortStateTable_t _fsmStateTable[] =
 				.stateName="LOCKED",
 				FSM_SET_FCT_NAME(_hal_port_pll_state_locked)
 		},
-		{.state=1}
+		{		.state=-1 }
 };
 
 static halPortEventTable_t _fsmEvtTable[] = {

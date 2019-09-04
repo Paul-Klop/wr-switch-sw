@@ -71,7 +71,7 @@ static halPortStateTable_t _fsmStateTable[] =
 				.stateName="DONE",
 				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_done)
 		},
-		{.state=1}
+		{ .state=-1 }
 };
 
 static halPortEventTable_t _fsmEvtTable[] = {

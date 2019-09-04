@@ -81,7 +81,7 @@ static halPortStateTable_t _fsmStateTable[] =
 				.stateName="LINK_UP",
 				FSM_SET_FCT_NAME(_hal_port_state_link_up)
 		},
-		{.state=1}
+		{ .state=-1 }
 };
 
 static halPortEventTable_t _fsmEvtTable[] = {

@@ -239,7 +239,7 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 				MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
 				MDIO_LPC_CTRL);
 		pcs_writel(ps, BMCR_ANENABLE | BMCR_ANRESTART, MII_BMCR);
-		//TODO-ML: change to port name
+
 		pr_info("wri%d: RX calibration complete at phase %d "
 				"ps (after %d attempts).\n", ps->hw_index + 1,
 				phase, rxSetup->attempts);

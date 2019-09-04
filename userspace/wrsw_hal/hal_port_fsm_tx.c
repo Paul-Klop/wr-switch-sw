@@ -241,11 +241,10 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 	int phase_min = txSetup->expected_phase - txSetup->tollerance;
 	int phase_max = txSetup->expected_phase + txSetup->tollerance;
 
-	//TODO-ML: change to name of interface, remove two phases
-	pr_info("TX Calibration: upd port %d phase %d %d after %d "
+	pr_info("TX Calibration: upd wri%d phase %d after %d "
 			"attempts target %d tollerance %d (temp = %.3f degC)\n",
-			ps->hw_index, txSetup->measured_phase, txSetup->measured_phase,
-			txSetup->attempts, txSetup->expected_phase, txSetup->tollerance,
+			ps->hw_index+1, txSetup->measured_phase, txSetup->attempts,
+			txSetup->expected_phase, txSetup->tollerance,
 			hal_get_fpga_temperature() / 256.0);
 
 	if(_within_range(phase, phase_min, phase_max, 16000)) {
@@ -420,8 +419,7 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 
 			if(cfg_get_int( _calibrationConfig, key_name, &value) )
 			{
-				//TODO-ML: change to name
-				pr_info("cal: %d %d\n", ps->hw_index, value);
+				pr_info("cal: wri%d %d\n", ps->hw_index+1, value);
 				ps->lpdc.txSetup->cal_saved_phase = value;
 				ps->lpdc.txSetup->cal_saved_phase_valid = 1;
 			}

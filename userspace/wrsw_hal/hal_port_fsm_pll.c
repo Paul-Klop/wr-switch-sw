@@ -186,7 +186,7 @@ void hal_port_pll_init_fsm(struct hal_port_state * ps ) {
 	_fireState(&_portFsm,HAL_PORT_PLL_STATE_UNLOCKED);
 }
 
-/* FSM state machine for TX setup on a given port
+/* FSM state machine for PLL on a given port
  * Returned value:
  *  1: when final state has been reached
  *  0: when final state has not been reached

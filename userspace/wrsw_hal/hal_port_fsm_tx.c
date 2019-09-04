@@ -129,7 +129,6 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 	} else {
 		// LPDC support
 		halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
-		struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
 
 		txSetup->attempts=0;
 		txSetup->expected_phase = 0;
@@ -249,9 +248,7 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 			txSetup->attempts, txSetup->expected_phase, txSetup->tollerance,
 			hal_get_fpga_temperature() / 256.0);
 
-	if (_within_range(phase, phase_min, phase_max, 16000)) {
-		int i;
-
+	if(_within_range(phase, phase_min, phase_max, 16000)) {
 		pr_info("FIX port %d phase %d after %d attempts "
 				"(temp = %.3f degC)\n", ps->hw_index, txSetup->measured_phase,
 				txSetup->attempts, hal_get_fpga_temperature() / 256.0);

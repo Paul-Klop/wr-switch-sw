@@ -134,6 +134,7 @@ static int _hal_port_state_init(void *vpfg, int eventMsk, int isNewState) {
 		_init_port(ps);
 		/* Init the tx state machine */
 		hal_port_tx_setup_init_fsm(ps);
+		hal_port_rx_setup_init_fsm(ps);
 	}
 	 /* if final state reached for tx setup state machine
 	  * then we can go to DISABLED state
@@ -310,10 +311,12 @@ void hal_port_state_fsm_init( struct hal_port_state * ps ) {
 
 	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
 		if ( ps->in_use)
+		{
 			_portFsm.ps=ps;
 			_portFsm.st=&ps->portStates;
 			 ps->portStates.state=-1;
 			_fireState(&_portFsm,HAL_PORT_STATE_INIT);
+		}
 		ps++; /* Next port */
 	}
 

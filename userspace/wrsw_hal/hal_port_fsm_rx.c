@@ -23,6 +23,7 @@
 #include "hal_port_leds.h"
 
 #include "hal_port_fsm_rxP.h"
+#include "hal_port_fsm_txP.h"
 
 /**
  * State machine
@@ -125,6 +126,12 @@ static __inline__ void updatePllState(struct hal_port_state * ps) {
 static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
 
+
+	// prevent RX FSM from starting up when the TX path calibration of the port is
+	// not completed.	
+	if( ps->lpdc.txSetupStates.state != HAL_PORT_TX_SETUP_STATE_DONE)
+		return 0;
+
 	if ( ps->lpdc.isSupported ) {
 		// LPDC support
 		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
@@ -157,6 +164,11 @@ static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
 		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 		libwr_tmo_init(&rxSetup->link_timeout, 100, 1);
+		// establish a 1ms wait for the LINK_ALIGNED flag -
+		// alignment detection takes a little bit more time than early
+		// link detect. Without the wait (depending on execution timing of the HAL code)
+		// the wait_lock state might detect the early link but never see it's aligned.
+		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
 
 		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
 			      MDIO_LPC_CTRL_TX_ENABLE |
@@ -169,7 +181,6 @@ static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
 
 		rxSetup->attempts++;
 		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_WAIT_LOCK);
-
 	}
 	return 0;
 }
@@ -183,6 +194,10 @@ static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
 	halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 	if ( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
+		// 1ms rx align detection window, described in previous state.
+		if(! libwr_tmo_expired(&rxSetup->align_timeout) )
+			return 0; // call me again 1ms later...
+
 		if ( _isHalRxSetupEventRxAligned(eventMsk)) {
 
 			rts_enable_ptracker(ps->hw_index, 0);
@@ -209,7 +224,7 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 
 	updatePllState(ps);
 
-	if (_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY) {
+	if (_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY)	{
 		int phase = _pll_state.channels[ps->hw_index].phase_loopback;
 		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 		uint32_t value;

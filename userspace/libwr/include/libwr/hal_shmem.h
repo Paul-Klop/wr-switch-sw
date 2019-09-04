@@ -85,6 +85,7 @@ typedef struct {
 /* Low Phase Drift Calibration for rx */
 typedef struct {
 	timeout_t link_timeout;
+	timeout_t align_timeout;
 	int attempts;
 }halPortLpdcRx_t;
 

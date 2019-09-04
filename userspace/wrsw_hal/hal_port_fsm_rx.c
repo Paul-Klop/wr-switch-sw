@@ -129,8 +129,13 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 
 	// prevent RX FSM from starting up when the TX path calibration of the port is
 	// not completed.	
-	if( ps->lpdc.txSetupStates.state != HAL_PORT_TX_SETUP_STATE_DONE)
+	if( ps->lpdc.txSetupStates.state != HAL_PORT_TX_SETUP_STATE_DONE) {
+		pr_warning("rx_setup FSM is attempted to be started before the"
+			"tx_setup FSM has finished (in state %d) - this should"
+			"never happen, in theory.\n",
+			ps->lpdc.txSetupStates.state);
 		return 0;
+        }
 
 	if ( ps->lpdc.isSupported ) {
 		// LPDC support

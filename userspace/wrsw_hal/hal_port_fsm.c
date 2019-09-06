@@ -117,6 +117,8 @@ static halPortFsmGen_t _portFsm = {
 		.pe=_fsmEvtTable
 };
 
+extern int txSetupDoneOnAllPorts(struct hal_port_state * ps);
+
 /* INIT state
  *
  * if  entering in state then
@@ -139,8 +141,12 @@ static int _hal_port_state_init(void *vpfg, int eventMsk, int isNewState) {
 	 /* if final state reached for tx setup state machine
 	  * then we can go to DISABLED state
 	  */
-	if (hal_port_tx_setup_state_fsm(ps)==1 )
+
+	hal_port_tx_setup_state_fsm( ps );
+
+	if ( txSetupDoneOnAllPorts(ps) )
 		_fireState(vpfg,HAL_PORT_STATE_DISABLED);
+	
 	return 0;
 }
 

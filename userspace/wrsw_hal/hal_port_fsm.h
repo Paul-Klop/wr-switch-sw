@@ -10,6 +10,8 @@
 #ifndef HAL_PORT_FSM_H
 #define HAL_PORT_FSM_H
 
+#define HAL_CAL_DMTD_SAMPLES 16
+#define HAL_DEFAULT_DMTD_SAMPLES 512
 
 /* Prototypes */
 void fsm_state_machine( struct hal_port_state * ps );

@@ -22,6 +22,14 @@ int hal_tmg_init(const char * logfilename)
 		      "Failed to establish communication with the RT subsystem.\n");
 		return -1;
 	}
+
+	if( rts_set_mode( RTS_MODE_GM_FREERUNNING ) < 0 )
+	{
+		pr_error(
+		      "Failed to configure PLL in free-running master mode.\n");
+		return -1;
+	}
+
 	return 0;
 }
 

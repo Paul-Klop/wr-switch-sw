@@ -19,6 +19,7 @@
 #include "hal_main.h"
 #include "hal_ports.h"
 #include "hal_port_fsm_txP.h"
+#include "hal_port_fsm.h"
 
 /**
  * State machine
@@ -101,8 +102,10 @@ static __inline__ void txSetupDone(struct hal_port_state * ps) {
 	gl->numberOfTxSetupDonePorts++;
 }
 
-static __inline__ int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
+int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
 	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	if( !gl )
+		return 0;
 	return gl->numberOfTxSetupDonePorts == gl->numberOfLpdcPorts;
 }
 
@@ -139,6 +142,7 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 		_pll_state.channels[ps->hw_index].flags = 0;
 
 		rts_enable_ptracker(ps->hw_index, 0);
+		rts_ptracker_set_average_samples(ps->hw_index, HAL_CAL_DMTD_SAMPLES);
 
 		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
 			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
@@ -215,7 +219,7 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 			return 0; // retry
 		}
 		return 0; // keep waiting
-        }
+    }
 
 	txSetup = ps->lpdc.txSetup;
 	int phase = _pll_state.channels[ps->hw_index].phase_loopback;
@@ -242,10 +246,9 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 	int phase_max = txSetup->expected_phase + txSetup->tollerance;
 
 	pr_info("TX Calibration: upd wri%d phase %d after %d "
-			"attempts target %d tollerance %d (temp = %.3f degC)\n",
-			ps->hw_index+1, txSetup->measured_phase, txSetup->attempts,
-			txSetup->expected_phase, txSetup->tollerance,
-			hal_get_fpga_temperature() / 256.0);
+			"attempts target %d tollerance %d\n",
+			ps->hw_index+1, txSetup->measured_phase, txSetup->measured_phase,
+			txSetup->attempts, txSetup->expected_phase, txSetup->tollerance);
 
 	if(_within_range(phase, phase_min, phase_max, 16000)) {
 		pr_info("FIX port %d phase %d after %d attempts "
@@ -280,6 +283,7 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 	txSetup->measured_phase = _pll_state.channels[ps->hw_index].phase_loopback;
 	pr_info("Port %d: TX calibration complete\n", ps->hw_index + 1);
 	rts_enable_ptracker(ps->hw_index, 0);
+	rts_ptracker_set_average_samples(ps->hw_index, HAL_DEFAULT_DMTD_SAMPLES);
 
 	// enable the PCS on the port
 	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |

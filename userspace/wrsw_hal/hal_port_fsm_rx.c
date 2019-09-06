@@ -125,7 +125,7 @@ static __inline__ void updatePllState(struct hal_port_state * ps) {
  */
 static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-
+	halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 	// prevent RX FSM from starting up when the TX path calibration of the port is
 	// not completed.	
@@ -138,14 +138,17 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
         }
 
 	if ( ps->lpdc.isSupported ) {
+		/* Wait a bit to make sure early_link_up is resetted. This
+		   timeout is initialized in hal_port_rx_setup_init_fsm(),
+		   see detailed description there. */
+		if (! libwr_tmo_expired(&rxSetup->earlyup_timeout)) {
+			return 0;
+		}
 		// LPDC support
 		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
 			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
 			      MDIO_LPC_CTRL);
-
 		if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
-			halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
-
 			rxSetup->attempts=0;
 			rts_enable_ptracker(ps->hw_index, 0);
 			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_RESET_PCS);
@@ -310,6 +313,22 @@ void hal_port_rx_setup_init_fsm(struct hal_port_state * ps ) {
 	_portFsm.ps=ps;
 	_portFsm.st=&ps->lpdc.rxSetupStates;
 	ps->lpdc.rxSetupStates.state=-1;
+	if ( ps->lpdc.isSupported ) {
+		/* This timeout is needed when link goes down. In such case
+		   the link_down flag is set earlier than the early_link_up
+		   flag is reseted. So, after the link goes down, we need to
+		   wait some time before executing the rx_setup FSM. Without
+		   such a wait, after unplugging fiber, the rx_setup FSM is
+		   started and then hangs in in wait_lock state until
+		   link_timeout fires.
+		   NOTE: We do the initialization of timeout here (and not in
+		   the _hal_port_rx_setup_state_start() when isNewState=1) for
+		   a reason. If it was done in _hal_port_rx_setup_state_start(),
+		   the timeout would also kick in when the START state is
+		   entered from WAIT_LOCK*/
+		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
+		libwr_tmo_init(&rxSetup->earlyup_timeout, 10, 1);
+        }
 	_fireState(&_portFsm,HAL_PORT_RX_SETUP_STATE_START);
 }
 

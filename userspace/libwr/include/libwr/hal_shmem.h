@@ -86,6 +86,7 @@ typedef struct {
 typedef struct {
 	timeout_t link_timeout;
 	timeout_t align_timeout;
+        timeout_t earlyup_timeout;
 	int attempts;
 }halPortLpdcRx_t;
 

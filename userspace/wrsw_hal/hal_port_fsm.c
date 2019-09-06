@@ -396,7 +396,14 @@ static void _init_port(struct hal_port_state * ps)
 static void _unlock_port( struct hal_port_state * ps)
 {
 
-	if ( hal_tmg_get_mode()==HAL_TIMING_MODE_BC ) {
+	/* reset timing mode to FREE (running) MASTER only if
+	   we are on Boundary Clock and the disconnected port
+	   has been locked (i.e. it was a SLAVE). In all other
+	   cases to nothing (e.g. if we did not chekc the locked
+	   flag, we would be unlocking Boundary Clock in the case
+	   of unplugging link from port in Master/Passive state) */
+	if ( hal_tmg_get_mode()==HAL_TIMING_MODE_BC &&
+	     ps->locked == 1) {
 		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
 	}
 

@@ -138,13 +138,10 @@ static int _hal_port_state_init(void *vpfg, int eventMsk, int isNewState) {
 		hal_port_tx_setup_init_fsm(ps);
 		hal_port_rx_setup_init_fsm(ps);
 	}
-	 /* if final state reached for tx setup state machine
+	 /* if final state reached for tx setup state machine ON ALL PORTS
 	  * then we can go to DISABLED state
 	  */
-
-	hal_port_tx_setup_state_fsm( ps );
-
-	if ( txSetupDoneOnAllPorts(ps) )
+	if (hal_port_tx_setup_state_fsm( ps ) == 1 )
 		_fireState(vpfg,HAL_PORT_STATE_DISABLED);
 	
 	return 0;

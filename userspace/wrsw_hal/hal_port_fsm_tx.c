@@ -40,6 +40,7 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState);
 static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState);
 static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState);
+static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, int isNewState);
 static int _hal_port_tx_setup_state_done(void *vpfg, int eventMsk, int isNewState);
 
 static halPortStateTable_t _fsmStateTable[] =
@@ -63,6 +64,10 @@ static halPortStateTable_t _fsmStateTable[] =
 		{ .state=HAL_PORT_TX_SETUP_STATE_VALIDATE,
 				.stateName="VALIDATE",
 				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_validate)
+		},
+		{ .state=HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS,
+				.stateName="WAIT OTHER PORTS",
+				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_wait_other_ports)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_DONE,
 				.stateName="DONE",
@@ -104,8 +109,6 @@ static __inline__ void txSetupDone(struct hal_port_state * ps) {
 
 int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
 	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
-	if( !gl )
-		return 0;
 	return gl->numberOfTxSetupDonePorts == gl->numberOfLpdcPorts;
 }
 
@@ -127,7 +130,7 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 
 	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support
-		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
+		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
 		return 0;
 	} else {
 		// LPDC support
@@ -293,13 +296,24 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 
 	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 
-	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
+	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
 	txSetupDone(ps);
 	if(txSetupDoneOnAllPorts(ps))
 		_write_tx_calibration_file(ps);
 
 	return 0;
 }
+/*
+ * Wait for all LPDC-supporting ports to be calibrated
+ */
+
+static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
+
+	if (txSetupDoneOnAllPorts(ps) )
+		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
+}
+
 
 /*
  * DONE state
@@ -328,19 +342,22 @@ void hal_port_tx_setup_init(struct hal_port_state * ps,  struct halGlobalLPDC *g
 	int firstLpdcPort = -1;
 	int lastLpdcPort = -1;
 
-	/* check whether there is any port that supports LPDC,
-	   if there is such port, load the tx calibration file.*/
+	/* Allocate memory for the global struct */
+	globalLpdc = malloc(sizeof(struct halGlobalLPDC));
+	
+	/* Initialize pointer to the global structure for each port.
+	   Check whether there is any port that supports LPDC,
+	   if there is/are such port(s), remember index of the first/last and
+	   their number. We need this info in operation.*/
 	for (index = 0; index < HAL_MAX_PORTS; index++){
+		/* Link the global structure from each port.
+		   NOTE: Even ports that do not support LPDC require access to
+		   this global structre as they need to know whether all
+		   the LPDC-supporting ports have been calibrated */
+		_ps->lpdc.globalLpdc = globalLpdc;
+
+		/* Fill in global info needed for operation */
 		if(_ps->in_use && _ps->lpdc.isSupported){
-
-			/* if this is the first port with LPDC support, 
-			   allocate memory for the global struct */
-			if( !globalLpdc )
-				globalLpdc = malloc(sizeof(struct halGlobalLPDC));
-
-			/* link the global structure from each port*/
-			_ps->lpdc.globalLpdc = globalLpdc;
-			
 			/* if this ist he first supporetd port, save its index*/
 			if (firstLpdcPort < 0)
 				firstLpdcPort = index;

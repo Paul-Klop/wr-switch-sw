@@ -250,7 +250,7 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 
 	pr_info("TX Calibration: upd wri%d phase %d after %d "
 			"attempts target %d tollerance %d\n",
-			ps->hw_index+1, txSetup->measured_phase, txSetup->measured_phase,
+			ps->hw_index+1, txSetup->measured_phase,
 			txSetup->attempts, txSetup->expected_phase, txSetup->tollerance);
 
 	if(_within_range(phase, phase_min, phase_max, 16000)) {
@@ -298,9 +298,6 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 
 	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
 	txSetupDone(ps);
-	if(txSetupDoneOnAllPorts(ps))
-		_write_tx_calibration_file(ps);
-
 	return 0;
 }
 /*
@@ -310,8 +307,10 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
 
-	if (txSetupDoneOnAllPorts(ps) )
+	if (txSetupDoneOnAllPorts(ps) ) {
+		_write_tx_calibration_file(ps);
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
+	}
 }
 
 
@@ -470,6 +469,12 @@ static void _write_tx_calibration_file(struct hal_port_state * _ps)
 	struct hal_port_state * ps=_ps;
 	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
 
+	/* Only the first LPDC-supporting port writes the file. Otherwise,
+	   there is problem with pointers when looping through port structures
+	   to write data for all ports, see the "for" below.  */
+	if(gl->firstLpdcPort != ps->hw_index)
+		return;
+
 	if(gl->calFileSynced)
 		return;
 
@@ -483,7 +488,7 @@ static void _write_tx_calibration_file(struct hal_port_state * _ps)
 	struct config_file *cfg = cfg_load(_calibrationFileName, 1);
 
 	ps=_ps;
-	for (i = 0; i < HAL_MAX_PORTS; i++) {
+	for (i = gl->firstLpdcPort; i <= gl->lastLpdcPort; i++) {
 		if (ps->in_use && ps->lpdc.isSupported)
 		{
 			char key_name[80];

@@ -311,6 +311,7 @@ static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, i
 		_write_tx_calibration_file(ps);
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
 	}
+	return 0;
 }
 
 

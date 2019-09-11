@@ -178,11 +178,18 @@ struct hal_temp_sensors {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 14 /* Version 13, HAL with PLDC */
+#define HAL_SHMEM_VERSION 15 /* Add share memory state*/
+
+typedef enum {
+	HAL_SHMEM_STATE_NOT_INITITALIZED=0,
+	HAL_SHMEM_STATE_INITITALIZING,
+	HAL_SHMEM_STATE_INITITALIZED
+}halShmemState_t;
 
 struct hal_shmem_header {
 	int nports;
 	int hal_mode;
+	halShmemState_t shmemState;
 	struct hal_port_state *ports;
 	struct hal_temp_sensors temp;
 	int read_sfp_diag;

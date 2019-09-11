@@ -1128,7 +1128,7 @@ void phase_test_mode1(int ep)
 #define MDIO_DBG1 19
 #define MDIO_DBG0 18
 
-int force_tx_phase(int ep, int center, int tollerance)
+int force_tx_phase(int ep, int center, int tolerance)
 {
 	int n_attempts = 0;
 
@@ -1148,7 +1148,7 @@ int force_tx_phase(int ep, int center, int tollerance)
 
 		int n = tx_phase - center + 10000;
 
-		if (n > 10000 - tollerance && n < 10000 + tollerance)
+		if (n > 10000 - tolerance && n < 10000 + tolerance)
 		{
 			fprintf(stderr, "locked on %d ps after %d attempts.\n", tx_phase, n_attempts);
 			return 1;

@@ -43,6 +43,7 @@ extern int hal_port_start_lock(const char *port_name, int priority);
 extern int hal_port_enable_tracking(const char *port_name);
 extern int hal_port_check_lock(const struct hal_port_state *ps);
 extern int hal_port_check_lock_by_name(const char *port_name);
+extern int hal_port_all_ports_initialized(void);
 extern int hal_port_reset(const char *port_name);
 extern int hal_port_pshifter_busy(void);
 extern void hal_port_update_info(char *iface_name, int mode, int synchronized);

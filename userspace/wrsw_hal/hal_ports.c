@@ -244,7 +244,9 @@ int hal_port_shmem_init(char *logfilename)
 		return -1;
 	}
 	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
-	halPorts.ports = wrs_shm_alloc(hal_shmem_hdr,
+
+	hal_shmem->shmemState= HAL_SHMEM_STATE_NOT_INITITALIZED;
+    halPorts.ports = wrs_shm_alloc(hal_shmem_hdr,
 			      sizeof(struct hal_port_state)
 			      * HAL_MAX_PORTS);
 	if (!hal_shmem || !halPorts.ports) {
@@ -275,6 +277,9 @@ int hal_port_shmem_init(char *logfilename)
 		hal_shmem->read_sfp_diag = READ_SFP_DIAG_ENABLE;
 	} else
 		hal_shmem->read_sfp_diag = READ_SFP_DIAG_DISABLE;
+
+
+	hal_shmem->shmemState= HAL_SHMEM_STATE_INITITALIZING;
 
 	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
 	/* Release processes waiting for HAL's to fill shm with correct data
@@ -702,6 +707,21 @@ int hal_port_reset(const char *port_name)
 
 	ps->evt_reset=1;
 	return 0;
+}
+
+// Check if all ports are initialized
+int hal_port_all_ports_initialized(void) {
+	struct hal_port_state *ps=halPorts.ports;
+	int i;
+
+	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		if ( ps->in_use && ps->portStates.state==HAL_PORT_STATE_INIT ) {
+			// This port has not finished its initialization state
+			return 0;
+		}
+		ps++;
+	}
+	return 1;
 }
 
 void hal_port_update_info(char *iface_name, int mode, int synchronized){

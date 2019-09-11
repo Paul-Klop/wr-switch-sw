@@ -310,6 +310,12 @@ int main(int argc, char *argv[])
 
 		// Check main timers and call callback if timeout expires
 		timer_scan(_timerParameters,MAIN_TIMER_COUNT);
+
+		if ( hal_shmem->shmemState== HAL_SHMEM_STATE_INITITALIZING) {
+			// Check if all ports have been initialized
+			if ( hal_port_all_ports_initialized())
+				hal_shmem->shmemState= HAL_SHMEM_STATE_INITITALIZED;
+		}
 	}
 
 	hal_shutdown();

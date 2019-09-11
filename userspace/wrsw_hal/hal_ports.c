@@ -134,13 +134,23 @@ static int hal_port_init(struct hal_port_state *ps, int index)
 	if (!hal_port_check_presence(ps->name, ps->hw_addr))
 		return -1;
 
-	ps->in_use = 1;
-	ps->lpdc.isSupported = hal_port_check_lpdc_support(ps);
+	/* Allocate LPDC structure */
+	if ( (ps->lpdc = wrs_shm_alloc(hal_shmem_hdr, sizeof(halPortLPDC_t)))==NULL ) {
+		pr_error("Can't allocate LPDC structure in shmem\n");
+		return -1;
+	}
 
-	if ( ps->lpdc.isSupported ) {
+	ps->in_use = 1;
+	ps->lpdc->isSupported = hal_port_check_lpdc_support(ps);
+
+	if ( ps->lpdc->isSupported ) {
 		// Allocate memory for tx/rx setup
-		ps->lpdc.txSetup = malloc(sizeof(halPortLpdcTx_t));
-		ps->lpdc.rxSetup = malloc(sizeof(halPortLpdcRx_t));
+		ps->lpdc->txSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcTx_t));
+		ps->lpdc->rxSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcRx_t));
+		if ( ps->lpdc->rxSetup==NULL || ps->lpdc->txSetup==NULL) {
+			pr_error("Can't allocate LPDC (rx/tx) structures in shmem\n");
+			return -1;
+		}
 	}
 	/* get the number of a port from notation wriX */
 	sscanf(ps->name + 3, "%d", &ps->hw_index);
@@ -247,8 +257,8 @@ int hal_port_shmem_init(char *logfilename)
 	for (index = 0; index < HAL_MAX_PORTS; index++)
 		if (hal_port_init(&halPorts.ports[index],index) < 0)
 			break;
-	hal_port_state_fsm_init(halPorts.ports); // Init fsm
-	hal_port_tx_setup_init(halPorts.ports, halPorts.globalLpdc); // Global init for tx_setup
+
+	hal_port_state_fsm_init(halPorts.ports,&halPorts.globalLpdc); // Init fsm
 	led_init_all_ports(halPorts.ports); // Reset all leds
 	halPorts.numberOfPorts = index;
 
@@ -342,11 +352,11 @@ static int hal_port_check_lpdc_support(struct hal_port_state * ps)
 		return 0;
 	} else {
 		if (rv & EP_ECR_FEAT_LPC) {
-			pr_info("Supports for Low Phase Drift Calibration detected"
+			pr_info("Supports for Low Phase Drift Calibration detected "
 					"at port %s\n", ps->name);
 			return 1;
 		} else {
-			pr_info("NO supports for Low Phase Drift Calibration detected"
+			pr_info("NO supports for Low Phase Drift Calibration detected "
 					"at port %s\n", ps->name);
 			return 0;
 		}

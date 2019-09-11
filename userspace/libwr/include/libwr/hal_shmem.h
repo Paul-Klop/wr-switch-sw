@@ -76,7 +76,7 @@ typedef struct {
 	int cal_saved_phase_valid;
 	int measured_phase;
 	int expected_phase;
-	int tollerance;
+	int tolerance;
 	int update_cnt;
 	int expected_phase_valid;
 	timeout_t calib_timeout;
@@ -86,17 +86,17 @@ typedef struct {
 typedef struct {
 	timeout_t link_timeout;
 	timeout_t align_timeout;
-        timeout_t earlyup_timeout;
+    timeout_t earlyup_timeout;
 	int attempts;
 }halPortLpdcRx_t;
 
-struct halGlobalLPDC {
+typedef struct  {
 	int numberOfLpdcPorts;
 	int numberOfTxSetupDonePorts;
 	int firstLpdcPort;
 	int lastLpdcPort;
 	int calFileSynced;
-}; /* Global data for Low phase drift calibration */
+}halGlobalLPDC_t; /* Global data for Low phase drift calibration */
 
 typedef struct {
 	int isSupported; /* Set if Low Phase Drift Calibration is supported */
@@ -104,7 +104,7 @@ typedef struct {
 	halPortFsmState_t rxSetupStates;
 	halPortLpdcTx_t *txSetup;
 	halPortLpdcRx_t *rxSetup;
-        struct halGlobalLPDC *globalLpdc;
+	halGlobalLPDC_t *globalLpdc;
 }halPortLPDC_t; /* per-port data for Low phase drift calibration */
 
 /* Internal port state structure */
@@ -161,10 +161,10 @@ struct hal_port_state {
 	/* Events to process */
 	int evt_reset; /* Set if a reset is requested */
 	int evt_lock; /* Set if the ptracker must be activated*/
-	int evt_linkUp; /* Set if link is up ( driver call */
+	int evt_linkUp; /* Set if link is up ( driver call )*/
 
 	/* Low phase drift calibration data */
-	halPortLPDC_t lpdc;
+	halPortLPDC_t *lpdc; /* Use a pointer to avoid to export this structure to PPSi */
 
 	/* Pll FSM */
 	halPortFsmState_t pllStates;

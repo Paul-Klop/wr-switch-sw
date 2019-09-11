@@ -103,12 +103,12 @@ static __inline__ void updatePllState(struct hal_port_state * ps) {
 }
 
 static __inline__ void txSetupDone(struct hal_port_state * ps) {
-	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
 	gl->numberOfTxSetupDonePorts++;
 }
 
 int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
-	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
 	return gl->numberOfTxSetupDonePorts == gl->numberOfLpdcPorts;
 }
 
@@ -128,18 +128,18 @@ static int _within_range(int x, int minval, int maxval, int wrap);
 static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
 
-	if ( !ps->lpdc.isSupported ) {
+	if ( !ps->lpdc->isSupported ) {
 		// NO LPDC support
 		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
 		return 0;
 	} else {
 		// LPDC support
-		halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
+		halPortLpdcTx_t *txSetup=ps->lpdc->txSetup;
 
 		txSetup->attempts=0;
 		txSetup->expected_phase = 0;
 		txSetup->expected_phase_valid = 0;
-		txSetup->tollerance = TX_CAL_TOLLERANCE;
+		txSetup->tolerance = TX_CAL_TOLLERANCE;
 		txSetup->update_cnt = 0;
 
 		_pll_state.channels[ps->hw_index].flags = 0;
@@ -186,12 +186,12 @@ static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
  */
 static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
+	halPortLpdcTx_t *txSetup=ps->lpdc->txSetup;
 	uint32_t value;
 
 	if ( pcs_readl(ps, MDIO_LPC_STAT,&value)>=0 ) {
 		if ( (value & MDIO_LPC_STAT_RESET_TX_DONE)!=0 ) {
-			ps->lpdc.txSetup->attempts++;
+			ps->lpdc->txSetup->attempts++;
 			rts_enable_ptracker(ps->hw_index, 1);
 			_pll_state.channels[ps->hw_index].flags = 0;
 			libwr_tmo_init(&txSetup->calib_timeout,
@@ -210,7 +210,7 @@ static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
  */
 static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
-	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
+	halPortLpdcTx_t *txSetup=ps->lpdc->txSetup;
 
 	updatePllState(ps);
 	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY)) {
@@ -224,7 +224,7 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 		return 0; // keep waiting
     }
 
-	txSetup = ps->lpdc.txSetup;
+	txSetup = ps->lpdc->txSetup;
 	int phase = _pll_state.channels[ps->hw_index].phase_loopback;
 	txSetup->measured_phase = phase;
 
@@ -239,19 +239,19 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 			// let's say the first 1.5 ns of the 16 ns ref clock 
 			// cycle, so that we have enough setup time
 
-			txSetup->tollerance = TX_CAL_FIRST_CAL_TOLLERANCE;
+			txSetup->tolerance = TX_CAL_FIRST_CAL_TOLLERANCE;
 			txSetup->expected_phase = TX_CAL_FIRST_CAL_EXPECTED_PHASE;
 		}
 		txSetup->expected_phase_valid = 1;
 	}
 
-	int phase_min = txSetup->expected_phase - txSetup->tollerance;
-	int phase_max = txSetup->expected_phase + txSetup->tollerance;
+	int phase_min = txSetup->expected_phase - txSetup->tolerance;
+	int phase_max = txSetup->expected_phase + txSetup->tolerance;
 
 	pr_info("TX Calibration: upd wri%d phase %d after %d "
-			"attempts target %d tollerance %d\n",
+			"attempts target %d tolerance %d\n",
 			ps->hw_index+1, txSetup->measured_phase,
-			txSetup->attempts, txSetup->expected_phase, txSetup->tollerance);
+			txSetup->attempts, txSetup->expected_phase, txSetup->tolerance);
 
 	if(_within_range(phase, phase_min, phase_max, 16000)) {
 		pr_info("FIX port %d phase %d after %d attempts "
@@ -282,7 +282,7 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY))
 		return 0; // keep waiting
 
-	txSetup = ps->lpdc.txSetup;
+	txSetup = ps->lpdc->txSetup;
 	txSetup->measured_phase = _pll_state.channels[ps->hw_index].phase_loopback;
 	pr_info("Port %d: TX calibration complete\n", ps->hw_index + 1);
 	rts_enable_ptracker(ps->hw_index, 0);
@@ -335,38 +335,37 @@ static  int _buildEvents(void *vpfg) {
    - initializing a global structure and filling it in - this structure is
      needed by tx calibration only (so far)
 */
-void hal_port_tx_setup_init(struct hal_port_state * ps,  struct halGlobalLPDC *globalLpdc) {
+void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalLpdc) {
 	int index;
 	struct hal_port_state * _ps = ps;
 	int numberOfLpdcPorts = 0;
 	int firstLpdcPort = -1;
 	int lastLpdcPort = -1;
-
-	/* Allocate memory for the global struct */
-	globalLpdc = malloc(sizeof(struct halGlobalLPDC));
 	
 	/* Initialize pointer to the global structure for each port.
 	   Check whether there is any port that supports LPDC,
 	   if there is/are such port(s), remember index of the first/last and
 	   their number. We need this info in operation.*/
 	for (index = 0; index < HAL_MAX_PORTS; index++){
-		/* Link the global structure from each port.
-		   NOTE: Even ports that do not support LPDC require access to
-		   this global structre as they need to know whether all
-		   the LPDC-supporting ports have been calibrated */
-		_ps->lpdc.globalLpdc = globalLpdc;
+		if (_ps->in_use ) {
+			/* Link the global structure from each port.
+			   NOTE: Even ports that do not support LPDC require access to
+			   this global structure as they need to know whether all
+			   the LPDC-supporting ports have been calibrated */
+			_ps->lpdc->globalLpdc = globalLpdc;
 
-		/* Fill in global info needed for operation */
-		if(_ps->in_use && _ps->lpdc.isSupported){
-			/* if this ist he first supporetd port, save its index*/
-			if (firstLpdcPort < 0)
-				firstLpdcPort = index;
-			
-			/*remember the index, just in case it is the last LPDC port*/
-			lastLpdcPort = index;
-			
-			/* count number of supported ports*/
-			numberOfLpdcPorts++;
+			/* Fill in global info needed for operation */
+			if (_ps->lpdc->isSupported) {
+				/* if this ist he first supporetd port, save its index*/
+				if (firstLpdcPort < 0)
+					firstLpdcPort = index;
+
+				/*remember the index, just in case it is the last LPDC port*/
+				lastLpdcPort = index;
+
+				/* count number of supported ports*/
+				numberOfLpdcPorts++;
+			}
 		}
 		_ps++;
 	}
@@ -394,8 +393,8 @@ void hal_port_tx_setup_init(struct hal_port_state * ps,  struct halGlobalLPDC *g
 /* Init the TX SETUP FSM on a given port */
 void hal_port_tx_setup_init_fsm(struct hal_port_state * ps ) {
 	_portFsm.ps=ps;
-	_portFsm.st=&ps->lpdc.txSetupStates;
-	ps->lpdc.txSetupStates.state=-1;
+	_portFsm.st=&ps->lpdc->txSetupStates;
+	ps->lpdc->txSetupStates.state=-1;
 	_fireState(&_portFsm,HAL_PORT_TX_SETUP_STATE_START);
 }
 
@@ -408,14 +407,14 @@ void hal_port_tx_setup_init_fsm(struct hal_port_state * ps ) {
 
 int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps ) {
 	_portFsm.ps=ps;
-	_portFsm.st=&ps->lpdc.txSetupStates;
+	_portFsm.st=&ps->lpdc->txSetupStates;
 	return hal_port_generic_fsm(&_portFsm);
 }
 /* if config is present then update the calibration data */
 static void _load_tx_calibration_file(struct hal_port_state * ps) {
 
 	int i = 0;
-	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
 
 	// Read calibration file, if it exists
 	_calibrationConfig = cfg_load(_calibrationFileName, 0);
@@ -431,7 +430,7 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 	pr_info("Loading LPCD config data from %s\n", _calibrationFileName);
 
 	for (i = 0; i < HAL_MAX_PORTS; i++){
-		if (ps->in_use && ps->lpdc.isSupported)
+		if (ps->in_use && ps->lpdc->isSupported)
 		{
 			char key_name[80];
 			int value;
@@ -441,8 +440,8 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 			if(cfg_get_int( _calibrationConfig, key_name, &value) )
 			{
 				pr_info("cal: wri%d %d\n", ps->hw_index+1, value);
-				ps->lpdc.txSetup->cal_saved_phase = value;
-				ps->lpdc.txSetup->cal_saved_phase_valid = 1;
+				ps->lpdc->txSetup->cal_saved_phase = value;
+				ps->lpdc->txSetup->cal_saved_phase_valid = 1;
 			}
 		}
 		ps++;
@@ -468,7 +467,7 @@ static void _write_tx_calibration_file(struct hal_port_state * _ps)
 {
 	int i;
 	struct hal_port_state * ps=_ps;
-	struct halGlobalLPDC * gl = ps->lpdc.globalLpdc;
+	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
 
 	/* Only the first LPDC-supporting port writes the file. Otherwise,
 	   there is problem with pointers when looping through port structures
@@ -490,11 +489,11 @@ static void _write_tx_calibration_file(struct hal_port_state * _ps)
 
 	ps=_ps;
 	for (i = gl->firstLpdcPort; i <= gl->lastLpdcPort; i++) {
-		if (ps->in_use && ps->lpdc.isSupported)
+		if (ps->in_use && ps->lpdc->isSupported)
 		{
 			char key_name[80];
 			snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d", ps->hw_index);
-			cfg_set_int(cfg, key_name, ps->lpdc.txSetup->measured_phase);
+			cfg_set_int(cfg, key_name, ps->lpdc->txSetup->measured_phase);
 		}
 		ps++;
 	}

@@ -11,6 +11,7 @@
 #define HAL_PORTS_H
 
 #include <rt_ipc.h>
+#include <libwr/hal_shmem.h>
 
 typedef struct {
 	struct hal_port_state *ports;
@@ -22,7 +23,7 @@ typedef struct {
 	int rts_state_valid;
 
 	/* Global information needed by LPDC (tx setup) */
-	struct halGlobalLPDC *globalLpdc;
+	halGlobalLPDC_t globalLpdc;
 
 }hal_ports_t;
 

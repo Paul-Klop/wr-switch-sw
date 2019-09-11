@@ -12,7 +12,7 @@
 
 /* prototypes */
 void hal_port_tx_setup_init_fsm(struct hal_port_state * ps );
-void hal_port_tx_setup_init(struct hal_port_state * ps, struct halGlobalLPDC *globalLpdc );
+void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalLpdc );
 int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps);
 
 #endif

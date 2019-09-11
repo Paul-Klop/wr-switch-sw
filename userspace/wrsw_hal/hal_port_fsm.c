@@ -309,20 +309,21 @@ static  int _builPortEvents(void * vpfg) {
 
 
 /* Init the FSM on all ports. Called one time at startup */
-void hal_port_state_fsm_init( struct hal_port_state * ps ) {
+void hal_port_state_fsm_init( struct hal_port_state * ps, halGlobalLPDC_t *globalLpdc) {
 	int portIndex;
+	struct hal_port_state * _ps=ps;
 
 	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
-		if ( ps->in_use)
+		if ( _ps->in_use)
 		{
-			_portFsm.ps=ps;
-			_portFsm.st=&ps->portStates;
-			 ps->portStates.state=-1;
+			_portFsm.ps=_ps;
+			_portFsm.st=&_ps->portStates;
+			 _ps->portStates.state=-1;
 			_fireState(&_portFsm,HAL_PORT_STATE_INIT);
 		}
-		ps++; /* Next port */
+		_ps++; /* Next port */
 	}
-
+	hal_port_tx_setup_init(ps, globalLpdc); // Global init for tx_setup
 }
 
 /* Call FSM for on all ports */

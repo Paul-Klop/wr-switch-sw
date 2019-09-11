@@ -16,6 +16,6 @@
 /* Prototypes */
 void fsm_state_machine( struct hal_port_state * ps );
 void hal_port_state_fsm( struct hal_port_state * ps );
-void hal_port_state_fsm_init( struct hal_port_state * ps );
+void hal_port_state_fsm_init( struct hal_port_state * ps,halGlobalLPDC_t *globalLpdc);
 
 #endif

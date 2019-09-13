@@ -42,7 +42,7 @@ static void cb_timer_update_all(int timerId);
 static timer_parameter_t _timerParameters[] = {
 		{
 				.id=TMO_UPDATE_ALL,
-				.tmoMs=10, // 100ms
+				.tmoMs=100, // 100ms
 				.repeat=1,
 				.cb=cb_timer_update_all
 		},

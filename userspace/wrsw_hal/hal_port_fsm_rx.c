@@ -138,7 +138,11 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
         }
 
 	if ( ps->lpdc->isSupported ) {
-		/* Wait a bit to make sure early_link_up is resetted. This
+		if ( isNewState )
+			// Restart the time-out
+			libwr_tmo_restart(&rxSetup->earlyup_timeout);
+
+		/* Wait a bit to make sure early_link_up is reseted. This
 		   timeout is initialized in hal_port_rx_setup_init_fsm(),
 		   see detailed description there. */
 		if (! libwr_tmo_expired(&rxSetup->earlyup_timeout)) {

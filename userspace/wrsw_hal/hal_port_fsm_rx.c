@@ -171,16 +171,13 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
  */
 static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+	halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+
+	if ( isNewState )
+		libwr_tmo_restart(&rxSetup->link_timeout);
 
 	if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
-		halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
 
-		libwr_tmo_init(&rxSetup->link_timeout, 100, 1);
-		// establish a 1ms wait for the LINK_ALIGNED flag -
-		// alignment detection takes a little bit more time than early
-		// link detect. Without the wait (depending on execution timing of the HAL code)
-		// the wait_lock state might detect the early link but never see it's aligned.
-		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
 
 		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
 			      MDIO_LPC_CTRL_TX_ENABLE |
@@ -193,6 +190,9 @@ static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
 
 		rxSetup->attempts++;
 		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_WAIT_LOCK);
+	} else {
+		if( libwr_tmo_expired( &rxSetup->link_timeout ) )
+			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_START);
 	}
 	return 0;
 }
@@ -204,6 +204,11 @@ static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
 static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState) {
 	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
 	halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+
+	if ( isNewState ) {
+		libwr_tmo_restart(&rxSetup->link_timeout);
+		libwr_tmo_restart(&rxSetup->align_timeout);
+	}
 
 	if ( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 		// 1ms rx align detection window, described in previous state.
@@ -250,7 +255,6 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 				"ps (after %d attempts).\n", ps->hw_index + 1,
 				phase, rxSetup->attempts);
 		rts_enable_ptracker(ps->hw_index, 0);
-		sleep(1); // fixme: really needed?
 		_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_DONE);
 	}
 
@@ -331,6 +335,15 @@ void hal_port_rx_setup_init_fsm(struct hal_port_state * ps ) {
 		   entered from WAIT_LOCK*/
 		halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
 		libwr_tmo_init(&rxSetup->earlyup_timeout, 10, 1);
+
+		// link timeout
+		libwr_tmo_init(&rxSetup->link_timeout, 100, 1);
+
+		// Establish a 1ms wait for the LINK_ALIGNED flag -
+		// alignment detection takes a little bit more time than early
+		// link detect. Without the wait (depending on execution timing of the HAL code)
+		// the wait_lock state might detect the early link but never see it's aligned.
+		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
         }
 	_fireState(&_portFsm,HAL_PORT_RX_SETUP_STATE_START);
 }

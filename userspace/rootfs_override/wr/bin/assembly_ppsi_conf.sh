@@ -427,14 +427,6 @@ if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER" ]; then
 	globals[domain-number]="$CONFIG_PTP_OPT_DOMAIN_NUMBER"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_ANNOUNCE_INTERVAL" ]; then
-	globals[announce-interval]="$CONFIG_PTP_OPT_ANNOUNCE_INTERVAL"
-fi
-
-if [ -n "$CONFIG_PTP_OPT_SYNC_INTERVAL" ]; then
-	globals[sync-interval]="$CONFIG_PTP_OPT_SYNC_INTERVAL"
-fi
-
 if [ -n "$CONFIG_PTP_OPT_PRIORITY1" ]; then
 	globals[priority1]="$CONFIG_PTP_OPT_PRIORITY1"
 fi

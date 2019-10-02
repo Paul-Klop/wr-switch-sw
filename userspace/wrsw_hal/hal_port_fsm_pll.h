@@ -10,8 +10,8 @@
 #ifndef HAL_PORT_FSM_PLL_H
 #define HAL_PORT_FSM_PLL_H
 
-/* prototypes */
-void hal_port_pll_init_fsm(struct hal_port_state * ps );
-int  hal_port_pll_state_fsm( struct hal_port_state * ps );
+void hal_port_pll_fsm_init(struct hal_port_state * ps );
+int  hal_port_pll_fsm_run( struct hal_port_state * ps );
+void hal_port_pll_setup_init_all(struct hal_port_state * ports);
 
 #endif

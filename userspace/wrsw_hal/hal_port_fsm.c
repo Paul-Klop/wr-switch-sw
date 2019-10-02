@@ -12,22 +12,26 @@
 #include <linux/if_ether.h>
 #include <linux/if_arp.h>
 #include <linux/if.h>
-
+#include <stdlib.h>
 #include <rt_ipc.h>
 
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
+#include <libwr/wrs-msg.h>
+#include <libwr/generic_fsm.h>
 
+#include "driver_stuff.h"
 #include "hal_exports.h"
 #include "hal_ports.h"
 #include "hal_port_leds.h"
-#include "hal_port_gen_fsm.h"
 #include "hal_port_fsmP.h"
 #include "hal_port_fsm_rx.h"
 #include "hal_port_fsm_tx.h"
 #include "hal_port_fsm_pll.h"
 #include "hal_timing.h"
 
+#define __EXPORTED_HEADERS__ /* prevent a #warning notice from linux/types.h */
+#include <linux/mii.h>
 
 /**
  * State machine
@@ -51,40 +55,40 @@
  */
 
 /* external prototypes */
-static  int _builPortEvents(void * vpfg);
+static  int port_fsm_build_events(fsm_t *fsm);
 
-static int _hal_port_state_init(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_state_disabled(void *vpfg,  int eventMsk, int isNewState);
-static int _hal_port_state_link_down(void *vpfg,  int eventMsk, int isNewState);
-static int _hal_port_state_link_up(void *vpfg,  int eventMsk, int isNewState);
+static int port_fsm_state_init(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_fsm_state_disabled(fsm_t *fsm,  int eventMsk, int isNewState);
+static int port_fsm_state_link_down(fsm_t *fsm,  int eventMsk, int isNewState);
+static int port_fsm_state_link_up(fsm_t *fsm,  int eventMsk, int isNewState);
 
-static void _init_port(struct hal_port_state * ps);
-static void _reset_port(struct hal_port_state * ps);
-static void _unlock_port( struct hal_port_state * ps);
-static int _get_port_link_state(struct hal_port_state * ps,int *linkUp);
+static void init_port(struct hal_port_state * ps);
+static void reset_port(struct hal_port_state * ps);
+static void shutdown_port( struct hal_port_state * ps);
+static int get_port_link_state(struct hal_port_state * ps,int *linkUp);
 
-static halPortStateTable_t _fsmStateTable[] =
+static fsm_state_table_entry_t port_fsm_states[] =
 {
 		{ .state=HAL_PORT_STATE_INIT,
 				.stateName="INIT",
-				FSM_SET_FCT_NAME(_hal_port_state_init)
+				FSM_SET_FCT_NAME(port_fsm_state_init)
 		},
 		{ .state=HAL_PORT_STATE_DISABLED,
 				.stateName="DISABLED",
-				FSM_SET_FCT_NAME(_hal_port_state_disabled)
+				FSM_SET_FCT_NAME(port_fsm_state_disabled)
 		},
 		{ .state=HAL_PORT_STATE_LINK_DOWN,
 				.stateName="LINK_DOWN",
-				FSM_SET_FCT_NAME(_hal_port_state_link_down)
+				FSM_SET_FCT_NAME(port_fsm_state_link_down)
 		},
 		{ .state=HAL_PORT_STATE_LINK_UP,
 				.stateName="LINK_UP",
-				FSM_SET_FCT_NAME(_hal_port_state_link_up)
+				FSM_SET_FCT_NAME(port_fsm_state_link_up)
 		},
 		{ .state=-1 }
 };
 
-static halPortEventTable_t _fsmEvtTable[] = {
+static fsm_event_table_entry_t port_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_EVENT_TIMER,
 				.evtName="TIMER"
@@ -109,16 +113,6 @@ static halPortEventTable_t _fsmEvtTable[] = {
 		},
 		{ .evtMask = -1 } };
 
-
-static halPortFsmGen_t _portFsm = {
-		.fsm_name="PortFsm",
-		.fctBuilEvents=_builPortEvents,
-		.pt=_fsmStateTable,
-		.pe=_fsmEvtTable
-};
-
-extern int txSetupDoneOnAllPorts(struct hal_port_state * ps);
-
 /* INIT state
  *
  * if  entering in state then
@@ -129,21 +123,19 @@ extern int txSetupDoneOnAllPorts(struct hal_port_state * ps);
  * if final state reached (TX SETUP FSM) then state = DISABLED
  *
  */
-static int _hal_port_state_init(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_fsm_state_init(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	if ( isNewState )  {
-		_init_port(ps);
-		/* Init the tx state machine */
-		hal_port_tx_setup_init_fsm(ps);
-		hal_port_rx_setup_init_fsm(ps);
+		init_port(ps);
+		/* Init tx state machine */
+		hal_port_tx_setup_fsm_init(ps);
 	}
 	 /* if final state reached for tx setup state machine ON ALL PORTS
 	  * then we can go to DISABLED state
 	  */
-	if (hal_port_tx_setup_state_fsm( ps ) == 1 )
-		_fireState(vpfg,HAL_PORT_STATE_DISABLED);
-	
+	if (hal_port_tx_setup_fsm_run(ps)==1 )
+		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
 	return 0;
 }
 
@@ -151,16 +143,16 @@ static int _hal_port_state_init(void *vpfg, int eventMsk, int isNewState) {
  * DISABLED state
  *
  * if entering in state then reset port
- * if SFP inserted the state=LINK_DOWN
+ * if SFP inserted and not port power-down then the state=LINK_DOWN
  */
-static int _hal_port_state_disabled(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_fsm_state_disabled(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
-	if ( isNewState ) {
-		_reset_port(ps);
-	}
-	if ( _isHalEventSfpInserted(eventMsk) )
-		_fireState(vpfg,HAL_PORT_STATE_LINK_DOWN);
+	if ( isNewState )
+		reset_port(ps);
+
+	if ( _isHalEventSfpInserted(eventMsk)  && !_isHalEventPortPowerDown( eventMsk ))
+		fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 	return 0;
 }
 
@@ -174,39 +166,39 @@ static int _hal_port_state_disabled(void *vpfg, int eventMsk, int isNewState) {
  * run RX_SETUP FSM
  * if final state (RX_SETUP FSM ) reached then state=LINK_UP
  */
-static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_fsm_state_link_down(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	// High priority event received
 	if ( _isHalEventSfpRemoved(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_STATE_DISABLED);
+		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
 		return 0;
 	}
 
-	if ( isNewState )  {
- 		_reset_port(ps);// clears ps->tx_cal_pending & ps->calib*, except ps->calib.bitslide_ps
+	if (isNewState) {
+		reset_port(ps); // clears ps->tx_cal_pending & ps->calib*, except ps->calib.bitslide_ps
 		/* Init the rx state machine */
-		hal_port_rx_setup_init_fsm(ps);
+		hal_port_rx_setup_fsm_init(ps);
 
-                /* Turn off both leds when detecting link down. The WRMODE led
-                   might be overriden later by the rx_setup_state_fsm*/
-                led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
-                led_set_synched(ps->hw_index, 0);
+		/* Turn off both leds when detecting link down. The WRMODE led
+		 might be overriden later by the rx_setup_state_fsm*/
+		led_set_wrmode(ps->hw_index, SFP_LED_WRMODE_OFF);
+		led_set_synched(ps->hw_index, 0);
 
 	}
 
 	/* if final state reached for tx setup state machine then
 	 *     we can go LINK_UP state
 	 */
-	if (hal_port_rx_setup_state_fsm(ps)==1 ) {
+	if (hal_port_rx_setup_fsm_run(ps) == 1 && _isHalEventLinkUp(eventMsk)) {
 
 		/* measure bitslide regardless of LPDC support,
-		   (if not supported, the value of the register will be zero) */
+		 (if not supported, the value of the register will be zero) */
 		uint32_t bit_slide_steps;
-		if ( pcs_readl(ps, 16,&bit_slide_steps)  >=0 ) {
-			bit_slide_steps= (bit_slide_steps>> 4) & 0x1f;
+		if (pcs_readl(ps, 16, &bit_slide_steps) >= 0) {
+			bit_slide_steps = (bit_slide_steps >> 4) & 0x1f;
 			/* FIXME: use proper register names */
-			ps->calib.bitslide_ps=bit_slide_steps*(uint32_t)800; /* 1 step = 800ps */
+			ps->calib.bitslide_ps = bit_slide_steps * (uint32_t) 800; /* 1 step = 800ps */
 			/* any calibration, if any, has been done*/
 			ps->calib.tx_calibrated = 1;
 			ps->calib.rx_calibrated = 1;
@@ -214,15 +206,11 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
 			ps->calib.delta_tx_phy = ps->calib.phy_tx_min;
 			ps->tx_cal_pending = 0;
 			ps->rx_cal_pending = 0;
-			pr_info("%s:%s: bitslide= %u [ps]\n",__func__,
-			         ps->name,ps->calib.bitslide_ps);
-			_fireState(vpfg,HAL_PORT_STATE_LINK_UP);
-		}
-		else
+			pr_info("%s:%s: bitslide= %u [ps]\n", __func__, ps->name,
+					ps->calib.bitslide_ps);
+			fsm_fire_state(fsm, HAL_PORT_STATE_LINK_UP);
+		} else
 			pr_warning("Cannot read bitslide, retrying...\n");
-
-
-		return 0;
 	}
 	return 0;
 }
@@ -235,23 +223,38 @@ static int _hal_port_state_link_down(void *vpfg, int eventMsk, int isNewState) {
  * Run PLL FSM
  * Update Leds
  */
-static int _hal_port_state_link_up(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_fsm_state_link_up(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
+	if ( ps->lpdc.isSupported) {
+		if ( !_isHalEventPortRxAligned(eventMsk) || !_isHalEventPortEarlyLinkUp(eventMsk))
+			fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
+	}
+
 	if ( _isHalEventSfpRemoved(eventMsk) ) {
-		_unlock_port(ps);
-		_fireState(vpfg,HAL_PORT_STATE_DISABLED);
+		shutdown_port(ps);
+		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
+		return 0;
+	}
+
+	if( _isHalEventPortPowerDown( eventMsk ))
+	{
+		pr_info("Port %d PDOWN detected\n" ,ps->hw_index + 1 );
+		// MII power down
+		shutdown_port(ps);
+		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
 		return 0;
 	}
 
 	if ( _isHalEventReset(eventMsk) || _isHalEventLinkDown(eventMsk)) {
-		_unlock_port(ps);
-		_fireState(vpfg,HAL_PORT_STATE_LINK_DOWN);
+		shutdown_port(ps);
+		fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 		return 0;
 	}
 
 	if ( isNewState ) {
 		// Init PLL FSM
-		hal_port_pll_init_fsm(ps);
+		hal_port_pll_fsm_init(ps);
 	}
 
 	if (isRtsStateValid() ) {
@@ -263,7 +266,7 @@ static int _hal_port_state_link_up(void *vpfg, int eventMsk, int isNewState) {
 	}
 
 	// Run PLL state machine
-	hal_port_pll_state_fsm(ps);
+	hal_port_pll_fsm_run(ps);
 
 	// Update leds
 	{
@@ -290,11 +293,12 @@ static int _hal_port_state_link_up(void *vpfg, int eventMsk, int isNewState) {
 /*
  * Build all events
  */
-static  int _builPortEvents(void * vpfg) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static  int port_fsm_build_events(fsm_t *fsm) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
 	int portEventMask=HAL_PORT_EVENT_TIMER;
 
-	if ( ps->evt_linkUp != -1 ) {
+	if ( ps->evt_linkUp >= 0 ) {
 		portEventMask |= ps->evt_linkUp ?
 				HAL_PORT_EVENT_LINK_UP  : HAL_PORT_EVENT_LINK_DOWN;
 	}
@@ -304,56 +308,81 @@ static  int _builPortEvents(void * vpfg) {
 	}
 	portEventMask |= ps->sfpPresent  ?
 			HAL_PORT_EVENT_SFP_INSERTED : HAL_PORT_EVENT_SFP_REMOVED;
+
+	portEventMask |= ps->evt_powerDown ? HAL_PORT_EVENT_POWER_DOWN : 0;
+
+	if ( ps->lpdc.isSupported ) {
+		uint32_t mioLpcStat;
+
+		if ( pcs_readl(ps, MDIO_LPC_STAT,&mioLpcStat) >= 0 ) {
+			if (mioLpcStat & MDIO_LPC_STAT_LINK_UP)
+				portEventMask |= HAL_PORT_EVENT_EARLY_LINK_UP;
+			if (mioLpcStat & MDIO_LPC_STAT_LINK_ALIGNED)
+				portEventMask |= HAL_PORT_EVENT_RX_ALIGNED;
+		}
+	}
+
+	
 	return portEventMask;
 }
 
 
 /* Init the FSM on all ports. Called one time at startup */
-void hal_port_state_fsm_init( struct hal_port_state * ps, halGlobalLPDC_t *globalLpdc) {
+void hal_port_state_fsm_init_all( struct hal_port_state * ports, halGlobalLPDC_t *globalLpdc)
+{
 	int portIndex;
-	struct hal_port_state * _ps=ps;
 
 	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
-		if ( _ps->in_use)
+		struct hal_port_state* ps = &ports[portIndex];
+		
+		if ( ps->in_use)
 		{
-			_portFsm.ps=_ps;
-			_portFsm.st=&_ps->portStates;
-			 _ps->portStates.state=-1;
-			_fireState(&_portFsm,HAL_PORT_STATE_INIT);
+			char name[64];
+			snprintf(name, sizeof(name), "PortFsm.%d", portIndex);
+			if ( fsm_generic_create( &ps->fsm, name, port_fsm_build_events, port_fsm_states, port_fsm_events, ps ) ){
+				pr_error("Cannot create main fsm !\n");
+				exit(EXIT_FAILURE);
+			}
+			 
+			fsm_fire_state(&ps->fsm , HAL_PORT_STATE_INIT);
 		}
-		_ps++; /* Next port */
 	}
-	hal_port_tx_setup_init(ps, globalLpdc); // Global init for tx_setup
+
+	hal_port_tx_setup_init_all(ports, globalLpdc);
+	hal_port_rx_setup_init_all(ports);
+	hal_port_pll_setup_init_all(ports);
 }
 
 /* Call FSM for on all ports */
-void hal_port_state_fsm( struct hal_port_state * ps ) {
+void hal_port_state_fsm_run_all( struct hal_port_state * ports) {
 	int portIndex;
 
 	hal_port_poll_rts_state(); // Update rts state on all ports
 
 	/* Call state machine for all ports */
 	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
-		if ( ps->in_use) {
-			_portFsm.ps=ps;
-			_portFsm.st=&ps->portStates;
+		struct hal_port_state* ps = &ports[portIndex];
 
-			/* Update evt_linkUp */
-			if ( _get_port_link_state(ps,&ps->evt_linkUp)==-1 ) {
+		if ( ps->in_use) {
+			uint32_t bmcr;
+			pcs_readl( ps, MII_BMCR, &bmcr );
+
+			ps->evt_powerDown = (bmcr & BMCR_PDOWN);
+
+			if ( get_port_link_state(ps, &ps->evt_linkUp) < 0 ) {
 				// IOTCL error : We put -1 in the link state. It will be considered as invalid
 				ps->evt_linkUp=-1;
 			}
-			hal_port_generic_fsm(&_portFsm);
-		}
-		ps++; /* Next port */
-	}
 
+			fsm_generic_run(&ps->fsm);
+		}
+	}
 }
 
 /* Reset port
  * Called when entering in states DISABLED and LINK_DOWN and when the port is initialized the first time
  */
-static void _reset_port(struct hal_port_state * ps)
+static void reset_port(struct hal_port_state * ps)
 {
 	// Disable ptracker : Needed if we were in state LINK_UP with a timing mode set to BC
 	rts_enable_ptracker(ps->hw_index, 0);
@@ -386,10 +415,10 @@ static void _reset_port(struct hal_port_state * ps)
 }
 
 /* Port initialization */
-static void _init_port(struct hal_port_state * ps)
+static void init_port(struct hal_port_state * ps)
 {
 
-	_reset_port(ps);
+	reset_port(ps);
 
 	ps->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
 	ps->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
@@ -397,18 +426,20 @@ static void _init_port(struct hal_port_state * ps)
 }
 
 /* Action done when leaving states locking/up */
-static void _unlock_port( struct hal_port_state * ps)
+static void shutdown_port( struct hal_port_state * ps)
 {
 
-	/* reset timing mode to FREE (running) MASTER only if
-	   we are on Boundary Clock and the disconnected port
-	   has been locked (i.e. it was a SLAVE). In all other
-	   cases to nothing (e.g. if we did not chekc the locked
-	   flag, we would be unlocking Boundary Clock in the case
-	   of unplugging link from port in Master/Passive state) */
-	if ( hal_tmg_get_mode()==HAL_TIMING_MODE_BC &&
-	     ps->locked == 1) {
+	if ( hal_tmg_get_mode()==HAL_TIMING_MODE_BC) 
 		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
+
+	// make sure the PHY calibration circuitry is put in a KNOWN state
+	if( ps->lpdc.isSupported )
+	{
+		hal_port_rx_setup_fsm_init( ps );
+		pcs_writel(ps,
+				MDIO_LPC_CTRL_RESET_RX | MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK
+						| MDIO_LPC_CTRL_TX_ENABLE, MDIO_LPC_CTRL);
+
 	}
 
 	// Disable tracker
@@ -417,7 +448,7 @@ static void _unlock_port( struct hal_port_state * ps)
 }
 
 /* Checks if the link is up on inteface (if_name). Returns non-zero if yes. */
-static int _get_port_link_state(struct hal_port_state * ps,int *linkUp)
+static int get_port_link_state(struct hal_port_state * ps,int *linkUp)
 {
 	struct ifreq ifr;
 

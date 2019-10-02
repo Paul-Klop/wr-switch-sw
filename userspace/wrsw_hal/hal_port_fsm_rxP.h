@@ -11,7 +11,7 @@
 #define HAL_PORT_FSM_RXP_H
 
 #include <libwr/wrs-msg.h>
-#include "hal_port_gen_fsm.h"
+#include <libwr/generic_fsm.h>
 
 typedef enum {
 HAL_PORT_RX_SETUP_STATE_START=0,
@@ -30,23 +30,23 @@ HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP=(1<<3),
 HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED=(1<<4)
 }halPortRxSetupEventMask_t ;
 
-static	__inline__ int _isHalRxSetupEventTimer(halPortRxSetupEventMask_t eventMsk) {
+static inline int _isHalRxSetupEventTimer(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_TIMER;
 }
 
-static	__inline__ int _isHalRxSetupEventLinkDown(halPortRxSetupEventMask_t eventMsk) {
+static inline int _isHalRxSetupEventLinkDown(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_LINK_DOWN;
 }
 
-static	__inline__ int _isHalRxSetupEventLinkUp(halPortRxSetupEventMask_t eventMsk) {
+static inline int _isHalRxSetupEventLinkUp(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_LINK_UP;
 }
 
-static	__inline__ int _isHalRxSetupEventEarlyLinkUp(halPortRxSetupEventMask_t eventMsk) {
+static inline int _isHalRxSetupEventEarlyLinkUp(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP;
 }
 
-static	__inline__ int _isHalRxSetupEventRxAligned(halPortRxSetupEventMask_t eventMsk) {
+static inline int _isHalRxSetupEventRxAligned(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED;
 }
 

@@ -11,9 +11,10 @@
 
 #include <libwr/hal_shmem.h>
 #include <libwr/config-lpcalib.h>
+#include <libwr/wrs-msg.h>
+#include <libwr/generic_fsm.h>
 
 #include "hal_exports.h"
-#include "hal_port_gen_fsm.h"
 #include "driver_stuff.h"
 #include "hal_port_leds.h"
 #include "hal_main.h"
@@ -34,61 +35,54 @@
  */
 
 /* external prototypes */
-static  int _buildEvents(void * vpfg);
-static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_tx_setup_state_done(void *vpfg, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_build_events(fsm_t *fsm);
+static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_state_validate(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_state_wait_lock(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_state_measure_phase(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_state_done(fsm_t *fsm, int eventMsk, int isNewState);
+static int port_tx_setup_fsm_state_wait_other_ports(fsm_t *fsm, int eventMsk, int isNewState);
 
-static halPortStateTable_t _fsmStateTable[] =
+static fsm_state_table_entry_t port_tx_setup_fsm_states[] =
 {
 		{ .state=HAL_PORT_TX_SETUP_STATE_START,
 				.stateName="START",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_start)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_start)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_RESET_PCS,
 				.stateName="RESET_PCS",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_reset_pcs)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_reset_pcs)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE,
 				.stateName="MEASURE_PHASE",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_measure_phase)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_measure_phase)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_WAIT_LOCK,
 				.stateName="WAIT_LOCK",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_wait_lock)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_wait_lock)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_VALIDATE,
 				.stateName="VALIDATE",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_validate)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_validate)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS,
 				.stateName="WAIT OTHER PORTS",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_wait_other_ports)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_wait_other_ports)
 		},
 		{ .state=HAL_PORT_TX_SETUP_STATE_DONE,
 				.stateName="DONE",
-				FSM_SET_FCT_NAME(_hal_port_tx_setup_state_done)
+				FSM_SET_FCT_NAME(port_tx_setup_fsm_state_done)
 		},
-		{ .state=-1 }
+		{.state=-1}
 };
 
-static halPortEventTable_t _fsmEvtTable[] = {
+static fsm_event_table_entry_t port_tx_setup_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_TX_SETUP_EVENT_TIMER,
 				.evtName="TIMER"
 		},
 		{ .evtMask = -1 } };
-
-static halPortFsmGen_t _portFsm = {
-		.fsm_name="PortFsmTxSetup",
-		.fctBuilEvents=_buildEvents,
-		.pt=_fsmStateTable,
-		.pe=_fsmEvtTable
-};
 
 //TODO-ML: the below structure is redundant, consider reogranization to use
 //         hal_port_rts_state
@@ -97,25 +91,31 @@ static struct rts_pll_state _pll_state;
 static char *_calibrationFileName = "/update/tx_phase_cal.conf";
 struct config_file *_calibrationConfig; // Calibration config form file
 
-static __inline__ void updatePllState(struct hal_port_state * ps) {
+static inline void updatePllState(struct hal_port_state * ps) {
 	// update PLL state once for all ports
 	rts_get_state(&_pll_state);
 }
 
-static __inline__ void txSetupDone(struct hal_port_state * ps) {
-	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
-	gl->numberOfTxSetupDonePorts++;
+static inline void txSetupDone(struct hal_port_state * ps) {
+	halGlobalLPDC_t * gl = ps->lpdc.globalLpdc;
+	gl->maskTxSetupDonePorts|=((uint32_t)1)<<ps->hw_index;
 }
 
-int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
-	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
-	return gl->numberOfTxSetupDonePorts == gl->numberOfLpdcPorts;
+static inline void txSetupNotDone(struct hal_port_state * ps) {
+	halGlobalLPDC_t * gl = ps->lpdc.globalLpdc;
+	gl->maskTxSetupDonePorts&=~(((uint32_t)1)<<ps->hw_index);
+}
+
+static inline int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
+	halGlobalLPDC_t * gl = ps->lpdc.globalLpdc;
+	return gl->maskLpdcPorts==gl->maskTxSetupDonePorts;
 }
 
 /* prototypes */
-static void _write_tx_calibration_file(struct hal_port_state * _ps);
-static void _load_tx_calibration_file(struct hal_port_state * ps);
+static void _write_tx_calibration_file(struct hal_port_state * ports);
+static void _load_tx_calibration_file(struct hal_port_state * ports);
 static int _within_range(int x, int minval, int maxval, int wrap);
+
 /*
  * START state
  *
@@ -125,21 +125,21 @@ static int _within_range(int x, int minval, int maxval, int wrap);
  * if  LPDC is not supported then state=DONE
  *
  */
-static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
-	if ( !ps->lpdc->isSupported ) {
+	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support
-		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
+		fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_DONE);
 		return 0;
 	} else {
 		// LPDC support
-		halPortLpdcTx_t *txSetup=ps->lpdc->txSetup;
+		halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 
 		txSetup->attempts=0;
 		txSetup->expected_phase = 0;
 		txSetup->expected_phase_valid = 0;
-		txSetup->tolerance = TX_CAL_TOLLERANCE;
+		txSetup->tolerance = TX_CAL_TOLERANCE;
 		txSetup->update_cnt = 0;
 
 		_pll_state.channels[ps->hw_index].flags = 0;
@@ -152,7 +152,8 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 			      MDIO_LPC_CTRL);
 
 		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_TX_CALIB);
-		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_RESET_PCS);
+		txSetupNotDone(ps);
+		fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 	}
 	return 0;
 }
@@ -162,8 +163,8 @@ static int _hal_port_tx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
  *
  *
  */
-static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_tx_setup_fsm_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	rts_enable_ptracker(ps->hw_index, 0);
 	pcs_writel(ps, MDIO_LPC_CTRL_RESET_TX |
@@ -175,7 +176,7 @@ static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
 		      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
 		      MDIO_LPC_CTRL);
 
-	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_LOCK);
+	fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_WAIT_LOCK);
 	return 0;
 }
 
@@ -184,20 +185,22 @@ static int _hal_port_tx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
  *
  *
  */
-static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-	halPortLpdcTx_t *txSetup=ps->lpdc->txSetup;
+static int port_tx_setup_fsm_state_wait_lock(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 	uint32_t value;
 
 	if ( pcs_readl(ps, MDIO_LPC_STAT,&value)>=0 ) {
 		if ( (value & MDIO_LPC_STAT_RESET_TX_DONE)!=0 ) {
-			ps->lpdc->txSetup->attempts++;
+			ps->lpdc.txSetup->attempts++;
+
 			rts_enable_ptracker(ps->hw_index, 1);
+
 			_pll_state.channels[ps->hw_index].flags = 0;
 			libwr_tmo_init(&txSetup->calib_timeout,
 				TX_CAL_PHASE_MEAS_TIMEOUT, 1);
 			
-			_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE);
+			fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE);
 		}
 	}
 	return 0;
@@ -208,9 +211,9 @@ static int _hal_port_tx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
  *
  *
  */
-static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
-	halPortLpdcTx_t *txSetup=ps->lpdc->txSetup;
+static int port_tx_setup_fsm_state_measure_phase(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 
 	updatePllState(ps);
 	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY)) {
@@ -218,13 +221,13 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 		{
 			pr_info("Port %d: tx phase measurement timeout expired,"
 			" retrying\n", ps->hw_index+1);
-			_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
+			fsm_fire_state(fsm,  HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 			return 0; // retry
 		}
 		return 0; // keep waiting
     }
 
-	txSetup = ps->lpdc->txSetup;
+	txSetup = ps->lpdc.txSetup;
 	int phase = _pll_state.channels[ps->hw_index].phase_loopback;
 	txSetup->measured_phase = phase;
 
@@ -239,7 +242,7 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 			// let's say the first 1.5 ns of the 16 ns ref clock 
 			// cycle, so that we have enough setup time
 
-			txSetup->tolerance = TX_CAL_FIRST_CAL_TOLLERANCE;
+			txSetup->tolerance = TX_CAL_FIRST_CAL_TOLERANCE;
 			txSetup->expected_phase = TX_CAL_FIRST_CAL_EXPECTED_PHASE;
 		}
 		txSetup->expected_phase_valid = 1;
@@ -248,10 +251,10 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 	int phase_min = txSetup->expected_phase - txSetup->tolerance;
 	int phase_max = txSetup->expected_phase + txSetup->tolerance;
 
-	pr_info("TX Calibration: upd wri%d phase %d after %d "
-			"attempts target %d tolerance %d\n",
-			ps->hw_index+1, txSetup->measured_phase,
-			txSetup->attempts, txSetup->expected_phase, txSetup->tolerance);
+//	pr_info("TX Calibration: upd wri%d phase %d after %d "
+//			"attempts target %d tolerance %d\n",
+//			ps->hw_index+1, txSetup->measured_phase,
+//			txSetup->attempts, txSetup->expected_phase, txSetup->tolerance);
 
 	if(_within_range(phase, phase_min, phase_max, 16000)) {
 		pr_info("FIX port %d phase %d after %d attempts "
@@ -262,9 +265,9 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
 
 		_pll_state.channels[ps->hw_index].flags = 0;
 
-		_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_VALIDATE);
+		fsm_fire_state(fsm,  HAL_PORT_TX_SETUP_STATE_VALIDATE);
 	} else
-		_fireState(vpfg, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
+		fsm_fire_state(fsm,  HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 
 	return 0;
 }
@@ -274,19 +277,18 @@ static int _hal_port_tx_setup_state_measure_phase(void *vpfg, int eventMsk, int 
  *
  *
  */
-static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
+static int port_tx_setup_fsm_state_validate(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 	halPortLpdcTx_t *txSetup;
 
 	updatePllState(ps);
 	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY))
 		return 0; // keep waiting
 
-	txSetup = ps->lpdc->txSetup;
+	txSetup = ps->lpdc.txSetup;
 	txSetup->measured_phase = _pll_state.channels[ps->hw_index].phase_loopback;
 	pr_info("Port %d: TX calibration complete\n", ps->hw_index + 1);
 	rts_enable_ptracker(ps->hw_index, 0);
-	rts_ptracker_set_average_samples(ps->hw_index, HAL_DEFAULT_DMTD_SAMPLES);
 
 	// enable the PCS on the port
 	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
@@ -296,7 +298,8 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 
 	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 
-	_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
+	fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
+
 	txSetupDone(ps);
 	return 0;
 }
@@ -304,12 +307,13 @@ static int _hal_port_tx_setup_state_validate(void *vpfg, int eventMsk, int isNew
  * Wait for all LPDC-supporting ports to be calibrated
  */
 
-static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps = ((halPortFsmGen_t *) vpfg)->ps;
+static int port_tx_setup_fsm_state_wait_other_ports(fsm_t *fsm, int eventMsk, int isNewState)
+{
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	if (txSetupDoneOnAllPorts(ps) ) {
 		_write_tx_calibration_file(ps);
-		_fireState(vpfg,HAL_PORT_TX_SETUP_STATE_DONE);
+		fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_DONE);
 	}
 	return 0;
 }
@@ -320,12 +324,12 @@ static int _hal_port_tx_setup_state_wait_other_ports(void *vpfg, int eventMsk, i
  *
  * Return final state machine reached
  */
-static int _hal_port_tx_setup_state_done(void *vpfg, int eventMsk, int isNewState) {
+static int port_tx_setup_fsm_state_done(fsm_t *fsm, int eventMsk, int isNewState) {
 	return 1; /* Final state reached */
 }
 
 /* Build events mask */
-static  int _buildEvents(void *vpfg) {
+static  int port_tx_setup_fsm_build_events(fsm_t *fsm) {
 	return HAL_PORT_TX_SETUP_EVENT_TIMER;
 }
 
@@ -335,28 +339,31 @@ static  int _buildEvents(void *vpfg) {
    - initializing a global structure and filling it in - this structure is
      needed by tx calibration only (so far)
 */
-void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalLpdc) {
+void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *globalLpdc) {
 	int index;
-	struct hal_port_state * _ps = ps;
 	int numberOfLpdcPorts = 0;
+	uint32_t maskLpdcPorts=0;
 	int firstLpdcPort = -1;
 	int lastLpdcPort = -1;
+	char name[64];
 	
 	/* Initialize pointer to the global structure for each port.
 	   Check whether there is any port that supports LPDC,
 	   if there is/are such port(s), remember index of the first/last and
 	   their number. We need this info in operation.*/
 	for (index = 0; index < HAL_MAX_PORTS; index++){
-		if (_ps->in_use ) {
+		struct hal_port_state *ps = &ports[index];
+		
+		if(ps->in_use ) {
 			/* Link the global structure from each port.
 			   NOTE: Even ports that do not support LPDC require access to
 			   this global structure as they need to know whether all
 			   the LPDC-supporting ports have been calibrated */
-			_ps->lpdc->globalLpdc = globalLpdc;
+			ps->lpdc.globalLpdc = globalLpdc;
 
 			/* Fill in global info needed for operation */
-			if (_ps->lpdc->isSupported) {
-				/* if this ist he first supporetd port, save its index*/
+			if (ps->lpdc.isSupported) {
+				/* if this is he first supported port, save its index*/
 				if (firstLpdcPort < 0)
 					firstLpdcPort = index;
 
@@ -365,9 +372,18 @@ void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalL
 
 				/* count number of supported ports*/
 				numberOfLpdcPorts++;
+				maskLpdcPorts|=((uint32_t)1)<<ps->hw_index;
+			}
+			/* Fill txSetup fsm structure */
+			snprintf(name, sizeof(name), "PortTxSetupFSM.%d", ps->hw_index);
+
+			if (fsm_generic_create(&ps->lpdc.txSetupFSM, name,
+					port_tx_setup_fsm_build_events, port_tx_setup_fsm_states,
+					port_tx_setup_fsm_events, ps)) {
+				pr_error("Cannot create TxSetup fsm !\n");
+				exit(EXIT_FAILURE);
 			}
 		}
-		_ps++;
 	}
 
 	/* if there are any LPDC ports, do some preparation */
@@ -375,7 +391,8 @@ void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalL
 
 		/* fill in the global structure */
 		globalLpdc->numberOfLpdcPorts = numberOfLpdcPorts;
-		globalLpdc->numberOfTxSetupDonePorts = 0;
+		globalLpdc->maskLpdcPorts=maskLpdcPorts;
+		globalLpdc->maskTxSetupDonePorts = 0;
 		globalLpdc->calFileSynced = 0;
 		globalLpdc->firstLpdcPort = firstLpdcPort;
 		globalLpdc->lastLpdcPort = lastLpdcPort;
@@ -386,16 +403,18 @@ void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalL
 		        globalLpdc->lastLpdcPort);
 
 		/* load the calib file*/
-		_load_tx_calibration_file(ps);
-        }
+		_load_tx_calibration_file(ports);
+
+		/* Force going to FREE running master for the calibration */
+		if ( hal_tmg_get_mode()!=HAL_TIMING_MODE_FREE_MASTER)
+			hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
+	}
 }
 
 /* Init the TX SETUP FSM on a given port */
-void hal_port_tx_setup_init_fsm(struct hal_port_state * ps ) {
-	_portFsm.ps=ps;
-	_portFsm.st=&ps->lpdc->txSetupStates;
-	ps->lpdc->txSetupStates.state=-1;
-	_fireState(&_portFsm,HAL_PORT_TX_SETUP_STATE_START);
+void hal_port_tx_setup_fsm_init(struct hal_port_state * ps ) {
+	fsm_init_state(&ps->lpdc.txSetupFSM);
+	fsm_fire_state(&ps->lpdc.txSetupFSM,HAL_PORT_TX_SETUP_STATE_START);
 }
 
 /* FSM state machine for TX setup on a given port
@@ -405,16 +424,18 @@ void hal_port_tx_setup_init_fsm(struct hal_port_state * ps ) {
  *  -1: error detected
  */
 
-int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps ) {
-	_portFsm.ps=ps;
-	_portFsm.st=&ps->lpdc->txSetupStates;
-	return hal_port_generic_fsm(&_portFsm);
+int  hal_port_tx_setup_fsm_run( struct hal_port_state * ps ) 
+{
+	if ( !ps->in_use )
+		return 1;
+	return fsm_generic_run(&ps->lpdc.txSetupFSM);
 }
+
 /* if config is present then update the calibration data */
-static void _load_tx_calibration_file(struct hal_port_state * ps) {
+static void _load_tx_calibration_file(struct hal_port_state * ports) {
 
 	int i = 0;
-	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
+	halGlobalLPDC_t * gl = ports[0].lpdc.globalLpdc;
 
 	// Read calibration file, if it exists
 	_calibrationConfig = cfg_load(_calibrationFileName, 0);
@@ -425,12 +446,14 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 			_calibrationFileName);
 		gl->calFileSynced = 0;
 		return;
-        }
+    }
 
 	pr_info("Loading LPCD config data from %s\n", _calibrationFileName);
 
 	for (i = 0; i < HAL_MAX_PORTS; i++){
-		if (ps->in_use && ps->lpdc->isSupported)
+		struct hal_port_state *ps = &ports[i];
+
+		if (ps->in_use && ps->lpdc.isSupported)
 		{
 			char key_name[80];
 			int value;
@@ -440,11 +463,10 @@ static void _load_tx_calibration_file(struct hal_port_state * ps) {
 			if(cfg_get_int( _calibrationConfig, key_name, &value) )
 			{
 				pr_info("cal: wri%d %d\n", ps->hw_index+1, value);
-				ps->lpdc->txSetup->cal_saved_phase = value;
-				ps->lpdc->txSetup->cal_saved_phase_valid = 1;
+				ps->lpdc.txSetup->cal_saved_phase = value;
+				ps->lpdc.txSetup->cal_saved_phase_valid = 1;
 			}
 		}
-		ps++;
 	}
 	gl->calFileSynced = 1;
 	cfg_close(_calibrationConfig);
@@ -463,11 +485,10 @@ static int file_exists(const char *filename)
 	return 0;
 }
 
-static void _write_tx_calibration_file(struct hal_port_state * _ps)
+static void _write_tx_calibration_file(struct hal_port_state * ps)
 {
 	int i;
-	struct hal_port_state * ps=_ps;
-	halGlobalLPDC_t * gl = ps->lpdc->globalLpdc;
+	halGlobalLPDC_t * gl = ps->lpdc.globalLpdc;
 
 	/* Only the first LPDC-supporting port writes the file. Otherwise,
 	   there is problem with pointers when looping through port structures
@@ -486,16 +507,17 @@ static void _write_tx_calibration_file(struct hal_port_state * _ps)
 	}
 
 	struct config_file *cfg = cfg_load(_calibrationFileName, 1);
+	struct hal_port_state *_ps=ps;
 
-	ps=_ps;
-	for (i = gl->firstLpdcPort; i <= gl->lastLpdcPort; i++) {
-		if (ps->in_use && ps->lpdc->isSupported)
+	for (i = gl->firstLpdcPort; i <= gl->lastLpdcPort; i++) {		
+
+		if (_ps->in_use && _ps->lpdc.isSupported)
 		{
 			char key_name[80];
 			snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d", ps->hw_index);
-			cfg_set_int(cfg, key_name, ps->lpdc->txSetup->measured_phase);
+			cfg_set_int(cfg, key_name, ps->lpdc.txSetup->measured_phase);
 		}
-		ps++;
+		_ps++;
 	}
 
 	pr_info( "Writing TX phase calibration data to %s\n", _calibrationFileName );
@@ -537,3 +559,12 @@ static int _within_range(int x, int minval, int maxval, int wrap)
 }
 
 
+void hal_port_tx_setup_fsm_reset(struct hal_port_state * ps ) 
+{
+	fsm_set_state( &ps->lpdc.txSetupFSM, -1 ); // reset state
+	fsm_fire_state( &ps->lpdc.txSetupFSM, HAL_PORT_TX_SETUP_STATE_START );
+
+	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
+			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+			      MDIO_LPC_CTRL);
+}

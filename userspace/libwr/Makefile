@@ -10,7 +10,7 @@ OBJS = init.o fpga_io.o util.o pps_gen.o i2c.o shw_io.o i2c_bitbang.o \
        dot-config.o config-lpcalib.o wrs-msg.o \
        mac.o \
        timeout.o \
-       config-lpcalib.o
+       config-lpcalib.o generic_fsm.o
 
 LIB = libwr.a
 

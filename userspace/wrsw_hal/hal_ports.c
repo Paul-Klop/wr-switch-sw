@@ -39,6 +39,12 @@
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
 
+#define FSM_DEBUG 1
+
+#if FSM_DEBUG
+static timeout_t debug_tmo;
+#endif
+
 hal_ports_t halPorts;
 
 /**
@@ -134,20 +140,15 @@ static int hal_port_init(struct hal_port_state *ps, int index)
 	if (!hal_port_check_presence(ps->name, ps->hw_addr))
 		return -1;
 
-	/* Allocate LPDC structure */
-	if ( (ps->lpdc = wrs_shm_alloc(hal_shmem_hdr, sizeof(halPortLPDC_t)))==NULL ) {
-		pr_error("Can't allocate LPDC structure in shmem\n");
-		return -1;
-	}
 
 	ps->in_use = 1;
-	ps->lpdc->isSupported = hal_port_check_lpdc_support(ps);
+	ps->lpdc.isSupported = hal_port_check_lpdc_support(ps);
 
-	if ( ps->lpdc->isSupported ) {
+	if ( ps->lpdc.isSupported ) {
 		// Allocate memory for tx/rx setup
-		ps->lpdc->txSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcTx_t));
-		ps->lpdc->rxSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcRx_t));
-		if ( ps->lpdc->rxSetup==NULL || ps->lpdc->txSetup==NULL) {
+		ps->lpdc.txSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcTx_t));
+		ps->lpdc.rxSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcRx_t));
+		if ( ps->lpdc.rxSetup==NULL || ps->lpdc.txSetup==NULL) {
 			pr_error("Can't allocate LPDC (rx/tx) structures in shmem\n");
 			return -1;
 		}
@@ -260,7 +261,11 @@ int hal_port_shmem_init(char *logfilename)
 		if (hal_port_init(&halPorts.ports[index],index) < 0)
 			break;
 
-	hal_port_state_fsm_init(halPorts.ports,&halPorts.globalLpdc); // Init fsm
+	hal_port_state_fsm_init_all(halPorts.ports, &halPorts.globalLpdc); // Init main port FSM for all ports
+	
+	if ( FSM_DEBUG )
+		libwr_tmo_init( &debug_tmo, 1000, 1 );
+
 	led_init_all_ports(halPorts.ports); // Reset all leds
 	halPorts.numberOfPorts = index;
 
@@ -639,10 +644,40 @@ void hal_port_update_all()
 	/* lock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 
-	hal_port_state_fsm(halPorts.ports);
+	hal_port_state_fsm_run_all(halPorts.ports);
 
 	/* unlock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+
+	if( FSM_DEBUG && libwr_tmo_expired( &debug_tmo ))
+	{
+		int i;
+		printf("PortDBG: \n");
+
+		for(i = 0; i < HAL_MAX_PORTS; i++)
+		{
+			struct hal_port_state *ps = &halPorts.ports[i];
+			char txEventsStr[128];
+			char rxEventsStr[128];
+
+			if ( !ps->in_use || !ps->lpdc.isSupported )
+				continue;
+
+			strncpy( txEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.txSetupFSM ), sizeof(txEventsStr) );
+			strncpy( rxEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.rxSetupFSM ), sizeof(rxEventsStr) );
+
+			printf("  - wri%02d: PORT:%-20s TX:%-21s (%-40s) RX:%-21s (%-40s) bslide=%d\n",
+				ps->hw_index + 1,
+				fsm_get_state_name( &ps->fsm ),
+				fsm_get_state_name( &ps->lpdc.txSetupFSM ),
+				txEventsStr,
+				fsm_get_state_name( &ps->lpdc.rxSetupFSM ),
+				rxEventsStr,
+				ps->calib.bitslide_ps
+			);
+		}
+
+	}
 }
 
 int hal_port_enable_tracking(const char *port_name)
@@ -715,7 +750,7 @@ int hal_port_all_ports_initialized(void) {
 	int i;
 
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
-		if ( ps->in_use && ps->portStates.state==HAL_PORT_STATE_INIT ) {
+		if ( ps->in_use && fsm_get_state( &ps->fsm ) ==HAL_PORT_STATE_INIT ) {
 			// This port has not finished its initialization state
 			return 0;
 		}

@@ -402,8 +402,8 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, hw_index),
 	DUMP_FIELD(int, fd),
 	DUMP_FIELD(int, hw_addr_auto),
-	DUMP_FIELD(int, portStates.state),
-	DUMP_FIELD(int, pllStates.state),
+	DUMP_FIELD(int, fsm.st.state),
+	DUMP_FIELD(int, pllFsm.st.state),
 	DUMP_FIELD(int, fiber_index),
 	DUMP_FIELD(int, locked),
 	/* these fields are defined as uint32_t but we prefer %i to %x */
@@ -458,7 +458,6 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int,  evt_lock),
 	DUMP_FIELD(int,  evt_linkUp),
 
-	DUMP_FIELD(int, pllStates.state),
 };
 
 /* map for fields of hal_port_state.lpdc (hal_shmem.h) */
@@ -466,8 +465,8 @@ struct dump_info hal_port_info [] = {
 #define DUMP_STRUCT halPortLPDC_t
 struct dump_info hal_port_info_lpdc [] = {
 		DUMP_FIELD(int, isSupported),
-		DUMP_FIELD(int, txSetupStates.state),
-		DUMP_FIELD(int, rxSetupStates.state),
+		DUMP_FIELD(int, txSetupFSM.st.state),
+		DUMP_FIELD(int, rxSetupFSM.st.state),
 };
 
 /* map for fields of hal_port_state.lpdc.txsetup (hal_shmem.h) */
@@ -522,31 +521,24 @@ int dump_hal_mem(struct wrs_shm_head *head)
 
 		sprintf(prefix,"HAL.port.%d",i+1);
 		dump_many_fields(p, hal_port_info, ARRAY_SIZE(hal_port_info),prefix);
-		if ( p->lpdc ) {
-			halPortLPDC_t *lpdc;
+		strcat(prefix,".lpdc");
+		dump_many_fields(&p->lpdc, hal_port_info_lpdc, ARRAY_SIZE(hal_port_info_lpdc),prefix);
+		if ( p->lpdc.txSetup) {
+			halPortLpdcTx_t *txsetup;
 
-			if ( (lpdc=wrs_shm_follow(head, p->lpdc))!=NULL ) {
+			if ( (txsetup=wrs_shm_follow(head, p->lpdc.txSetup))!=NULL ) {
+				strcpy(prefix2,prefix);
+				strcat(prefix2,".txsetup");
+				dump_many_fields(txsetup, hal_port_info_lpdc_txsetup, ARRAY_SIZE(hal_port_info_lpdc_txsetup),prefix2);
+			}
+		}
+		if ( p->lpdc.rxSetup) {
+			halPortLpdcTx_t *rxsetup;
 
-				strcat(prefix,".lpdc");
-				dump_many_fields(lpdc, hal_port_info_lpdc, ARRAY_SIZE(hal_port_info_lpdc),prefix);
-				if ( lpdc->txSetup) {
-					halPortLpdcTx_t *txsetup;
-
-					if ( (txsetup=wrs_shm_follow(head, lpdc->txSetup))!=NULL ) {
-						strcpy(prefix2,prefix);
-						strcat(prefix2,".txsetup");
-						dump_many_fields(txsetup, hal_port_info_lpdc_txsetup, ARRAY_SIZE(hal_port_info_lpdc_txsetup),prefix2);
-					}
-				}
-				if ( lpdc->rxSetup) {
-					halPortLpdcTx_t *rxsetup;
-
-					if ( (rxsetup=wrs_shm_follow(head, lpdc->rxSetup))!=NULL ) {
-						strcpy(prefix2,prefix);
-						strcat(prefix2,".rxsetup");
-						dump_many_fields(rxsetup, hal_port_info_lpdc_rxsetup, ARRAY_SIZE(hal_port_info_lpdc_rxsetup),prefix2);
-					}
-				}
+			if ( (rxsetup=wrs_shm_follow(head, p->lpdc.rxSetup))!=NULL ) {
+				strcpy(prefix2,prefix);
+				strcat(prefix2,".rxsetup");
+				dump_many_fields(rxsetup, hal_port_info_lpdc_rxsetup, ARRAY_SIZE(hal_port_info_lpdc_rxsetup),prefix2);
 			}
 		}
 	}

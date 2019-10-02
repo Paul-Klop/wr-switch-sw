@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <libwr/wrs-msg.h>
 #include <libwr/hal_shmem.h>
@@ -41,15 +42,15 @@
  */
 
 /* external prototypes */
-static int _buildEvents(void * vpfg);
-static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int ventMsk, int isNewState);
-static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int ventMsk, int isNewState);
-static int _hal_port_rx_setup_state_validate(void *vpfg, int ventMsk, int isNewState);
-static int _hal_port_rx_setup_state_done(void *vpfg, int ventMsk, int isNewState);
+static int port_rx_setup_fsm_build_events(fsm_t *fsm);
+static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewState);
+static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int ventMsk, int isNewState);
+static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int ventMsk, int isNewState);
+static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int ventMsk, int isNewState);
+static int _hal_port_rx_setup_state_done(fsm_t *fsm, int ventMsk, int isNewState);
 
 
-static halPortStateTable_t _fsmStateTable[] =
+static fsm_state_table_entry_t port_rx_setup_fsm_states[] =
 {
 		{ .state=HAL_PORT_RX_SETUP_STATE_START,
 				.stateName="START",		
@@ -74,7 +75,7 @@ static halPortStateTable_t _fsmStateTable[] =
 		{ .state=-1 }
 };
 
-static halPortEventTable_t _fsmEvtTable[] = {
+static fsm_event_table_entry_t port_rx_setup_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_RX_SETUP_EVENT_TIMER,
 				.evtName="TIMER"
@@ -97,19 +98,13 @@ static halPortEventTable_t _fsmEvtTable[] = {
 		},
 		{ .evtMask = -1 } };
 
-static halPortFsmGen_t _portFsm = {
-		.fsm_name="PortFsmRxSetup",
-		.fctBuilEvents=_buildEvents,
-		.pt=_fsmStateTable,
-		.pe=_fsmEvtTable
-};
 
 //TODO-ML: the below structure is redundant, consider reogranization to use
 //         hal_port_rts_state
 static struct rts_pll_state _pll_state;
 
 
-static __inline__ void updatePllState(struct hal_port_state * ps) {
+static inline void updatePllState(struct hal_port_state * ps) {
 	// update PLL state once for all ports
 	rts_get_state(&_pll_state);
 }
@@ -123,21 +118,23 @@ static __inline__ void updatePllState(struct hal_port_state * ps) {
  *     nothing to do, go to DONE and wait for link up
  * fi
  */
-static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-	halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+	halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 	// prevent RX FSM from starting up when the TX path calibration of the port is
 	// not completed.	
-	if( ps->lpdc->txSetupStates.state != HAL_PORT_TX_SETUP_STATE_DONE) {
+	
+	int tx_setup_state = fsm_get_state( &ps->lpdc.txSetupFSM);
+	if( tx_setup_state != HAL_PORT_TX_SETUP_STATE_DONE) {
 		pr_warning("rx_setup FSM is attempted to be started before the"
-			"tx_setup FSM has finished (in state %d) - this should"
-			"never happen, in theory.\n",
-			ps->lpdc->txSetupStates.state);
+			" tx_setup FSM has finished (in state %d) - this should"
+			" never happen, in theory.\n",
+			tx_setup_state);
 		return 0;
         }
 
-	if ( ps->lpdc->isSupported ) {
+	if ( ps->lpdc.isSupported ) {
 		if ( isNewState )
 			// Restart the time-out
 			libwr_tmo_restart(&rxSetup->earlyup_timeout);
@@ -152,14 +149,17 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
 		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
 			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
 			      MDIO_LPC_CTRL);
+
 		if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
+			halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
+
 			rxSetup->attempts=0;
 			rts_enable_ptracker(ps->hw_index, 0);
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_RESET_PCS);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_RESET_PCS);
 		}
 	} else {
 		/* nothing to do, go waiting for link_up*/
-		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_DONE);
+		fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_DONE);
 	}
 	return 0;
 }
@@ -169,15 +169,19 @@ static int _hal_port_rx_setup_state_start(void *vpfg, int eventMsk, int isNewSta
  * RESET_PCS state
  *
  */
-static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-	halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNewState) {
+		struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
+	halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 	if ( isNewState )
 		libwr_tmo_restart(&rxSetup->link_timeout);
 
 	if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
+		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
+		libwr_tmo_init(&rxSetup->link_timeout, 100, 1);
+		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
 
 		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
 			      MDIO_LPC_CTRL_TX_ENABLE |
@@ -189,10 +193,10 @@ static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
 			      MDIO_LPC_CTRL);
 
 		rxSetup->attempts++;
-		_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_WAIT_LOCK);
+		fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_WAIT_LOCK);
 	} else {
 		if( libwr_tmo_expired( &rxSetup->link_timeout ) )
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
 	}
 	return 0;
 }
@@ -201,14 +205,10 @@ static int _hal_port_rx_setup_state_reset_pcs(void *vpfg, int eventMsk, int isNe
  * WAIT_LOCK state
  *
  */
-static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
-	halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int eventMsk, int isNewState) {
+		struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
-	if ( isNewState ) {
-		libwr_tmo_restart(&rxSetup->link_timeout);
-		libwr_tmo_restart(&rxSetup->align_timeout);
-	}
+	halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 	if ( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 		// 1ms rx align detection window, described in previous state.
@@ -220,13 +220,13 @@ static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
 			rts_enable_ptracker(ps->hw_index, 0);
 			rts_enable_ptracker(ps->hw_index, 1);
 			_pll_state.channels[ps->hw_index].flags = 0;
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_VALIDATE);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_VALIDATE);
 		} else {
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_RESET_PCS);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_RESET_PCS);
 		}
 	} else {
 		if( libwr_tmo_expired( &rxSetup->link_timeout ) )
-			_fireState(vpfg,HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
 	}
 
 	return 0;
@@ -236,14 +236,15 @@ static int _hal_port_rx_setup_state_wait_lock(void *vpfg, int eventMsk, int isNe
  * VALIDATE state
  *
  */
-static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int eventMsk, int isNewState) {
+		struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
 
 	updatePllState(ps);
 
-	if (_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY)	{
+	if (_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY) {
 		int phase = _pll_state.channels[ps->hw_index].phase_loopback;
-		halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
 		pcs_writel(ps, MDIO_LPC_CTRL_RX_ENABLE |
 				MDIO_LPC_CTRL_TX_ENABLE |
@@ -255,7 +256,9 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
 				"ps (after %d attempts).\n", ps->hw_index + 1,
 				phase, rxSetup->attempts);
 		rts_enable_ptracker(ps->hw_index, 0);
-		_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_DONE);
+
+		libwr_tmo_init( &rxSetup->align_to_link_timeout, 5000, 0 );
+		fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_DONE);
 	}
 
 	return 0;
@@ -269,37 +272,61 @@ static int _hal_port_rx_setup_state_validate(void *vpfg, int eventMsk, int isNew
   * if link up event then return final state machine reached
  *
  */
-static int _hal_port_rx_setup_state_done(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewState) {
+		struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
+
+	int early_up = _isHalRxSetupEventEarlyLinkUp(eventMsk);
+	int link_aligned = _isHalRxSetupEventRxAligned(eventMsk);
+	int link_up = _isHalRxSetupEventLinkUp(eventMsk);
 
 	/* earlyLinkUp detection only if LPDC support */
-	if ( ps->lpdc->isSupported ) {
-		if ( !_isHalRxSetupEventEarlyLinkUp(eventMsk)) {
+	if ( ps->lpdc.isSupported ) {
+		if ( !early_up) {
 			// Port went done
 			pr_info("rxcal: early link flag lost on port wri%d\n",
 					ps->hw_index + 1);
-			_fireState(vpfg, HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
 			return 0;
-                }
+        }
+        
+		if( libwr_tmo_expired( &ps->lpdc.rxSetup->align_to_link_timeout ) && !link_up && early_up && link_aligned)
+		{
+			
+			pr_warning("rxcal: link is fucked up, early+align on, but no PCS link up. Retrying calibration on port %d\n",ps->hw_index + 1);
+
+//			pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE|MDIO_LPC_CTRL_RESET_RX|MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
+//			      MDIO_LPC_CTRL);
+			pcs_writel(ps, MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+			      MDIO_LPC_CTRL);
+
+			// force the other side of the link to reset its FSMs too!
+			// usleep(100000);
+			sleep(1);
+
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
+			return 0;
+		}
 	}
-	if ( _isHalRxSetupEventLinkUp(eventMsk) ) {
-		return 1; /* Final state reached */;
-	}
-	return 0;
+	
+	return link_up ? 1 : 0;
 }
 
 /* Build FSM events */
-static  int _buildEvents(void *vpfg) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static  int port_rx_setup_fsm_build_events (fsm_t *fsm) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
 	int portEventMask=HAL_PORT_RX_SETUP_EVENT_TIMER;
 
 
-	if ( ps->evt_linkUp != -1 ) {
+	//printf("rxBuildEvents port %d lup %d\n", ps->hw_index, ps->evt_linkUp );
+
+	if ( ps->evt_linkUp >= 0 ) {
 		portEventMask |= ps->evt_linkUp ?
 				HAL_PORT_RX_SETUP_EVENT_LINK_UP  : HAL_PORT_RX_SETUP_EVENT_LINK_DOWN;
 	}
 
-	if ( ps->lpdc->isSupported ) {
+	if ( ps->lpdc.isSupported ) {
 		uint32_t mioLpcStat;
 
 		if ( pcs_readl(ps, MDIO_LPC_STAT,&mioLpcStat) >= 0 ) {
@@ -313,14 +340,34 @@ static  int _buildEvents(void *vpfg) {
 }
 
 
+/* Initialize rx_setup - this is a global init, executed once for all ports/FSMs.
+*/
+void hal_port_rx_setup_init_all(struct hal_port_state * ports) {
+	char name[64];
+	int index;
+
+	for (index = 0; index < HAL_MAX_PORTS; index++){
+		struct hal_port_state *ps = &ports[index];
+
+		snprintf(name, sizeof(name), "PortRxSetupFSM.%d", ps->hw_index);
+
+		if (fsm_generic_create(&ps->lpdc.rxSetupFSM, name,
+				port_rx_setup_fsm_build_events, port_rx_setup_fsm_states,
+				port_rx_setup_fsm_events, ps)) {
+			pr_error("Cannot create RxSetup fsm !\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
 /*
  * Init RX SETUP FSM
  */
-void hal_port_rx_setup_init_fsm(struct hal_port_state * ps ) {
-	_portFsm.ps=ps;
-	_portFsm.st=&ps->lpdc->rxSetupStates;
-	ps->lpdc->rxSetupStates.state=-1;
-	if ( ps->lpdc->isSupported ) {
+void hal_port_rx_setup_fsm_init(struct hal_port_state * ps ) {
+
+	fsm_init_state ( &ps->lpdc.rxSetupFSM);
+	
+	if ( ps->lpdc.isSupported ) {
 		/* This timeout is needed when link goes down. In such case
 		   the link_down flag is set earlier than the early_link_up
 		   flag is reseted. So, after the link goes down, we need to
@@ -333,7 +380,7 @@ void hal_port_rx_setup_init_fsm(struct hal_port_state * ps ) {
 		   a reason. If it was done in _hal_port_rx_setup_state_start(),
 		   the timeout would also kick in when the START state is
 		   entered from WAIT_LOCK*/
-		halPortLpdcRx_t *rxSetup=ps->lpdc->rxSetup;
+		halPortLpdcRx_t *rxSetup = ps->lpdc.rxSetup;
 		libwr_tmo_init(&rxSetup->earlyup_timeout, 10, 1);
 
 		// link timeout
@@ -344,8 +391,9 @@ void hal_port_rx_setup_init_fsm(struct hal_port_state * ps ) {
 		// link detect. Without the wait (depending on execution timing of the HAL code)
 		// the wait_lock state might detect the early link but never see it's aligned.
 		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
-        }
-	_fireState(&_portFsm,HAL_PORT_RX_SETUP_STATE_START);
+    }
+	
+	fsm_fire_state( &ps->lpdc.rxSetupFSM, HAL_PORT_RX_SETUP_STATE_START );
 }
 
 /* FSM state machine for RX setup on a given port
@@ -355,9 +403,14 @@ void hal_port_rx_setup_init_fsm(struct hal_port_state * ps ) {
  *  -1: error detected
  */
 
-int hal_port_rx_setup_state_fsm( struct hal_port_state * ps ) {
-	_portFsm.ps=ps;
-	_portFsm.st=&ps->lpdc->rxSetupStates;
-	return hal_port_generic_fsm(&_portFsm);
+int hal_port_rx_setup_fsm_run( struct hal_port_state * ps ) {
+	if ( !ps->in_use )
+		return 1;
+	return fsm_generic_run( &ps->lpdc.rxSetupFSM );
 }
 
+void hal_port_rx_setup_fsm_reset(struct hal_port_state * ps ) 
+{
+	fsm_set_state( &ps->lpdc.rxSetupFSM, -1 ); // reset state
+	fsm_fire_state( &ps->lpdc.rxSetupFSM, HAL_PORT_RX_SETUP_STATE_START );
+}

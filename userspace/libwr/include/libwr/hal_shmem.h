@@ -1,11 +1,13 @@
 #ifndef __LIBWR_HAL_SHMEM_H__
 #define __LIBWR_HAL_SHMEM_H__
 
+#include <string.h>
 #include <hal_exports.h>
 #include <libwr/sfp_lib.h>
-#include <string.h>
+#include <libwr/generic_fsm.h>
 
-#include "timeout.h"
+
+#include <libwr/timeout.h>
 
 /* Port state machine states */
 typedef enum {
@@ -63,12 +65,6 @@ typedef struct hal_port_calibration {
 	struct shw_sfp_dom sfp_dom_raw;
 } hal_port_calibration_t;
 
-/* States used by the generic FSM */
-typedef struct {
-	int state;
-	int nextState;
-} halPortFsmState_t;
-
 /* Low Phase Drift Calibration for tx */
 typedef struct {
 	int attempts;
@@ -87,12 +83,14 @@ typedef struct {
 	timeout_t link_timeout;
 	timeout_t align_timeout;
     timeout_t earlyup_timeout;
+	timeout_t align_to_link_timeout;
 	int attempts;
 }halPortLpdcRx_t;
 
 typedef struct  {
 	int numberOfLpdcPorts;
-	int numberOfTxSetupDonePorts;
+	uint32_t maskLpdcPorts;
+	uint32_t maskTxSetupDonePorts;
 	int firstLpdcPort;
 	int lastLpdcPort;
 	int calFileSynced;
@@ -100,8 +98,8 @@ typedef struct  {
 
 typedef struct {
 	int isSupported; /* Set if Low Phase Drift Calibration is supported */
-	halPortFsmState_t txSetupStates;
-	halPortFsmState_t rxSetupStates;
+	fsm_t txSetupFSM;
+	fsm_t rxSetupFSM;
 	halPortLpdcTx_t *txSetup;
 	halPortLpdcRx_t *rxSetup;
 	halGlobalLPDC_t *globalLpdc;
@@ -118,7 +116,8 @@ struct hal_port_state {
 	int hw_addr_auto;
 
 	/* port FSM state (HAL_PORT_STATE_xxxx) */
-	halPortFsmState_t portStates;
+	fsm_t fsm;
+	fsm_t pllFsm;
 
 	int fiber_index;/* fiber type, used to get alpha for SFP frequency */
 	int locked; /* 1: PLL is locked to this port */
@@ -162,12 +161,10 @@ struct hal_port_state {
 	int evt_reset; /* Set if a reset is requested */
 	int evt_lock; /* Set if the ptracker must be activated*/
 	int evt_linkUp; /* Set if link is up ( driver call )*/
+	int evt_powerDown; /* Set if port is in power down state (MII MCR.PDOWN ==1 ) */
 
 	/* Low phase drift calibration data */
-	halPortLPDC_t *lpdc; /* Use a pointer to avoid to export this structure to PPSi */
-
-	/* Pll FSM */
-	halPortFsmState_t pllStates;
+	halPortLPDC_t lpdc;
 };
 
 struct hal_temp_sensors {
@@ -197,7 +194,7 @@ struct hal_shmem_header {
 
 static inline int get_port_state(struct hal_port_state *ps)
 {
-	return ps->portStates.state;
+	return fsm_get_state( &ps->fsm );
 }
 
 static inline int state_up(struct hal_port_state *ps)

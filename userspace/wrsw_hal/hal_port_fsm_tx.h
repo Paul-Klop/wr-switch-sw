@@ -10,9 +10,9 @@
 #ifndef HAL_PORT_FSM_TX_H
 #define HAL_PORT_FSM_TX_H
 
-/* prototypes */
-void hal_port_tx_setup_init_fsm(struct hal_port_state * ps );
-void hal_port_tx_setup_init(struct hal_port_state * ps, halGlobalLPDC_t *globalLpdc );
-int  hal_port_tx_setup_state_fsm( struct hal_port_state * ps);
+void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *globalLpdc);
+void hal_port_tx_setup_fsm_init(struct hal_port_state * ps );
+int  hal_port_tx_setup_fsm_run( struct hal_port_state * ps );
+void hal_port_tx_setup_fsm_reset(struct hal_port_state * ps );
 
 #endif

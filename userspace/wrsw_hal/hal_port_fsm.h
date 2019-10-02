@@ -13,9 +13,7 @@
 #define HAL_CAL_DMTD_SAMPLES 16
 #define HAL_DEFAULT_DMTD_SAMPLES 512
 
-/* Prototypes */
-void fsm_state_machine( struct hal_port_state * ps );
-void hal_port_state_fsm( struct hal_port_state * ps );
-void hal_port_state_fsm_init( struct hal_port_state * ps,halGlobalLPDC_t *globalLpdc);
+void hal_port_state_fsm_init_all( struct hal_port_state * ports, halGlobalLPDC_t *globalLpdc);
+void hal_port_state_fsm_run_all( struct hal_port_state * ports);
 
 #endif

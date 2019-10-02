@@ -1,3 +1,4 @@
+#include <stdlib.h>
 
 #include <hal_exports.h>
 #include <libwr/hal_shmem.h>
@@ -23,13 +24,13 @@
  */
 
 /* external prototypes */
-static int _buildEvents(void * vpfg);
-static int _hal_port_pll_state_unlocked(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_pll_state_locked(void *vpfg, int eventMsk, int isNewState);
-static int _hal_port_pll_state_locking(void *vpfg, int eventMsk, int isNewState);
+static int port_pll_fsm_build_events(fsm_t *pfg);
+static int _hal_port_pll_state_unlocked(fsm_t *pfg, int eventMsk, int isNewState);
+static int _hal_port_pll_state_locked(fsm_t *pfg, int eventMsk, int isNewState);
+static int _hal_port_pll_state_locking(fsm_t *pfg, int eventMsk, int isNewState);
 
 
-static halPortStateTable_t _fsmStateTable[] =
+static fsm_state_table_entry_t port_pll_fsm_states[] =
 {
 		{
 				.state=HAL_PORT_PLL_STATE_UNLOCKED,
@@ -49,7 +50,7 @@ static halPortStateTable_t _fsmStateTable[] =
 		{		.state=-1 }
 };
 
-static halPortEventTable_t _fsmEvtTable[] = {
+static fsm_event_table_entry_t port_pll_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_PLL_EVENT_TIMER,
 				.evtName="TIMER"
@@ -72,13 +73,6 @@ static halPortEventTable_t _fsmEvtTable[] = {
 		},
 		{ .evtMask = -1 } };
 
-static halPortFsmGen_t _portFsm = {
-		.fsm_name="PortFsmPll",
-		.fctBuilEvents=_buildEvents,
-		.pt=_fsmStateTable,
-		.pe=_fsmEvtTable
-};
-
 /* UNLOCKED state
  *
  * if locked event then
@@ -91,16 +85,16 @@ static halPortFsmGen_t _portFsm = {
  * fi
  *
  */
-static int _hal_port_pll_state_unlocked(void *vpfg, int eventMsk, int isNewState) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int _hal_port_pll_state_unlocked(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	if ( _isHalPllEventLocked(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_PLL_STATE_LOCKED);
+		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKED);
 		return 0;
 	}
 	if ( _isHalPllEventLock(eventMsk) ) {
 		if ( rts_lock_channel(ps->hw_index, 0)>=0 ) {
-			_fireState(vpfg,HAL_PORT_PLL_STATE_LOCKING);
+			fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKING);
 			return 0;
 		}
 	}
@@ -113,14 +107,14 @@ static int _hal_port_pll_state_unlocked(void *vpfg, int eventMsk, int isNewState
  *  if locked event then  state=LOCKED
  *  else if unlock event then state=UNLOCKED
  */
-static int _hal_port_pll_state_locking(void *vpfg, int eventMsk, int isNewState) {
+static int _hal_port_pll_state_locking(fsm_t *fsm, int eventMsk, int isNewState) {
 
 	if ( _isHalPllEventLocked(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_PLL_STATE_LOCKED);
+		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKED);
 		return 0;
 	}
 	if ( _isHalPllEventDisable(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_PLL_STATE_UNLOCKED);
+		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_UNLOCKED);
 		return 0;
 	}
 	return 0;
@@ -135,13 +129,13 @@ static int _hal_port_pll_state_locking(void *vpfg, int eventMsk, int isNewState)
  *      else return final state machine reached
  * fi
  */
-static int _hal_port_pll_state_locked(void *vpfg, int eventMsk, int isNewState) {
+static int _hal_port_pll_state_locked(fsm_t *fsm, int eventMsk, int isNewState) {
 	if ( _isHalPllEventUnlock(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_PLL_STATE_LOCKING);
+		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKING);
 		return 0;
 	}
 	if ( _isHalPllEventDisable(eventMsk) ) {
-		_fireState(vpfg,HAL_PORT_PLL_STATE_UNLOCKED);
+		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_UNLOCKED);
 		return 0;
 	}
 	return 1; /* final state */
@@ -152,8 +146,8 @@ static int _hal_port_pll_state_locked(void *vpfg, int eventMsk, int isNewState) 
  *
  * Lock & Locked events are generated only if the timing mode is BC
  */
-static int _buildEvents(void * vpfg) {
-	struct hal_port_state * ps=((halPortFsmGen_t *)vpfg)->ps;
+static int port_pll_fsm_build_events(fsm_t *fsm) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 	int portEventMask=HAL_PORT_PLL_EVENT_TIMER;
 	int tm;
 
@@ -177,13 +171,36 @@ static int _buildEvents(void * vpfg) {
 	return portEventMask;
 }
 
-/* Init PLL FSM */
-void hal_port_pll_init_fsm(struct hal_port_state * ps ) {
+/* Initialize rx_setup - this is a global init, executed once for all ports/FSMs.
+*/
+void hal_port_pll_setup_init_all(struct hal_port_state * ports) {
+	char name[64];
+	int index;
 
-	_portFsm.ps=ps;
-	_portFsm.st=&ps->pllStates;
-	ps->pllStates.state=-1;
-	_fireState(&_portFsm,HAL_PORT_PLL_STATE_UNLOCKED);
+	for (index = 0; index < HAL_MAX_PORTS; index++){
+		struct hal_port_state *ps = &ports[index];
+
+		snprintf(name, sizeof(name), "PortPllFSM.%d", ps->hw_index);
+
+		if (fsm_generic_create(&ps->pllFsm, name, port_pll_fsm_build_events,
+				port_pll_fsm_states, port_pll_fsm_events, ps)) {
+			pr_error("Cannot create PLL fsm !\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+/* Init PLL FSM */
+void hal_port_pll_fsm_init(struct hal_port_state * ps )
+{
+	fsm_init_state(&ps->pllFsm);
+	fsm_fire_state(&ps->pllFsm, HAL_PORT_PLL_STATE_UNLOCKED);
+}
+
+void hal_port_pll_fsm_reset(struct hal_port_state * ps )
+{
+	fsm_init_state(&ps->pllFsm);
+	fsm_fire_state(&ps->pllFsm, HAL_PORT_PLL_STATE_UNLOCKED);
 }
 
 /* FSM state machine for PLL on a given port
@@ -193,9 +210,9 @@ void hal_port_pll_init_fsm(struct hal_port_state * ps ) {
  *  -1: error detected
  */
 
-int  hal_port_pll_state_fsm( struct hal_port_state * ps ) {
-	_portFsm.ps=ps;
-	_portFsm.st=&ps->pllStates;
-	return hal_port_generic_fsm(&_portFsm);
+int  hal_port_pll_fsm_run( struct hal_port_state * ps ) {
+	if ( !ps->in_use )
+		return 1;
+	return fsm_generic_run( &ps->pllFsm );	
 }
 

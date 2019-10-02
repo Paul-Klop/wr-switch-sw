@@ -11,7 +11,8 @@
 #define HAL_PORT_FSM_PLLP_H
 
 #include <libwr/wrs-msg.h>
-#include "hal_port_gen_fsm.h"
+#include <libwr/generic_fsm.h>
+
 #include "hal_port_fsm_pll.h"
 
 typedef enum {
@@ -30,19 +31,19 @@ typedef enum
 }halPortPllEventMask_t ;
 
 
-static	__inline__ int _isHalPllEventLock(halPortPllEventMask_t eventMsk) {
+static	inline int _isHalPllEventLock(halPortPllEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_PLL_EVENT_LOCK;
 }
 
-static	__inline__ int _isHalPllEventLocked(halPortPllEventMask_t eventMsk) {
+static	inline int _isHalPllEventLocked(halPortPllEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_PLL_EVENT_LOCKED;
 }
 
-static	__inline__ int _isHalPllEventUnlock(halPortPllEventMask_t eventMsk) {
+static	inline int _isHalPllEventUnlock(halPortPllEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_PLL_EVENT_UNLOCKED;
 }
 
-static	__inline__ int _isHalPllEventDisable(halPortPllEventMask_t eventMsk) {
+static	inline int _isHalPllEventDisable(halPortPllEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_PLL_EVENT_DISABLE;
 }
 

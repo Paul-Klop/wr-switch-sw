@@ -47,6 +47,7 @@ static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewSta
 static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int ventMsk, int isNewState);
+static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_done(fsm_t *fsm, int ventMsk, int isNewState);
 
 
@@ -67,6 +68,10 @@ static fsm_state_table_entry_t port_rx_setup_fsm_states[] =
 		{ .state=HAL_PORT_RX_SETUP_STATE_VALIDATE,
 				.stateName="VALIDATE",
 				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_validate)
+		},
+		{ .state=HAL_PORT_RX_SETUP_STATE_RESTART,
+				.stateName="RESTART",
+				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_restart)
 		},
 		{ .state=HAL_PORT_RX_SETUP_STATE_DONE,
 				.stateName="DONE",
@@ -265,6 +270,25 @@ static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int eventMsk, int isNew
 }
 
 /*
+ * RESTART state - wait few ms before to mode to START state
+ *
+ *
+ */
+static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
+	if ( isNewState ) {
+		// This timer is used to leave enough time to the FSM in the other side to detect a link down
+		libwr_tmo_init(&ps->lpdc.rxSetup->restart_timeout, 100, 0);
+	} else {
+		if( libwr_tmo_expired( &ps->lpdc.rxSetup->restart_timeout ) ) {
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
+		}
+	}
+	return 0;
+}
+
+/*
  * DONE state - wait for link_up
  *
  * if LPDC supported
@@ -300,11 +324,7 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 			pcs_writel(ps, MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
 			      MDIO_LPC_CTRL);
 
-			// force the other side of the link to reset its FSMs too!
-			// usleep(100000);
-			sleep(1);
-
-			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_RESTART);
 			return 0;
 		}
 	}

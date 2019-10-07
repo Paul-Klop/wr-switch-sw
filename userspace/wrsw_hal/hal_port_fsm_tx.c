@@ -130,7 +130,7 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	// Force timing mode to FR
-	if ( hal_tmg_get_mode(NULL)==HAL_TIMING_MODE_BC)
+	if ( hal_tmg_get_mode(NULL)!=HAL_TIMING_MODE_FREE_MASTER)
 		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
 	ps->locked=0;
 

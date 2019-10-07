@@ -90,7 +90,7 @@ typedef struct {
 
 typedef struct  {
 	int numberOfLpdcPorts;
-	uint32_t maskLpdcPorts;
+	uint32_t maskUsedPorts;
 	uint32_t maskTxSetupDonePorts;
 	int firstLpdcPort;
 	int lastLpdcPort;
@@ -208,10 +208,14 @@ static inline struct hal_port_state *hal_lookup_port(
 			const char *name)
 {
 	int i;
+	struct hal_port_state *p=ports;
 
-	for (i = 0; i < nports; i++)
-		if (ports[i].in_use && (!strcmp(name, ports[i].name)))
-			return ports + i;
+	for (i = 0; i < nports; i++) {
+		if (p->in_use && (!strcmp(name, p->name))) {
+			return p;
+		}
+		p++;
+	}
 	return NULL;
 }
 

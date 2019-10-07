@@ -83,23 +83,19 @@ static fsm_state_table_entry_t port_rx_setup_fsm_states[] =
 static fsm_event_table_entry_t port_rx_setup_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_RX_SETUP_EVENT_TIMER,
-				.evtName="TIMER"
+				.evtName="TIM"
 		},
 		{
 				.evtMask = HAL_PORT_RX_SETUP_EVENT_LINK_UP,
-				.evtName="LINK_UP"
+				.evtName="LKUP"
 		},
 		{
 				.evtMask = HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP,
-				.evtName="EARLY_LINK_UP"
-		},
-		{
-				.evtMask = HAL_PORT_RX_SETUP_EVENT_LINK_DOWN,
-				.evtName="LINK_DOWN"
+				.evtName="ELKUP"
 		},
 		{
 				.evtMask = HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED,
-				.evtName="RX_ALIGNED"
+				.evtName="RX_ALGN"
 		},
 		{ .evtMask = -1 } };
 
@@ -139,28 +135,31 @@ static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewSta
 		return 0;
         }
 
-	if ( ps->lpdc.isSupported ) {
-		if ( isNewState )
+	if (ps->lpdc.isSupported) {
+		if (isNewState)
 			// Restart the time-out
 			libwr_tmo_restart(&rxSetup->earlyup_timeout);
 
 		/* Wait a bit to make sure early_link_up is reseted. This
-		   timeout is initialized in hal_port_rx_setup_init_fsm(),
-		   see detailed description there. */
-		if (! libwr_tmo_expired(&rxSetup->earlyup_timeout)) {
+		 timeout is initialized in hal_port_rx_setup_init_fsm(),
+		 see detailed description there. */
+		if (!libwr_tmo_expired(&rxSetup->earlyup_timeout)) {
 			return 0;
 		}
 		// LPDC support
 		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-			      MDIO_LPC_CTRL);
+		MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
+		MDIO_LPC_CTRL);
 
-		if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
-			halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
+		if (_isHalRxSetupEventEarlyLinkUp(eventMsk)) {
+			halPortLpdcRx_t *rxSetup = ps->lpdc.rxSetup;
 
-			rxSetup->attempts=0;
+			rxSetup->attempts = 0;
 			rts_enable_ptracker(ps->hw_index, 0);
 			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_RESET_PCS);
+		} else {
+			// Restart the time-out
+			libwr_tmo_restart(&rxSetup->earlyup_timeout);
 		}
 	} else {
 		/* nothing to do, go waiting for link_up*/
@@ -184,9 +183,6 @@ static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNe
 
 	if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
-
-		libwr_tmo_init(&rxSetup->link_timeout, 100, 1);
-		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
 
 		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
 			      MDIO_LPC_CTRL_TX_ENABLE |
@@ -215,6 +211,10 @@ static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int eventMsk, int isNe
 
 	halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
+	if ( isNewState ) {
+		libwr_tmo_restart(&rxSetup->link_timeout);
+		libwr_tmo_restart(&rxSetup->align_timeout);
+	}
 	if ( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 		// 1ms rx align detection window, described in previous state.
 		if(! libwr_tmo_expired(&rxSetup->align_timeout) )
@@ -262,7 +262,6 @@ static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int eventMsk, int isNew
 				phase, rxSetup->attempts);
 		rts_enable_ptracker(ps->hw_index, 0);
 
-		libwr_tmo_init( &rxSetup->align_to_link_timeout, 5000, 0 );
 		fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_DONE);
 	}
 
@@ -280,6 +279,8 @@ static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewS
 	if ( isNewState ) {
 		// This timer is used to leave enough time to the FSM in the other side to detect a link down
 		libwr_tmo_init(&ps->lpdc.rxSetup->restart_timeout, 100, 0);
+		pcs_writel(ps, MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+		      MDIO_LPC_CTRL);
 	} else {
 		if( libwr_tmo_expired( &ps->lpdc.rxSetup->restart_timeout ) ) {
 			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
@@ -301,28 +302,26 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 
 
 	int early_up = _isHalRxSetupEventEarlyLinkUp(eventMsk);
-	int link_aligned = _isHalRxSetupEventRxAligned(eventMsk);
 	int link_up = _isHalRxSetupEventLinkUp(eventMsk);
 
 	/* earlyLinkUp detection only if LPDC support */
 	if ( ps->lpdc.isSupported ) {
+		if ( isNewState ) {
+			libwr_tmo_init( &ps->lpdc.rxSetup->align_to_link_timeout, 5000, 0 );
+		}
 		if ( !early_up) {
 			// Port went done
 			pr_info("rxcal: early link flag lost on port wri%d\n",
 					ps->hw_index + 1);
+
 			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
 			return 0;
         }
         
-		if( libwr_tmo_expired( &ps->lpdc.rxSetup->align_to_link_timeout ) && !link_up && early_up && link_aligned)
+		if( libwr_tmo_expired( &ps->lpdc.rxSetup->align_to_link_timeout ) && !link_up)
 		{
 			
-			pr_warning("rxcal: link is fucked up, early+align on, but no PCS link up. Retrying calibration on port %d\n",ps->hw_index + 1);
-
-//			pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE|MDIO_LPC_CTRL_RESET_RX|MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-//			      MDIO_LPC_CTRL);
-			pcs_writel(ps, MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
-			      MDIO_LPC_CTRL);
+			pr_warning("rxcal: link is fucked up. Retrying calibration on port %d\n",ps->hw_index + 1);
 
 			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_RESTART);
 			return 0;
@@ -338,12 +337,8 @@ static  int port_rx_setup_fsm_build_events (fsm_t *fsm) {
 
 	int portEventMask=HAL_PORT_RX_SETUP_EVENT_TIMER;
 
-
-	//printf("rxBuildEvents port %d lup %d\n", ps->hw_index, ps->evt_linkUp );
-
-	if ( ps->evt_linkUp >= 0 ) {
-		portEventMask |= ps->evt_linkUp ?
-				HAL_PORT_RX_SETUP_EVENT_LINK_UP  : HAL_PORT_RX_SETUP_EVENT_LINK_DOWN;
+	if ( ps->evt_linkUp > 0 ) {
+		portEventMask |= HAL_PORT_RX_SETUP_EVENT_LINK_UP;
 	}
 
 	if ( ps->lpdc.isSupported ) {

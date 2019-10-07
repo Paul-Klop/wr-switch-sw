@@ -41,9 +41,6 @@ extern struct wrs_shm_head *hal_shmem_hdr;
 
 #define FSM_DEBUG 1
 
-#if FSM_DEBUG
-static timeout_t debug_tmo;
-#endif
 
 hal_ports_t halPorts;
 
@@ -263,9 +260,6 @@ int hal_port_shmem_init(char *logfilename)
 
 	hal_port_state_fsm_init_all(halPorts.ports, &halPorts.globalLpdc); // Init main port FSM for all ports
 	
-	if ( FSM_DEBUG )
-		libwr_tmo_init( &debug_tmo, 1000, 1 );
-
 	led_init_all_ports(halPorts.ports); // Reset all leds
 	halPorts.numberOfPorts = index;
 
@@ -274,7 +268,7 @@ int hal_port_shmem_init(char *logfilename)
 
 	/* We are done, mark things as valid */
 	hal_shmem->nports = halPorts.numberOfPorts ;
-	hal_shmem->hal_mode = hal_tmg_get_mode();
+	hal_shmem->hal_mode = hal_tmg_get_mode(NULL);
 
 	ret = libwr_cfg_get("READ_SFP_DIAG_ENABLE");
 	if (ret && !strcmp(ret, "y")) {
@@ -576,7 +570,7 @@ static void _cb_port_poll_rts_state(int timerId){
 	/* poll_rts_state does not write to shmem */
 	hal_port_poll_rts_state();
 	// Update timing mode
-	hal_shmem->hal_mode = hal_tmg_get_mode();
+	hal_shmem->hal_mode = hal_tmg_get_mode(NULL);
 }
 
 static void _cb_port_poll_sfp(int timerId){
@@ -636,6 +630,48 @@ static void _cb_port_update_link_leds(int timerId){
 	led_link_update(halPorts.ports);
 }
 
+static void printFsmDebugInfo(void) {
+	static timeout_t _fsm_debug_tmo={.repeat=-1}; // Use -1 to know that the timer must be initialized
+
+	if ( _fsm_debug_tmo.repeat==-1) {
+			libwr_tmo_init( &_fsm_debug_tmo, 1000, 1 );
+			return;
+	}
+	if ( libwr_tmo_expired( &_fsm_debug_tmo ) ) {
+		int i;
+		printf("PortDBG: \n");
+
+		for(i = 0; i < HAL_MAX_PORTS; i++)
+		{
+			struct hal_port_state *ps = &halPorts.ports[i];
+			char txEventsStr[128];
+			char rxEventsStr[128];
+			char pllEventsStr[128];
+			char eventsStr[128];
+
+			if ( !ps->in_use )
+				continue;
+
+			strncpy( eventsStr, fsm_get_event_mask_as_string( &ps->fsm ), sizeof(txEventsStr) );
+			strncpy( txEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.txSetupFSM ), sizeof(txEventsStr) );
+			strncpy( rxEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.rxSetupFSM ), sizeof(rxEventsStr) );
+			strncpy( pllEventsStr, fsm_get_event_mask_as_string( &ps->pllFsm ), sizeof(rxEventsStr) );
+
+			printf("  wri%02d: PORT:%-12s[%-36s] TX:%-16s[%-10s] RX:%-12s[%-25s] PLL:%-12s[%-25s] bs=%d\n",
+				ps->hw_index + 1,
+				fsm_get_state_name( &ps->fsm ),
+				eventsStr,
+				fsm_get_state_name( &ps->lpdc.txSetupFSM ),
+				txEventsStr,
+				fsm_get_state_name( &ps->lpdc.rxSetupFSM ),
+				rxEventsStr,
+				fsm_get_state_name( &ps->pllFsm ),
+				pllEventsStr,
+				ps->calib.bitslide_ps
+			);
+		}
+	}
+}
 /* Executes the port FSM for all ports. Called regularly by the main loop. */
 void hal_port_update_all()
 {
@@ -649,35 +685,8 @@ void hal_port_update_all()
 	/* unlock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
-	if( FSM_DEBUG && libwr_tmo_expired( &debug_tmo ))
-	{
-		int i;
-		printf("PortDBG: \n");
-
-		for(i = 0; i < HAL_MAX_PORTS; i++)
-		{
-			struct hal_port_state *ps = &halPorts.ports[i];
-			char txEventsStr[128];
-			char rxEventsStr[128];
-
-			if ( !ps->in_use || !ps->lpdc.isSupported )
-				continue;
-
-			strncpy( txEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.txSetupFSM ), sizeof(txEventsStr) );
-			strncpy( rxEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.rxSetupFSM ), sizeof(rxEventsStr) );
-
-			printf("  - wri%02d: PORT:%-20s TX:%-21s (%-40s) RX:%-21s (%-40s) bslide=%d\n",
-				ps->hw_index + 1,
-				fsm_get_state_name( &ps->fsm ),
-				fsm_get_state_name( &ps->lpdc.txSetupFSM ),
-				txEventsStr,
-				fsm_get_state_name( &ps->lpdc.rxSetupFSM ),
-				rxEventsStr,
-				ps->calib.bitslide_ps
-			);
-		}
-
-	}
+	if ( FSM_DEBUG )
+		printFsmDebugInfo();
 }
 
 int hal_port_enable_tracking(const char *port_name)
@@ -699,6 +708,9 @@ int hal_port_start_lock(const char *port_name, int priority)
 	if ( !ps )
 		return -1; /* unknown port */
 
+	if ( rts_lock_channel(ps->hw_index, 0)<0 ) {
+		return -1;
+	}
 	ps->evt_lock=1;
 	return 0;
 }

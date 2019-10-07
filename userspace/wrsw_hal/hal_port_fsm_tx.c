@@ -17,6 +17,7 @@
 #include "hal_exports.h"
 #include "driver_stuff.h"
 #include "hal_port_leds.h"
+#include "hal_timing.h"
 #include "hal_main.h"
 #include "hal_ports.h"
 #include "hal_port_fsm_txP.h"
@@ -80,7 +81,7 @@ static fsm_state_table_entry_t port_tx_setup_fsm_states[] =
 static fsm_event_table_entry_t port_tx_setup_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_TX_SETUP_EVENT_TIMER,
-				.evtName="TIMER"
+				.evtName="TIM"
 		},
 		{ .evtMask = -1 } };
 
@@ -108,7 +109,7 @@ static inline void txSetupNotDone(struct hal_port_state * ps) {
 
 static inline int txSetupDoneOnAllPorts(struct hal_port_state * ps) {
 	halGlobalLPDC_t * gl = ps->lpdc.globalLpdc;
-	return gl->maskLpdcPorts==gl->maskTxSetupDonePorts;
+	return gl->maskUsedPorts==gl->maskTxSetupDonePorts;
 }
 
 /* prototypes */
@@ -128,9 +129,15 @@ static int _within_range(int x, int minval, int maxval, int wrap);
 static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
+	// Force timing mode to FR
+	if ( hal_tmg_get_mode(NULL)==HAL_TIMING_MODE_BC)
+		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
+	ps->locked=0;
+
+	txSetupNotDone(ps);
 	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support
-		fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_DONE);
+		fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
 		return 0;
 	} else {
 		// LPDC support
@@ -152,7 +159,6 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
 			      MDIO_LPC_CTRL);
 
 		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_TX_CALIB);
-		txSetupNotDone(ps);
 		fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 	}
 	return 0;
@@ -187,7 +193,6 @@ static int port_tx_setup_fsm_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNew
  */
 static int port_tx_setup_fsm_state_wait_lock(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
-	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 	uint32_t value;
 
 	if ( pcs_readl(ps, MDIO_LPC_STAT,&value)>=0 ) {
@@ -197,8 +202,6 @@ static int port_tx_setup_fsm_state_wait_lock(fsm_t *fsm, int eventMsk, int isNew
 			rts_enable_ptracker(ps->hw_index, 1);
 
 			_pll_state.channels[ps->hw_index].flags = 0;
-			libwr_tmo_init(&txSetup->calib_timeout,
-				TX_CAL_PHASE_MEAS_TIMEOUT, 1);
 			
 			fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE);
 		}
@@ -216,6 +219,10 @@ static int port_tx_setup_fsm_state_measure_phase(fsm_t *fsm, int eventMsk, int i
 	halPortLpdcTx_t *txSetup=ps->lpdc.txSetup;
 
 	updatePllState(ps);
+
+	if ( isNewState ) {
+		libwr_tmo_init(&txSetup->calib_timeout,	TX_CAL_PHASE_MEAS_TIMEOUT, 1);
+	}
 	if (!(_pll_state.channels[ps->hw_index].flags & CHAN_PMEAS_READY)) {
 		if (libwr_tmo_expired(&txSetup->calib_timeout) )
 		{
@@ -299,8 +306,6 @@ static int port_tx_setup_fsm_state_validate(fsm_t *fsm, int eventMsk, int isNewS
 	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 
 	fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS);
-
-	txSetupDone(ps);
 	return 0;
 }
 /*
@@ -311,8 +316,12 @@ static int port_tx_setup_fsm_state_wait_other_ports(fsm_t *fsm, int eventMsk, in
 {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
+	if ( isNewState )
+		txSetupDone(ps);
+
 	if (txSetupDoneOnAllPorts(ps) ) {
-		_write_tx_calibration_file(ps);
+		if (ps->lpdc.globalLpdc->numberOfLpdcPorts )
+			_write_tx_calibration_file(ps);
 		fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_DONE);
 	}
 	return 0;
@@ -342,7 +351,7 @@ static  int port_tx_setup_fsm_build_events(fsm_t *fsm) {
 void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *globalLpdc) {
 	int index;
 	int numberOfLpdcPorts = 0;
-	uint32_t maskLpdcPorts=0;
+	uint32_t maskUsedPorts=0;
 	int firstLpdcPort = -1;
 	int lastLpdcPort = -1;
 	char name[64];
@@ -360,6 +369,7 @@ void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *
 			   this global structure as they need to know whether all
 			   the LPDC-supporting ports have been calibrated */
 			ps->lpdc.globalLpdc = globalLpdc;
+			maskUsedPorts|=((uint32_t)1)<<ps->hw_index;
 
 			/* Fill in global info needed for operation */
 			if (ps->lpdc.isSupported) {
@@ -372,7 +382,7 @@ void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *
 
 				/* count number of supported ports*/
 				numberOfLpdcPorts++;
-				maskLpdcPorts|=((uint32_t)1)<<ps->hw_index;
+
 			}
 			/* Fill txSetup fsm structure */
 			snprintf(name, sizeof(name), "PortTxSetupFSM.%d", ps->hw_index);
@@ -386,12 +396,12 @@ void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *
 		}
 	}
 
+	globalLpdc->maskUsedPorts=maskUsedPorts;
 	/* if there are any LPDC ports, do some preparation */
 	if(globalLpdc && numberOfLpdcPorts) {
 
 		/* fill in the global structure */
 		globalLpdc->numberOfLpdcPorts = numberOfLpdcPorts;
-		globalLpdc->maskLpdcPorts=maskLpdcPorts;
 		globalLpdc->maskTxSetupDonePorts = 0;
 		globalLpdc->calFileSynced = 0;
 		globalLpdc->firstLpdcPort = firstLpdcPort;
@@ -406,10 +416,24 @@ void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *
 		_load_tx_calibration_file(ports);
 
 		/* Force going to FREE running master for the calibration */
-		if ( hal_tmg_get_mode()!=HAL_TIMING_MODE_FREE_MASTER)
+		if ( hal_tmg_get_mode(NULL)!=HAL_TIMING_MODE_FREE_MASTER)
 			hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
 	}
 }
+
+//static void hal_port_tx_setup_fsm_reset(struct hal_port_state * ps )
+//{
+//	fsm_set_state( &ps->lpdc.txSetupFSM, -1 ); // reset state
+//	fsm_fire_state( &ps->lpdc.txSetupFSM, HAL_PORT_TX_SETUP_STATE_START );
+//
+//	if ( hal_tmg_get_mode(NULL)==HAL_TIMING_MODE_BC)
+//		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
+//	ps->locked=0;
+//
+//	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
+//			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+//			      MDIO_LPC_CTRL);
+//}
 
 /* Init the TX SETUP FSM on a given port */
 void hal_port_tx_setup_fsm_init(struct hal_port_state * ps ) {
@@ -559,12 +583,3 @@ static int _within_range(int x, int minval, int maxval, int wrap)
 }
 
 
-void hal_port_tx_setup_fsm_reset(struct hal_port_state * ps ) 
-{
-	fsm_set_state( &ps->lpdc.txSetupFSM, -1 ); // reset state
-	fsm_fire_state( &ps->lpdc.txSetupFSM, HAL_PORT_TX_SETUP_STATE_START );
-
-	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
-			      MDIO_LPC_CTRL);
-}

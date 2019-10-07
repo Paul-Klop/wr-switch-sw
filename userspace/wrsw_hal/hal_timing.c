@@ -33,11 +33,13 @@ int hal_tmg_init(const char * logfilename)
 	return 0;
 }
 
-int hal_tmg_get_mode(void)
+int hal_tmg_get_mode(uint32_t *hwIndex)
 {
 	struct rts_pll_state *hs = getRtsStatePtr();
 
-	if (isRtsStateValid())
+	if (isRtsStateValid()) {
+		if ( hwIndex!=NULL )
+			*hwIndex=hs->current_ref;
 		switch (hs->mode) {
 		case RTS_MODE_GM_EXTERNAL:
 			return HAL_TIMING_MODE_GRAND_MASTER;
@@ -48,6 +50,7 @@ int hal_tmg_get_mode(void)
 		case RTS_MODE_DISABLED:
 			return HAL_TIMING_MODE_DISABLED;
 		}
+	}
 	return -1;
 }
 

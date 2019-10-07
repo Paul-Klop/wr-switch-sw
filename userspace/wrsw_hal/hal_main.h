@@ -10,7 +10,5 @@
 #ifndef HAL_MAIN_H
 #define HAL_MAIN_H
 
-extern int hal_tmg_set_mode(uint32_t tm);
-extern int hal_tmg_get_mode(void);
 extern int hal_get_fpga_temperature(void);
 #endif

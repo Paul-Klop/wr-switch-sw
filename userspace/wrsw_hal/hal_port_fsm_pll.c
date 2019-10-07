@@ -53,7 +53,7 @@ static fsm_state_table_entry_t port_pll_fsm_states[] =
 static fsm_event_table_entry_t port_pll_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_PLL_EVENT_TIMER,
-				.evtName="TIMER"
+				.evtName="TIM"
 		},
 		{
 				.evtMask = HAL_PORT_PLL_EVENT_LOCK,
@@ -88,16 +88,16 @@ static fsm_event_table_entry_t port_pll_fsm_events[] = {
 static int _hal_port_pll_state_unlocked(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
+	if ( isNewState ) {
+		ps->locked=0;
+	}
+
 	if ( _isHalPllEventLocked(eventMsk) ) {
 		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKED);
-		return 0;
-	}
-	if ( _isHalPllEventLock(eventMsk) ) {
-		if ( rts_lock_channel(ps->hw_index, 0)>=0 ) {
+	} else
+		if ( _isHalPllEventLock(eventMsk) ) {
 			fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKING);
-			return 0;
 		}
-	}
 	return 0;
 }
 
@@ -108,7 +108,11 @@ static int _hal_port_pll_state_unlocked(fsm_t *fsm, int eventMsk, int isNewState
  *  else if unlock event then state=UNLOCKED
  */
 static int _hal_port_pll_state_locking(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
+	if ( isNewState ) {
+		ps->locked=0;
+	}
 	if ( _isHalPllEventLocked(eventMsk) ) {
 		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKED);
 		return 0;
@@ -130,6 +134,11 @@ static int _hal_port_pll_state_locking(fsm_t *fsm, int eventMsk, int isNewState)
  * fi
  */
 static int _hal_port_pll_state_locked(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
+	if ( isNewState ) {
+		ps->locked=1;
+	}
 	if ( _isHalPllEventUnlock(eventMsk) ) {
 		fsm_fire_state(fsm, HAL_PORT_PLL_STATE_LOCKING);
 		return 0;
@@ -150,23 +159,23 @@ static int port_pll_fsm_build_events(fsm_t *fsm) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 	int portEventMask=HAL_PORT_PLL_EVENT_TIMER;
 	int tm;
+	uint32_t hwIndex;
+	tm=	hal_tmg_get_mode(&hwIndex);
 
-	tm=	hal_tmg_get_mode();
-
-	ps->locked=0;
-	if ( tm == HAL_TIMING_MODE_BC) {
+	if ( tm == HAL_TIMING_MODE_BC && ps->evt_lock) {
+		portEventMask |= HAL_PORT_PLL_EVENT_LOCK;
+		ps->evt_lock=0; // Event consumed
+		return portEventMask;
+	}
+	if ( ps->hw_index==hwIndex && tm == HAL_TIMING_MODE_BC) {
 		int locked=hal_port_check_lock(ps);
 		if ( locked >=0 ) {
-			ps->locked = locked;
 			portEventMask|= locked ?
 				HAL_PORT_PLL_EVENT_LOCKED : HAL_PORT_PLL_EVENT_UNLOCKED;
 		}
-		if ( ps->evt_lock )
-			portEventMask |= HAL_PORT_PLL_EVENT_LOCK;
 	} else {
 		portEventMask |= HAL_PORT_PLL_EVENT_DISABLE;
 	}
-	ps->evt_lock=0;// Clear event
 
 	return portEventMask;
 }

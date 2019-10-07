@@ -104,17 +104,23 @@ static inline const char *fsm_get_event_mask_as_string(fsm_t *fsm)
 {
 	static char str[1024];
 	fsm_event_table_entry_t *evt;
+	int lastEventMask=fsm->lastEventMask;
 
-	strcpy(str, "");
+	str[0]=0;
 
 	for( evt = fsm->event_table; evt->evtMask > 0; evt++ )
 	{
-		if (fsm->lastEventMask & evt->evtMask)
+		if ( lastEventMask == 0 ) break;
+		if (lastEventMask & evt->evtMask)
 		{
+			if ( str[0]!=0 )
+				strcat(str," ");
 			strcat(str, evt->evtName);
-			strcat(str, " ");
+			lastEventMask &=~evt->evtMask;
 		}
 	}
+	if (lastEventMask!=0)
+		strcat(str," ???");
 
 	return str;
 }

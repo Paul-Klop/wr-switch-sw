@@ -26,17 +26,12 @@ typedef enum
 {
 HAL_PORT_RX_SETUP_EVENT_TIMER=(1<<0),
 HAL_PORT_RX_SETUP_EVENT_LINK_UP=(1<<1),
-HAL_PORT_RX_SETUP_EVENT_LINK_DOWN=(1<<2),
-HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP=(1<<3),
-HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED=(1<<4)
+HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP=(1<<2),
+HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED=(1<<3)
 }halPortRxSetupEventMask_t ;
 
 static inline int _isHalRxSetupEventTimer(halPortRxSetupEventMask_t eventMsk) {
 	return eventMsk & HAL_PORT_RX_SETUP_EVENT_TIMER;
-}
-
-static inline int _isHalRxSetupEventLinkDown(halPortRxSetupEventMask_t eventMsk) {
-	return eventMsk & HAL_PORT_RX_SETUP_EVENT_LINK_DOWN;
 }
 
 static inline int _isHalRxSetupEventLinkUp(halPortRxSetupEventMask_t eventMsk) {

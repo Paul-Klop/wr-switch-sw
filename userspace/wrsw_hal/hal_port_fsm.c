@@ -64,7 +64,6 @@ static int port_fsm_state_link_up(fsm_t *fsm,  int eventMsk, int isNewState);
 
 static void init_port(struct hal_port_state * ps);
 static void reset_port(struct hal_port_state * ps);
-static void shutdown_port( struct hal_port_state * ps);
 static int get_port_link_state(struct hal_port_state * ps,int *linkUp);
 
 static fsm_state_table_entry_t port_fsm_states[] =
@@ -91,25 +90,27 @@ static fsm_state_table_entry_t port_fsm_states[] =
 static fsm_event_table_entry_t port_fsm_events[] = {
 		{
 				.evtMask = HAL_PORT_EVENT_TIMER,
-				.evtName="TIMER"
+				.evtName="TIM"
 		},
 		{
-				.evtMask =HAL_PORT_EVENT_SFP_INSERTED,
-				.evtName = "SFP_INS"
-		},
-		{
-				.evtMask =HAL_PORT_EVENT_SFP_REMOVED,
-				.evtName = "SFP_REM"
+				.evtMask =HAL_PORT_EVENT_SFP_PRESENT,
+				.evtName = "SFP"
 		},
 		{
 				.evtMask =HAL_PORT_EVENT_LINK_UP,
-				.evtName = "LINK_UP"
-		},
-		{ 		.evtMask =HAL_PORT_EVENT_LINK_DOWN,
-				.evtName = "LINK_DOWN"
+				.evtName = "LKUP"
 		},
 		{ 		.evtMask =HAL_PORT_EVENT_RESET,
-				.evtName = "REET"
+				.evtName = "RST"
+		},
+		{ 		.evtMask =HAL_PORT_EVENT_POWER_DOWN,
+				.evtName = "PDOWN"
+		},
+		{ 		.evtMask =HAL_PORT_EVENT_EARLY_LINK_UP,
+				.evtName = "ELKUP"
+		},
+		{ 		.evtMask =HAL_PORT_EVENT_RX_ALIGNED,
+				.evtName = "RXALGN"
 		},
 		{ .evtMask = -1 } };
 
@@ -148,10 +149,21 @@ static int port_fsm_state_init(fsm_t *fsm, int eventMsk, int isNewState) {
 static int port_fsm_state_disabled(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
-	if ( isNewState )
+	if ( isNewState ) {
 		reset_port(ps);
 
-	if ( _isHalEventSfpInserted(eventMsk)  && !_isHalEventPortPowerDown( eventMsk ))
+		// make sure the PHY calibration circuitry is put in a KNOWN state
+		if( ps->lpdc.isSupported )	{
+			pcs_writel(ps,
+					MDIO_LPC_CTRL_RESET_RX | MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK
+							| MDIO_LPC_CTRL_TX_ENABLE, MDIO_LPC_CTRL);
+
+		}
+		// Disable tracker
+		rts_enable_ptracker(ps->hw_index, 0);
+	}
+
+	if ( _isHalEventSfpPresent(eventMsk)  && !_isHalEventPortPowerDown( eventMsk ))
 		fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 	return 0;
 }
@@ -170,7 +182,15 @@ static int port_fsm_state_link_down(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	// High priority event received
-	if ( _isHalEventSfpRemoved(eventMsk) ) {
+	if ( !_isHalEventSfpPresent(eventMsk) ) {
+		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
+		return 0;
+	}
+
+	if( _isHalEventPortPowerDown( eventMsk ))
+	{
+		pr_info("%s: Port wri%d PDOWN detected\n" ,__func__,ps->hw_index + 1 );
+		// MII power down
 		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
 		return 0;
 	}
@@ -227,27 +247,31 @@ static int port_fsm_state_link_up(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	if ( ps->lpdc.isSupported) {
-		if ( !_isHalEventPortRxAligned(eventMsk) || !_isHalEventPortEarlyLinkUp(eventMsk))
+		if ( /*!_isHalEventPortRxAligned(eventMsk) ||*/  !_isHalEventPortEarlyLinkUp(eventMsk)) {
+//			if ( !_isHalEventPortRxAligned(eventMsk)  )
+//				printf("JCB:%s:wri%d  RX not aligned\n",__func__, ps->hw_index+1);
+			if ( !_isHalEventPortEarlyLinkUp(eventMsk)  )
+				printf("JCB:%s:wri%d  No early link Up\n",__func__, ps->hw_index+1);
 			fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
+		}
 	}
 
-	if ( _isHalEventSfpRemoved(eventMsk) ) {
-		shutdown_port(ps);
+	if ( !_isHalEventSfpPresent(eventMsk) ) {
 		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
 		return 0;
 	}
 
 	if( _isHalEventPortPowerDown( eventMsk ))
 	{
-		pr_info("Port %d PDOWN detected\n" ,ps->hw_index + 1 );
+		pr_info("%s: Port wri%d PDOWN detected\n" ,__func__,ps->hw_index + 1 );
 		// MII power down
-		shutdown_port(ps);
 		fsm_fire_state(fsm,HAL_PORT_STATE_DISABLED);
 		return 0;
 	}
 
-	if ( _isHalEventReset(eventMsk) || _isHalEventLinkDown(eventMsk)) {
-		shutdown_port(ps);
+	if ( _isHalEventReset(eventMsk) || !_isHalEventLinkUp(eventMsk)) {
+		if ( !_isHalEventLinkUp(eventMsk)  )
+			printf("JCB:%s:wri%d Link up lost\n",__func__, ps->hw_index+1);
 		fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 		return 0;
 	}
@@ -298,18 +322,18 @@ static  int port_fsm_build_events(fsm_t *fsm) {
 
 	int portEventMask=HAL_PORT_EVENT_TIMER;
 
-	if ( ps->evt_linkUp >= 0 ) {
-		portEventMask |= ps->evt_linkUp ?
-				HAL_PORT_EVENT_LINK_UP  : HAL_PORT_EVENT_LINK_DOWN;
+	if ( ps->evt_linkUp > 0 ) {
+		portEventMask |= HAL_PORT_EVENT_LINK_UP;
 	}
 	if ( ps->evt_reset ) {
 		portEventMask |= HAL_PORT_EVENT_RESET;
 		ps->evt_reset=0;
 	}
-	portEventMask |= ps->sfpPresent  ?
-			HAL_PORT_EVENT_SFP_INSERTED : HAL_PORT_EVENT_SFP_REMOVED;
+	if (ps->sfpPresent)
+		portEventMask |= HAL_PORT_EVENT_SFP_PRESENT;
 
-	portEventMask |= ps->evt_powerDown ? HAL_PORT_EVENT_POWER_DOWN : 0;
+	if ( ps->evt_powerDown )
+		portEventMask |= HAL_PORT_EVENT_POWER_DOWN;
 
 	if ( ps->lpdc.isSupported ) {
 		uint32_t mioLpcStat;
@@ -322,7 +346,6 @@ static  int port_fsm_build_events(fsm_t *fsm) {
 		}
 	}
 
-	
 	return portEventMask;
 }
 
@@ -417,35 +440,12 @@ static void reset_port(struct hal_port_state * ps)
 /* Port initialization */
 static void init_port(struct hal_port_state * ps)
 {
-
 	reset_port(ps);
-
 	ps->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
 	ps->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
 	ps->clock_period = REF_CLOCK_PERIOD_PS;
 }
 
-/* Action done when leaving states locking/up */
-static void shutdown_port( struct hal_port_state * ps)
-{
-
-	if ( hal_tmg_get_mode()==HAL_TIMING_MODE_BC) 
-		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
-
-	// make sure the PHY calibration circuitry is put in a KNOWN state
-	if( ps->lpdc.isSupported )
-	{
-		hal_port_rx_setup_fsm_init( ps );
-		pcs_writel(ps,
-				MDIO_LPC_CTRL_RESET_RX | MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK
-						| MDIO_LPC_CTRL_TX_ENABLE, MDIO_LPC_CTRL);
-
-	}
-
-	// Disable tracker
-	rts_enable_ptracker(ps->hw_index, 0);
-	ps->locked=0;
-}
 
 /* Checks if the link is up on inteface (if_name). Returns non-zero if yes. */
 static int get_port_link_state(struct hal_port_state * ps,int *linkUp)

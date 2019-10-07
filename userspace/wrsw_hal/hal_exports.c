@@ -145,7 +145,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 		return hal_tmg_set_mode(params->timing_mode);
 
 	case HEXP_PPSG_CMD_GET_TIMING_MODE:{
-		ret=hal_tmg_get_mode();
+		ret=hal_tmg_get_mode(NULL);
 		return ret;
 	}
 

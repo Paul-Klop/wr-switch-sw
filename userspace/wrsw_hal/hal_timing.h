@@ -11,7 +11,7 @@
 #define HAL_TIMING_H
 
 extern int hal_tmg_set_mode(uint32_t tm);
-extern int hal_tmg_get_mode(void);
+extern int hal_tmg_get_mode(uint32_t *hwIndex);
 extern int hal_tmg_init(const char * logfilename);
 
 #endif

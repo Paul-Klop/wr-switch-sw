@@ -39,7 +39,7 @@
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
 
-#define FSM_DEBUG 1
+#define FSM_DEBUG 0
 
 
 hal_ports_t halPorts;

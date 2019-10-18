@@ -247,11 +247,7 @@ static int port_fsm_state_link_up(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	if ( ps->lpdc.isSupported) {
-		if ( /*!_isHalEventPortRxAligned(eventMsk) ||*/  !_isHalEventPortEarlyLinkUp(eventMsk)) {
-//			if ( !_isHalEventPortRxAligned(eventMsk)  )
-//				printf("JCB:%s:wri%d  RX not aligned\n",__func__, ps->hw_index+1);
-			if ( !_isHalEventPortEarlyLinkUp(eventMsk)  )
-				printf("JCB:%s:wri%d  No early link Up\n",__func__, ps->hw_index+1);
+		if ( !_isHalEventPortEarlyLinkUp(eventMsk)) {
 			fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 		}
 	}
@@ -270,8 +266,6 @@ static int port_fsm_state_link_up(fsm_t *fsm, int eventMsk, int isNewState) {
 	}
 
 	if ( _isHalEventReset(eventMsk) || !_isHalEventLinkUp(eventMsk)) {
-		if ( !_isHalEventLinkUp(eventMsk)  )
-			printf("JCB:%s:wri%d Link up lost\n",__func__, ps->hw_index+1);
 		fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 		return 0;
 	}

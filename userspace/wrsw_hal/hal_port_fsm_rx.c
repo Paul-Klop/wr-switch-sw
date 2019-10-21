@@ -43,6 +43,7 @@
 
 /* external prototypes */
 static int port_rx_setup_fsm_build_events(fsm_t *fsm);
+static int _hal_port_rx_setup_state_init(fsm_t *fsm, int eventMsk, int isNewState);
 static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewState);
 static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int ventMsk, int isNewState);
 static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int ventMsk, int isNewState);
@@ -53,6 +54,10 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int ventMsk, int isNewState
 
 static fsm_state_table_entry_t port_rx_setup_fsm_states[] =
 {
+		{ .state=HAL_PORT_RX_SETUP_STATE_INIT,
+				.stateName="INIT",
+				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_init)
+		},
 		{ .state=HAL_PORT_RX_SETUP_STATE_START,
 				.stateName="START",		
 				FSM_SET_FCT_NAME(_hal_port_rx_setup_state_start)
@@ -109,6 +114,35 @@ static inline void updatePllState(struct hal_port_state * ps) {
 	// update PLL state once for all ports
 	rts_get_state(&_pll_state);
 }
+
+/* INIT state
+ * (Hypothesis: LPDC support has already been determined before )
+ *
+ * This state is used to start the minCalib RX timer
+ */
+static int _hal_port_rx_setup_state_init(fsm_t *fsm, int eventMsk, int isNewState) {
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
+
+	if ( ps->lpdc.globalLpdc->numberOfLpdcPorts ) {
+		if ( !ps->lpdc.rebootDone ) {
+			/**
+			 * This time-out is used to impose the same minimum of RX calibration time
+			 * on all ports (including port without LPDC. This is done to try to have
+			 * all ports going to state UP at the same time after a reboot.
+			 * It is is not done, PPSi (with BMCA) will take a long time to stabilize
+			 * its port states
+			 */
+			libwr_tmo_init(&ps->lpdc.minCalibRx_timeout,20000,0); // Timeout set to 20s
+		}
+	} else {
+		/** No LCPD ports. We don't need to try synchronize the ports */
+		ps->lpdc.rebootDone=1;
+	}
+	fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
+
+	return 0;
+}
+
 
 /* START state
  * (Hypothesis: LPDC support has already been determined before )
@@ -298,8 +332,7 @@ static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewS
  *
  */
 static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewState) {
-		struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
-
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	int early_up = _isHalRxSetupEventEarlyLinkUp(eventMsk);
 	int link_up = _isHalRxSetupEventLinkUp(eventMsk);
@@ -328,6 +361,11 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 		}
 	}
 	
+	if ( !ps->lpdc.rebootDone ) {
+		if ( libwr_tmo_expired(&ps->lpdc.minCalibRx_timeout)  )
+			ps->lpdc.rebootDone=1;
+		return link_up && ps->lpdc.rebootDone  ? 1 : 0;
+	}
 	return link_up ? 1 : 0;
 }
 
@@ -408,7 +446,7 @@ void hal_port_rx_setup_fsm_init(struct hal_port_state * ps ) {
 		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
     }
 	
-	fsm_fire_state( &ps->lpdc.rxSetupFSM, HAL_PORT_RX_SETUP_STATE_START );
+	fsm_fire_state( &ps->lpdc.rxSetupFSM, HAL_PORT_RX_SETUP_STATE_INIT );
 }
 
 /* FSM state machine for RX setup on a given port
@@ -424,8 +462,3 @@ int hal_port_rx_setup_fsm_run( struct hal_port_state * ps ) {
 	return fsm_generic_run( &ps->lpdc.rxSetupFSM );
 }
 
-void hal_port_rx_setup_fsm_reset(struct hal_port_state * ps ) 
-{
-	fsm_set_state( &ps->lpdc.rxSetupFSM, -1 ); // reset state
-	fsm_fire_state( &ps->lpdc.rxSetupFSM, HAL_PORT_RX_SETUP_STATE_START );
-}

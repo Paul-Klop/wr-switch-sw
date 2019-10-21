@@ -101,6 +101,8 @@ typedef struct {
 	int isSupported; /* Set if Low Phase Drift Calibration is supported */
 	fsm_t txSetupFSM;
 	fsm_t rxSetupFSM;
+	int rebootDone;
+	timeout_t minCalibRx_timeout;
 	halPortLpdcTx_t *txSetup;
 	halPortLpdcRx_t *rxSetup;
 	halGlobalLPDC_t *globalLpdc;

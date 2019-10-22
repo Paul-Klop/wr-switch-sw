@@ -124,22 +124,17 @@ static int _hal_port_rx_setup_state_init(fsm_t *fsm, int eventMsk, int isNewStat
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	if ( ps->lpdc.globalLpdc->numberOfLpdcPorts ) {
-		if ( !ps->lpdc.rebootDone ) {
-			/**
-			 * This time-out is used to impose the same minimum of RX calibration time
-			 * on all ports (including port without LPDC. This is done to try to have
-			 * all ports going to state UP at the same time after a reboot.
-			 * It is is not done, PPSi (with BMCA) will take a long time to stabilize
-			 * its port states
-			 */
-			libwr_tmo_init(&ps->lpdc.minCalibRx_timeout,20000,0); // Timeout set to 20s
+		if (ps->lpdc.isSupported) {
+			if ( _isHalRxSetupEventEarlyLinkUp(eventMsk) )
+				libwr_tmo_restart(&ps->lpdc.minCalibRx_timeout);
+				fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
+		} else {
+			if ( _isHalRxSetupEventLinkUp(eventMsk))
+				libwr_tmo_restart(&ps->lpdc.minCalibRx_timeout);
+				fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
 		}
-	} else {
-		/** No LCPD ports. We don't need to try synchronize the ports */
-		ps->lpdc.rebootDone=1;
-	}
-	fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
-
+	} else
+		fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
 	return 0;
 }
 
@@ -231,7 +226,7 @@ static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNe
 		fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_WAIT_LOCK);
 	} else {
 		if( libwr_tmo_expired( &rxSetup->link_timeout ) )
-			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_INIT);
 	}
 	return 0;
 }
@@ -261,11 +256,15 @@ static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int eventMsk, int isNe
 			_pll_state.channels[ps->hw_index].flags = 0;
 			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_VALIDATE);
 		} else {
-			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_RESET_PCS);
+			if ( libwr_tmo_expired ( &ps->lpdc.minCalibRx_timeout))
+				// We are looping from WAIT_LOCK and RESET_PCS for too long
+				fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_INIT);
+			else
+				fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_RESET_PCS);
 		}
 	} else {
 		if( libwr_tmo_expired( &rxSetup->link_timeout ) )
-			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_INIT);
 	}
 
 	return 0;
@@ -317,7 +316,7 @@ static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewS
 		      MDIO_LPC_CTRL);
 	} else {
 		if( libwr_tmo_expired( &ps->lpdc.rxSetup->restart_timeout ) ) {
-			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_INIT);
 		}
 	}
 	return 0;
@@ -347,7 +346,7 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 			pr_info("rxcal: early link flag lost on port wri%d\n",
 					ps->hw_index + 1);
 
-			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_START);
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_INIT);
 			return 0;
         }
         
@@ -361,12 +360,10 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 		}
 	}
 	
-	if ( !ps->lpdc.rebootDone ) {
-		if ( libwr_tmo_expired(&ps->lpdc.minCalibRx_timeout)  )
-			ps->lpdc.rebootDone=1;
-		return link_up && ps->lpdc.rebootDone  ? 1 : 0;
-	}
-	return link_up ? 1 : 0;
+	if ( ps->lpdc.globalLpdc->numberOfLpdcPorts )
+		return link_up && libwr_tmo_expired(&ps->lpdc.minCalibRx_timeout)  ? 1 : 0;
+	else
+		return link_up ? 1 : 0;
 }
 
 /* Build FSM events */
@@ -445,6 +442,15 @@ void hal_port_rx_setup_fsm_init(struct hal_port_state * ps ) {
 		// the wait_lock state might detect the early link but never see it's aligned.
 		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
     }
+	/**
+	 * This time-out is used to impose the same minimum of RX calibration time
+	 * on all ports (including port without LPDC. This is done to try to have
+	 * all ports going to state UP at the same time.
+	 * It is is not done, PPSi (with BMCA) will take a long time to stabilize
+	 * its port states
+	 */
+	libwr_tmo_init(&ps->lpdc.minCalibRx_timeout,20000,0); // Timeout set to 20s
+
 	
 	fsm_fire_state( &ps->lpdc.rxSetupFSM, HAL_PORT_RX_SETUP_STATE_INIT );
 }

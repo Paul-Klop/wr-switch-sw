@@ -134,6 +134,9 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
 		hal_tmg_set_mode(HAL_TIMING_MODE_FREE_MASTER);
 	ps->locked=0;
 
+	/* Disable TX light on this port */
+	shw_sfp_gpio_set(ps->hw_index, SFP_TX_DISABLE);
+
 	txSetupNotDone(ps);
 	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support
@@ -322,6 +325,8 @@ static int port_tx_setup_fsm_state_wait_other_ports(fsm_t *fsm, int eventMsk, in
 	if (txSetupDoneOnAllPorts(ps) ) {
 		if (ps->lpdc.globalLpdc->numberOfLpdcPorts )
 			_write_tx_calibration_file(ps);
+		/* Enable TX light on this port */
+		shw_sfp_gpio_set(ps->hw_index, 0);
 		fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_DONE);
 	}
 	return 0;

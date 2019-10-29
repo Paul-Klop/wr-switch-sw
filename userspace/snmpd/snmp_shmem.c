@@ -11,6 +11,8 @@ int hal_nports_local;
 struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct pp_instance *ppsi_ppi;
+parentDS_t *ppsi_parentDS;
+
 int *ppsi_ppi_nlinks;
 
 /* RTUd */
@@ -128,6 +130,13 @@ static int init_shm_ppsi(void)
 	}
 	/* use pointer instead of copying */
 	ppsi_ppi_nlinks = &(ppg->nlinks);
+
+	ppsi_parentDS = wrs_shm_follow(ppsi_head, ppg->parentDS);
+	if (!ppsi_parentDS) {
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"Cannot follow ppsi_parentDS in shmem.\n");
+		return 5;
+	}
 	return 0;
 }
 

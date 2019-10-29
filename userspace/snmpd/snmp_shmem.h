@@ -16,6 +16,7 @@ extern int hal_nports_local;
 /* PPSI */
 extern struct wrs_shm_head *ppsi_head;
 extern struct pp_instance *ppsi_ppi;
+extern parentDS_t *ppsi_parentDS;
 extern int *ppsi_ppi_nlinks;
 
 /* RTUd */

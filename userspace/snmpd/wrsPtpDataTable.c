@@ -132,7 +132,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				ppsi_i->servo);
 
 				/* wrsPtpGrandmasterID */
-				//TODO
+				memcpy(&ptp_a[si].wrsPtpGrandmasterID,
+					&ppsi_parentDS->grandmasterIdentity,
+					sizeof(ClockIdentity));
 
 				/* wrsPtpOwnID */
 				//TODO

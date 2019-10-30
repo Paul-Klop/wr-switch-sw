@@ -137,7 +137,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					sizeof(ClockIdentity));
 
 				/* wrsPtpOwnID */
-				//TODO
+				memcpy(&ptp_a[si].wrsPtpOwnID,
+					&ppsi_defaultDS->clockIdentity,
+					sizeof(ClockIdentity));
 
 				/* wrsPtpMode */
 				//TODO

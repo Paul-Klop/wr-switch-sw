@@ -23,6 +23,7 @@ typedef int32_t timeOut_t;
 #define BMCR_ANRESTART 1
 
 extern void timer_init(timeOut_t tmo);
+extern void timer_restart(timeOut_t tmo);
 extern Boolean is_timer_expired(timeOut_t tmo);
 extern void usleep(int);
 extern pcs_write(int );

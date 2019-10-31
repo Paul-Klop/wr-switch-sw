@@ -1,3 +1,5 @@
+-include ../Makefile.specific
+
 # if BRVER not defined use a wildcard
 BRVER?=2*
 SNMP_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-$(BRVER))
@@ -21,7 +23,7 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 # defer running "net-snmp-config --cflags" so it is visible in make output
 CFLAGS  += -fPIC -Wall  $$($(NET_SNMP_CONFIG) --cflags | sed s,-I/usr/include,,)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
-CFLAGS += -I../include -I../libwr/include -I../ppsi/include -I../ppsi/arch-wrs/include
+CFLAGS += -I../include -I../libwr/include -I../ppsi/include -I../ppsi/arch-wrs/include -I.
 CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG=0
 
 SHLIB = wrsSnmp.so

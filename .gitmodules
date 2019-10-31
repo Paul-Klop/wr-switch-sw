@@ -1,6 +1,3 @@
-[submodule "userspace/mini-rpc"]
-	path = userspace/mini-rpc
-	url = git://github.com/rubini/mini-rpc.git
 [submodule "userspace/ppsi"]
 	path = userspace/ppsi
 	url = ../ppsi.git

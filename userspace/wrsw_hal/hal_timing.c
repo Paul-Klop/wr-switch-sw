@@ -11,33 +11,35 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/timeout.h>
 
-#include "wrsw_hal.h"
-#include <rt_ipc.h>
-#include <hal_exports.h>
+#include "hal_exports.h"
+#include "hal_ports.h"
 
-extern struct rts_pll_state hal_port_rts_state;
-extern int hal_port_rts_state_valid;
 
-int hal_init_timing_mode(void)
+int hal_tmg_init(const char * logfilename)
 {
 	if (rts_connect(NULL) < 0) {
 		pr_error(
 		      "Failed to establish communication with the RT subsystem.\n");
 		return -1;
 	}
+
+	if( rts_set_mode( RTS_MODE_GM_FREERUNNING ) < 0 )
+	{
+		pr_error(
+		      "Failed to configure PLL in free-running master mode.\n");
+		return -1;
+	}
+
 	return 0;
 }
 
-int hal_init_timing(char *filename)
+int hal_tmg_get_mode(uint32_t *hwIndex)
 {
-	return 0;
-}
+	struct rts_pll_state *hs = getRtsStatePtr();
 
-int hal_get_timing_mode(void)
-{
-	struct rts_pll_state *hs = &hal_port_rts_state;
-
-	if (hal_port_rts_state_valid)
+	if (isRtsStateValid()) {
+		if ( hwIndex!=NULL )
+			*hwIndex=hs->current_ref;
 		switch (hs->mode) {
 		case RTS_MODE_GM_EXTERNAL:
 			return HAL_TIMING_MODE_GRAND_MASTER;
@@ -48,11 +50,14 @@ int hal_get_timing_mode(void)
 		case RTS_MODE_DISABLED:
 			return HAL_TIMING_MODE_DISABLED;
 		}
+	}
 	return -1;
 }
 
-int  hal_update_timing_mode(void) {
-	return hal_port_poll_rts_state();
+int  hal_tmg_set_mode(uint32_t tm) {
+	int ret=shw_pps_set_timing_mode(tm);
+	hal_port_poll_rts_state();
+	return ret;
 }
 
 

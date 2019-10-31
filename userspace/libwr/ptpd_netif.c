@@ -238,7 +238,7 @@ struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
 	hwconfig.tx_type = HWTSTAMP_TX_ON;
 	hwconfig.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_EVENT;
 
-	ifr.ifr_data = &hwconfig;
+	ifr.ifr_data = (char *)&hwconfig;
 
 	if (ioctl(fd, SIOCSHWTSTAMP, &ifr) < 0) {
 		perror("SIOCSHWTSTAMP");

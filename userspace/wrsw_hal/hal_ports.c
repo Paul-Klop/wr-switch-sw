@@ -16,6 +16,7 @@
 #include <linux/if.h>
 
 /* LOTs of hardware includes */
+#include <rt_ipc.h>
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/pio.h>
@@ -23,75 +24,84 @@
 #include <libwr/shmem.h>
 #include <libwr/config.h>
 #include <libwr/timeout.h>
+#include <libwr/hal_shmem.h>
 
 #include <ppsi/ppsi.h>
-#include "wrsw_hal.h"
-#include <rt_ipc.h>
-#include <hal_exports.h>
-#include <libwr/hal_shmem.h>
 #include "driver_stuff.h"
-
-#define UPDATE_RTS_PERIOD 250 /* ms */
-#define UPDATE_SFP_PERIOD 1000 /* ms */
-#define UPDATE_SYNC_LEDS_PERIOD 500 /* ms */
-#define UPDATE_LINK_LEDS_PERIOD 500 /* ms */
-#define UPDATE_SFP_DOM_PERIOD 1000 /* ms */
-
-typedef struct {
-	struct pp_instance * ppi;              /* pointer to the ppi instance */
-	struct pp_servo      servo_snapshot;  /* image of a the ppsi servo */
-} inst_servo_t  ;
+#include "hal_exports.h"
+#include "hal_timer.h"
+#include "hal_port_fsm.h"
+#include "hal_port_fsm_tx.h"
+#include "hal_port_leds.h"
+#include "hal_ports.h"
+#include "hal_timing.h"
 
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
 
-/* Port table: the only item which is not "hal_port_*", as it's much used */
-static struct hal_port_state *ports;
+#define FSM_DEBUG 0
 
-/* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
-static int hal_port_fd;
 
-/* RT subsystem PLL state, polled regularly via mini-ipc */
-struct rts_pll_state hal_port_rts_state;
-int hal_port_rts_state_valid = 0;
+hal_ports_t halPorts;
+
+/**
+ * End new stuff
+ */
+
+typedef enum {
+	TMO_PORT_TMO_RTS=0,
+	TMO_PORT_POLL_SFP,
+	TMO_PORT_SFP_DOM,
+	TMO_UPDATE_SYNC_LEDs,
+	TMO_UPDATE_LINK_LEDS,
+	TMO_COUNT
+}port_tmo_id_t;
+
+static void _cb_port_poll_rts_state(int timerId);
+static void _cb_port_poll_sfp(int timerId);
+static void _cb_port_poll_sfp_dom(int timerId);
+static void _cb_port_update_sync_leds(int timerId);
+static void _cb_port_update_link_leds(int timerId);
+
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
-static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
-static timeout_t update_sync_leds_tmo, update_link_leds_tmo;
-static timeout_t update_sfp_dom_tmo;
-static int hal_port_nports;
+static timer_parameter_t _timerParameters[] = {
+		{
+				.id=TMO_PORT_TMO_RTS,
+				.tmoMs=250, // 250 ms
+				.repeat=1,
+				.cb=_cb_port_poll_rts_state
+		},
+		{
+				.id=TMO_PORT_POLL_SFP,
+				.tmoMs=1000, // 1s
+				.repeat=1,
+				.cb=_cb_port_poll_sfp
+		},
+		{
+				.id=TMO_PORT_SFP_DOM,
+				.tmoMs=1000, // 1s
+				.repeat=1,
+				.cb=_cb_port_poll_sfp_dom
+		},
+		{
+				.id=TMO_UPDATE_SYNC_LEDs,
+				.tmoMs= 500, // 500ms
+				.repeat=1,
+				.cb=_cb_port_update_sync_leds
+		},
+		{
+				.id=TMO_UPDATE_LINK_LEDS,
+				.tmoMs=500, // 500ms
+				.repeat=1,
+				.cb=_cb_port_update_link_leds
+		},
+};
 
-int hal_port_check_lock(const char *port_name);
-static void update_link_leds(void);
-static void set_led_wrmode(int p_index, int val);
-static void set_led_synced(int p_index, int val);
-static void update_sync_leds(void);
+#define PORT_TIMER_COUNT (sizeof(_timerParameters)/sizeof(timer_parameter_t))
 
-
-int hal_port_any_locked(void)
-{
-	if (!hal_port_rts_state_valid)
-		return -1;
-	if (hal_port_rts_state.current_ref == REF_NONE)
-		return -1;
-
-	return hal_port_rts_state.current_ref;
-}
-
-/* Resets the state variables of a port and re-starts its state machines */
-static void hal_port_reset_state(struct hal_port_state * p)
-{
-	p->state = HAL_PORT_STATE_LINK_DOWN;
-	p->calib.rx_calibrated =
-			p->calib.tx_calibrated =
-					p->locked = 0;
-	p->lock_state =
-			p->tx_cal_pending =
-					p->rx_cal_pending = 0;
-	p->portMode= PORT_MODE_OTHER;
-	p->synchronized=0;
-
-}
+/* prototypes */
+static int hal_port_check_lpdc_support(struct hal_port_state * ps);
 
 /* checks if the port is supported by the FPGA firmware */
 static int hal_port_check_presence(const char *if_name, unsigned char *mac)
@@ -100,16 +110,15 @@ static int hal_port_check_presence(const char *if_name, unsigned char *mac)
 
 	strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
 
-	if (ioctl(hal_port_fd, SIOCGIFHWADDR, &ifr) < 0)
+	if (ioctl(halPorts.hal_port_fd, SIOCGIFHWADDR, &ifr) < 0)
 		return 0;
 	memcpy(mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 	return 1;
 }
 
 /* Port initialization, from dot-config values */
-static int hal_port_init(int index)
+static int hal_port_init(struct hal_port_state *ps, int index)
 {
-	struct hal_port_state *p = &ports[index];
 	char key[128];
 	int port_i;
 	char *retValue;
@@ -118,52 +127,51 @@ static int hal_port_init(int index)
 	/* index is 0..17, port_i 1..18 */
 	port_i = index + 1;
 
-	/* make sure the states and other variables are in their init state */
-	hal_port_reset_state(p);
-
 	/* read dot-config values to get the interface name */
 	sprintf(key,"PORT%02i_IFACE",port_i);
 	if( (retValue=libwr_cfg_get(key))==NULL)
 		return -1;
-	strncpy(p->name, retValue, 16);
+	strncpy(ps->name, retValue, 16);
 
 	/* check if the port is built into the firmware, if not, we are done */
-	if (!hal_port_check_presence(p->name, p->hw_addr))
+	if (!hal_port_check_presence(ps->name, ps->hw_addr))
 		return -1;
 
-	p->state = HAL_PORT_STATE_DISABLED;
-	p->in_use = 1;
 
-	p->calib.phy_tx_min = p->calib.phy_rx_min = 0; // No longer used
+	ps->in_use = 1;
+	ps->lpdc.isSupported = hal_port_check_lpdc_support(ps);
 
-	p->calib.delta_tx_board = 0; /* never set */
-	p->calib.delta_rx_board = 0; /* never set */
+	if ( ps->lpdc.isSupported ) {
+		// Allocate memory for tx/rx setup
+		ps->lpdc.txSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcTx_t));
+		ps->lpdc.rxSetup = wrs_shm_alloc(hal_shmem_hdr,sizeof(halPortLpdcRx_t));
+		if ( ps->lpdc.rxSetup==NULL || ps->lpdc.txSetup==NULL) {
+			pr_error("Can't allocate LPDC (rx/tx) structures in shmem\n");
+			return -1;
+		}
+	}
 	/* get the number of a port from notation wriX */
-	sscanf(p->name + 3, "%d", &p->hw_index);
+	sscanf(ps->name + 3, "%d", &ps->hw_index);
 	/* hw_index is 0..17, p->name wri1..18 */
-	p->hw_index--;
-
-	p->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
-	p->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
-	p->clock_period = REF_CLOCK_PERIOD_PS;
+	ps->hw_index--;
 
 	/* Get fiber type */
-	p->fiber_index = 0; /* Default fiber value */
+	ps->fiber_index = 0; /* Default fiber value */
 	sprintf(key,"PORT%02i_FIBER",port_i);
 	if( (retValue=libwr_cfg_get(key))==NULL ) {
 		pr_error("port %i (%s): no key \"%s\" specified. Default fiber 0\n",
-			port_i, p->name,key);
+			port_i, ps->name,key);
 	} else {
-		if (sscanf(retValue, "%i", &p->fiber_index) != 1) {
+		if (sscanf(retValue, "%i", &ps->fiber_index) != 1) {
 			pr_error("port %i (%s): Invalid key \"%s\" value (%d). Default fiber 0\n",
-				port_i, p->name, key,*retValue);
+				port_i, ps->name, key,*retValue);
 		}
 	}
 	/* read dot-config values to get the number of defined fibers */
 	strcpy(key,"N_FIBER_ENTRIES");
 	if( (retValue=libwr_cfg_get(key))==NULL) {
 		pr_error("port %i (%s): no key \"%s\" specified\n",
-			port_i, p->name,key);
+			port_i, ps->name,key);
 		maxFibers=-1;
 	} else
 		if (sscanf(retValue, "%i", &maxFibers) != 1) {
@@ -171,63 +179,57 @@ static int hal_port_init(int index)
 			maxFibers=-1;
 		}
 
-	if (p->fiber_index > maxFibers) {
+	if (ps->fiber_index > maxFibers) {
 		pr_error("port %i (%s): "
 			"not supported fiber value (%d), default to 0\n",
-			port_i, p->name,p->fiber_index);
-		p->fiber_index = 0;
+			port_i, ps->name,ps->fiber_index);
+		ps->fiber_index = 0;
 	}
 
 	/* Enable port monitoring by default */
-	p->monitor = HAL_PORT_MONITOR_ENABLE;
+	ps->monitor = HAL_PORT_MONITOR_ENABLE;
 	sprintf(key,"PORT%02i_INST%02i_MONITOR",port_i,1);
 	if ((retValue = libwr_cfg_get(key)) == NULL ) {
 		pr_error("port %i (%s): no key \"%s\" specified. Default to"
 			 " monitor=y.\n",
-			 port_i, p->name,key);
+			 port_i, ps->name,key);
 	} else {
 		if (!strcasecmp(retValue, "n")) {
-			p->monitor = HAL_PORT_MONITOR_DISABLE;
+			ps->monitor = HAL_PORT_MONITOR_DISABLE;
 			pr_info("port %i (%s): monitor=n (%i)\n", port_i,
-				p->name, p->monitor);
+				ps->name, ps->monitor);
 		} else if (!strcasecmp(retValue, "y")) {
-			p->monitor = HAL_PORT_MONITOR_ENABLE;
+			ps->monitor = HAL_PORT_MONITOR_ENABLE;
 			pr_info("port %i (%s): monitor=y (%i)\n", port_i,
-				p->name, p->monitor);
+				ps->name, ps->monitor);
 		} else {
 			/* error */
 			pr_error("port %i (%s): not supported \"monitor\" "
 				 "value, default to y\n",
-				 port_i, p->name);
+				 port_i, ps->name);
 		}
 	}
 
-	/* Used to pre-calibrate the TX path for each port. No more in V3 */
-
 	/* FIXME: this address should come from the driver header */
-	p->ep_base = 0x30000 + 0x400 * p->hw_index;
+	ps->ep_base = 0x30000 + 0x400 * ps->hw_index;
 
 	return 0;
 }
 
 /* Interates via all the ports defined in the config file and
  * intializes them one after another. */
-int hal_port_init_shmem(char *logfilename)
+int hal_port_shmem_init(char *logfilename)
 {
 	int index;
 	char *ret;
 	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
-	libwr_tmo_init(&hal_port_tmo_sfp, UPDATE_SFP_PERIOD, 1);
-	libwr_tmo_init(&hal_port_tmo_rts, UPDATE_RTS_PERIOD, 1);
-	libwr_tmo_init(&update_sync_leds_tmo, UPDATE_SYNC_LEDS_PERIOD, 1);
-	libwr_tmo_init(&update_link_leds_tmo, UPDATE_LINK_LEDS_PERIOD, 1);
-	libwr_tmo_init(&update_sfp_dom_tmo, UPDATE_SFP_DOM_PERIOD, 1);
+	timer_init(_timerParameters,PORT_TIMER_COUNT);
 
 	/* Open a single raw socket for accessing the MAC addresses, etc. */
-	hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
-	if (hal_port_fd < 0) {
+	halPorts.hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
+	if (halPorts.hal_port_fd < 0) {
 		pr_error("Can't create socket: %s\n", strerror(errno));
 		return -1;
 	}
@@ -240,28 +242,33 @@ int hal_port_init_shmem(char *logfilename)
 		return -1;
 	}
 	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
-	ports = wrs_shm_alloc(hal_shmem_hdr,
+
+	hal_shmem->shmemState= HAL_SHMEM_STATE_NOT_INITITALIZED;
+    halPorts.ports = wrs_shm_alloc(hal_shmem_hdr,
 			      sizeof(struct hal_port_state)
 			      * HAL_MAX_PORTS);
-	if (!hal_shmem || !ports) {
+	if (!hal_shmem || !halPorts.ports) {
 		pr_error("Can't allocate in shmem\n");
 		return -1;
 	}
 
-	hal_shmem->ports = ports;
+	hal_shmem->ports = halPorts.ports;
 
 	for (index = 0; index < HAL_MAX_PORTS; index++)
-		if (hal_port_init(index) < 0)
+		if (hal_port_init(&halPorts.ports[index],index) < 0)
 			break;
 
-	hal_port_nports = index;
+	hal_port_state_fsm_init_all(halPorts.ports, &halPorts.globalLpdc); // Init main port FSM for all ports
+	
+	led_init_all_ports(halPorts.ports); // Reset all leds
+	halPorts.numberOfPorts = index;
 
 	pr_info("Number of physical ports supported in HW: %d\n",
-	      hal_port_nports);
+			halPorts.numberOfPorts );
 
 	/* We are done, mark things as valid */
-	hal_shmem->nports = hal_port_nports;
-	hal_shmem->hal_mode = hal_get_timing_mode();
+	hal_shmem->nports = halPorts.numberOfPorts ;
+	hal_shmem->hal_mode = hal_tmg_get_mode(NULL);
 
 	ret = libwr_cfg_get("READ_SFP_DIAG_ENABLE");
 	if (ret && !strcmp(ret, "y")) {
@@ -269,6 +276,9 @@ int hal_port_init_shmem(char *logfilename)
 		hal_shmem->read_sfp_diag = READ_SFP_DIAG_ENABLE;
 	} else
 		hal_shmem->read_sfp_diag = READ_SFP_DIAG_DISABLE;
+
+
+	hal_shmem->shmemState= HAL_SHMEM_STATE_INITITALIZING;
 
 	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
 	/* Release processes waiting for HAL's to fill shm with correct data
@@ -280,37 +290,95 @@ int hal_port_init_shmem(char *logfilename)
 	return 0;
 }
 
-int hal_port_init_wripc(char *logfilename)
+int pcs_writel(struct hal_port_state *ps, uint16_t value, int reg)
 {
-	/* Create a WRIPC server for HAL public API */
-	return hal_init_wripc(ports, logfilename);
+	struct ifreq ifr;
+	uint32_t rv;
+
+	strncpy(ifr.ifr_name, ps->name, sizeof(ifr.ifr_name));
+
+	rv = NIC_WRITE_PHY_CMD(reg, value);
+	ifr.ifr_data = (void *)&rv;
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCPHYREG, &ifr) < 0)
+	{
+		pr_error("%s: ioctl failed writing at register adress %d\n",
+				__func__,reg);
+		return -1;
+	};
+
+	return 0;
 }
 
-/* Checks if the link is up on inteface (if_name). Returns non-zero if yes. */
-static int hal_port_check_link(const char *if_name)
+int pcs_readl(struct hal_port_state * p, int reg, uint32_t *value)
 {
 	struct ifreq ifr;
 
-	strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
 
-	if (ioctl(hal_port_fd, SIOCGIFFLAGS, &ifr) > 0)
+	*value = NIC_READ_PHY_CMD(reg);
+	ifr.ifr_data = (void *)value;
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCPHYREG, &ifr) < 0) {
+		pr_error("%s: ioctl failed reading register at address %d\n",
+				__func__, reg);
 		return -1;
+	}
 
-	return (ifr.ifr_flags & IFF_UP && ifr.ifr_flags & IFF_RUNNING);
+	*value=NIC_RESULT_DATA(*value);
+	return 0;
 }
 
-/* Port locking state machine - controls the HPLL/DMPLL.  TODO (v3):
-   get rid of this code - this will all be moved to the realtime CPU
-   inside the FPGA and the softpll. */
-static void hal_port_locking_fsm(struct hal_port_state * p)
+static uint32_t ep_read(struct hal_port_state * p, int reg_addr, uint32_t *value)
 {
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
+
+	*value = reg_addr;
+	ifr.ifr_data = (void *) value;
+	pr_info("raw fd %d name %s\n", halPorts.hal_port_fd, ifr.ifr_name);
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCREADREG, &ifr) < 0) {
+		pr_error("%s: ioctl failed reading register at address %d\n", __func__,reg_addr);
+		return -1;
+	}
+	pr_info("ep_read: reg %d data %x\n", reg_addr, *value);
+	return 0;
 }
+
+/* checks if the port supports Low Phase Drift Calibration*/
+static int hal_port_check_lpdc_support(struct hal_port_state * ps)
+{
+
+	uint32_t rv;
+
+	if ( ep_read(ps, EP_ECR_ADDR,&rv)<0 ) {
+		pr_error("Cannot detects supports for Low Phase Drift Calibration "
+				"at port %s\n", ps->name);
+		return 0;
+	} else {
+		if (rv & EP_ECR_FEAT_LPC) {
+			pr_info("Supports for Low Phase Drift Calibration detected "
+					"at port %s\n", ps->name);
+			return 1;
+		} else {
+			pr_info("NO supports for Low Phase Drift Calibration detected "
+					"at port %s\n", ps->name);
+			return 0;
+		}
+	}
+}
+
+int hal_port_wripc_init(char *logfilename)
+{
+	/* Create a WRIPC server for HAL public API */
+	return hal_wripc_init(halPorts.ports, logfilename);
+}
+
 
 int hal_port_pshifter_busy()
 {
-	struct rts_pll_state *hs = &hal_port_rts_state;
+	struct rts_pll_state *hs = getRtsStatePtr();
 
-	if (!hal_port_rts_state_valid)
+	if (! isRtsStateValid() )
 		return 1;
 
 	if (hs->current_ref != REF_NONE) {
@@ -318,9 +386,6 @@ int hal_port_pshifter_busy()
 		    hs->channels[hs->current_ref].
 		    flags & CHAN_SHIFTING ? 1 : 0;
 
-		if (0)
-			pr_info("PSBusy %d, flags %x\n", busy,
-			      hs->channels[hs->current_ref].flags);
 		return busy;
 	}
 
@@ -331,163 +396,16 @@ int hal_port_pshifter_busy()
  * port. Called by the main update function regularly. */
 int hal_port_poll_rts_state(void)
 {
-	struct rts_pll_state *hs = &hal_port_rts_state;
+	struct rts_pll_state *hs = getRtsStatePtr();
 
-	hal_port_rts_state_valid = rts_get_state(hs) < 0 ? 0 : 1;
-	if (!hal_port_rts_state_valid)
-		printf("rts_get_state failure, weird...\n");
-	return hal_port_rts_state_valid;
+	setRtsStateValidity( rts_get_state(hs) < 0 ? 0 : 1);
+	if (! isRtsStateValid() )
+		pr_warning("rts_get_state failure, weird...\n");
+	return isRtsStateValid();
 }
 
-static uint32_t pcs_readl(struct hal_port_state * p, int reg)
-{
-	struct ifreq ifr;
-	uint32_t rv;
 
-	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
-
-	rv = NIC_READ_PHY_CMD(reg);
-	ifr.ifr_data = (void *)&rv;
-//      printf("raw fd %d name %s\n", hal_port_fd, ifr.ifr_name);
-	if (ioctl(hal_port_fd, PRIV_IOCPHYREG, &ifr) < 0) {
-		pr_error("ioctl failed\n");
-	};
-
-//      printf("PCS_readl: reg %d data %x\n", reg, NIC_RESULT_DATA(rv));
-	return NIC_RESULT_DATA(rv);
-}
-
-static int hal_port_link_down(struct hal_port_state * p, int link_up)
-{
-	/* If, at any moment, the link goes down, reset the FSM and
-	 * the port state structure. */
-	if (!link_up && p->state != HAL_PORT_STATE_LINK_DOWN
-	    && p->state != HAL_PORT_STATE_DISABLED) {
-		if (p->locked) {
-			pr_info("Switching RTS to use local reference\n");
-			if (hal_get_timing_mode()
-			    != HAL_TIMING_MODE_GRAND_MASTER) {
-				shw_pps_set_timing_mode(HAL_TIMING_MODE_FREE_MASTER);
-				hal_update_timing_mode();
-			}
-		}
-
-		/* turn off synced LED */
-		set_led_synced(p->hw_index, 0);
-
-		/* turn off link/wrmode LEDs */
-		set_led_wrmode(p->hw_index, SFP_LED_WRMODE_OFF);
-		p->state = HAL_PORT_STATE_LINK_DOWN;
-		hal_port_reset_state(p);
-
-		rts_enable_ptracker(p->hw_index, 0);
-		pr_info("%s: link down\n", p->name);
-
-		return 1;
-	}
-	return 0;
-}
-
-/* Main port state machine */
-static void hal_port_fsm(struct hal_port_state * p)
-{
-	struct rts_pll_state *hs = &hal_port_rts_state;
-	int link_up = hal_port_check_link(p->name);
-
-	if (hal_port_link_down(p, link_up))
-		return;
-	/* handle the locking part */
-	hal_port_locking_fsm(p);
-
-	switch (p->state) {
-
-	case HAL_PORT_STATE_DISABLED:
-		p->calib.tx_calibrated = 0;
-		p->calib.rx_calibrated = 0;
-		break;
-
-		/* Default state - wait until the link goes up */
-	case HAL_PORT_STATE_LINK_DOWN:
-	case HAL_PORT_STATE_RESET:
-		{
-			if (link_up) {
-				uint32_t bit_slide_steps;
-
-				p->calib.tx_calibrated = 1;
-				p->calib.rx_calibrated = 1;
-				/* FIXME: use proper register names */
-				bit_slide_steps=(pcs_readl(p, 16) >> 4) & 0x1f;
-				p->calib.bitslide_ps=bit_slide_steps*800; /* 1 step = 800ps */
-				pr_info("Bitslide: %d\n",bit_slide_steps);
-
-				p->calib.delta_rx_phy =
-				    p->calib.phy_rx_min;
-				p->calib.delta_tx_phy = p->calib.phy_tx_min;
-
-				if (0)
-					pr_info(
-					      "Bypassing calibration for "
-					      "downlink port %s [dTx %d, dRx %d]\n",
-					      p->name, p->calib.delta_tx_phy,
-					      p->calib.delta_rx_phy);
-
-				p->tx_cal_pending = 0;
-				p->rx_cal_pending = 0;
-				/* Set link/wrmode LEDs to other. Master/slave
-				 * color is set in the different place */
-				set_led_wrmode(p->hw_index,
-					       SFP_LED_WRMODE_OTHER);
-				pr_info("%s: link up\n", p->name);
-				p->state = HAL_PORT_STATE_UP;
-			}
-			break;
-		}
-
-		/* Default "on" state - just keep polling the phase value. */
-	case HAL_PORT_STATE_UP:
-		if (hal_port_rts_state_valid) {
-			p->phase_val =
-			    hs->channels[p->hw_index].phase_loopback;
-			p->phase_val_valid =
-			    hs->channels[p->hw_index].
-			    flags & CHAN_PMEAS_READY ? 1 : 0;
-			//hal_port_check_lock(p->name);
-			//p->locked =
-		}
-
-		break;
-
-		/* Locking state (entered on calling hal_port_start_lock()). */
-	case HAL_PORT_STATE_LOCKING:
-
-		/* Once the locking FSM is done, go back to the "UP" state. */
-
-		p->locked = hal_port_check_lock(p->name);
-
-		if (p->locked) {
-			pr_info("[main-fsm] Port %s locked.\n",
-			      p->name);
-			p->state = HAL_PORT_STATE_UP;
-		}
-
-		break;
-
-		/* Calibration state (entered by starting the
-		 * calibration with halexp_calibration_cmd()) */
-	case HAL_PORT_STATE_CALIBRATION:
-
-		/* Calibration still pending - if not anymore, go back
-		 * to the "UP" state */
-		if (p->rx_cal_pending || p->tx_cal_pending) {
-		}		//calibration_fsm(p);
-		else
-			p->state = HAL_PORT_STATE_UP;
-
-		break;
-	}
-}
-
-static void hal_port_insert_sfp(struct hal_port_state * p)
+static void hal_port_insert_sfp(struct hal_port_state * ps)
 {
 	struct shw_sfp_header shdr;
 	struct shw_sfp_caldata *cdata;
@@ -495,72 +413,75 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	int err;
 
 	memset(&shdr, 0, sizeof(struct shw_sfp_header));
-	memset(&p->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
-	err = shw_sfp_read_verify_header(p->hw_index, &shdr);
-	memcpy(&p->calib.sfp_header_raw, &shdr, sizeof(struct shw_sfp_header));
+	memset(&ps->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
+	err = shw_sfp_read_verify_header(ps->hw_index, &shdr);
 	if (err == -2) {
 		pr_error("%s SFP module not inserted. Failed to read SFP "
-			 "configuration header\n", p->name);
+			 "configuration header\n", ps->name);
 		return;
 	} else if (err < 0) {
 		pr_error("Failed to read SFP configuration header for %s\n",
-			 p->name);
-		return;
+			 ps->name);
+		/* Clear any mess that was wrongly read to make sure that
+		   the SFP will be unrecognized. */
+		memset(&shdr, 0, sizeof(struct shw_sfp_header));
 	}
+	memcpy(&ps->calib.sfp_header_raw, &shdr, sizeof(struct shw_sfp_header));
+
 	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
 	    && shdr.diagnostic_monitoring_type & SFP_DIAGNOSTIC_IMPLEMENTED) {
 		pr_info("SFP Diagnostic Monitoring implemented in SFP plugged"
-			" to port %d (%s)\n", p->hw_index + 1, p->name);
+			" to port %d (%s)\n", ps->hw_index + 1, ps->name);
 		if (shdr.diagnostic_monitoring_type & SFP_ADDR_CHANGE_REQ) {
 			pr_warning("SFP in port %d (%s) requires special "
 				   "address change before accessing Diagnostic"
 				   " Monitoring, which is not implemented "
-				   "right now\n", p->hw_index + 1, p->name);
+				   "right now\n", ps->hw_index + 1, ps->name);
 		} else {
 			/* copy coontent of SFP's Diagnostic Monitoring */
-			shw_sfp_read_dom(p->hw_index, &p->calib.sfp_dom_raw);
+			shw_sfp_read_dom(ps->hw_index, &ps->calib.sfp_dom_raw);
 			if (err < 0) {
 				pr_error("Failed to read SFP Diagnostic "
 					 "Monitoring for port %d (%s)\n",
-					 p->hw_index + 1, p->name);
+					 ps->hw_index + 1, ps->name);
 			}
-			p->has_sfp_diag = 1;
+			ps->has_sfp_diag = 1;
 		}
 
 	}
 	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s\n",
 	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
-	cdata = shw_sfp_get_cal_data(p->hw_index, &shdr);
+	cdata = shw_sfp_get_cal_data(ps->hw_index, &shdr);
 	if (cdata) {
 		/* Alpha is not known now. It is read later from the fibers'
 		 * database. */
 		pr_info("%s SFP Info: (%s) delta Tx %d, delta Rx %d, "
-			"TX wl: %dnm, RX wl: %dnm\n", p->name,
+			"TX wl: %dnm, RX wl: %dnm\n", ps->name,
 			cdata->flags & SFP_FLAG_CLASS_DATA
 			? "class-specific" : "device-specific",
 			cdata->delta_tx_ps, cdata->delta_rx_ps, cdata->tx_wl,
 			cdata->rx_wl);
 
-		memcpy(&p->calib.sfp, cdata,
+		memcpy(&ps->calib.sfp, cdata,
 		       sizeof(struct shw_sfp_caldata));
 		/* Mark SFP as found in data base */
-		p->calib.sfp.flags |= SFP_FLAG_IN_DB;
+		ps->calib.sfp.flags |= SFP_FLAG_IN_DB;
 	} else {
 		pr_error("Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
 			"vs=\"%.16s\" on port %s\n", shdr.vendor_name,
-			shdr.vendor_pn, shdr.vendor_serial, p->name);
-		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
+			shdr.vendor_pn, shdr.vendor_serial, ps->name);
+		memset(&ps->calib.sfp, 0, sizeof(ps->calib.sfp));
 	}
 
-	p->state = HAL_PORT_STATE_LINK_DOWN;
-	shw_sfp_set_tx_disable(p->hw_index, 0);
+	ps->sfpPresent=1;
+	shw_sfp_set_tx_disable(ps->hw_index, 0);
 	/* Copy the strings anyways, for informative value in shmem */
-	strncpy(p->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
-	strncpy(p->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
-	strncpy(p->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
+	strncpy(ps->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
+	strncpy(ps->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
+	strncpy(ps->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
 	/* check if SFP is 1GbE */
-	p->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
-	p->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_10 ? SFP_FLAG_1GbE : 0;
+	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
+	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_10 ? SFP_FLAG_1GbE : 0;
 
 	/*
 	 * Now, we should fix the alpha value according to fiber
@@ -568,357 +489,318 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	 * speed ratio of the SFP frequencies over the specific
 	 * fiber. Thus, rely on the fiber type for this port.
 	 */
-	sprintf(subname, "alpha_%i_%i", p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
+	sprintf(subname, "alpha_%i_%i", ps->calib.sfp.tx_wl, ps->calib.sfp.rx_wl);
 	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
-				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
-				 p->fiber_index);
+				 LIBWR_DOUBLE, &ps->calib.sfp.alpha,
+				 ps->fiber_index);
 	if (!err) {
 		/* Now we know alpha, so print it. */
 		pr_info("%s SFP Info: alpha %.3f (* 1e6) found for TX wl: %dnm,"
-			" RX wl: %dmn\n", p->name, p->calib.sfp.alpha * 1e6,
-			p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
+			" RX wl: %dmn\n", ps->name, ps->calib.sfp.alpha * 1e6,
+			ps->calib.sfp.tx_wl, ps->calib.sfp.rx_wl);
 		return;
 	}
 
 	/* Try again, with the opposite direction (rx/tx) */
-	sprintf(subname, "alpha_%i_%i", p->calib.sfp.rx_wl, p->calib.sfp.tx_wl);
+	sprintf(subname, "alpha_%i_%i", ps->calib.sfp.rx_wl, ps->calib.sfp.tx_wl);
 	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
-				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
-				 p->fiber_index);
+				 LIBWR_DOUBLE, &ps->calib.sfp.alpha,
+				 ps->fiber_index);
 	if (!err) {
-		p->calib.sfp.alpha = (1.0 / (1.0 + p->calib.sfp.alpha)) - 1.0;
+		ps->calib.sfp.alpha = (1.0 / (1.0 + ps->calib.sfp.alpha)) - 1.0;
 		/* Now we know alpha, so print it. */
 		pr_info("%s SFP Info: alpha %.3f (* 1e6) found for TX wl: %dnm,"
-			" RX wl: %dmn\n", p->name, p->calib.sfp.alpha * 1e6,
-			p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
+			" RX wl: %dmn\n", ps->name, ps->calib.sfp.alpha * 1e6,
+			ps->calib.sfp.tx_wl, ps->calib.sfp.rx_wl);
 		return;
 	}
 
 	pr_error("Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
-		"fiber %i: no alpha known\n", p->name,
-		p->calib.sfp.vendor_name, p->calib.sfp.part_num,
-		p->calib.sfp.vendor_serial, p->fiber_index);
-	p->calib.sfp.alpha = 0;
+		"fiber %i: no alpha known\n", ps->name,
+		ps->calib.sfp.vendor_name, ps->calib.sfp.part_num,
+		ps->calib.sfp.vendor_serial, ps->fiber_index);
+	ps->calib.sfp.alpha = 0;
 }
 
-static void hal_port_remove_sfp(struct hal_port_state * p)
+static void hal_port_remove_sfp(struct hal_port_state * ps)
 {
-	hal_port_link_down(p, 0);
-	p->state = HAL_PORT_STATE_DISABLED;
 	/* clean SFP's details when removing SFP */
-	memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
-	memset(&p->calib.sfp_header_raw, 0, sizeof(struct shw_sfp_header));
-	memset(&p->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
-	p->has_sfp_diag = 0;
+	memset(&ps->calib.sfp, 0, sizeof(ps->calib.sfp));
+	memset(&ps->calib.sfp_header_raw, 0, sizeof(struct shw_sfp_header));
+	memset(&ps->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
+	ps->has_sfp_diag=ps->sfpPresent=0;
 }
 
 /* detects insertion/removal of SFP transceivers */
 static void hal_port_poll_sfp(void)
 {
-		uint32_t mask = shw_sfp_module_scan();
-		static int old_mask = 0;
+	static int __old_mask = 0;
+	uint32_t mask = shw_sfp_module_scan();
 
-		if (mask != old_mask) {
-			int i, hw_index;
-			for (i = 0; i < HAL_MAX_PORTS; i++) {
-				hw_index = ports[i].hw_index;
+	if (mask != __old_mask) {
+		int i, hw_index;
 
-				if (ports[i].in_use
-				    && (mask ^ old_mask) & (1 << hw_index)) {
-					int insert = mask & (1 << hw_index);
-					pr_info("SFP Info: Detected SFP %s "
-					      "on port %s.\n",
-					      insert ? "insertion" : "removal",
-					      ports[i].name);
-					if (insert)
-						hal_port_insert_sfp(&ports[i]);
-					else
-						hal_port_remove_sfp(&ports[i]);
-				}
+		/* lock shmem */
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+
+		for (i = 0; i < HAL_MAX_PORTS; i++) {
+			hw_index = halPorts.ports[i].hw_index;
+
+			if (halPorts.ports[i].in_use
+				&& (mask ^ __old_mask) & (1 << hw_index)) {
+				int insert = mask & (1 << hw_index);
+				pr_info("SFP Info: Detected SFP %s "
+					  "on port %s.\n",
+					  insert ? "insertion" : "removal",
+							  halPorts.ports[i].name);
+				if (insert)
+					hal_port_insert_sfp(&halPorts.ports[i]);
+				else
+					hal_port_remove_sfp(&halPorts.ports[i]);
 			}
 		}
-		old_mask = mask;
+
+		/* unlock shmem */
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+		__old_mask = mask;
+	}
 }
 
-/* Executes the port FSM for all ports. Called regularly by the main loop. */
-void hal_port_update_all()
-{
-	int i;
-	struct shw_sfp_dom sfp_dom_raw[HAL_MAX_PORTS];
-
+static void _cb_port_poll_rts_state(int timerId){
 	/* poll_rts_state does not write to shmem */
-	if (libwr_tmo_expired(&hal_port_tmo_rts))
-		hal_port_poll_rts_state();
+	hal_port_poll_rts_state();
+	// Update timing mode
+	hal_shmem->hal_mode = hal_tmg_get_mode(NULL);
+}
 
-	/* lock shmem */
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-	if (libwr_tmo_expired(&hal_port_tmo_sfp))
-		hal_port_poll_sfp();
+static void _cb_port_poll_sfp(int timerId){
+	hal_port_poll_sfp();
+}
 
-	for (i = 0; i < HAL_MAX_PORTS; i++)
-		if (ports[i].in_use) {
-			hal_port_fsm(&ports[i]);
-		}
+static void _cb_port_poll_sfp_dom(int timerId){
+	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE) {
+		struct shw_sfp_dom sfp_dom_raw[HAL_MAX_PORTS];
+		struct hal_port_state *ps;
+		int i;
 
-	/* unlock shmem */
-	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
-
-	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
-	    && libwr_tmo_expired(&update_sfp_dom_tmo)) {
 		/* get the DOM data to local memory */
+		ps=halPorts.ports;
 		for (i = 0; i < HAL_MAX_PORTS; i++) {
 			/* read DOM only for plugged ports with DOM
 			 * capabilities */
-			if (ports[i].in_use
-			    && ports[i].state != HAL_PORT_STATE_DISABLED
-			    && (ports[i].has_sfp_diag)) {
-				shw_sfp_update_dom(ports[i].hw_index,
+			if (ps->in_use
+			    && ps->sfpPresent
+			    && ps->has_sfp_diag) {
+				shw_sfp_update_dom(ps->hw_index,
 						   &sfp_dom_raw[i]);
 			}
+			ps++;
 		}
 
 		/* lock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 
 		/* copy the DOM from local memory to shmem */
+		ps=halPorts.ports;
 		for (i = 0; i < HAL_MAX_PORTS; i++) {
 			/* update DOM only for plugged ports with DOM
 			 * capabilities */
-			if (ports[i].in_use
-			    && ports[i].state != HAL_PORT_STATE_DISABLED
-			    && (ports[i].has_sfp_diag)) {
-				memcpy(&ports[i].calib.sfp_dom_raw,
+			if (ps->in_use
+			    && ps->sfpPresent
+			    &&  ps->has_sfp_diag) {
+				memcpy(&halPorts.ports[i].calib.sfp_dom_raw,
 				       &sfp_dom_raw[i],
 				       sizeof(struct shw_sfp_dom));
 			}
+			ps++;
 		}
 
 		/* unlock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 	}
+}
 
+static void _cb_port_update_sync_leds(int timerId){
+	/* update LEDs of synced ports */
+	led_synched_update(halPorts.ports);
+}
 
-	if (libwr_tmo_expired(&update_link_leds_tmo)) {
-		/* update color of the link LEDs */
-		update_link_leds();
+static void _cb_port_update_link_leds(int timerId){
+	/* update color of the link LEDs */
+	led_link_update(halPorts.ports);
+}
+
+static void printFsmDebugInfo(void) {
+	static timeout_t _fsm_debug_tmo={.repeat=-1}; // Use -1 to know that the timer must be initialized
+
+	if ( _fsm_debug_tmo.repeat==-1) {
+			libwr_tmo_init( &_fsm_debug_tmo, 1000, 1 );
+			return;
 	}
+	if ( libwr_tmo_expired( &_fsm_debug_tmo ) ) {
+		int i;
+		printf("PortDBG: \n");
 
-	if (libwr_tmo_expired(&update_sync_leds_tmo)) {
-		/* update LEDs of synced ports */
-		update_sync_leds();
+		for(i = 0; i < HAL_MAX_PORTS; i++)
+		{
+			struct hal_port_state *ps = &halPorts.ports[i];
+			char txEventsStr[128];
+			char rxEventsStr[128];
+			char pllEventsStr[128];
+			char eventsStr[128];
+
+			if ( !ps->in_use )
+				continue;
+
+			strncpy( eventsStr, fsm_get_event_mask_as_string( &ps->fsm ), sizeof(txEventsStr) );
+			strncpy( txEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.txSetupFSM ), sizeof(txEventsStr) );
+			strncpy( rxEventsStr, fsm_get_event_mask_as_string( &ps->lpdc.rxSetupFSM ), sizeof(rxEventsStr) );
+			strncpy( pllEventsStr, fsm_get_event_mask_as_string( &ps->pllFsm ), sizeof(rxEventsStr) );
+
+			printf("  wri%02d: PORT:%-12s[%-36s] TX:%-16s[%-10s] RX:%-12s[%-25s] PLL:%-12s[%-25s] bs=%d\n",
+				ps->hw_index + 1,
+				fsm_get_state_name( &ps->fsm ),
+				eventsStr,
+				fsm_get_state_name( &ps->lpdc.txSetupFSM ),
+				txEventsStr,
+				fsm_get_state_name( &ps->lpdc.rxSetupFSM ),
+				rxEventsStr,
+				fsm_get_state_name( &ps->pllFsm ),
+				pllEventsStr,
+				ps->calib.bitslide_ps
+			);
+		}
 	}
+}
+/* Executes the port FSM for all ports. Called regularly by the main loop. */
+void hal_port_update_all()
+{
+	timer_scan(_timerParameters,PORT_TIMER_COUNT);
+
+	/* lock shmem */
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+
+	hal_port_state_fsm_run_all(halPorts.ports);
+
+	/* unlock shmem */
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+
+	if ( FSM_DEBUG )
+		printFsmDebugInfo();
 }
 
 int hal_port_enable_tracking(const char *port_name)
 {
-	const struct hal_port_state *p = hal_lookup_port(ports,
-						  hal_port_nports, port_name);
+	const struct hal_port_state *ps = hal_lookup_port(halPorts.ports,
+						  halPorts.numberOfPorts, port_name);
 
-	if (!p)
+	if (!ps)
 		return -1;
-
-	return rts_enable_ptracker(p->hw_index, 1); /* 0 or -1 already */
+	return rts_enable_ptracker(ps->hw_index, 1); /* 0 or -1 already */
 }
 
 /* Triggers the locking state machine, called by the PTPd during the
  * WR link setup phase. */
 int hal_port_start_lock(const char *port_name, int priority)
 {
-	struct hal_port_state *p = hal_lookup_port(ports, hal_port_nports,
-						   port_name);
-	int ret=-1;
+	struct hal_port_state *ps = hal_lookup_port(halPorts.ports, halPorts.numberOfPorts, port_name);
 
-	if (!p && p->state != HAL_PORT_STATE_UP )
-		return -1; /* can't lock to a disconnected port */
+	if ( !ps )
+		return -1; /* unknown port */
 
-	pr_info("Locking to port: %s\n", port_name);
-
-	hal_port_poll_rts_state(); // update rts state
-	if ( (hal_get_timing_mode()==HAL_TIMING_MODE_BC)  &&
-			(ret=rts_lock_channel(p->hw_index, 0))==0 ) {
-		/* lock shmem */
-		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-		/* fixme: check the main FSM state before */
-		p->state = HAL_PORT_STATE_LOCKING;
-		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+	if ( rts_lock_channel(ps->hw_index, 0)<0 ) {
+		return -1;
 	}
-	return ret;
-
+	ps->evt_lock=1;
+	return 0;
 }
 
-/* Returns 1 if the port is locked */
-int hal_port_check_lock(const char *port_name)
+/* Returns 1 if the port is locked, 0 if unlocked, -1 in case of error */
+int hal_port_check_lock(const struct hal_port_state *ps)
 {
-	const struct hal_port_state *p = hal_lookup_port(ports,
-						hal_port_nports, port_name);
-	struct rts_pll_state *hs = &hal_port_rts_state;
+	struct rts_pll_state *hs = getRtsStatePtr();
 
-	if (!p)
-		return 0; /* was -1, but it would confuse the caller */
+	if (!ps)
+		return -1;
 
-	if (!hal_port_rts_state_valid)
-		return 0;
+	if (!isRtsStateValid())
+		return -1;
 
 	if (hs->delock_count > 0)
-		return 0;
+		return -1;
 
 	return ( hs->mode==RTS_MODE_BC &&
-		hs->current_ref == p->hw_index &&
+		hs->current_ref == ps->hw_index &&
 		(hs->flags & RTS_DMTD_LOCKED) &&
 		(hs->flags & RTS_REF_LOCKED));
 }
 
+/* Returns 1 if the port is locked */
+int hal_port_check_lock_by_name(const char *port_name)
+{
+	const struct hal_port_state *ps = hal_lookup_port(halPorts.ports,
+			halPorts.numberOfPorts, port_name);
+
+	return hal_port_check_lock(ps);
+}
+
 int hal_port_reset(const char *port_name)
 {
-	struct hal_port_state *p = hal_lookup_port(ports,
-						  hal_port_nports, port_name);
+	struct hal_port_state *ps = hal_lookup_port(halPorts.ports,
+			halPorts.numberOfPorts, port_name);
 
-	if (!p)
+	if (!ps)
 		return -1;
 
-	if (p->state != HAL_PORT_STATE_LINK_DOWN
-	    && p->state != HAL_PORT_STATE_DISABLED) {
-
-		/* turn off synced LED */
-		set_led_synced(p->hw_index, 0);
-
-		/* turn off link/wrmode LEDs */
-		set_led_wrmode(p->hw_index, SFP_LED_WRMODE_OFF);
-		hal_port_reset_state(p);
-		p->state = HAL_PORT_STATE_RESET;
-
-		rts_enable_ptracker(p->hw_index, 0);
-		pr_info("%s: link down\n", p->name);
-
-		return 1;
-	}
+	ps->evt_reset=1;
 	return 0;
 }
 
-/* to avoid i2c transfers to set the link LEDs, cache their state */
-static void set_led_wrmode(int p_index, int val)
-{
-	/* We assume that after the HAL is started all LEDs are off */
-	static int leds_map[HAL_MAX_PORTS];
-
-	if (p_index >= HAL_MAX_PORTS)
-		return;
-
-	if (leds_map[p_index] == val) {
-		/* value has not changed */
-		return;
-	}
-
-	/* update the LED, don't forget to turn off LEDs if needed */
-	if (val == SFP_LED_WRMODE_SLAVE) {
-		/* cannot set and clear LED in the same call! */
-		shw_sfp_set_generic(p_index, 1, SFP_LED_WRMODE1);
-		shw_sfp_set_generic(p_index, 0, SFP_LED_WRMODE2);
-	} else if (val == SFP_LED_WRMODE_OTHER) {
-		/* cannot set and clear LED in the same call! */
-		shw_sfp_set_generic(p_index, 0, SFP_LED_WRMODE1);
-		shw_sfp_set_generic(p_index, 1, SFP_LED_WRMODE2);
-	} else if (val == SFP_LED_WRMODE_MASTER) {
-		shw_sfp_set_generic(p_index, 1,
-				    SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
-	} else if (val == SFP_LED_WRMODE_OFF) {
-		shw_sfp_set_generic(p_index, 0,
-				    SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
-	}
-	leds_map[p_index] = val;
-}
-
-static void update_link_leds(void) {
+// Check if all ports are initialized
+int hal_port_all_ports_initialized(void) {
+	struct hal_port_state *ps=halPorts.ports;
 	int i;
-	struct hal_port_state *port = &ports[0];
 
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
-		if (port->in_use && state_up(port->state)) {
-
-			if (port->portMode == PORT_MODE_SLAVE)
-				set_led_wrmode(i, SFP_LED_WRMODE_SLAVE);
-			else if (port->portMode  == PORT_MODE_MASTER)
-				set_led_wrmode(i, SFP_LED_WRMODE_MASTER);
-			else
-				set_led_wrmode(i, SFP_LED_WRMODE_OTHER);
+		if ( ps->in_use && fsm_get_state( &ps->fsm ) ==HAL_PORT_STATE_INIT ) {
+			// This port has not finished its initialization state
+			return 0;
 		}
-		port++;
+		ps++;
 	}
+	return 1;
 }
 
-
-/* to avoid i2c transfers to set the synced LEDs, cache their state */
-static void set_led_synced(int p_index, int val)
-{
-	/* We assume that after the HAL is started all LEDs are off */
-	static int leds_map[HAL_MAX_PORTS];
-
-	if (p_index >= HAL_MAX_PORTS)
-		return;
-
-	if (leds_map[p_index] == val) {
-		/* value has not changed */
-		return;
-	}
-
-	/* update the LED */
-	shw_sfp_set_led_synced(p_index, val);
-	leds_map[p_index] = val;
-}
-
-static void update_sync_leds(void)
-{
-	int i;
-	struct hal_port_state *port=&ports[0];
-
-	for (i = 0; i < HAL_MAX_PORTS; i++) {
-
-		/* Check:
-		 * --port in use
-		 * --link is up
-		 */
-		if (   port->in_use
-		    && state_up(port->state) ) {
-
-			int ledValue;
-
-			/* Check:
-			* --ppsi instance in slave state
-			* --servo is locked
-			* --WR of HA PTP servo
-			* --servo is updating
-			*/
-			ledValue= port->synchronized
-			    && (port->portInfoUpdated--) > -10
-			    ? 1 : 0;
-			set_led_synced(i, ledValue);
-		}
-		port++;
-	}
-}
-
-void hal_update_port_info(char *iface_name, int mode, int synchronized){
+void hal_port_update_info(char *iface_name, int mode, int synchronized){
 
 	int i;
-	struct hal_port_state *port=&ports[0];
+	struct hal_port_state *ps=halPorts.ports;
 
 	if ( iface_name==NULL ) {
 		pr_error("%s: Invalid iface_name parameter (NULL).\n",__func__);
 		return;
 	}
 
+	/* TODO: Improve/implement handling of many instances on a single 
+	   physical port. Currently, the PPSi instance with the greatest
+	   index will override any preceeding instances on a give physical
+	   port. Very likely, a table with counter of instances per physical
+	   port could be done. If the counter is greater than 1, the arbiration
+	   kicks in. In such case, we could follow what was implemente 
+	   previously, namely an Instance in PTP SLAVE state has precedence.
+	   TO BE DISCUSSED.
+        */
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
 
-		if (port->in_use &&
-				state_up(port->state) &&
-				!strcmp(iface_name,port->name) ) {
+		if (ps->in_use &&
+				!strcmp(iface_name,ps->name) ) {
 
-			port->portMode=mode;
-			port->synchronized=synchronized;
-			port->portInfoUpdated=1;
+			ps->portMode=mode;
+			ps->synchronized=synchronized;
+			ps->portInfoUpdated=1;
 			break;
 		}
-		port++;
+		ps++;
 	}
 }
 

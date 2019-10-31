@@ -383,6 +383,7 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo, char *prefi
 #define DUMP_STRUCT struct hal_shmem_header
 struct dump_info hal_shmem_info [] = {
 	DUMP_FIELD(int, nports),
+	DUMP_FIELD(int, shmemState),
 	DUMP_FIELD(int, hal_mode),
 	DUMP_FIELD(int, read_sfp_diag),
 	DUMP_FIELD(sensor_temp, temp.fpga),
@@ -401,7 +402,8 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, hw_index),
 	DUMP_FIELD(int, fd),
 	DUMP_FIELD(int, hw_addr_auto),
-	DUMP_FIELD(int, state),
+	DUMP_FIELD(int, fsm.st.state),
+	DUMP_FIELD(int, pllFsm.st.state),
 	DUMP_FIELD(int, fiber_index),
 	DUMP_FIELD(int, locked),
 	/* these fields are defined as uint32_t but we prefer %i to %x */
@@ -442,8 +444,50 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(uint32_t, t2_phase_transition),
 	DUMP_FIELD(uint32_t, t4_phase_transition),
 	DUMP_FIELD(uint32_t, ep_base),
+	DUMP_FIELD(int, sfpPresent),
 	DUMP_FIELD(int, has_sfp_diag),
 	DUMP_FIELD(int, monitor),
+
+	/* PPSi instance information */
+	DUMP_FIELD(int, portMode),
+	DUMP_FIELD(int, synchronized),
+	DUMP_FIELD(int, portInfoUpdated),
+
+	/* Events to process */
+	DUMP_FIELD(int,  evt_reset),
+	DUMP_FIELD(int,  evt_lock),
+	DUMP_FIELD(int,  evt_linkUp),
+
+};
+
+/* map for fields of hal_port_state.lpdc (hal_shmem.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT halPortLPDC_t
+struct dump_info hal_port_info_lpdc [] = {
+		DUMP_FIELD(int, isSupported),
+		DUMP_FIELD(int, txSetupFSM.st.state),
+		DUMP_FIELD(int, rxSetupFSM.st.state),
+};
+
+/* map for fields of hal_port_state.lpdc.txsetup (hal_shmem.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT halPortLpdcTx_t
+struct dump_info hal_port_info_lpdc_txsetup [] = {
+		DUMP_FIELD(int, attempts),
+		DUMP_FIELD(int, cal_saved_phase),
+		DUMP_FIELD(int, cal_saved_phase_valid),
+		DUMP_FIELD(int, measured_phase),
+		DUMP_FIELD(int, expected_phase),
+		DUMP_FIELD(int, tolerance),
+		DUMP_FIELD(int, update_cnt),
+		DUMP_FIELD(int, expected_phase_valid),
+};
+
+/* map for fields of hal_port_state.lpdc.rxsetup (hal_shmem.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT halPortLpdcRx_t
+struct dump_info hal_port_info_lpdc_rxsetup [] = {
+		DUMP_FIELD(int, attempts),
 };
 
 int dump_hal_mem(struct wrs_shm_head *head)
@@ -472,9 +516,31 @@ int dump_hal_mem(struct wrs_shm_head *head)
 
 	for (i = 0; i < n; i++, p++) {
 		char prefix[64];
+		char prefix2[64];
+
 
 		sprintf(prefix,"HAL.port.%d",i+1);
 		dump_many_fields(p, hal_port_info, ARRAY_SIZE(hal_port_info),prefix);
+		strcat(prefix,".lpdc");
+		dump_many_fields(&p->lpdc, hal_port_info_lpdc, ARRAY_SIZE(hal_port_info_lpdc),prefix);
+		if ( p->lpdc.txSetup) {
+			halPortLpdcTx_t *txsetup;
+
+			if ( (txsetup=wrs_shm_follow(head, p->lpdc.txSetup))!=NULL ) {
+				strcpy(prefix2,prefix);
+				strcat(prefix2,".txsetup");
+				dump_many_fields(txsetup, hal_port_info_lpdc_txsetup, ARRAY_SIZE(hal_port_info_lpdc_txsetup),prefix2);
+			}
+		}
+		if ( p->lpdc.rxSetup) {
+			halPortLpdcTx_t *rxsetup;
+
+			if ( (rxsetup=wrs_shm_follow(head, p->lpdc.rxSetup))!=NULL ) {
+				strcpy(prefix2,prefix);
+				strcat(prefix2,".rxsetup");
+				dump_many_fields(rxsetup, hal_port_info_lpdc_rxsetup, ARRAY_SIZE(hal_port_info_lpdc_rxsetup),prefix2);
+			}
+		}
 	}
 	return 0;
 }

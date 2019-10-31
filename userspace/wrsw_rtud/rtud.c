@@ -108,7 +108,7 @@ static int rtu_create_static_entries(void)
 	for (i = 0; i < hal_nports_local; i++) {
 		enabled_port_mask |= (1 << hal_ports_local_copy[i].hw_index);
 
-		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
+		port_was_up[i] = state_up(&hal_ports_local_copy[i]);
 	}
 
 	// VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
@@ -180,7 +180,7 @@ static void rtu_update_ports_state(void)
 		if (!hal_ports_local_copy[i].in_use)
 			continue;
 
-		link_up = state_up(hal_ports_local_copy[i].state);
+		link_up = state_up(&hal_ports_local_copy[i]);
 		if (port_was_up[i] && !link_up) {
 			pr_info(
 			      "Port %s went down, removing corresponding entries...\n",
@@ -253,7 +253,7 @@ static int rtu_daemon_learning_process(void)
 			for (port_down = i = 0; i <= MAX_PORT; i++) {
 				p = &hal_ports_local_copy[i];
 				if (p->in_use && p->hw_index == req.port_id
-				    && !state_up(p->state)) {
+				    && !state_up(p)) {
 					port_down = 1;
 					pr_debug("port down %s\n", p->name);
 					break;

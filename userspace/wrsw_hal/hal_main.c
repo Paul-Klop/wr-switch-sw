@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <rt_ipc.h>
+
 #include <libwr/wrs-msg.h>
 #include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
@@ -21,12 +23,39 @@
 #include <libwr/util.h>
 #include <libwr/timeout.h>
 
-#include "wrsw_hal.h"
-#include <rt_ipc.h>
+#include "hal_ports.h"
+#include "hal_timer.h"
+#include "hal_timing.h"
 
 #define MAX_CLEANUP_CALLBACKS 16
-#define UPDATE_FAN_PERIOD 500
-#define UPDATE_ALL_PERIOD 100
+
+typedef enum {
+	TMO_UPDATE_ALL=0,
+	TMO_UPDATE_FAN,
+	TMO_COUNT
+}main_tmo_id_t;
+
+static void cb_timer_update_fan(int timerId);
+static void cb_timer_update_all(int timerId);
+
+/* Polling timeouts (RT Subsystem & SFP detection) */
+static timer_parameter_t _timerParameters[] = {
+		{
+				.id=TMO_UPDATE_ALL,
+				.tmoMs=100, // 100ms
+				.repeat=1,
+				.cb=cb_timer_update_all
+		},
+		{
+				.id=TMO_UPDATE_FAN,
+				.tmoMs=500, // 500ms
+				.repeat=1,
+				.cb=cb_timer_update_fan
+		},
+};
+
+#define MAIN_TIMER_COUNT (sizeof(_timerParameters)/sizeof(timer_parameter_t))
+
 
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
@@ -35,6 +64,7 @@ static char *dotconfigname = "/wr/etc/dot-config";
 
 struct hal_shmem_header *hal_shmem;
 struct wrs_shm_head *hal_shmem_hdr;
+struct hal_temp_sensors temp_sensors;
 
 /* Adds a function to be called during the HAL shutdown. */
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
@@ -114,16 +144,14 @@ static int hal_init(void)
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
 
-	/* read timing mode from dot-config */
-	assert_init(hal_init_timing_mode());
+	/* Init timing part */
+	assert_init(hal_tmg_init(logfilename));
 
 	/* Initialize HAL's shmem - see hal_ports.c */
-	assert_init(hal_port_init_shmem(logfilename));
-
-	assert_init(hal_init_timing(logfilename));
+	assert_init(hal_port_shmem_init(logfilename));
 
 	/* Initialize IPC/RPC - see hal_ports.c */
-	assert_init(hal_port_init_wripc(logfilename));
+	assert_init(hal_port_wripc_init(logfilename));
 
 	//everything is fine up to here, we can blink green LED
 	shw_io_write(shw_io_led_state_o, 0);
@@ -223,11 +251,29 @@ static void hal_parse_cmdline(int argc, char *argv[])
 	}
 }
 
+static void cb_timer_update_fan(int timerId) {
+
+	/* Update fans and get temperatures values. Don't write
+	* temperatures directly to the shmem to reduce the
+	* critical section of shmem */
+	shw_update_fans(&temp_sensors);
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+	memcpy(&hal_shmem->temp, &temp_sensors,
+	       sizeof(temp_sensors));
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+}
+
+static void cb_timer_update_all(int timerId) {
+	hal_port_update_all();
+}
+
+int hal_get_fpga_temperature(void)
+{
+	return temp_sensors.fpga;
+}
+
 int main(int argc, char *argv[])
 {
-	struct hal_temp_sensors temp_sensors; /* local copy of temperatures */
-	static timeout_t update_fan_tmo;
-	static timeout_t update_all_tmo;
 
 	wrs_msg_init(argc, argv, LOG_DAEMON);
 
@@ -246,8 +292,7 @@ int main(int argc, char *argv[])
 	if (hal_init())
 		exit(1);
 
-	libwr_tmo_init(&update_fan_tmo, UPDATE_FAN_PERIOD, 1);
-	libwr_tmo_init(&update_all_tmo, UPDATE_ALL_PERIOD, 1);
+	timer_init(_timerParameters,MAIN_TIMER_COUNT);
 
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
@@ -261,20 +306,15 @@ int main(int argc, char *argv[])
 	 */
 
 	for (;;) {
-		hal_update_wripc(25 /* max ms delay */);
+		hal_wripc_update(25 /* max ms delay */);
 
-		if (libwr_tmo_expired(&update_all_tmo))
-			hal_port_update_all();
+		// Check main timers and call callback if timeout expires
+		timer_scan(_timerParameters,MAIN_TIMER_COUNT);
 
-		if (libwr_tmo_expired(&update_fan_tmo)) {
-			/* Update fans and get temperatures values. Don't write
-			* temperatures directly to the shmem to reduce the
-			* critical section of shmem */
-			shw_update_fans(&temp_sensors);
-			wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-			memcpy(&hal_shmem->temp, &temp_sensors,
-			       sizeof(temp_sensors));
-			wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+		if ( hal_shmem->shmemState== HAL_SHMEM_STATE_INITITALIZING) {
+			// Check if all ports have been initialized
+			if ( hal_port_all_ports_initialized())
+				hal_shmem->shmemState= HAL_SHMEM_STATE_INITITALIZED;
 		}
 	}
 

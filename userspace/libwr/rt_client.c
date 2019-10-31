@@ -71,6 +71,19 @@ int rts_set_mode(int mode)
 	return rval;
 }
 
+int rts_ptracker_set_average_samples(int channel, int avg_samples)
+{
+	int rval;
+	int ret = minipc_call(client, RTS_TIMEOUT,
+			      &rtipc_rts_set_average_samples_struct, &rval, avg_samples);
+
+	if (ret < 0)
+		return ret;
+
+	return rval;
+}
+
+
 /* Sets the phase setpoint on a given channel */
 int rts_adjust_phase(int channel, int32_t phase_setpoint)
 {

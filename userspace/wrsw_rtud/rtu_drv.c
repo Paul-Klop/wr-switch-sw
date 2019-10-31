@@ -71,66 +71,66 @@ extern struct wrs_shm_head *hal_head;
 extern struct hal_port_state *hal_ports;
 extern int hal_nports_local;
 
+#define HAL_SHMEM_TOTAL_US (20000000) // 20sec
+#define HAL_SHMEM_SLEEP_US (250000) // 250ms
+#define HAL_SHMEM_RETRIES  (HAL_SHMEM_TOTAL_US/HAL_SHMEM_SLEEP_US)
+
 void init_shm(void)
 {
-	struct hal_shmem_header *h;
-	int ii;
+	struct hal_shmem_header *hal_shem_header;
 	int n_wait = 0;
 	int ret;
 
 	/* wait for HAL */
 	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
 		n_wait++;
-		if (n_wait > 10) {
+		if (n_wait > HAL_SHMEM_RETRIES) {
 			/* print if waiting more than 10 seconds, some wait
 			 * is expected since hal requires few seconds to start
 			 */
 			if (ret == WRS_SHM_OPEN_FAILED) {
-				pr_error("Unable to open HAL's shmem!\n");
+				pr_error("Unable to open HAL's shared memory!\n");
 			}
 			if (ret == WRS_SHM_WRONG_VERSION) {
-				pr_error("Unable to read HAL's version!\n");
-			}
-			if (ret == WRS_SHM_INCONSISTENT_DATA) {
-				pr_error("Unable to read consistent data from "
-					 "HAL's shmem!\n");
+				pr_error("Unable to read HAL's shared memory version!\n");
 			}
 			exit(1);
 		}
-		sleep(1);
+		usleep(HAL_SHMEM_SLEEP_US);
 	}
 
-	h = (void *)hal_head + hal_head->data_off;
-
-	while (1) { /* wait 10 sec for HAL to produce consistent nports */
-		ii = wrs_shm_seqbegin(hal_head);
-		/* Assume number of ports does not change in runtime */
-		hal_nports_local = h->nports;
-		if (!wrs_shm_seqretry(hal_head, ii))
-			break;
-		if (n_wait > 10) {
-			pr_error("Wait for HAL.\n");
-			exit(1);
-		}
-		n_wait++;
-		sleep(1);
-	}
+	hal_shem_header = (void *)hal_head + hal_head->data_off;
 
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		pr_error("Unknown hal's shm version %i (known is %i)\n",
+		pr_error("Unexpected HAL's shared memory version %i (expected is %i)\n",
 			hal_head->version, HAL_SHMEM_VERSION);
 		exit(-1);
 	}
 
+	// Wait end of HAL initialization to produce consistent nports
+	n_wait=0;
+	while (1) {
+		if ( hal_shem_header->shmemState==HAL_SHMEM_STATE_INITITALIZED )
+			break;
+		if (n_wait > HAL_SHMEM_RETRIES) {
+			pr_error("HAL initialization waiting failure\n");
+			exit(1);
+		}
+		n_wait++;
+		usleep(HAL_SHMEM_SLEEP_US);
+	}
+
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
-	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	hal_nports_local = hal_shem_header->nports;
+	hal_ports = wrs_shm_follow(hal_head, hal_shem_header->ports);
 	if (hal_nports_local > HAL_MAX_PORTS) {
 		pr_error("Too many ports reported by HAL. %d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
 		exit(-1);
 	}
+	pr_info("Connected to HAL's share memory.\n");
 }
 
 /**

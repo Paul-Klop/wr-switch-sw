@@ -1,0 +1,14 @@
+/*
+ * Copyright (C) 2019 CERN (www.cern.ch)
+ * Author: Jean-Claude BAU - CERN
+ *
+ * Released according to the GNU LGPL, version 2.1 or any later version.
+ *
+ *
+ */
+
+#ifndef HAL_MAIN_H
+#define HAL_MAIN_H
+
+extern int hal_get_fpga_temperature(void);
+#endif

@@ -1,3 +1,4 @@
+-include ../Makefile.specific
 
 # We are now Kconfig-based
 -include ../../.config
@@ -6,9 +7,10 @@ OBJS = init.o fpga_io.o util.o pps_gen.o i2c.o shw_io.o i2c_bitbang.o \
        i2c_fpga_reg.o pio.o libshw_i2c.o i2c_sfp.o fan.o i2c_io.o hwiu.o \
        ptpd_netif.o hal_client.o hal_minirpc.o\
        shmem.o rt_client.o \
-       dot-config.o wrs-msg.o \
+       dot-config.o config-lpcalib.o wrs-msg.o \
        mac.o \
-       timeout.o
+       timeout.o \
+       config-lpcalib.o generic_fsm.o
 
 LIB = libwr.a
 

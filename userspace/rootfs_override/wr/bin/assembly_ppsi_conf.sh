@@ -377,6 +377,7 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [PROFILE_PTP]="profile ptp" [PROFILE_WR]="profile wr" [PROFILE_HA]="profile ha" [PROFILE_CUSTOM]="profile custom" \
 [DESIRADE_STATE_MASTER]="desiredState master" [DESIRADE_STATE_SLAVE]="desiredState slave" [DESIRADE_STATE_PASSIVE]="desiredState passive" \
 [ANNOUNCE_INTERVAL]="logAnnounceInterval" [ANNOUNCE_RECEIPT_TIMEOUT]="announceReceiptTimeout" \
+[SYNC_INTERVAL]="logSyncInterval" \
 [MIN_DELAY_REQ_INTERVAL]="logMinDelayReqInterval" [MIN_PDELAY_REQ_INTERVAL]="logMinPDelayReqInterval" \
 [ASYMMETRY_CORRECTION_ENABLE]="asymmetryCorrectionEnable" \
 [BMODE_MASTER_ONLY]="masterOnly" \
@@ -424,14 +425,6 @@ fi
 
 if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER" ]; then
 	globals[domain-number]="$CONFIG_PTP_OPT_DOMAIN_NUMBER"
-fi
-
-if [ -n "$CONFIG_PTP_OPT_ANNOUNCE_INTERVAL" ]; then
-	globals[announce-interval]="$CONFIG_PTP_OPT_ANNOUNCE_INTERVAL"
-fi
-
-if [ -n "$CONFIG_PTP_OPT_SYNC_INTERVAL" ]; then
-	globals[sync-interval]="$CONFIG_PTP_OPT_SYNC_INTERVAL"
 fi
 
 if [ -n "$CONFIG_PTP_OPT_PRIORITY1" ]; then

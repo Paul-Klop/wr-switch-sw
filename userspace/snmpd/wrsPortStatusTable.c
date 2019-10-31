@@ -97,7 +97,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			 * values defined as WRS_PORT_STATUS_LINK_*
 			*/
 			wrsPortStatusTable_array[i].wrsPortStatusLink =
-					1 + state_up(&port_state);
+					1 + state_up(port_state);
 			if (get_port_state(port_state) == HAL_PORT_STATE_DISABLED) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpError =
 					  WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN;
@@ -202,7 +202,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		{
 			snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG " ignoring any "
 				"problems on port %s as monitoring is disabled\n",
-				wrsPortStatusTable_array[i].wrsPortStatusPortName;
+				wrsPortStatusTable_array[i].wrsPortStatusPortName);
 			continue;
 		}
 		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {

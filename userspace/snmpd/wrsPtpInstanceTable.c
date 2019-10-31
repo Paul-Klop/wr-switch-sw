@@ -78,7 +78,6 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	char *tmpstr_p;
 	int vlan_i;
         float tmp_f;
-	int bc_has_slave = 0;
 	slog_obj_name = wrsPtpInstanceStatusError_str;
 
 	/* number of rows does not change for wrsPortStatusTable */
@@ -208,8 +207,9 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
                         {
 				i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_OK;
 
-				if ((p_a[phys_port].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
-				    (p_a[phys_port].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP))
+				/* error when there is an active Slave port in GM of FM mode */
+				if ((p_a[phys_port-1].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
+				    (p_a[phys_port-1].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP))
 				{
 					if ((i_a[i].wrsPtpInstanceState == PPS_SLAVE ||
 					     i_a[i].wrsPtpInstanceState == PPS_UNCALIBRATED) &&
@@ -232,12 +232,8 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
 					}
 				}
-				if((p_a[phys_port].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP) &&
-				   (i_a[i].wrsPtpInstanceState == PPS_SLAVE))
-				{
-					bc_has_slave = 1;
-				}
-				if ((p_a[phys_port].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
+
+				if ((p_a[phys_port-1].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
 				    (hal_shmem->hal_mode == HAL_TIMING_MODE_BC) &&
 				    (i_a[i].wrsPtpInstanceExtPortCfgDesSt == PPS_SLAVE))
 				{
@@ -251,7 +247,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 							 "is not in SLAVE state.\n",
 							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
 					}
-					if(p_a[phys_port].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)
+					if(p_a[phys_port-1].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)
 					{
 						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
 						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
@@ -262,13 +258,6 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 					}
 				}
 			}
-		}
-		if(hal_shmem->hal_mode == HAL_TIMING_MODE_BC && bc_has_slave == 0)
-		{
-			i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
-			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-				"In Boundary Clock mode, there is no port in SLAVE state\n",
-				slog_obj_name);
 		}
 
 		retries++;

@@ -3,6 +3,7 @@
 #include "wrsPtpDataTable.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPortStatusTable.h"
+#include "wrsPtpInstanceTable.h"
 #include "wrsTimingStatusGroup.h"
 
 static struct pickinfo wrsTimingStatus_pickinfo[] = {
@@ -313,7 +314,11 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 {
 	struct wrsSpllStatus_s *s;
 	struct wrsPortStatusTable_s *p_a;
+	struct wrsPtpInstanceTable_s *i_a;
 	struct wrsTimingStatus_s *t;
+	struct pp_instance *ppsi_i;
+	int phys_port;
+	int has_slave = 0;
 	int i;
 
 	/*********************************************************************\
@@ -326,9 +331,45 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	*/
 	s = &wrsSpllStatus_s;
 	p_a = wrsPortStatusTable_array;
+	i_a = wrsPtpInstanceTable_array;
 	t = &wrsTimingStatus_s;
 	slog_obj_name = wrsSlaveLinksStatus_str;
+	
+	t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
 
+	if (!shmem_ready_hald()) {
+		/* HAL shmem not available yet */
+		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
+		return;
+	}
+	       
+	for (i = 0; i < *ppsi_ppi_nlinks; i++) {
+		ppsi_i = ppsi_ppi + i;
+		/* wrsSlaveLinksStatus is ERROR if any of the instances are ERROR */
+		if (i_a[i].wrsPtpInstanceStatusError == WRS_SLAVE_LINK_STATUS_ERROR) {
+			t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				"One of the PTP Instances reports link status error. "
+				"Check wrsPtpInstanceTable for more details.\n",
+				slog_obj_name);
+		}
+
+		phys_port = i_a[i].wrsPtpInstancePort;
+		if ((p_a[phys_port-1].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP) &&
+		   (i_a[i].wrsPtpInstanceState == PPS_SLAVE))
+		{
+			has_slave = 1;
+		}
+	}
+	
+	/* wrsSlaveLinksStatus is ERROR if the configured mode is BC (defined by
+	 * the clock class of defaultDS) and there is no active slave port*/
+	if (ppsi_defaultDS->clockQuality.clockClass > 127 && has_slave == 0) {
+		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			"In Boundary Clock mode, there is no active port in "
+			"SLAVE state\n", slog_obj_name);
+	}
 }
 
 static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)

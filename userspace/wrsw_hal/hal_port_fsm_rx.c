@@ -275,8 +275,7 @@ static int _hal_port_rx_setup_state_wait_lock(fsm_t *fsm, int eventMsk, int isNe
  *
  */
 static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int eventMsk, int isNewState) {
-		struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
-
+	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
 	updatePllState(ps);
 
@@ -296,8 +295,12 @@ static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int eventMsk, int isNew
 		rts_enable_ptracker(ps->hw_index, 0);
 
 		fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_DONE);
-	}
+	} else {
 
+		if ( !_isHalRxSetupEventEarlyLinkUp(eventMsk) || libwr_tmo_expired( &ps->lpdc.minCalibRx_timeout) )
+			// We are waiting for too long
+			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_INIT);
+	}
 	return 0;
 }
 
@@ -311,7 +314,7 @@ static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewS
 
 	if ( isNewState ) {
 		// This timer is used to leave enough time to the FSM in the other side to detect a link down
-		libwr_tmo_init(&ps->lpdc.rxSetup->restart_timeout, 100, 0);
+		libwr_tmo_restart(&ps->lpdc.rxSetup->restart_timeout);
 		pcs_writel(ps, MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
 		      MDIO_LPC_CTRL);
 	} else {
@@ -339,7 +342,7 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 	/* earlyLinkUp detection only if LPDC support */
 	if ( ps->lpdc.isSupported ) {
 		if ( isNewState ) {
-			libwr_tmo_init( &ps->lpdc.rxSetup->align_to_link_timeout, 5000, 0 );
+			libwr_tmo_restart(&ps->lpdc.rxSetup->align_to_link_timeout);
 		}
 		if ( !early_up) {
 			// Port went done
@@ -431,16 +434,23 @@ void hal_port_rx_setup_fsm_init(struct hal_port_state * ps ) {
 		   the timeout would also kick in when the START state is
 		   entered from WAIT_LOCK*/
 		halPortLpdcRx_t *rxSetup = ps->lpdc.rxSetup;
-		libwr_tmo_init(&rxSetup->earlyup_timeout, 10, 1);
+		libwr_tmo_init(&rxSetup->earlyup_timeout, 10, 0);
 
 		// link timeout
-		libwr_tmo_init(&rxSetup->link_timeout, 100, 1);
+		libwr_tmo_init(&rxSetup->link_timeout, 100, 0);
 
 		// Establish a 1ms wait for the LINK_ALIGNED flag -
 		// alignment detection takes a little bit more time than early
 		// link detect. Without the wait (depending on execution timing of the HAL code)
 		// the wait_lock state might detect the early link but never see it's aligned.
-		libwr_tmo_init(&rxSetup->align_timeout, 1, 1);
+		libwr_tmo_init(&rxSetup->align_timeout, 1, 0);
+
+		// Align to link time-out
+		libwr_tmo_init( &ps->lpdc.rxSetup->align_to_link_timeout, 5000, 0 );
+
+		// This timer is used to leave enough time to the FSM in the other side to detect a link down
+		libwr_tmo_init(&ps->lpdc.rxSetup->restart_timeout, 100, 0);
+
     }
 	/**
 	 * This time-out is used to impose the same minimum of RX calibration time

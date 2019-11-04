@@ -31,14 +31,17 @@ time_t wrsTimingStatus_data_fill(void)
 	time_t time_ptp_data; /* time when wrsPtpDataTable was updated */
 	time_t time_spll; /* time when softPLL data was updated */
 	time_t time_port_status; /* time when port status table was updated */
+	time_t time_ptp_instance; /* time when wrsPtpInstanceTable was updated */
 	static time_t time_ptp_data_prev; /* time when previous wrsPtpDataTable
 					   * table was updated */
 	unsigned int ptp_data_nrows; /* number of rows in wrsPtpDataTable */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
+	unsigned int ptp_instance_nrows;
 
 	time_ptp_data = wrsPtpDataTable_data_fill(&ptp_data_nrows);
 	time_spll = wrsSpllStatus_data_fill();
 	time_port_status = wrsPortStatusTable_data_fill(&port_status_nrows);
+	time_ptp_instance = wrsPtpInstanceTable_data_fill(&ptp_instance_nrows);
 
 	if (ptp_data_nrows > WRS_MAX_N_SERVO_INSTANCES) {
 		snmp_log(LOG_ERR, "SNMP: wrsTimingStatusGroup too many PTP "
@@ -56,7 +59,8 @@ time_t wrsTimingStatus_data_fill(void)
 
 	if (time_ptp_data <= time_update
 	    && time_spll <= time_update
-	    && time_port_status <= time_update) {
+	    && time_port_status <= time_update
+	    && time_ptp_instance <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}
@@ -75,9 +79,9 @@ time_t wrsTimingStatus_data_fill(void)
 		get_wrsSoftPLLStatus();
 	}
 
-	/* update only when the port_status was updated
+	/* update when port_status and ptp instances were updated
 	 * otherwise there may be comparison between the same data */
-	if (time_port_status > time_update) {
+	if (time_port_status > time_update && time_ptp_instance > time_update) {
 		get_wrsSlaveLinksStatus(port_status_nrows);
 		get_wrsPTPFramesFlowing(port_status_nrows);
 	}

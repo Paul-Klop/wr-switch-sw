@@ -111,17 +111,17 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			/* FIXME: get real peer_id */
 			memset(&wrsPortStatusTable_array[i].wrsPortStatusPeer, 0xff,
 			       sizeof(ClockIdentity));
-			if (port_state->calib.sfp.flags & SFP_FLAG_IN_DB) {
+			if (port_state->sfpPresent && port_state->calib.sfp.flags & SFP_FLAG_IN_DB) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
 					WRS_PORT_STATUS_SFP_IN_DB_IN_DATA_BASE;
-			} else {
+			} else if (port_state->sfpPresent) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
 					WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE;
 			}
-			if (port_state->calib.sfp.flags & SFP_FLAG_1GbE) {
+			if (port_state->sfpPresent && port_state->calib.sfp.flags & SFP_FLAG_1GbE) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
 					WRS_PORT_STATUS_SFP_GBE_LINK_GBE;
-			} else {
+			} else if (port_state->sfpPresent) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
 					WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE;
 			}
@@ -179,9 +179,14 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		 * like:
 		 * - wrsPortStatusSfpInDB
 		 */
+		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == 0) {
+			/* if this is not filled, it means SFP is not plugged,
+			 * so there is no error on that port */
+			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
+			continue;
+		}
 		/* Don't check if WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN */
-		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == 0
-		    || wrsPortStatusTable_array[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
+		if(wrsPortStatusTable_array[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
 			continue;
 		}
 

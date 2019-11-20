@@ -563,8 +563,16 @@ config TIME_GM
 	  claim to be a PTP authoritative source on the network.
 	  The clockClass is set to 6 which designates a clock that is
 	  synchronized to a primary reference time source.
-	  The value of the clockClass can be overridden by the user in
-	  a separate configuration parameter (CONFIG_PTP_OPT_CLOCK_CLASS).
+
+config TIME_ARB_GM
+	bool "Arbitrary Grand-Master"
+	help
+	  This options selects the White Rabbit Switch as a grandmaster,
+	  i.e. it uses its input channels to track an application-specific 
+	  source of time.
+	  The clockClass is set to 13 which designates a clock that is
+	  synchronized to an application-specific source of time. The timescale
+	  distributed is then ARB (arbitrary).
 
 config TIME_FM
 	bool "Free-Running Master"
@@ -572,10 +580,8 @@ config TIME_FM
 	  The White Rabbit Switch pretends to be a master on his PTP
 	  network, but it doesn't sync to an external source. Its own
 	  internal clocks and counters are used to drive timing.
-	  The clockClass is set to 52 which designates a clock that shall not
-	  be a slave to another clock i the domain.
-	  The value of the clockClass can be overridden by the user in
-	  a separate configuration parameter (CONFIG_PTP_OPT_CLOCK_CLASS).
+	  The clockClass is set to 193 and all ports must be set to
+	  master-only mode.
 
 
 config TIME_BC
@@ -585,10 +591,117 @@ config TIME_BC
 	  slave on one of its ports and master on the other ones, according
 	  to the standard Best Master Clock algorithm.
 	  The clockClass is set to 248 which is the default clockClass.
-	  The value of the clockClass can be overridden by the user in
-	  a separate configuration parameter (CONFIG_PTP_OPT_CLOCK_CLASS).
+
+config TIME_CUSTOM
+	bool "Custom"
+	help
+	  This custom mode allows free access to the clock quality parameters.
 
 endchoice
+
+menu "PTP options"
+
+config PTP_OPT_DOMAIN_NUMBER
+	int "domain-number"
+	default 0
+	range 0 255
+	help
+	  A domain consists of one or more PTP devices communicating with each
+	  other as defined by the PTP protocol. A domain defines the scope of
+	  PTP message communication, state, operations, data sets, and
+	  timescale. PTP devices may participate in multiple domains.
+	  For more details please refer to the IEEE 1588-2008 standard.
+
+config PTP_OPT_PRIORITY1
+	int "priority1"
+	default "128"
+	range 0 255
+	help
+	  A user configurable designation that a clock belongs to an ordered
+	  set of PTP devices from which a PTP Master is selected.
+	  For more details please refer to the IEEE 1588-2008 standard
+
+config PTP_OPT_PRIORITY2
+	int "priority2"
+	default "128"
+	range 0 255
+	help
+	  A user configurable designation that provides finer grained ordering
+	  among otherwise equivalent PTP devices.
+	  For more details please refer to the IEEE 1588-2008 standard
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_CLOCK_CLASS
+	int "clock-class"
+	default 6 if TIME_GM
+	range 6 6 if TIME_GM
+	default 13 if TIME_ARB_GM
+	range 13 13 if TIME_ARB_GM
+	default 193 if TIME_FM
+	range 193 193 if TIME_FM
+	default 248 if TIME_BC
+	range 248 248 if TIME_BC
+	default 248 if TIME_CUSTOM
+	range 1 255 if TIME_CUSTOM 
+	help
+	  An attribute defining the TAI traceability, synchronization state and
+	  expected performance of the time or frequency distributed by a
+	  Boundary Clock or Ordinary Clock.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_OVERWRITE_ATTRIBUTES
+	boolean "Overwrite default PTP device attributes"
+	depends on ! TIME_CUSTOM
+	default FALSE
+	help
+	  This option allows to overwrite the default value depending 
+	  of the timing mode for the clock accuracy, the clock Allan variance.
+
+if PTP_OPT_OVERWRITE_ATTRIBUTES || TIME_CUSTOM
+
+config PTP_OPT_CLOCK_ACCURACY
+	int "clock-accuracy"
+	default 33  if TIME_GM || TIME_ARB_GM 
+	default 32  if TIME_FM
+	default 254
+	range 0 255
+	help
+	  An attribute defining the accuracy of the Local Clock (e.g. local
+	  oscillator) of a Boundary Clock or Ordinary Clock.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+
+config PTP_OPT_CLOCK_ALLAN_VARIANCE
+	int "clock-allan-variance/offsetScaledLogVariance"
+	default 47360 if TIME_GM || TIME_ARB_GM 
+	default 50973 if TIME_FM
+	default 65535
+	range 0 65535
+	help
+	  An attribute defining the stability of the Local Clock of a
+	  Boundary Clock or Ordinary Clock.
+	  For more details please refer to the IEEE 1588-2008 standard.
+	  If set, this configuration item overwrites the default value from
+	  ppsi-pre.conf during generation of ppsi.conf.
+  
+config PTP_OPT_TIME_SOURCE
+	int "time-source"
+	depends on ! TIME_BC 
+	default 32 if TIME_GM || TIME_ARB_GM 
+	default 160 if TIME_FM
+	default 160
+	range 0 255
+	help
+	  This information-only attribute indicates the source of time used
+	  by the grandmaster (or free-running master).
+	  
+endif
+
+endmenu #"PPSI options"
 
 menu "PPS generation"
 	
@@ -636,20 +749,19 @@ choice
 	prompt "PTP Port Assignment"
 	default PTP_PORT_PARAMS
 	help
-	  You can choose wether to use parameters defined in PORTXX_PARAMS or
-	  your own custom configuration file placed in switch filesystem
+	  You can choose either to use parameters defined in PORTxx_INSTxx or
+	  your own custom configuration file placed in switch file system
 	  or downloaded at boot time.
 
 config PTP_PORT_PARAMS
-	bool "Generate ppsi.conf based on the PORTXX_PARAMS"
+	bool "Generate ppsi.conf based on the PORTxx_INSTyy_z parameters"
 	help
-	  Generate ppsi.conf based on "proto" and "role" specified for each
-	  port in PORTXX_PARAMS.
-	  PPSI's global settings can be set in file
-	  /wr/etc/ppsi-pre.conf
+	  Generate ppsi.conf based on "PORTxx_INSTyy_z parameters" and "role" specified for each
+	  port.
+	  PPSI's global settings can be set in file /wr/etc/ppsi-pre.conf
 
 config PTP_CUSTOM
-	bool "Custom ppsi.conf in the WRS filesystem"
+	bool "Custom ppsi.conf in the WRS file system"
 	help
 	  Use custom file for ppsi defined by CONFIG_PTP_CUSTOM_FILENAME.
 
@@ -659,7 +771,7 @@ config PTP_REMOTE_CONF
 	  This choice allows to specify an URL so you can download a
 	  custom file using the network. This allows running a bunch
 	  of switches, all with the same configuration but different
-	  configuations that can't just be derived from PORT_PARAMS above.
+	  configurations that can't just be derived from PORT_PARAMS above.
 
 endchoice
 
@@ -682,102 +794,6 @@ config PTP_CONF_URL
 	  you can use host names.
 	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
 
-menu "PTP options"
-
-config PTP_OPT_OVERWRITE_CLOCK_CLASS
-	boolean "Overwrite default clock-class"
-	depends on TIME_BC || TIME_FM
-	default FALSE
-	help
-	  The clock class is automatically set depending of the timing mode.
-	  This option allows to overwrite the default value.
-	   
-config PTP_OPT_CLOCK_CLASS
-	int "clock-class"
-	default 52  if TIME_FM
-	default 248 
-	range 128 255 if TIME_BC
-	range 52 122 if TIME_FM
-	depends on PTP_OPT_OVERWRITE_CLOCK_CLASS
-	help
-	  An attribute defining the TAI traceability, synchronization state and
-	  expected performance of the time or frequency distributed by a
-	  Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
-
-config PTP_OPT_CLOCK_ACCURACY
-	int "clock-accuracy"
-	range 0 255
-	default "254"
-	help
-	  An attribute defining the accuracy of the Local Clock (e.g. local
-	  oscillator) of a Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
-
-config PTP_OPT_CLOCK_ALLAN_VARIANCE
-	int "clock-allan-variance/offsetScaledLogVariance"
-	default "65535"
-	range 0 65535
-	help
-	  An attribute defining the stability of the Local Clock of a
-	  Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
-
-config PTP_OPT_DOMAIN_NUMBER
-	int "domain-number"
-	default 0
-	range 0 255
-	help
-	  A domain consists of one or more PTP devices communicating with each
-	  other as defined by the PTP protocol. A domain defines the scope of
-	  PTP message communication, state, operations, data sets, and
-	  timescale. PTP devices may participate in multiple domains.
-	  For more details please refer to the IEEE 1588-2008 standard.
-
-config PTP_OPT_PRIORITY1
-	int "priority1"
-	default "128"
-	range 0 255
-	help
-	  A user configurable designation that a clock belongs to an ordered
-	  set of PTP devices from which a PTP Master is selected.
-	  For more details please refer to the IEEE 1588-2008 standard
-
-config PTP_OPT_PRIORITY2
-	int "priority2"
-	default "128"
-	range 0 255
-	help
-	  A user configurable designation that provides finer grained ordering
-	  among otherwise equivalent PTP devices.
-	  For more details please refer to the IEEE 1588-2008 standard
-	  If set, this configuration item overwrites the default value from
-	  ppsi-pre.conf during generation of ppsi.conf.
-
-config PTP_OPT_OVERWRITE_TIME_SOURCE
-	boolean "Overwrite default time-source"
-	default FALSE
-	help
-	  The clock class is automatically set depending of the timing mode.
-	  This option allows to overwrite the default value.
-	  
-config PTP_OPT_TIME_SOURCE
-	int "time-source"
-	default 160
-	range 0 255
-	depends on PTP_OPT_OVERWRITE_TIME_SOURCE
-	help
-	  This information-only attribute indicates the source of time used
-	  by the grandmaster (or free-running master).
-	  NOTE: This is not supported yet by the PPSi.
-
-endmenu #"PPSI options"
 
 menu "Management configuration"
 config SNMP_TRAPSINK_ADDRESS

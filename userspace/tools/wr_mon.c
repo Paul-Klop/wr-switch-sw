@@ -735,7 +735,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 					/* Note: we may have more pp instances per port */
 /*					if (state_up(port_state->state)) */ {
-						unsigned char *p = ppi->peer;
+						unsigned char *p = ppi->activePeer;
 						char * extension_state_name=EMPTY_EXTENSION_STATE_NAME;
 
 						term_cprintf(C_WHITE, "%02x:%02x"

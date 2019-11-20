@@ -358,8 +358,8 @@ function build_inst_ppsi_keys() {
 }
 
 
-globals_indexes='clock-class clock-accuracy clock-allan-variance domain-number priority1 priority2 time-source externalPortConfigurationEnabled slaveOnly ptpPpsThresholdMs ptpFallbackPpsGen gmDelayToGenPpsSec forcePpsGen'
-globals_not_yet_supported='time-source'
+globals_indexes='clock-class clock-accuracy clock-allan-variance time-source domain-number priority1 priority2 externalPortConfigurationEnabled slaveOnly ptpPpsThresholdMs ptpFallbackPpsGen gmDelayToGenPpsSec forcePpsGen'
+globals_not_yet_supported='empty'
 
 # PHYSICAL PORT PARAMETERS
 declare -A port_dotc_ppsi_key_mapping='(\
@@ -399,28 +399,23 @@ declare -A globals
 [[ "$PRE_FILE" != "" ]] && [[ -f $PRE_FILE ]] && decode_pre_file "$PRE_FILE"
 	
 
-if [ "$CONFIG_TIME_GM" = "y" ]; then
-		globals[clock-class]=6
-else 
-	# Use default value of clock class if not overwritten or empty string 
-	if [ -v CONFIG_PTP_OPT_OVERWRITE_CLOCK_CLASS ] && [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
-		globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS"
-	else
-		if [ "$CONFIG_TIME_FM" = "y" ]; then
-			globals[clock-class]=52
-		fi
-		if [ "$CONFIG_TIME_BC" = "y" ]; then
-			globals[clock-class]=248
-		fi
+if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
+	globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS"
+else # Use BC as default
+	globals[clock-class]="248" 
+fi
+
+if [ -n "$CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES" ]; then
+	# Overwrite default PTP device attributes
+	if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
+		globals[clock-accuracy]="$CONFIG_PTP_OPT_CLOCK_ACCURACY"
 	fi
-fi
-
-
-if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
-	globals[clock-accuracy]="$CONFIG_PTP_OPT_CLOCK_ACCURACY"
-fi
-if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE" ]; then
-	globals[clock-allan-variance]="$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE"
+	if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE" ]; then
+		globals[clock-allan-variance]="$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE"
+	fi
+	if [ -n "$CONFIG_PTP_OPT_TIME_SOURCE" ]; then
+		globals[time-source]="$CONFIG_PTP_OPT_TIME_SOURCE"
+	fi
 fi
 
 if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER" ]; then
@@ -433,20 +428,6 @@ fi
 
 if [ -n "$CONFIG_PTP_OPT_PRIORITY2" ]; then
 	globals[priority2]="$CONFIG_PTP_OPT_PRIORITY2"
-fi
-
-if [ -v CONFIG_PTP_OPT_OVERWRITE_TIME_SOURCE ] && [ -n "$CONFIG_PTP_OPT_TIME_SOURCE" ]; then
-	globals[time-source]="$CONFIG_PTP_OPT_TIME_SOURCE"
-else
-	if [ "$CONFIG_TIME_GM" = "y" ]; then
-		globals[time-source]=16 # ATOMIC_CLOCK
-	fi
-	if [ "$CONFIG_TIME_FM" = "y" ]; then
-		globals[time-source]=160 # INTERNAL_OSCILLATOR
-	fi
-	if [ "$CONFIG_TIME_BC" = "y" ]; then
-		globals[time-source]=160 # INTERNAL_OSCILLATOR
-	fi
 fi
 
 if [ -n "$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED" ]; then

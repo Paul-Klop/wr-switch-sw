@@ -190,9 +190,9 @@ static int hal_port_init(struct hal_port_state *ps, int index)
 	ps->monitor = HAL_PORT_MONITOR_ENABLE;
 	sprintf(key,"PORT%02i_INST%02i_MONITOR",port_i,1);
 	if ((retValue = libwr_cfg_get(key)) == NULL ) {
-		pr_error("port %i (%s): no key \"%s\" specified. Default to"
-			 " monitor=y.\n",
-			 port_i, ps->name,key);
+		ps->monitor = HAL_PORT_MONITOR_DISABLE;
+		pr_info("port %i (%s): monitor=n (%i)\n", port_i,
+			ps->name, ps->monitor);
 	} else {
 		if (!strcasecmp(retValue, "n")) {
 			ps->monitor = HAL_PORT_MONITOR_DISABLE;

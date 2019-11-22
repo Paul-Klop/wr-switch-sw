@@ -315,7 +315,7 @@ static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewS
 	if ( isNewState ) {
 		// This timer is used to leave enough time to the FSM in the other side to detect a link down
 		libwr_tmo_restart(&ps->lpdc.rxSetup->restart_timeout);
-		pcs_writel(ps, MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
+		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE | MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
 		      MDIO_LPC_CTRL);
 	} else {
 		if( libwr_tmo_expired( &ps->lpdc.rxSetup->restart_timeout ) ) {

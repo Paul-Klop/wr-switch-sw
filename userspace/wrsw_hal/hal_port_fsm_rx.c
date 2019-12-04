@@ -338,31 +338,39 @@ static int _hal_port_rx_setup_state_done(fsm_t *fsm, int eventMsk, int isNewStat
 
 	int early_up = _isHalRxSetupEventEarlyLinkUp(eventMsk);
 	int link_up = _isHalRxSetupEventLinkUp(eventMsk);
+	int link_aligned = _isHalRxSetupEventRxAligned(eventMsk);
 
 	/* earlyLinkUp detection only if LPDC support */
 	if ( ps->lpdc.isSupported ) {
 		if ( isNewState ) {
 			libwr_tmo_restart(&ps->lpdc.rxSetup->align_to_link_timeout);
 		}
-		if ( !early_up) {
+		if ( !early_up ) {
 			// Port went done
 			pr_info("rxcal: early link flag lost on port wri%d\n",
 					ps->hw_index + 1);
 
 			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_INIT);
 			return 0;
-        }
-        
-		if( libwr_tmo_expired( &ps->lpdc.rxSetup->align_to_link_timeout ) && !link_up)
-		{
-			
-			pr_warning("rxcal: link is fucked up. Retrying calibration on port %d\n",ps->hw_index + 1);
+		}
 
-			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_RESTART);
+		if ( !link_aligned ) {
+			// Port went down
+			pr_info("rxcal: aligned flag lost on port wri%d\n",
+					ps->hw_index + 1);
+
+			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_INIT);
+			return 0;
+		}
+
+		// EARLY_UP + ALIGNED but autonegotiation fails? try restarting autoneg...
+		if( libwr_tmo_expired( &ps->lpdc.rxSetup->align_to_link_timeout ) && !link_up) {
+			pcs_writel(ps, BMCR_ANENABLE | BMCR_ANRESTART, MII_BMCR);
+			libwr_tmo_restart(&ps->lpdc.rxSetup->align_to_link_timeout);
 			return 0;
 		}
 	}
-	
+
 	if ( ps->lpdc.globalLpdc->numberOfLpdcPorts )
 		return link_up && libwr_tmo_expired(&ps->lpdc.minCalibRx_timeout)  ? 1 : 0;
 	else

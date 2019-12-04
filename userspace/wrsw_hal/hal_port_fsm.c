@@ -250,6 +250,9 @@ static int port_fsm_state_link_up(fsm_t *fsm, int eventMsk, int isNewState) {
 		if ( !_isHalEventPortEarlyLinkUp(eventMsk)) {
 			fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
 		}
+		if ( !_isHalEventPortRxAligned(eventMsk)) {
+			fsm_fire_state(fsm,HAL_PORT_STATE_LINK_DOWN);
+		}
 	}
 
 	if ( !_isHalEventSfpPresent(eventMsk) ) {

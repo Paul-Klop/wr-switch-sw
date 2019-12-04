@@ -32,7 +32,10 @@
 
 #define MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK (1 << 14)
 #define MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK (0 << 14)
+#define MDIO_LPC_STAT_DBG_DATA      (1 << 4)
 
+#define MDIO_LPC_CTRL_DBG_SHIFT_EN  (1 << 8)
+#define MDIO_LPC_CTRL_DBG_TRIG      (1 << 10)
 /*
  * Address and mask to discover support for Low Phase Drift
  * Calibration, taken from endpoint-regs.h

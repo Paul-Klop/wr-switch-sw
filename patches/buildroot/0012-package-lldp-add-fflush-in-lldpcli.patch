@@ -1,0 +1,45 @@
+From 0175432f629684a5207e3427cbb4f28a67ed592a Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 5 Dec 2019 00:30:30 +0100
+Subject: [PATCH] package/lldp: add fflush() in lldpcli
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ ...li-flush-stdout-after-executing-a-command.patch | 25 ++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+ create mode 100644 package/lldpd/0003-lldpcli-flush-stdout-after-executing-a-command.patch
+
+diff --git a/package/lldpd/0003-lldpcli-flush-stdout-after-executing-a-command.patch b/package/lldpd/0003-lldpcli-flush-stdout-after-executing-a-command.patch
+new file mode 100644
+index 0000000..0afd271
+--- /dev/null
++++ b/package/lldpd/0003-lldpcli-flush-stdout-after-executing-a-command.patch
+@@ -0,0 +1,25 @@
++From 3849e680b9498c3b5bcefc293bebd36be5ffeec3 Mon Sep 17 00:00:00 2001
++From: Alessandro Rubini <rubini@gnudd.com>
++Date: Sun, 10 Nov 2019 23:16:43 +0100
++Subject: [PATCH] lldpcli: flush stdout after executing a command
++
++Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
++---
++ src/client/lldpcli.c |    1 +
++ 1 files changed, 1 insertions(+), 0 deletions(-)
++
++diff --git a/src/client/lldpcli.c b/src/client/lldpcli.c
++index e534343..85a6ee9 100644
++--- a/src/client/lldpcli.c
+++++ b/src/client/lldpcli.c
++@@ -583,6 +583,7 @@ main(int argc, char *argv[])
++ 	do {
++ 		if ((line = readline(prompt()))) {
++ 			int n = parse_and_exec(conn, fmt, line);
+++			fflush(stdout);
++ 			if (n != 0) {
++ #ifdef HAVE_READLINE_HISTORY
++ 				add_history(line);
++-- 
++1.7.7.2
++
+-- 
+2.1.4
+

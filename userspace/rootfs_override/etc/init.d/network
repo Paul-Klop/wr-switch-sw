@@ -6,12 +6,29 @@
 dotconfig=/wr/etc/dot-config
 int_file=/etc/network/interfaces
 log_output=/dev/kmsg
+management_port=eth0
+me=`basename "$0"`
+
+#
+# This function is looping forever until DHCP is reachable 
+#
+wait_dhcp_forever()
+{
+	while  : ; do
+		udhcpc  -n -q  -i $management_port
+		if [ "$?" -eq "0" ]; then
+			break
+		fi
+		echo "$me: waiting DHCP service ...."
+		sleep 5
+	done
+}
 
 # no matter what we do keep lo up
 ifup lo &> /dev/null
 
 if grep -q '/ nfs' /proc/mounts; then
-	echo "Running via NFS: leaving eth0 config alone" | tee $log_output
+	echo "Running via NFS: leaving $management_port config alone" | tee $log_output
 	exit 0
 fi
 
@@ -22,13 +39,13 @@ fi
 
 # kill all previous instances of udhcpc
 killall udhcpc &> /dev/null
-# put eth0 down in case it was up before, but it is not so simple
+# put management port down in case it was up before, but it is not so simple
 # ifdown to change /var/run/ifstate
 # flush to aviod ifup complains
 # down to take link down (after reboot ifdown does not put link down)
-ifdown eth0 &> /dev/null
-ip addr flush dev eth0
-ip link set eth0 down
+ifdown $management_port &> /dev/null
+ip addr flush dev $management_port
+ip link set $management_port down
 # wait after down to make udhcpc to work properly
 sleep 1
 
@@ -40,7 +57,7 @@ if [ "$CONFIG_ETH0_STATIC" = "y" ] || [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
     echo "iface lo inet loopback" >> $int_file
     echo "" >> $int_file
 
-    echo "iface eth0 inet static" >> $int_file
+    echo "iface $management_port inet static" >> $int_file
     if [ "$CONFIG_ETH0_IP" ]; then
 	echo "    address $CONFIG_ETH0_IP" >> $int_file
     fi
@@ -61,8 +78,8 @@ fi
 
 if [ "$CONFIG_HOSTNAME_STATIC" = "y" ]; then
     if [ -z "$CONFIG_HOSTNAME_STRING" ]; then
-	echo "empty CONFIG_HOSTNAME_STRING! use wrs" | tee $log_output
-	CONFIG_HOSTNAME_STRING="wrs"
+		echo "empty CONFIG_HOSTNAME_STRING! use wrs" | tee $log_output
+		CONFIG_HOSTNAME_STRING="wrs"
     fi
     /bin/hostname "$CONFIG_HOSTNAME_STRING"
     echo "$CONFIG_HOSTNAME_STRING"  | tee $log_output > /etc/hostname
@@ -73,19 +90,19 @@ fi
 if [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
     echo "Try DHCP to get IP" | tee $log_output
     # try dhcp, if fail use static IP
-    udhcpc -i eth0 -n $DHCP_OPT_EXTRA | tee $log_output
+    udhcpc -i $management_port -n $DHCP_OPT_EXTRA | tee $log_output
     if [ $? -ne 0 ]; then
-	echo "Failed to obtain IP address via DHCP, set static IP" | tee $log_output
-	CONFIG_ETH0_STATIC="y"
+		echo "Failed to obtain IP address via DHCP, set static IP" | tee $log_output
+		CONFIG_ETH0_STATIC="y"
     else
-	exit
+		exit
     fi
 fi
 
 if [ "$CONFIG_ETH0_STATIC" = "y" ]; then
     # ifup to use static parameters from /etc/netwrok/interfaces
     echo "Using static IP" | tee $log_output
-    ifup eth0
+    ifup $management_port
     exit
 fi
 
@@ -94,4 +111,5 @@ fi
 echo "Using DHCP to get IP" | tee $log_output
 # redirect output from udhcpc into syslog and output about the first lease to
 # the kernel log (syslog is not started at this point)
-udhcpc -S -b -i eth0 $DHCP_OPT_EXTRA | tee $log_output
+wait_dhcp_forever
+udhcpc -S -b -i $management_port $DHCP_OPT_EXTRA | tee $log_output

@@ -203,6 +203,7 @@ static int libwr_cfg_read_kconfig(struct kc **all_configs,
 	struct kc *kc;
 	int ret = 0;
 	int len;
+	int helpIndentation=-1; // Not in help
 
 	/* Prevent infinite recursion */
 	if (depth_level >= READ_KCONFIG_MAX_DEPTH) {
@@ -227,10 +228,34 @@ static int libwr_cfg_read_kconfig(struct kc **all_configs,
 		return -1;
 	while (fgets(s, sizeof(s), f)) {
 		char *ss=s;
+		int indentation=0;
 
-		/* Remove leading spaces */
-		while ( *ss==' ' || *ss=='\t')
+		/* The indentation must be measured to make the difference between
+		 * a key word or a text in help section
+		 */
+
+		/* Remove leading spaces and measure indentation */
+		while ( *ss==' ' || *ss=='\t') {
+			indentation++;
 			ss++;
+		}
+
+		if (helpIndentation==-1 ) {
+			// Not in help section
+			if (strncmp(ss,"help",4)==0 || strncmp(ss,"---help---",10)==0 ) {
+				// Enter in help section
+				helpIndentation=indentation;
+				continue;
+			}
+		} else {
+			// In help section
+			if ( indentation>=helpIndentation )
+				continue; // Still in help section
+			helpIndentation=-1; // Exiting help section
+		}
+
+		if ( *ss==0 || *ss=='\n' || *ss=='#' )
+			continue;
 
 		if (sscanf(ss, "source %s", name) == 1) {
 			/* Recursive call for sourced files */

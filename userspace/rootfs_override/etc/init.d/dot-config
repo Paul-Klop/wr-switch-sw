@@ -10,12 +10,28 @@ dotconfig=/wr/etc/dot-config
 tmpconfig=/tmp/dot-config
 tmpdir=/tmp
 log_output=/dev/kmsg
+management_port=eth0
+me=`basename "$0"`
 
 set -o pipefail # The return value of a pipeline is the status of
                 # the last command to exit with a non-zero status,
                 # or zero if no command exited with a non-zero status
                 # Needed for return value ($?) of xxx in "xxx | tee yyy"
 
+#
+# This function is looping forever until DHCP is reachable 
+#
+wait_dhcp_forever()
+{
+	while  : ; do
+		udhcpc -n -q  -i $management_port
+		if [ "$?" -eq "0" ]; then
+			break
+		fi
+		echo "$me: waiting DHCP service...."
+		sleep 5
+	done
+}
 
 rm -f "$tmpdir"/dot-config_source
 
@@ -58,40 +74,44 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
     # get URL via DHCP
     if [ "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" = "y" ] \
 	    || [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ]; then
-	if [ "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" = "y" ]; then
-	    echo "try_dhcp" > "$tmpdir"/dot-config_source
-	fi
-	if [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ]; then
-	    echo "force_dhcp" > "$tmpdir"/dot-config_source
-	fi
-
-	# up eth0 to allow dhcp requests
-	ifconfig eth0 up
-	# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
-	# from DHCP (which contain url with dot-config).
-	/sbin/udhcpc -i eth0 -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
-		-n -q -f -t 5 &>/dev/null
-	if [ -f "$tmpdir"/dot-config_source_url ]; then
-	    # replace CONFIG_DOTCONF_URL with one gotten from dhcp
-	    CONFIG_DOTCONF_URL=`cat "$tmpdir"/dot-config_source_url`
-	    echo "Got dot-config's URL ("$CONFIG_DOTCONF_URL") via DHCP" | tee $log_output >& 2
-	else
-	    echo "dhcp_error" > "$tmpdir"/dot-config_status
-	    echo "Unable to get dot-config's URL via DHCP, using old dot-config" | tee $log_output >& 2
-	    # apply old dot-config
-	    /wr/bin/apply_dot-config
-	    exit
-	fi
+		if [ "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" = "y" ]; then
+		    echo "try_dhcp" > "$tmpdir"/dot-config_source
+		fi
+		if [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ]; then
+		    echo "force_dhcp" > "$tmpdir"/dot-config_source
+		fi
+	
+		# up management port to allow dhcp requests
+		ifconfig $management_port up
+		if [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ] && [ "$CONFIG_ETH0_DHCP" = "y" ]; then
+			# Wait DHCP forever only if DHCP is also forced on management port  
+		    wait_dhcp_forever
+		fi
+		# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
+		# from DHCP (which contain url with dot-config).
+		/sbin/udhcpc -i $management_port -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
+			-n -q -f -t 5 &>/dev/null
+		if [ -f "$tmpdir"/dot-config_source_url ]; then
+		    # replace CONFIG_DOTCONF_URL with one gotten from dhcp
+		    CONFIG_DOTCONF_URL=`cat "$tmpdir"/dot-config_source_url`
+		    echo "Got dot-config's URL ("$CONFIG_DOTCONF_URL") via DHCP" | tee $log_output >& 2
+		else
+		    echo "dhcp_error" > "$tmpdir"/dot-config_status
+		    echo "Unable to get dot-config's URL via DHCP, using old dot-config" | tee $log_output >& 2
+		    # apply old dot-config
+		    /wr/bin/apply_dot-config
+		    exit
+		fi
     fi
 
     # replace IPADDR and MACADDR, to have a device-specific name
-    macaddr=$(cat /sys/class/net/eth0/address)
-    ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+    macaddr=$(cat /sys/class/net/${management_port}/address)
+    ipaddr=$(ifconfig ${management_port} | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
     if [ -z "$ipaddr" ]; then
 	# if no IP address available from barebox try to get IP from old dot-config
 	# /etc/init.d/network will run later again
 	/etc/init.d/network
-	ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+	ipaddr=$(ifconfig ${management_port} | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
     fi
     host_name=`hostname`
     URL=$(echo $CONFIG_DOTCONF_URL | \

@@ -589,9 +589,9 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpPortName.<n>}{
     The port on which the instance is running.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpGrandmasterID.<n>}{
-    Not implemented.}
+    Identity of the PTP Grandmaster in the network.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpOwnID.<n>}{
-    Not implemented.}
+    PTP clock identity.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpMode.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoState.<n>}{PTP servo
   state as string}
@@ -622,7 +622,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoUpdateTime.<n>}{
     TAI Nanosecond of the last servo's update.}
 
-  \snmpentrye{WR-SWITCH-MIB}{}{wrsPortStatusTable}{Table with a row per port.}
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsPortStatusTable}{Table with a port per row.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusIndex.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPortName.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusLink.<n>}{}
@@ -644,6 +644,27 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxBiax.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxPower.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpRxPower.<n>}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsPtpInstanceTable}{Table with all PTP instances.
+    This table has two indexes. The first one \textit{n}, corresponds to port
+    number to which a particular instance is assigned, the second index \textit{m},
+    is a serial number of an instance on particular port.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePortIndex.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceOnPortIndex.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceName.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePort.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePortInstance.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePortName.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceState.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceStateNext.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceRole.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceMechanism.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceProto.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceExt.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePeerMac.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePeerVid.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceVlanNum.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceVlanListStr.<n>.<m>}{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add entries from other MIBs.

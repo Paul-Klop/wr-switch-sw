@@ -51,6 +51,7 @@ SOURCES = \
 	wrsPstatsHCTable.c \
 	wrsPtpDataTable.c \
 	wrsPortStatusTable.c \
+	wrsPtpInstanceTable.c \
 	init.c \
 
 MIBS = WR-SWITCH-MIB.txt

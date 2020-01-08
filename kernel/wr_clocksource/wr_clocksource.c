@@ -90,7 +90,6 @@ static void wrcs_timer_fn(unsigned long unused)
 
 	wrcs_cs.rating=450; /* Perfect */
 
-	printk(KERN_DEBUG " %s: Timer function \n",__func__);
 	/* Read ppsg, all fields consistently so we can use the value */
 	do {
 		tai_l = readl(&wrcs_ppsg->CNTR_UTCLO);

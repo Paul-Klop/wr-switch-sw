@@ -3,6 +3,7 @@
 #include "wrsPtpDataTable.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPortStatusTable.h"
+#include "wrsPtpInstanceTable.h"
 #include "wrsTimingStatusGroup.h"
 
 static struct pickinfo wrsTimingStatus_pickinfo[] = {
@@ -30,14 +31,17 @@ time_t wrsTimingStatus_data_fill(void)
 	time_t time_ptp_data; /* time when wrsPtpDataTable was updated */
 	time_t time_spll; /* time when softPLL data was updated */
 	time_t time_port_status; /* time when port status table was updated */
+	time_t time_ptp_instance; /* time when wrsPtpInstanceTable was updated */
 	static time_t time_ptp_data_prev; /* time when previous wrsPtpDataTable
 					   * table was updated */
 	unsigned int ptp_data_nrows; /* number of rows in wrsPtpDataTable */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
+	unsigned int ptp_instance_nrows;
 
 	time_ptp_data = wrsPtpDataTable_data_fill(&ptp_data_nrows);
 	time_spll = wrsSpllStatus_data_fill();
 	time_port_status = wrsPortStatusTable_data_fill(&port_status_nrows);
+	time_ptp_instance = wrsPtpInstanceTable_data_fill(&ptp_instance_nrows);
 
 	if (ptp_data_nrows > WRS_MAX_N_SERVO_INSTANCES) {
 		snmp_log(LOG_ERR, "SNMP: wrsTimingStatusGroup too many PTP "
@@ -55,7 +59,8 @@ time_t wrsTimingStatus_data_fill(void)
 
 	if (time_ptp_data <= time_update
 	    && time_spll <= time_update
-	    && time_port_status <= time_update) {
+	    && time_port_status <= time_update
+	    && time_ptp_instance <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}
@@ -74,9 +79,9 @@ time_t wrsTimingStatus_data_fill(void)
 		get_wrsSoftPLLStatus();
 	}
 
-	/* update only when the port_status was updated
+	/* update when port_status and ptp instances were updated
 	 * otherwise there may be comparison between the same data */
-	if (time_port_status > time_update) {
+	if (time_port_status > time_update && time_ptp_instance > time_update) {
 		get_wrsSlaveLinksStatus(port_status_nrows);
 		get_wrsPTPFramesFlowing(port_status_nrows);
 	}
@@ -313,7 +318,11 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 {
 	struct wrsSpllStatus_s *s;
 	struct wrsPortStatusTable_s *p_a;
+	struct wrsPtpInstanceTable_s *i_a;
 	struct wrsTimingStatus_s *t;
+	struct pp_instance *ppsi_i;
+	int phys_port;
+	int has_slave = 0;
 	int i;
 
 	/*********************************************************************\
@@ -326,78 +335,44 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	*/
 	s = &wrsSpllStatus_s;
 	p_a = wrsPortStatusTable_array;
+	i_a = wrsPtpInstanceTable_array;
 	t = &wrsTimingStatus_s;
 	slog_obj_name = wrsSlaveLinksStatus_str;
+	
+	t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
 
-	/* check whether hal_shmem is available */
-	if (shmem_ready_hald()) {
-		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
-		for (i = 0; i < port_status_nrows; i++) {
-			/* wrsPortStatusMonitor value is ignored for this oid on this port */
-			/* warning N/A */
-			if (p_a[i].wrsPortStatusConfiguredMode == 0) {
-				if (t->wrsSlaveLinksStatus != WRS_SLAVE_LINK_STATUS_ERROR) {
-					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
-				}
-				/* Log always for every port */
-				snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
-					  "Status of wrsPortStatusConfiguredMode not available "
-					  "for port %i (wri%i)\n",
-					  slog_obj_name, i + 1, i + 1);
-			}
-			if (p_a[i].wrsPortStatusLink == 0){
-				if (t->wrsSlaveLinksStatus != WRS_SLAVE_LINK_STATUS_ERROR) {
-					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
-				}
-				/* Log always for every port */
-				snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
-					  "Status of wrsPortStatusLink not available "
-					  "for port %i (wri%i)\n",
-					  slog_obj_name, i + 1, i + 1);
-			}
-
-			/* error when slave port is down when switch is in slave mode
-			  */
-			if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
-			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)) {
-				if (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN) {
-					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
-					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-						"In Boundary Clock mode, port %d (wri%d) configured as slave is down\n",
-						slog_obj_name, i + 1, i + 1);
-				}
-				if (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE) {
-					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
-					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-						"In Boundary Clock mode, port %d (wri%d) configured as slave, "
-						"wrsSpllMode not slave (%d), but %d\n",
-						slog_obj_name, i + 1, i + 1, WRS_SPLL_MODE_SLAVE, s->wrsSpllMode);
-				}
-			}
-			/* error when slave port is up when switch is in master or
-			* grandmaster mode */
-			if ((p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
-				if (hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) {
-					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
-					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-						 "In Grand Master mode, port %d (wri%d) configured as slave is up\n",
-						 slog_obj_name, i + 1, i + 1);
-					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-						 "In Grand Master mode slave ports cannot be used\n",
-						 slog_obj_name);
-				}
-				if (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER) {
-					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
-					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-						 "In Free-running Master mode, port %d (wri%d) configured as slave is up\n",
-						 slog_obj_name, i + 1, i + 1);
-					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-						 "In Free-running Master mode slave ports cannot be used\n",
-						 slog_obj_name);
-				}
-			}
+	if (!shmem_ready_hald()) {
+		/* HAL shmem not available yet */
+		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
+		return;
+	}
+	       
+	for (i = 0; i < *ppsi_ppi_nlinks; i++) {
+		ppsi_i = ppsi_ppi + i;
+		/* wrsSlaveLinksStatus is ERROR if any of the instances are ERROR */
+		if (i_a[i].wrsPtpInstanceStatusError == WRS_SLAVE_LINK_STATUS_ERROR) {
+			t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				"One of the PTP Instances reports link status error. "
+				"Check wrsPtpInstanceTable for more details.\n",
+				slog_obj_name);
 		}
+
+		phys_port = i_a[i].wrsPtpInstancePort;
+		if ((p_a[phys_port-1].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP) &&
+		   (i_a[i].wrsPtpInstanceState == PPS_SLAVE))
+		{
+			has_slave = 1;
+		}
+	}
+	
+	/* wrsSlaveLinksStatus is ERROR if the configured mode is BC (defined by
+	 * the clock class of defaultDS) and there is no active slave port*/
+	if (ppsi_defaultDS->clockQuality.clockClass > 193 && has_slave == 0) {
+		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			"In Boundary Clock mode, there is no active port in "
+			"SLAVE state\n", slog_obj_name);
 	}
 }
 
@@ -435,9 +410,7 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 		/* Error when there is no increase in TX/RX PTP counters.
 		   Check only when port is not (non-wr and none) and port is down */
 		}
-		if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
-		    && (p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
-		    && (p_a[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
+		if ((p_a[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE)
 		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
 			if (wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames) {
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;
@@ -454,19 +427,6 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			/* can't go worse, but check other ports for logging */
 		/* Warning N/A, skip when already error. Will not reach this
 		 * point for first read */
-		}
-		if (p_a[i].wrsPortStatusConfiguredMode == 0) {
-			/* assign if not error */
-			if (t->wrsPTPFramesFlowing != WRS_PTP_FRAMES_FLOWING_ERROR) {
-				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_WARNING_NA;
-			}
-			/* Log always for every port */
-			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
-				  "Status of wrsPortStatusConfiguredMode not available "
-				  "for port %i (wri%i)\n",
-				  slog_obj_name, i + 1, i + 1);
-			/* continue with other ports, somewhere may be an
-			 * error */
 		}
 		if (p_a[i].wrsPortStatusLink == 0){
 			/* assign if not error */

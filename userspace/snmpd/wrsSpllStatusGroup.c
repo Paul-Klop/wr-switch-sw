@@ -49,7 +49,8 @@ time_t wrsSpllStatus_data_fill(void)
 		return time_update;
 	}
 	/* check version of SPLL's stat structure, versions 1 and 2 are ok */
-	if ((spll_stats_p->ver == 1) || (spll_stats_p->ver == 2)) {
+	if ((spll_stats_p->ver == 1) || (spll_stats_p->ver == 2) ||
+	    (spll_stats_p->ver == 3)) {
 		wrsSpllStatus_s.wrsSpllMode = spll_stats_p->mode;
 		wrsSpllStatus_s.wrsSpllIrqCnt = spll_stats_p->irq_cnt;
 		wrsSpllStatus_s.wrsSpllSeqState = spll_stats_p->seq_state;
@@ -59,6 +60,13 @@ time_t wrsSpllStatus_data_fill(void)
 		wrsSpllStatus_s.wrsSpllHY = spll_stats_p->H_y;
 		wrsSpllStatus_s.wrsSpllMY = spll_stats_p->M_y;
 		wrsSpllStatus_s.wrsSpllDelCnt = spll_stats_p->del_cnt;
+	}
+	else
+	{
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"wrsSpllStatusGroup unsupported version of spll_stats "
+			"registers (reading ver %d, supported 1, 2 and 3) \n",
+			spll_stats_p->ver);
 	}
 	/* there was an update, return current time */
 	return time_update;

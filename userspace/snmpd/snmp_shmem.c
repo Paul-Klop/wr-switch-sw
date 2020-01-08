@@ -10,9 +10,10 @@ int hal_nports_local;
 /* PPSI */
 struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
-struct pp_servo *ppsi_servo;
-struct wr_servo_state *ppsi_wr_servo;
 struct pp_instance *ppsi_ppi;
+parentDS_t *ppsi_parentDS;
+defaultDS_t *ppsi_defaultDS;
+
 int *ppsi_ppi_nlinks;
 
 /* RTUd */
@@ -122,15 +123,6 @@ static int init_shm_ppsi(void)
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
-	/* TODO JCB Servo is part of an instance now */
-	ppsi_servo=NULL;
-//	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->servo);
-//	if (!ppsi_servo) {
-//		snmp_log(LOG_ERR, "SNMP: " SL_ER
-//			"Cannot follow ppsi_servo in shmem.\n");
-//		return 4;
-//	}
-
 	ppsi_ppi = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 	if (!ppsi_ppi) {
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
@@ -139,6 +131,20 @@ static int init_shm_ppsi(void)
 	}
 	/* use pointer instead of copying */
 	ppsi_ppi_nlinks = &(ppg->nlinks);
+
+	ppsi_parentDS = wrs_shm_follow(ppsi_head, ppg->parentDS);
+	if (!ppsi_parentDS) {
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"Cannot follow ppsi_parentDS in shmem.\n");
+		return 5;
+	}
+
+	ppsi_defaultDS = wrs_shm_follow(ppsi_head, ppg->defaultDS);
+	if (!ppsi_defaultDS) {
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			"Cannot follow ppsi_defaultDS in shmem.\n");
+		return 5;
+	}
 	return 0;
 }
 

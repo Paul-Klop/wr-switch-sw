@@ -34,6 +34,7 @@ struct wrsPtpDataTable_s {
 	uint32_t wrsPtpClockOffsetErrCnt;
 	uint32_t wrsPtpRTTErrCnt;
 	uint64_t wrsPtpServoUpdateTime;
+	int wrsPtpServoExt;
 };
 
 extern struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];

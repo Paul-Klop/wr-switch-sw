@@ -107,7 +107,7 @@ struct wrs_usd_item {
 static struct wrs_usd_item userspace_daemons[] = {
 	[0] = {.key = "/usr/sbin/sshd", .exp = -1}, /* expect at least one
 						     * sshd process */
-	[1] = {"/wr/bin/wrsw_hal", 2}, /* two wrsw_hal instances */
+	[1] = {"/wr/bin/wrsw_hal", 1}, /* two wrsw_hal instances */
 	[2] = {"/wr/bin/wrsw_rtud", 1},
 	[3] = {"/wr/bin/ppsi", 1},
 	[UDI_HTTP] = {"/usr/sbin/lighttpd", 1}, /* web interface can be

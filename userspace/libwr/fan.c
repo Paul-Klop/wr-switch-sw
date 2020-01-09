@@ -156,6 +156,30 @@ static uint32_t tmp100_read_reg(int dev_addr, uint8_t reg_addr, int n_bytes)
 	return rv;
 }
 
+/* Interpret the readout from registers of TMP100 as temperature
+ * According to TMP100, TMP101 datasheet, the temperature is encoded
+ * on 12 bits in binary twos completment format, e.g.:
+ * temp =  128 Celsius degree for reg_val=b'0111 1111 1111
+ * temp =   25 Celsius degree for reg_val=b'0001 1001 0000
+ * temp =    0 Celsius degree for reg_val=b'0000 0000 0000
+ * temp =  -25 Celsius degree for reg_val=b'1110 0111 0000
+ * temp = -128 Celsius degree for reg_val=b'1000 0000 0000
+ *
+ * We read 2 bytes (16 bits) and the four LSB bits are 0x0. Thus,
+ * the value is interpreted as 16 bit twos complement.
+ */
+static int tmp100_read_temp(int dev_addr)
+{
+	int temp;
+	uint32_t rv = 0x0000FFFF & tmp100_read_reg(dev_addr, 0, 2);
+
+	if(rv & 0x00008000) // negative
+		temp = -(int)(0x0000FFFF & (~rv+1));
+	else                // positive
+		temp =  (int)(0x00007FFF & rv);
+	return temp;
+}
+
 static void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
 {
 	uint8_t data[2];
@@ -261,10 +285,10 @@ void shw_update_fans(struct hal_temp_sensors *sensors)
 	//pr_info("t=%f,pwm=%f\n",t_cur , drive);
 
 	/* update sensor values */
-	sensors->fpga = tmp100_read_reg(TEMP_SENSOR_ADDR_FPGA, 0, 2);
-	sensors->pll = tmp100_read_reg(TEMP_SENSOR_ADDR_PLL, 0, 2);
-	sensors->psl = tmp100_read_reg(TEMP_SENSOR_ADDR_PSL, 0, 2);
-	sensors->psr = tmp100_read_reg(TEMP_SENSOR_ADDR_PSR, 0, 2);
+	sensors->fpga = tmp100_read_temp(TEMP_SENSOR_ADDR_FPGA);
+	sensors->pll  = tmp100_read_temp(TEMP_SENSOR_ADDR_PLL);
+	sensors->psl  = tmp100_read_temp(TEMP_SENSOR_ADDR_PSL);
+	sensors->psr  = tmp100_read_temp(TEMP_SENSOR_ADDR_PSR);
 
 	/* drive fan based on PLL temperature */
 	t_cur = ((float)(sensors->pll >> 4)) / 16.0;

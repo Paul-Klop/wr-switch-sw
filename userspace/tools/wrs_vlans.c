@@ -540,7 +540,8 @@ static int print_help(char *prgname)
 			"\t --list            prints the content of RTUd VLAN table\n"
 			"\t -f|--file <file>  clears configuration, then applies configuration from the provided\n"
 			"\t                   dot-config file\n"
-			"\t -v                be more verbose (can be used 1 or 2 times)\n"
+			"\t -v                be more verbose (can be used 1 or 2 times), to be used with other\n"
+			"\t                   arguments, e.g.: wrsw_vlans -v -v --port 1-18\n"
 			"\t -q                be less verbose\n"
 			"\t --help            prints this help message\n");
 	return 0;

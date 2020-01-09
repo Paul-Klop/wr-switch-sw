@@ -379,9 +379,21 @@ static void set_p_pmode(int ep, int arg_mode)
 {
 	vlans[ep].pmode = arg_mode;
 	vlans[ep].valid_mask |= VALID_QMODE;
-	/* untag is all-or-nothing: default untag if access mode */
-	if ((vlans[ep].valid_mask & VALID_UNTAG) == 0)
-		vlans[ep].untag_mask = (arg_mode == 0);
+	/* untag is all-or-nothing, by default:
+	   - untag enabled : ACCESS QMODE (i.e. mode == 0)
+	   - untag disabled: other  QMODEs
+	 When changing QMODE, we always need to set the default untagging
+	 property, otherwise the user might get lost (e.g. when setting
+	 ACCESS qmode, untagging is enabled, when the QMODE is changed from
+	 ACCESS to TRUNK and untagging is not disabled, the behavior will be
+	 very hard to debug.
+	 If the user knows what he/she is doing, he/she can override default
+	 setting with "--puntag 0|1" in such case either:
+	 - vlans[ep].valid_mask == VALID_UNTAG, or
+	 - vlans[ep].untag_mask will be overriden later
+	 */
+	if ((vlans[ep].valid_mask & VALID_UNTAG) == 0) // user not specified
+		set_p_untag(ep,(arg_mode == 0));       // apply default value
 }
 
 static void set_p_vid(int ep, char *arg_vid)
@@ -512,9 +524,13 @@ static int print_help(char *prgname)
 			"\t                    for example 1-3,5-6 will apply settings to ports 1,2,3,5,6\n"
 			"\t --pmode <0..3>     sets pmode for a port, possible values:\n"
 			"\t \t 0: ACCESS           - tags untagged frames, drops tagged frames not belonging to configured VLAN\n"
+			"\t \t                       (by default untagging enabled, override with --puntag)\n"
 			"\t \t 1: TRUNK            - passes only tagged frames, drops all untagged frames\n"
+			"\t \t                       (by default untagging disabled, override with --puntag)\n"
 			"\t \t 2: VLANs disabled   - passes all frames as is\n"
-			"\t \t 3: Unqualified port - passes all frames regardless of VLAN config\n");
+			"\t \t                       (by default untagging disabled, override with --puntag)\n"
+			"\t \t 3: Unqualified port - passes all frames regardless of VLAN config\n"
+			"\t \t                       (by default untagging disabled, override with --puntag)\n");
 	fprintf(stderr, "\t --pprio <%d|%d..%d>  sets priority for retagging; -1 disables retagging;\n",
 			PORT_PRIO_DISABLE, PORT_PRIO_MIN, PORT_PRIO_MAX);
 	fprintf(stderr, "\t --pvid <%d..%d>   sets VLAN Id for port\n",
@@ -639,7 +655,7 @@ static int apply_settings(struct s_port_vlans *vlans)
 			v = (v & ~EP_VCR0_PVID_MASK) | EP_VCR0_PVID_W(vlans[ep].vid);
 		ep_write(ep, r, v);
 		/* VCR1: loop over the whole bitmask */
-		if (vlans[ep].untag_mask) {
+		if (vlans[ep].valid_mask & VALID_UNTAG) {
 			int i;
 
 			r = offsetof(struct EP_WB, VCR1);

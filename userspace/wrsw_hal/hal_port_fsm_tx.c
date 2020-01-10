@@ -543,8 +543,8 @@ static void _write_tx_calibration_file(struct hal_port_state * ps)
 		if (_ps->in_use && _ps->lpdc.isSupported)
 		{
 			char key_name[80];
-			snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d", ps->hw_index);
-			cfg_set_int(cfg, key_name, ps->lpdc.txSetup->measured_phase);
+			snprintf(key_name, sizeof(key_name), "TX_PHASE_PORT%d", _ps->hw_index);
+			cfg_set_int(cfg, key_name, _ps->lpdc.txSetup->measured_phase);
 		}
 		_ps++;
 	}

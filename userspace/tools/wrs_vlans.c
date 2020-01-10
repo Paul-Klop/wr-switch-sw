@@ -71,6 +71,14 @@ static struct vlan_sets dot_config_vlan_sets[] = {
 };
 static struct s_port_vlans vlans[NPORTS];
 
+static char *qmode_names[] =   {"ACCESS     ",
+				"TRUNK      ",
+				"disabled   ",
+				"unqualified"};
+
+static char *yes_no[] ={"no  ",
+			"yes "};
+
 static unsigned long portmask;
 
 static void set_p_pmode(int ep, int arg_mode);
@@ -157,7 +165,7 @@ int main(int argc, char *argv[])
 	unsigned long conf_pmask = 0; /* current '--port' port mask */
 	struct rtu_shmem_header *rtu_hdr;
 	int n_wait = 0;
-	int ret;
+	int ret, display_updates = 1; /* by default, display updates */
 	char *prgname;
 
 	wrs_msg_level = LOG_WARNING;
@@ -350,9 +358,10 @@ int main(int argc, char *argv[])
 			if (ret < 0)
 				exit(-ret);
 
+			display_updates = 0; /* do not display updates when file*/
 			break;
-		case 'q': break; /* done in wrs_msg_init() */
-		case 'v': break; /* done in wrs_msg_init() */
+		case 'q': display_updates = 0; break; /* done in wrs_msg_init() */
+		case 'v':                      break; /* done in wrs_msg_init() */
 		case '?':
 		case OPT_HELP:
 		default:
@@ -364,12 +373,15 @@ int main(int argc, char *argv[])
 	if (wrs_msg_level >= LOG_DEBUG)
 		minipc_set_logfile(rtud_ch, stderr);
 
-	if (wrs_msg_level >= LOG_INFO) {
+	/* apply vlans and rtu_vlans */
+	apply_settings(vlans);
+
+	/* display what was set*/
+	if (display_updates == 1){
 		print_config_rtu(vlans);
 		print_config_vlan();
 	}
-	/* apply vlans and rtu_vlans */
-	apply_settings(vlans);
+
 	free_rtu_vlans(rtu_vlans);
 
 	return 0;
@@ -557,7 +569,7 @@ static int print_help(char *prgname)
 			"\t -f|--file <file>  clears configuration, then applies configuration from the provided\n"
 			"\t                   dot-config file\n"
 			"\t -v                be more verbose (can be used 1 or 2 times), to be used with other\n"
-			"\t                   arguments, e.g.: wrsw_vlans -v -v --port 1-18\n"
+			"\t                   arguments, try: wrsw_vlans -v -v --port 1-18\n"
 			"\t -q                be less verbose\n"
 			"\t --help            prints this help message\n");
 	return 0;
@@ -567,60 +579,92 @@ static void print_config_rtu(struct s_port_vlans *vlans)
 {
 	int i;
 
+	if(portmask)
+		printf("\nUpdates applied for port(s):\n");
+	else
+		return;
+
 	for_each_port(i) {
-		printf("port: %2d, pmode: %d, pmode_valid: %d, fix_prio: %d, "
-		       "prio_val: %d, prio_valid: %d, vid: %2d, vid_valid: %d,"
-		       " untag_mask: 0x%X, untag_valid: %d\n",
-		       i + 1,
-		       vlans[i].pmode,
-		       ((vlans[i].valid_mask & VALID_QMODE) != 0),
-		       vlans[i].fix_prio,
-		       vlans[i].prio_val,
-		       ((vlans[i].valid_mask & VALID_PRIO) != 0),
-		       vlans[i].vid,
-		       ((vlans[i].valid_mask & VALID_VID) != 0),
-		       vlans[i].untag_mask,
-		       ((vlans[i].valid_mask & VALID_UNTAG) != 0)
-		       );
+		printf("port: %4d   ", i+1);
+		printf("pmode: ");
+		if (vlans[i].valid_mask & VALID_QMODE)
+			printf("%s ", qmode_names[vlans[i].pmode & 0x3]);
+		else
+			printf("[No update] ");
+
+		printf("fix_prio: ");
+		if (vlans[i].valid_mask & VALID_PRIO)
+			printf("%s        ", yes_no[vlans[i].fix_prio & 0x1]);
+		else
+			printf("[No update] ");
+
+		printf("prio_val: ");
+		if (vlans[i].valid_mask & VALID_PRIO)
+			printf("%2d          ", vlans[i].prio_val);
+		else
+			printf("[No update] ");
+
+		printf("vid: ");
+		if (vlans[i].valid_mask & VALID_VID)
+			printf("%4d        ", vlans[i].vid);
+		else
+			printf("[No update] ");
+
+		printf("untag: ");
+		if (vlans[i].valid_mask & VALID_UNTAG)
+			printf("%s        ", yes_no[vlans[i].untag_mask & 0x1]);
+		else
+			printf("[No update] ");
+
+		printf("\n");
 	}
+	printf("\n");
 }
 
 static void print_config_vlan(void)
 {
 	struct rtu_vlans_t *cur;
 	cur = rtu_vlans;
+	if(cur)
+		printf("\nUpdates applied for VLAN(s):\n");
+	else
+		return;
+
 	while (cur) {
-		printf("vid: ");
+		printf("vid : ");
 		if (cur->flags & VALID_VID)
-			printf("%4d ", cur->vid);
+			printf("%4d     ", cur->vid);
 		else
-			printf("     ");
+			printf("[No update] ");
 
 		printf("fid: ");
 		if (cur->flags & VALID_FID)
-			printf("%4d ", cur->fid);
+			printf("%4d        ", cur->fid);
 		else
-			printf("     ");
+			printf("[No update] ");
 
 		printf("port_mask: ");
 		if (cur->flags & VALID_PMASK)
-			printf("0x%05x ", cur->pmask);
+			printf("0x%08x  ", cur->pmask);
 		else
-			printf("        ");
+			printf("[No update] ");
 
 		printf("drop: ");
 		if (cur->flags & VALID_DROP)
-			printf("%1d ", cur->drop);
+			printf("%s        ", yes_no[cur->drop & 0x1]);
 		else
-			printf("  ");
+			printf("[No update] ");
 
 		printf("prio: ");
 		if (cur->flags & VALID_PRIO)
-			printf("%1d", cur->prio);
+			printf("%1d          ", cur->prio);
+		else
+			printf("[No update] ");
 
 		printf("\n");
 		cur = cur->next;
 	}
+	printf("\n");
 }
 
 static uint32_t ep_read(int ep, int offset)
@@ -765,7 +809,6 @@ static void list_p_vlans(void)
 {
 	uint32_t v, r;
 	int ep;
-	static char *names[] = {"ACCESS", "TRUNK", "disabled", "unqualified"};
 
 	printf("#        QMODE    FIX_PRIO  PRIO    PVID     MAC\n");
 	printf("#-----------------------------------------------\n");
@@ -773,7 +816,7 @@ static void list_p_vlans(void)
 		r = offsetof(struct EP_WB, VCR0);
 		v = ep_read(ep, r);
 		printf("wri%-2i    %i %6.6s     %i      %i     %4i    %04x%08x\n",
-		       ep + 1, v & 3, names[v & 3],
+		       ep + 1, v & 3, qmode_names[v & 3],
 		       v & EP_VCR0_FIX_PRIO ? 1 : 0,
 		       EP_VCR0_PRIO_VAL_R(v),
 		       EP_VCR0_PVID_R(v),

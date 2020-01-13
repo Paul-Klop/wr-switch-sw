@@ -437,9 +437,8 @@ int rtu_fd_set_aging_time(unsigned long t)
  */
 void rtu_fd_flush(void)
 {
-	rtu_fd_age_update();	// Update filtering entries age
-
 	pthread_mutex_lock(&fd_mutex);
+	rtu_fd_age_update();	// Update filtering entries age
 	rtu_fd_age_out();	// Remove old entries
 	pthread_mutex_unlock(&fd_mutex);
 }

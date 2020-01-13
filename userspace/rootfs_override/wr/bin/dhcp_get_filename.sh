@@ -29,3 +29,10 @@ fi
 if [ -n "$siaddr" ]; then
    echo $siaddr > "$tmpdir"/boot_server_ip
 fi
+
+# Set hostname
+if [ -n "$hostname" ]; then
+    /bin/hostname "$hostname"
+    echo "$hostname" > /etc/hostname
+fi
+

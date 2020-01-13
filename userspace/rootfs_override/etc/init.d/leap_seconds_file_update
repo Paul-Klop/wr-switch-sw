@@ -105,7 +105,7 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
 		if [ -z "$bsip" ] ; then  
 			# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
 			# from DHCP (which contain url with dot-config).
-			/sbin/udhcpc -i eth0 -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
+			/sbin/udhcpc -i eth0 -s /wr/bin/dhcp_get_filename.sh -O bootfile -O hostname -o \
 				-n -q -f -t 5 &>/dev/null
 		fi
 		# Try again now

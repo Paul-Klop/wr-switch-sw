@@ -89,7 +89,7 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 		fi
 		# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
 		# from DHCP (which contain url with dot-config).
-		/sbin/udhcpc -i $management_port -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
+		/sbin/udhcpc -i $management_port -s /wr/bin/dhcp_get_filename.sh -O bootfile -O hostname -o \
 			-n -q -f -t 5 &>/dev/null
 		if [ -f "$tmpdir"/dot-config_source_url ]; then
 		    # replace CONFIG_DOTCONF_URL with one gotten from dhcp
@@ -108,10 +108,10 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
     macaddr=$(cat /sys/class/net/${management_port}/address)
     ipaddr=$(ifconfig ${management_port} | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
     if [ -z "$ipaddr" ]; then
-	# if no IP address available from barebox try to get IP from old dot-config
-	# /etc/init.d/network will run later again
-	/etc/init.d/network
-	ipaddr=$(ifconfig ${management_port} | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+		# if no IP address available from barebox try to get IP from old dot-config
+		# /etc/init.d/network will run later again
+		/etc/init.d/network
+		ipaddr=$(ifconfig ${management_port} | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
     fi
     host_name=`hostname`
     URL=$(echo $CONFIG_DOTCONF_URL | \
@@ -125,34 +125,34 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
     echo "$URL" > "$tmpdir"/dot-config_source_url
     rm -f $tmpconfig
     case $proto in
-	http|ftp)
-	    wget $URL -O $tmpconfig
-	    ;;
-	tftp)
-	    tftp -g -r "$filename" -l $tmpconfig $host
-	    ;;
-	*)
-	    echo "Invalid URL for dot-config: \"$URL\"" | tee $log_output >& 2
-	    ;;
+		http|ftp)
+		    wget $URL -O $tmpconfig
+		    ;;
+		tftp)
+		    tftp -g -r "$filename" -l $tmpconfig $host
+		    ;;
+		*)
+		    echo "Invalid URL for dot-config: \"$URL\"" | tee $log_output >& 2
+		    ;;
     esac
     if [ -f $tmpconfig ]; then
-	# If it exists, it is not empty or too small and the checker is happy
-	# then try to source it in another shell to verify syntax
-	if [ $(cat $tmpconfig | wc -c) -gt 200 ] &&
-	    /wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig 2>&1| tee $log_output &&
-	    /bin/sh -c ". $tmpconfig"; then
-	    echo "Using newly-downloaded dot-config from $URL" | tee $log_output >& 2
-	    # copy it in place to use the new file (unless it is identical)
-	    cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
-	    # info for SNMP that downloading was successful and checker is happy
-	    echo "config_ok" > "$tmpdir"/dot-config_status
-	else
-	    echo "check_error" > "$tmpdir"/dot-config_status
-	    echo "Errors found in downloaded dot-config \"$URL\", using old" | tee $log_output >& 2
-	fi
+		# If it exists, it is not empty or too small and the checker is happy
+		# then try to source it in another shell to verify syntax
+		if [ $(cat $tmpconfig | wc -c) -gt 200 ] &&
+		    /wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig 2>&1| tee $log_output &&
+		    /bin/sh -c ". $tmpconfig"; then
+		    echo "Using newly-downloaded dot-config from $URL" | tee $log_output >& 2
+		    # copy it in place to use the new file (unless it is identical)
+		    cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
+		    # info for SNMP that downloading was successful and checker is happy
+		    echo "config_ok" > "$tmpdir"/dot-config_status
+		else
+		    echo "check_error" > "$tmpdir"/dot-config_status
+		    echo "Errors found in downloaded dot-config \"$URL\", using old" | tee $log_output >& 2
+		fi
     else
-	echo "download_error" > "$tmpdir"/dot-config_status
-	echo "Download error for dot-config \"$URL\", using old" | tee $log_output >& 2
+		echo "download_error" > "$tmpdir"/dot-config_status
+		echo "Download error for dot-config \"$URL\", using old" | tee $log_output >& 2
     fi
 elif [ "$CONFIG_DOTCONF_SOURCE_LOCAL" = "y" ]; then
     echo "local" > "$tmpdir"/dot-config_source

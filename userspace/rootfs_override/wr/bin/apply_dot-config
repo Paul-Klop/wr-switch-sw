@@ -155,6 +155,43 @@ else
     echo "No valid PTP option in dot-config!" | tee $log_output >& 2
 fi
 
+# Configure processes to be monitored by monit
+# It creates a symbolic link with extension .enabled for all processes to monitor 
+rm -f /etc/monit.d/*.enabled
+if [ "$CONFIG_MONIT_DISABLE" != "y" ]; then
+    # Evaluate all processes that must be monitored 
+	monit_configs=`ls /etc/monit.d/*.conf`
+	if [ -n "$monit_configs" ]; then 
+		for config in $monit_configs ;  do
+			process=`basename $config .conf`
+			monitor=1
+			case $process in
+			  lldpd)    if [ "$CONFIG_LLDPD_DISABLE" == "y" ] ; then 
+			  				monitor=0
+			 			fi 
+			 			;;
+			  nslcd)    if [ "$CONFIG_LDAP_ENABLE" != "y"   ] ; then 
+			  				monitor=0;	
+			  			fi 
+			  			;;
+			  lighttpd) if [ "$CONFIG_HTTPD_DISABLE" == "y" ] ; then 
+			  				monitor=0
+			  			fi 
+			  			;;
+			  *) ;; 
+			esac
+			if [[ $monitor = 1 ]] ; then 
+				ln -s $config  $config.enabled 
+			fi
+		done
+	fi
+fi
+#if monit is running, force it to re-read its configuration
+#monit_pid=/var/run/monit.pid
+#if [ -f $monit_pid ] ; then
+#	kill -SIGHUP `cat $monit_pid`
+#fi
+ 
 # System clock monitor: program the cron tab
 /etc/init.d/system_clock_monitor -s
 

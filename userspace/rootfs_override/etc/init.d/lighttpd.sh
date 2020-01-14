@@ -10,8 +10,7 @@ start_counter() {
 	# increase boot counter
 	COUNTER_FILE="/tmp/start_cnt_httpd"
 	START_COUNTER=1
-	if [ -f "$COUNTER_FILE" ];
-	then
+	if [ -f "$COUNTER_FILE" ] ; then
 	    read -r START_COUNTER < $COUNTER_FILE
 	    START_COUNTER=$((START_COUNTER+1))
 	fi
@@ -30,10 +29,6 @@ start() {
 	if [ "$CONFIG_HTTPD_DISABLE" = "y" ]; then
 		echo "web interface disabled in dot-config!"
 		if [ "$1" != "force" ]; then
-			# Unmonitor web server (lighttpd), ignore all printouts
-			# from monit.
-			# Run in background since monit may wait for a timeout.
-			$MONIT unmonitor lighttpd &>/dev/null &
 			exit 0
 		fi
 		echo -n "Force start of lighttpd: "
@@ -51,15 +46,6 @@ start() {
 		echo "Failed (already running?)"
 	else
 		echo "Failed"
-	fi
-
-	# check whether the process was monitored
-	$MONIT summary 2>&1 | grep lighttpd | grep "Not monitored" &> /dev/null
-	if [ $? -eq 0 ]; then
-		echo "web interface was not monitored, enabling monitoring"
-		# the process was not monitored, enable monitoring
-		# this will generate extra log entries from monit
-		$MONIT monitor lighttpd
 	fi
 }
 

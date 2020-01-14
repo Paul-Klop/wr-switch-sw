@@ -10,8 +10,7 @@ start_counter() {
 	# increase boot counter
 	COUNTER_FILE="/tmp/start_cnt_ldap"
 	START_COUNTER=1
-	if [ -f "$COUNTER_FILE" ];
-	then
+	if [ -f "$COUNTER_FILE" ] ;	then
 		read -r START_COUNTER < $COUNTER_FILE
 		START_COUNTER=$((START_COUNTER+1))
 	fi
@@ -29,10 +28,6 @@ start() {
 	
 	if [ "$CONFIG_LDAP_ENABLE" != "y" ]; then
 		echo "LDAP not enabled in dot-config" | tee $log_output
-		# Unmonitor web server (nslcd), ignore all printouts
-		# from monit.
-		# Run in background since monit may wait for a timeout.
-		$MONIT unmonitor nslcd &>/dev/null &
 		exit 0
 	fi
 	

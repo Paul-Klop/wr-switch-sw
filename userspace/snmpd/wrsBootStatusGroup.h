@@ -107,4 +107,24 @@ extern struct wrsBootStatus_s wrsBootStatus_s;
 time_t wrsBootStatus_data_fill(void);
 
 void init_wrsBootStatusGroup(void);
+
+/* user space daemon list item */
+struct wrs_usd_item {
+	char *key;	/* process name */
+	int32_t exp;	/* expected number of processes */
+	uint32_t cnt;	/* number of processes found */
+};
+
+#define UDI_HTTP 4 /* index of web server in userspace_daemons array */
+#define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
+#define UDI_LLDP 8 /* index of LLDP in userspace_daemons array */
+#define UDI_NSLCD 9 /* index of NSLCD (LDAP) in userspace_daemons array */
+/* user space daemon list */
+/* - key contain process name reported by ps command
+ * - positive exp describe exact number of expected processes
+ * - negative exp describe minimum number of expected processes. Usefull for
+ *   processes that is hard to predict number of their instances. For example
+ *   new sshd process is spawned at ssh login.
+ */
+
 #endif /* WRS_BOOT_STATUS_GROUP_H */

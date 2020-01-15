@@ -1,5 +1,6 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
+#include "wrsBootStatusGroup.h"
 #include "wrsStartCntGroup.h"
 
 #define START_CNT_SSHD "/tmp/start_cnt_sshd"
@@ -9,6 +10,11 @@
 #define START_CNT_WRSWATCHDOG "/tmp/start_cnt_wrs_watchdog"
 #define START_CNT_LLDPD "/tmp/start_cnt_lldpd"
 #define START_CNT_LDAP "/tmp/start_cnt_ldap"
+
+/* This structure is defined in read in wrsBootStatusGroup.c.
+   It is used here to know which deamons are disabled and
+   therefore shall not be checked for start cnt. */
+extern struct wrs_usd_item userspace_daemons[];
 
 static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHAL),
@@ -33,7 +39,7 @@ static void read_start_count(char *file, uint32_t *counter)
 	f = fopen(file, "r");
 	if (!f) {
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
-			 " wrsStartCntGroup filed to open file %s\n", file);
+			 " wrsStartCntGroup failed to open file %s\n", file);
 	} else {
 		/* ignore fscanf errors */
 		fscanf(f, "%d", counter);
@@ -77,12 +83,19 @@ time_t wrsStartCnt_data_fill(void){
 	}
 
 	read_start_count(START_CNT_SSHD, &wrsStartCnt_s.wrsStartCntSshd);
-	read_start_count(START_CNT_HTTPD, &wrsStartCnt_s.wrsStartCntHttpd);
+
+	if(userspace_daemons[UDI_HTTP].exp) /* check only if enabled (exp != 0) */
+		read_start_count(START_CNT_HTTPD, &wrsStartCnt_s.wrsStartCntHttpd);
+
 	read_start_count(START_CNT_SNMPD, &wrsStartCnt_s.wrsStartCntSnmpd);
 	read_start_count(START_CNT_SYSLOGD, &wrsStartCnt_s.wrsStartCntSyslogd);
 	read_start_count(START_CNT_WRSWATCHDOG, &wrsStartCnt_s.wrsStartCntWrsWatchdog);
-	read_start_count(START_CNT_LLDPD, &wrsStartCnt_s.wrsStartCntLldpd);
-	read_start_count(START_CNT_LDAP, &wrsStartCnt_s.wrsStartCntLdap);
+
+	if(userspace_daemons[UDI_LLDP].exp) /* check only if enabled (exp != 0) */
+		read_start_count(START_CNT_LLDPD, &wrsStartCnt_s.wrsStartCntLldpd);
+
+	if(userspace_daemons[UDI_NSLCD].exp) /* check only if enabled (exp != 0) */
+		read_start_count(START_CNT_LDAP, &wrsStartCnt_s.wrsStartCntLdap);
 
 	/* there was an update, return current time */
 	return time_update;

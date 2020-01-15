@@ -86,25 +86,11 @@ static struct wrs_km_item kernel_modules[] = {
 	[9] = {"libcomposite"},
 };
 
-/* user space daemon list item */
-struct wrs_usd_item {
-	char *key;	/* process name */
-	int32_t exp;	/* expected number of processes */
-	uint32_t cnt;	/* number of processes found */
-};
-
-#define UDI_HTTP 4 /* index of web server in userspace_daemons array */
-#define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
-#define UDI_LLDP 8 /* index of LLDP in userspace_daemons array */
-#define UDI_NSLCD 9 /* index of NSLCD (LDAP) in userspace_daemons array */
-/* user space daemon list */
-/* - key contain process name reported by ps command
- * - positive exp describe exact number of expected processes
- * - negative exp describe minimum number of expected processes. Usefull for
- *   processes that is hard to predict number of their instances. For example
- *   new sshd process is spawned at ssh login.
- */
-static struct wrs_usd_item userspace_daemons[] = {
+/* This structure is filled/used here and it is also used in
+   wrsStartCntGroup to recognize on deamons the startCnt should
+   be checked. Note, wrs_usd_item struct and UDI_* are defined in
+   wrsBootStatusGroup.h. */
+struct wrs_usd_item userspace_daemons[] = {
 	[0] = {.key = "/usr/sbin/sshd", .exp = -1}, /* expect at least one
 						     * sshd process */
 	[1] = {"/wr/bin/wrsw_hal", 1}, /* two wrsw_hal instances */

@@ -35,9 +35,14 @@
 
 @setchapternewpage off
 
-@set update-month August 2017
+@set update-month February 2020
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
+
+@comment %**useful declaration used in the document
+@set release_version 6.0
+@set release_version_tiny 0
+@set url_docs https://www.ohwr.org/project/wr-switch-sw/wikis/Documents#files
 
 @finalout
 
@@ -45,7 +50,7 @@
 @title White Rabbit Switch: User's Manual
 @subtitle Information about configuring the White Rabbit switch, for final users
 @subtitle @value{update-month} (@value{release})
-@author Alessandro Rubini, Adam Wujek, Benoit Rat, Federico Vaga, ...
+@author A. Rubini, A. Wujek, B. Rat, F. Vaga, J-C. Bau ...
 @end titlepage
 @headings single
 
@@ -111,7 +116,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 
 The official @sc{pdf} copy of these manuals at each release
 is published in the @i{files} tab of the software project in @t{ohwr.org}:
-(@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
+(@uref{@value{url_docs}})).
 This doesn't apply to release v4.0 and earlier.
 
 The source form of all four manuals is maintained in @t{wr-switch-sw/doc}.
@@ -131,7 +136,8 @@ device.
 Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
 are the owner of one of them, please refer to version 3.3 of the
 @i{wrs-build} document, that includes appendixes about using older
-versions. As usual, it is in the @i{files} tab of @t{ohwr.org}.
+versions. As usual, it is in the @i{files} tab of 
+@t{@uref{@value{url_docs}}}.
 
 V1 and V2 were development items, never shipped.
 
@@ -158,7 +164,7 @@ Additionally, the @t{wrs-firmware.tar} containing corrupted file is renamed to
 the next successful update.
 
 When checksums in the @t{wrs-firmware.tar} are not available
-(for example during downgrading to version pre-5.0) appropriate warning
+(for example during downgrading to version pre-@value{release_version}) appropriate warning
 message is printed to the console.
 
 If this method of upgrading firmware works for you, you can ignore the rest of
@@ -167,10 +173,10 @@ explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
 
 @c ==========================================================================
-@node Upgrade from pre-v5.0 to v5.0
-@section Upgrade from pre-v5.0 to v5.0
+@node Upgrade from pre-v5.0 to v@value{release_version}
+@section Upgrade from pre-v5.0 to v@value{release_version}
 
-During the update from the pre-v5.0 firmware to v5.0 (or later) you might see
+During the update from the pre-v5.0 firmware to v@value{release_version} (or later) you might see
 the following errors on the console.
 @example
 /wr/bin/sdb-read: can't load library 'libm.so.1'
@@ -207,8 +213,8 @@ When upgrading from a pre-4.1 switch software, you need to create this
 need to be aware of the steps involved, in case something goes wrong.
 
 @c ==========================================================================
-@node Upgrading from v4.0
-@section Upgrading from v4.0
+@node Upgrading from v4.0 and later
+@section Upgrading from v4.0 and later
 
 Version 4.0 and later of @t{wr-switch-sw} are able to upgrade
 themselves if you place the proper files in the @i{/update} directory
@@ -228,7 +234,7 @@ you prefer we can't tell. Both work, each with its own drawbacks.
 Each of them preserves the current MAC addresses.
 
 @c =-------------------------------------------------------------------------
-@node Upgrading from v4.0 with the USB cable
+@node Upgrading with the USB cable
 @subsection Upgrading from v4.0 with the USB cable
 
 This is the procedure if you are able to walk to your @sc{wrs} and
@@ -309,7 +315,7 @@ access to the device and, unfortunately, requires some extra steps
 especially if you want to preserve your MAC addresses.
 
 One possible path is flashing version 4.0 (please refer to v4.0
-manuals) and then proceed as described in @ref{Upgrading from v4.0}.
+manuals) and then proceed as described in @ref{Upgrading from v4.0 and later}.
 When flashing version 4.0 you'll need to pass your MAC addresses on
 the command line of the flasher, so please take note of what they are.
 
@@ -387,7 +393,7 @@ The configuration step creates @t{.config}, that you can copy to your
 choices in effect.
 
 The first three configuration items are free-text fields which are intended for
-dot-config management purposed. As now (v5.0.1) these fields are not used for
+dot-config management purposed. As now (v@value{release_version}.@value{release_version_tiny}) these fields are not used for
 any functionality on the switch.
 
 @table @t
@@ -426,12 +432,20 @@ sources are implemented in current version:
         Server can be configured in a way to provide the entire URL to
         the @t{dot-config} in the ``@t{filename}'' configuration field of the
         DHCP server. In this case, provided URL has to be in the same form
-        as @t{CONFIG_DOTCONF_URL}.
-
+        as @t{CONFIG_DOTCONF_URL}. 
+        
         As an alternative, ``@t{filename}'' can be configured only as a
         path. It will be then interpreted as a path on a TFTP server, which IP
         address is taken from the configuration field
         ``@t{The BOOTP next server option}'' of a DHCP server.
+        
+        If the DHCP service is not available at boot time, the switch will wait
+        forever until it has obtained the DHCP lease from server. If the DHCP server is reachable 
+        but switch fails to download @t{dot-config} file then it will 
+        cause errors in SNMP's objects.
+         
+        This choice is only available if CONFIG_ETH0_DHCP is chosen for network configuration. 
+        
 
 @item CONFIG_DOTCONF_SOURCE_TRY_DHCP
 	The same as @t{CONFIG_DOTCONF_SOURCE_FORCE_DHCP}, but this option does
@@ -650,11 +664,14 @@ appropriate way, before the respective service is started.
 
 @item CONFIG_REMOTE_SYSLOG_SERVER
 @itemx CONFIG_REMOTE_SYSLOG_UDP
-
+@itemx CONFIG_LOCAL_SYSLOG_FILE
 	Configuration for system log. The name (or IP address) of the
         server is stored in @t{/etc/rsyslog.conf} of the runtime
         filesystem.  The UDP option, set by default, chooses UDP transmission;
         if unset it selects TCP communication.
+	    @t{CONFIG_LOCAL_SYSLOG_FILE} option indicates the file to which syslog messages will be stored. 
+	  	The file is rotated when reaching 1MB. If remote
+	  	server is specified, the messages go to both, server and local file.
 
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
@@ -742,52 +759,51 @@ appropriate way, before the respective service is started.
 	Please note that unknown facility names will generate a runtime error
 	on the switch.
 
-@item CONFIG_PORT01_PARAMS
-@itemx CONFIG_PORT02_PARAMS
+@item CONFIG_LEAPSEC_SOURCE_LOCAL
+@itemx CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE
+@itemx CONFIG_LEAPSEC_SOURCE_REMOTE_TRY
+@itemx CONFIG_LEAPSEC_URL
+	The @t{/etc/leap-seconds.list} file is used to get the current TAI offset.@xref{wr_date}.
+	The @t{CONFIG_LEAPSEC_SOURCE_LOCAL} choice forces to use the local version,
+	if exists, of @t{/etc/leap-seconds.list} file. 
+	
+	@t{CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE} and @t{CONFIG_LEAPSEC_SOURCE_REMOTE_TRY} choices are 
+	acting in the same way. The @t{leap-seconds.list} is read remotely using the URL
+	defined in @t{CONFIG_LEAPSEC_URL} using the same format as @t{CONFIG_DOTCONF_URL}. If the 
+	downloaded file is newer than the local @t{/etc/leap-seconds.list} file, it will replace it.
+	
+	Unlike @t{CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE}, @t{CONFIG_LEAPSEC_SOURCE_REMOTE_TRY} option does 
+	not cause errors in SNMP's objects if switch fails to download the file.
+
+@item CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED
+@itemx CONFIG_PORT@i{xx}_@i{zz}
 @itemx ...
-@itemx CONFIG_PORT18_PARAMS
 
 	These configuration items are used to set up timing parameters of the
-	WR ports:
+	WR port. 
+	
+	Items build using the format  @t{CONFIG_PORT@i{xx}_@i{zz}} are composed of : 
 
 	@itemize
-		@item @t{name} -- the name of a given interface
-		@item @t{proto} -- PTP protocol type to be used on particular
-				   port; possible values:
-		@itemize
-			@item @t{raw} -- use raw Ethernet frames for timing
-			@item @t{udp} -- use UDP packets for timing
-		@end itemize
-		@item @t{tx} -- TX delay of a port in picoseconds
-		@item @t{rx} -- RX delay of a port in picoseconds
-		@item @t{role} -- PTP role of a port; possible values:
-		@itemize
-			@item @t{master} -- configure port as WR master
-			@item @t{slave} -- configure port as WR slave
-			@item @t{auto} -- when a port is connected to master
-					  behave as a slave, otherwise behave
-					  as master
-			@item @t{non-wr} -- for this port don't report SNMP
-					    errors like: SFP not in DB,
-					    copper SFP connected, non 1GB
-					    SFP etc. This role should be used
-					    for synchronizing regular IEEE-1588
-					    slaves.
-			@item @t{none} -- disable White Rabbit and PTP on a
-					  port
-		@end itemize
-		@item @t{fiber} -- fiber index from @t{CONFIG_FIBERXX_PARAMS}
-				   that is connected to this port
-        @end itemize
+		@item @i{xx} -- represent the port number ('01' to '18')
+		@item @i{yy} -- the item signification for the given port @i{xx} 
+    @end itemize
 
-        Most likely the default values work for you.
-        See @ref{Timing Configuration} for details.
+    Most likely the default values work for you.
+    See @ref{Timing Configuration} for details.
 
-@item CONFIG_SFP00_PARAMS
+@item CONFIG_N_SFP_ENTRIES
+@itemx CONFIG_SFP00_PARAMS
 @itemx ...
-@itemx CONFIG_SFP09_PARAMS
+@itemx CONFIG_SFP17_PARAMS
 
-	Configuration for @sc{sfp} models. You should fill 
+   Configuration for @sc{sfp} models.
+   
+   @t{CONFIG_N_SFP_ENTRIES} indicates number of available SFP entries defined. Up to 18 SFPs
+   can be defined. 
+    
+   @t{CONFIG_SFP@i{xx}_PARAMS} with index @i{xx} in range 00 to 17, contains @sc{sfp} parameters.
+	 You should fill 
         all @sc{sfp} models and all
         wavelengths you are using in your @sc{wrs} 
 	@itemize
@@ -805,59 +821,149 @@ appropriate way, before the respective service is started.
         @end itemize
         See @ref{Timing Configuration} for details.
 
+@item CONFIG_N_FIBER_ENTRIES
 @item CONFIG_FIBER00_PARAMS
 @itemx ...
-@itemx CONFIG_FIBER03_PARAMS
+@itemx CONFIG_FIBER17_PARAMS
 
 	This parameter specifies the physical features of used fiber types.
-	Specify the alpha value for each pair of used wavelengths.
+	
+	@t{CONFIG_N_FIBER_ENTRIES} indicates number of available fiber type entries defined. Up to 18 
+	different fiber types can be defined. 
+   
+	@t{CONFIG_FIBER@i{xx}_PARAMS} with index @i{xx} in range 00 to 17, specifies the alpha value for each pair of used wavelengths.
 	This parameter follows a format:
 
-	@t{alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...}
+	@t{alpha_@i{xxxx}_@i{yyyy}=1.23e-04,alpha_@i{aaaa}_@i{bbbb}=4.56e-04,...}
 
 	Where:
 	@itemize
-	@item @t{XXX_YYYY} and @t{AAAA_BBBB} are pairs of used wavelengths
+	@item @t{@i{xxxx}_@i{yyyy}} and @t{@i{aaaa}_@i{bbbb}} are pairs of used wavelengths
 	@item @t{1.23e-04} and @t{4.56e-04} are alpha values to be used for
 	      particular wavelengths.
 	@end itemize
-	The index (@t{00} onwards) is used to match the port
-	(@t{CONFIG_PORTxx_PARAMS}) with one of several installed fiber types.
-	See @ref{Timing Configuration} for details.
+	The index (@t{00} onwards) is used by the @t{CONFIG_PORT@i{xx}_FIBER} port parameter to 
+	reference the connected fiber type. @xref{Timing Configuration}.
 
-	You are expected to have no more than 4 fiber types installed in
+	You are expected to have no more than 18 fiber types installed in
 	your deployment.
 
 @item CONFIG_TIME_GM
+@itemx CONFIG_TIME_ARB_GM
 @itemx CONFIG_TIME_FM
 @itemx CONFIG_TIME_BC
+@itemx CONFIG_TIME_CUSTOM
 
-	The type of PTP clock this switch is. Only one of the three
+	The type of PTP clock this switch is. Only one of the five first
         items should be set (e.g. running ``@t{make menuconfig}'' offers
-        them as an exclusive choice). The options select: a grand-master (GM)
-        with external reference, e.g. GPS or Cesium; a free-running
-        master (FM), used for isolated acquisition networks, without an
-        external reference; or a normal ``boundary-clock'' (BC) device that
-        is slave on some ports and master on other ports.
+        them as an exclusive choice). The options select: 
+        @itemize 
+	        @item @t{CONFIG_TIME_GM} a grand-master with external reference, e.g. GPS or Cesium.
+	        @item @t{CONFIG_TIME_ARB_GM} a arbitrary grand-master which designates 
+	        	a clock that is synchronized to an application-specific source of time. 
+	        @item @t{CONFIG_TIME_FM} a free-running master (FM), used for isolated 
+	        	acquisition networks, without an external reference. 
+	        @item @t{CONFIG_TIME_BC} a normal ``boundary-clock'' device that
+	        	is slave on some ports and master on other ports.  
+ 	        @item @t{CONFIG_TIME_CUSTOM} an option which leave the possibility to define freely the clock class.
+        @end itemize
+    
+@item CONFIG_PTP_OPT_CLOCK_CLASS
 
-        The PTP's clockClass is set based on which option is selected.
-        For the GM the clockClass is 6, for the FM is 52, for the BC is 248.
+	An attribute defining the TAI traceability, synchronization state and
+	expected performance of the time or frequency distributed by a
+	Boundary Clock or Ordinary Clock.
+	Its value can be set only if @t{CONFIG_TIME_CUSTOM} parameter is selected. The following table shows the default value
+	used depending on the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice:
+		@multitable @columnfractions .3 .4
+		@headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_CLASS 
+		@item  CONFIG_TIME_GM @tab 6
+		@item  CONFIG_TIME_ARB_GM @tab 13
+		@item  CONFIG_TIME_FM @tab 193
+		@item  CONFIG_TIME_BC @tab 248
+		@end multitable
 
-@item CONFIG_PTP_PORT_PARAMS
+	For more details please refer to the IEEE 1588-2008 standard.
+
+	
+@item CONFIG_PTP_OPT_CLOCK_ACCURACY
+
+	An attribute defining the accuracy of the Local Clock (e.g. local
+	oscillator) of a Boundary Clock or Ordinary Clock.
+	By default its value is set automatically according to the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice.
+	However a value can be manually set either the option @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES} is set 
+	or the timing mode ``@t{CONFIG_TIME_CUSTOM}`` is selected.
+	The following table gives the default values depending on the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice :
+		@multitable @columnfractions .3 .4
+		@headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_ACCURACY 
+		@item  CONFIG_TIME_GM @tab 33
+		@item  CONFIG_TIME_ARB_GM @tab 33
+		@item  CONFIG_TIME_FM @tab 32
+		@item  CONFIG_TIME_BC @tab 254
+		@end multitable
+
+	For more details please refer to the IEEE 1588-2008 standard.
+	
+@item CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
+	An attribute defining the stability of the Local Clock of a
+	Boundary Clock or Ordinary Clock.
+	By default its value is set automatically according to the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice.
+	However a value can be manually set either the option @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES} is set 
+	or the timing mode ``@t{CONFIG_TIME_CUSTOM}`` is selected.
+	The following table gives the default values depending on the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice :
+		@multitable @columnfractions .3 .4
+		@headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE 
+		@item  CONFIG_TIME_GM @tab 47360
+		@item  CONFIG_TIME_ARB_GM @tab 47360
+		@item  CONFIG_TIME_FM @tab 50973
+		@item  CONFIG_TIME_BC @tab 65535
+		@end multitable
+
+	For more details please refer to the IEEE 1588-2008 standard.
+
+
+@item CONFIG_PTP_OPT_TIME_SOURCE
+	This information-only attribute indicates the source of time used
+	by the grandmaster (or free-running master).
+	
+	The following table gives the default values depending on the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice :
+		@multitable @columnfractions .3 .4
+		@headitem  Timing mode @tab CONFIG_PTP_OPT_TIME_SOURCE 
+		@item  CONFIG_TIME_GM @tab 32 (GNSS)
+		@item  CONFIG_TIME_ARB_GM @tab 32 (GNSS)
+		@item  CONFIG_TIME_FM @tab 160 (INTERNAL_OSCILLATOR)
+		@item  CONFIG_TIME_BC @tab --
+		@end multitable
+		
+@item CONFIG_PTP_OPT_DOMAIN_NUMBER
+	A domain consists of one or more PTP devices communicating with each
+	other as defined by the PTP protocol. A domain defines the scope of
+	PTP message communication, state, operations, data sets, and
+	timescale. PTP devices may participate in multiple domains.
+	For more details please refer to the IEEE 1588-2008 standard.
+
+@item CONFIG_PTP_OPT_PRIORITY1
+	A user configurable designation that a clock belongs to an ordered
+	set of PTP devices from which a PTP Master is selected.
+	For more details please refer to the IEEE 1588-2008 standard.
+
+@item CONFIG_PTP_OPT_PRIORITY2
+	A user configurable designation that provides finer grained ordering
+	among otherwise equivalent PTP devices.
+	For more details please refer to the IEEE 1588-2008 standard.
+
+@item CONFIG_PORT@i{xx}_@i{zz}
 @itemx CONFIG_PTP_CUSTOM
 @itemx CONFIG_PTP_REMOTE_CONF
 
-	By default, PTP daemon (PPSi) configuration file is assembled based on role and
-        protocol parameters stored in @t{PORTxx_PARAMS}. If VLANs are
-        configured, the items
-        @t{CONFIG_VLANS_PORTXX_VID} are used as well.
-        Parameters @t{clock-class} and @t{clock-accuracy} can be changed
-        or new global PPSi settings can be added by editing file
+	By default, PTP daemon (PPSi) configuration file is assembled based on parameters stored 
+		in @t{CONFIG_PORT@i{xx}_@i{zz}} parameters. 
+		If VLANs are configured, the items @t{CONFIG_VLANS_PORT@i{xx}_VID} are used as well.
+        New global PPSi settings can be added by editing file
         @t{/wr/etc/ppsi-pre.conf}, which is used as beginning of final
         PPSi configuration file.
 
-	Alternatively, PPSi can use a custom user file for configuration
-        (@t{CONFIG_PTP_CUSTOM}).
+	Alternatively, PPSi can use a custom user file for configuration (@t{CONFIG_PTP_CUSTOM}).
 
 	Finally, you can choose @t{PTP_REMOTE_CONF} to
         specify an URL whence the switch will download the @t{ppsi.conf} at
@@ -884,70 +990,32 @@ appropriate way, before the respective service is started.
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
 
-@item CONFIG_PTP_OPT_CLOCK_CLASS
-	An attribute defining the TAI traceability, synchronization state and
-	expected performance of the time or frequency distributed by a
-	Boundary Clock or Ordinary Clock.
-	For more details please refer to the IEEE 1588-2008 standard.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
+@item CONFIG_PPSGEN_PTP_FALLBACK
+@itemx CONFIG_PPSGEN_PTP_THRESHOLD_MS
+@itemx CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC
+@itemx CONFIG_PPSGEN_FORCE
 
-@item CONFIG_PTP_OPT_CLOCK_ACCURACY
-	An attribute defining the accuracy of the Local Clock (e.g. local
-	oscillator) of a Boundary Clock or Ordinary Clock.
-	For more details please refer to the IEEE 1588-2008 standard.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
-	An attribute defining the stability of the Local Clock of a
-	Boundary Clock or Ordinary Clock.
-	For more details please refer to the IEEE 1588-2008 standard.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_DOMAIN_NUMBER
-	A domain consists of one or more PTP devices communicating with each
-	other as defined by the PTP protocol. A domain defines the scope of
-	PTP message communication, state, operations, data sets, and
-	timescale. PTP devices may participate in multiple domains.
-	For more details please refer to the IEEE 1588-2008 standard.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_ANNOUNCE_INTERVAL
-	The mean time interval between transmissions of successive
-	Announce messages.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_SYNC_INTERVAL
-	The mean time interval between transmission of successive
-	Sync messages, i.e., the sync-interval, when transmitted
-	as multicast messages. The value is the logarithm to the base 2.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_PRIORITY1
-	A user configurable designation that a clock belongs to an ordered
-	set of PTP devices from which a PTP Master is selected.
-	For more details please refer to the IEEE 1588-2008 standard.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_PRIORITY2
-	A user configurable designation that provides finer grained ordering
-	among otherwise equivalent PTP devices.
-	For more details please refer to the IEEE 1588-2008 standard.
-	If set, this configuration item overwrites the default value from
-	ppsi-pre.conf during generation of ppsi.conf.
-
-@item CONFIG_PTP_OPT_TIME_SOURCE
-	This information-only attribute indicates the source of time used
-	by the grandmaster (or free-running master).
-
-	NOTE: This is not supported yet by the PPSi.
-
+	Configuration of the PPS output. By default, the PPS is generated on a grand master switch 
+	only when the timing mode is set either to @t{CONFIG_TIMING_GM} or @t{CONFIG_TIME_FM}. 
+	However the @t{CONFIG_PPSGEN_FORCE} option, if activated, leaves the possibility to force the PPS
+	generation all the time.
+	 
+	When a switch becomes grand master by BMCA, the @t{CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC} option
+	, if it contains a value greater than 0, defines a delay in seconds to respect before 
+	to start the PPS generation.
+	
+	The @t{CONFIG_PPSGEN_PTP_THRESHOLD_MS} option defines the threshold corresponding to the offset from the 
+	  master used to start the generation of the PPS. It is  either used by a PTP slave 
+	  instance or a instance using a protocol extension but going into the fallback PTP mode 
+	  and with the PTP fallback option active. 
+	  A 0 value means that the PPS will be not generated for the considered cases. 
+	  When the PPS is generated, it can be also disabled when the offset from master becomes greater
+	  than the threshold value + 20%
+	  
+	The latest @t{CONFIG_PPSGEN_PTP_FALLBACK} option, if activated, enables the PPS generation if a slave instance 
+	  programmed to use an extension protocol (WR, L1Sync, ...) is falling back
+	  to PTP communication only. 
+	
 @item CONFIG_SNMP_TRAPSINK_ADDRESS
 @itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
 @itemx CONFIG_SNMP_RO_COMMUNITY
@@ -986,6 +1054,36 @@ appropriate way, before the respective service is started.
 @c
 @c	Error if frame rate of any RX priority exceed given value.
 @c	(currently not implemented)
+
+@item CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_HOURS
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_MINUTES
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
+@itemx CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
+
+	When @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED} option is set, 
+		the local system time is compared to the time 
+		returned by the NTP server (@t{CONFIG_NTP_SERVER}). If the difference
+		of time exceed a given threshold (@t{CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD})
+		expressed in seconds then an error will be notified to SNMP.
+		
+	This comparison is done cyclically at a repetition rate expressed either in days 
+	(@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS}), in hours (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_HOURS}) or
+	in minutes (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_MINUTES}).
+	
+	According to the selected unit, the repetition rate will be stored in the appropriate location:  
+	@multitable @columnfractions .3 .7
+	@headitem  Unit @tab Storage 
+	@item  @t{...UNIT_DAYS} @tab @t{...CHECK_INTERVAL_DAYS}
+	@item  @t{...UNIT_HOURS} @tab @t{...CHECK_INTERVAL_MINUTES}
+	@item  @t{...UNIT_MINUTES} @tab @t{...CHECK_INTERVAL_MINUTES}
+	@end multitable
+	
+	The @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED} option is available only if a
+	NTP server has been defined (@t{CONFIG_NTP_SERVER}).
 
 @item CONFIG_WRSAUXCLK_FREQ
 @itemx CONFIG_WRSAUXCLK_DUTY
@@ -1146,28 +1244,28 @@ appropriate way, before the respective service is started.
 	Enable VLANs configuration. All below VLAN config options
 	(@t{CONFIG_VLANS_*}) require this filed to be set.
 
-@item CONFIG_VLANS_PORTXX_MODE_ACCESS
-@itemx CONFIG_VLANS_PORTXX_MODE_TRUNK
-@itemx CONFIG_VLANS_PORTXX_MODE_DISABLED
-@itemx CONFIG_VLANS_PORTXX_MODE_UNQUALIFIED
+@item CONFIG_VLANS_PORT@i{xx}_MODE_ACCESS
+@itemx CONFIG_VLANS_PORT@i{xx}_MODE_TRUNK
+@itemx CONFIG_VLANS_PORT@i{xx}_MODE_DISABLED
+@itemx CONFIG_VLANS_PORT@i{xx}_MODE_UNQUALIFIED
 
 	VLANs port mode configuration for ports 1..18.
 	It can be one of: Access, Trunk, Disabled or Unqualified.
 	For details please refer to the @ref{VLANs Configuration}
 
-@item CONFIG_VLANS_PORTXX_UNTAG_ALL
-@itemx CONFIG_VLANS_PORTXX_UNTAG_NONE
+@item CONFIG_VLANS_PORT@i{xx}_UNTAG_ALL
+@itemx CONFIG_VLANS_PORT@i{xx}_UNTAG_NONE
 
 	Define whether to remove a VLAN tag from egress frames on port 1..18.
 
-@item CONFIG_VLANS_PORTXX_PRIO
+@item CONFIG_VLANS_PORT@i{xx}_PRIO
 
 	Priority value used when tagging incoming frames or to locally override
 	the priority (in Unqualified and Disabled modes).
 	-1 disables the priority overwrite. Valid values are
 	from -1 to 7.
 
-@item CONFIG_VLANS_PORTXX_VID
+@item CONFIG_VLANS_PORT@i{xx}_VID
 
 	The meaning of this value and whether it is mandatory or optional,
 	depends on the port mode:
@@ -1189,7 +1287,7 @@ appropriate way, before the respective service is started.
 
 	For details please refer to the @ref{VLANs Configuration}
 
-@item CONFIG_VLANS_VLANXXXX
+@item CONFIG_VLANS_VLAN@i{xxxx}
 
 	Provide a configuration for VLAN from the range 0000-4094.
 	This option is a comma separated string in the following format:
@@ -1225,6 +1323,26 @@ appropriate way, before the respective service is started.
 	For more details about VLANs configuration please refer to the
 	@ref{VLANs Configuration}
 
+@item CONFIG_OPTIMIZATION_DEBUGGING
+@itemx CONFIG_OPTIMIZATION_NONE_DEBUGGING
+@itemx CONFIG_OPTIMIZATION_SIZE_SPEED
+@itemx CONFIG_OPTIMIZATION_SPEED
+	
+	Compilation options. Chose one of these four choices to control the 
+	compilation flags.
+	
+	@t{CONFIG_OPTIMIZATION_DEBUGGING}: Should be the optimization level choice 
+	  for the standard edit-compile-debug cycle.
+	
+	@t{CONFIG_OPTIMIZATION_NONE_DEBUGGING}: Compile without optimization and with debug informations
+	
+	@t{CONFIG_OPTIMIZATION_SIZE_SPEED}: Optimize for size. Enables all -O2 optimizations except those 
+	  that often increase code size.
+	
+	@t{CONFIG_OPTIMIZATION_SPEED}: GCC performs nearly all supported optimizations 
+	  that do not involve a space-speed tradeoff.
+	 
+	
 @end table
 
 @c ==========================================================================
@@ -1235,15 +1353,34 @@ This section describes how timing configuration works in the switch.
 Please note that up to version 4.1 (included) of @t{wr-switch-sw} things
 were different and not really documented.
 
-Timing configuration now depends on three sets of @t{dot-config}
-variables: per-port information, per-sfp information and fiber
+Similarly, I want to bring to the attention of the reader that since 
+version @value{release_version}, the configuration of the timing configuration 
+has considerably evolved.
+
+Timing configuration now depends on four sets of @t{dot-config}
+variables: common port information, per-port information, sfp information and fiber
 description.
 
 This is, for explanation's sake, an example of such items:
 
 @smallexample
-CONFIG_PORT09_PARAMS="name=wri9,proto=raw,tx=226214,rx=226758,role=slave,fiber=2"
+# common port information
+PTP_OPT_EXT_PORT_CONFIG_ENABLED=yes
+...
+# per-port information
+CONFIG_PORT09_IFACE="wri9"
+CONFIG_PORT09_FIBER=2
+CONFIG_PORT09_INSTANCE_COUNT_1=yes
+CONFIG_PORT09_INST01_PROTOCOL_RAW=yes
+CONFIG_PORT09_INST01_PROFILE_WR=yes
+CONFIG_PORT09_INST01_DESIRADE_STATE_SLAVE=yes
+CONFIG_PORT09_INST01_EGRESS_LATENCY=226214
+CONFIG_PORT09_INST01_INGRESS_LATENCY=226758
+...
+# sfp information
 CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
+...
+# fiber infomation
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
 
@@ -1253,13 +1390,16 @@ uses configuration in the following way:
 
 @itemize @bullet
 
-@item The port has known tx and rx delays (around 226ns); the
+@item The port has known tx (@t{CONFIG_PORT09_INST01_EGRESS_LATENCY}) and 
+rx (@t{CONFIG_PORT09_INST01_INGRESS_LATENCY}) delays (around 226ns); the
 values depend on trace length and other hardware-specific details
 and are determined by a calibration procedure.  These values are
 used as constant delays in the @i{tx} and @i{rx} directions.
 
-@item The port is also configured as WR slave (@i{role}) using raw whiterabbit
-protocol (@i{proto}) and is deployed using fiber type 2 -- this number
+@item The port is also configured as WR slave (@t{CONFIG_PORT09_INST01_DESIRADE_STATE_SLAVE}) 
+using raw Ethernet (@t{CONFIG_PORT09_INST01_PROTOCOL_RAW}) to transport the White-Rabbit protocol 
+(@t{CONFIG_PORT09_INST01_PROFILE_WR}) and is deployed using fiber type 2 
+(@t{CONFIG_PORT09_FIBER}) -- this number
 is just a local enumeration of fiber types; most likely you'll be
 using type ``0'' in every port.
 
@@ -1279,11 +1419,163 @@ wavelength, and is determined, again, by the calibration procedure.
 Please note that only one alpha value is provided, because the
 opposite one (@t{alpha_1490_1310}) is calculated by software.
 
-@subheading SFP name matching
+
+@subsection Common port information description
+
+The following table give the list of all information common to all port instances of the WR switch.
+
+@table @code
+
+@item CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED
+
+	  This option is used to force the state of all port instances. 
+	  When set, each port instance can be either in the slave, master or passive state.
+	  The BMCA is then disabled.
+	  This option is only available for a boundary clock (@t{CONFIG_TIME_BC}).
+	  For more details please refer to the IEEE 1588-2020 (clause 17.6.2)
+	  
+@item CONFIG_PTP_SLAVE_ONLY
+
+	  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
+	  which does not enable transition to MASTER state.
+	  This option is only available if @t{PTP_OPT_EXT_PORT_CONFIG_ENABLED}
+	  is not used.
+	  For more details please refer to the IEEE 1588-2020 (clause 9.2.2.1)
+	
+@end table
+
+@subsection  Per-port information description
+
+On each port, many PPSi instances can be instantiated. However only one can be active at 
+a given time. This possibility is already present but not yet activated to anticipate the 
+deployment of the High Accuracy (@b{HA}) profile. It will be used to interconnect WR switches/Nodes 
+using WR or HA profiles. The active instance will dependent then of the profile used by the peer.
+While waiting for the next WR switch release with the HA profile, the number of port instances 
+must be set to either 1 (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1=yes}) or 0 
+(@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_0=yes}) if the port is not used. @i{xx} represents 
+the port number in the range 01 to 18. 
+
+@subheading  Common instance information description
+
+A set of parameters are only dependent of a port and shared by all instances on this port. The 
+@i{xx} value in the parameter name represents the port number.
+
+@table @code
+
+@item  CONFIG_PORT@i{xx}_IFACE
+	 Used to set the physical port interface name: "wri[1-18]"
+	 
+@item  CONFIG_PORT@i{xx}_FIBER
+	Identify the fiber type. This is a number (@i{zz}) referring to the corresponding 
+	@t{CONFIG_FIBER@i{zz}_PARAMS})
+	
+@item  CONFIG_PORT@i{xx}_CONSTANT_ASYMMETRY
+	Defines a constant asymmetry that is used to compute the value of the delay asymmetry.
+
+@end table
+  
+@subheading  Instance information description
+
+All port instance parameter will be constructed using the following format : CONFIG_PORT@i{xx}_INST@i{yy}_@i{pp} with
+ @i{xx} representing the port number, @i{yy} representing the instance number (01 to 02) and @i{pp} a key
+ describing the parameter itself. 
+
+@table @code
+
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_RAW
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_UDP_IPV4
+  Network protocol. @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_RAW} must be set for raw Ethernet and 
+  @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_UDP_IPV4} for UDP
+ 
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP
+  Profile selection. @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR} must be set to use the White Rabbit profile and 
+  @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} for pure PTP profile.
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P
+  Delay mechanism. @t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E} must be set for 'end-to-end' and 
+  @t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P} for 'peer-to-peer'.
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_SLAVE
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_PASSIVE
+  If @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is enabled then the instance state must be defined as follow:
+  @multitable @columnfractions .2 .8 
+  @headitem State @tab Parameter
+  @item MASTER  @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER}
+  @item SLAVE   @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_SLAVE}
+  @item PASSIVE @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_PASSIVE}
+  @end multitable
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_ASYMMETRY_CORRECTION_ENABLE
+  This option is only accessible when the PTP profile is selected otherwise this option is enabled by default. 
+  It is used to force the servo to integrate on its calculation the computation of the delay asymmetry. 
+  
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_AUTO
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY
+  Indicates the BMCA mode to use. This choice is only available when @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is disable. 
+  @t{CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_AUTO} choice indicates to use the BMCA alghorithm and 
+  @t{CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY} the optional masterOnly feature. 
+  For more details please refer to the IEEE 1588-2020 (clause 9.2.2.2)
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY
+  Defines the reception (@t{CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY}) and transmission 
+  (@t{CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY}) constant delays expressed in pico-seconds.
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL
+  The mean time interval between transmissions of successive
+	Announce messages. The value is the logarithm to the base 2.
+  
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT
+  The announceReceiptTimeout specifies the number of announceIntervals 
+	  that must pass without receipt of an Announce message before the 
+	  occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+	  The value is the logarithm to the base 2.
+    
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL
+	  The mean time interval between transmission of successive
+	  Sync messages, i.e., the sync-interval, when transmitted
+	  as multicast messages. The value is the logarithm to the base 2.
+
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL
+	  The minDelayRequestInterval specifies the minimum permitted
+	  mean time interval between successive Delay_Req messages.
+	  The value is the logarithm to the base 2.
+    This option is available when 'end-to-end' delay mechanism is selected 
+    (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E}).
+
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL
+	  The minPDelayRequestInterval specifies the minimum permitted
+	  mean time interval between successive Pdelay_Req messages.
+	  The value is the logarithm to the base 2.
+    This option is only available when 'peer-to-peer' delay mechanism is selected
+    (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P}).
+
+@item  CONFIG_PORT@i{xx}_INST@i{yy}_MONITOR
+  Option to disable or enable triggering errors in SNMP on a port.
+
+@c  --------------------------
+@c Option that will be available whe HA will be deployed
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENCY_IS_REQUIRED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENCY_IS_REQUIRED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENCY_IS_REQUIRED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+
+
+@end table
+
+@subsection SFP name matching
 
 SFP matching is based on the vendor name (@i{vn}), part number (@i{pn}) and vendor
 serial (@i{vs}). During the matching, SFP parameters are compared with values stored
-in @t{CONFIG_SFPxx_PARAMS}.
+in @t{CONFIG_SFP@i{xx}_PARAMS}.
 The first try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with those
 stored in @t{dot-config}. If the match is not successful, @i{vn} and @i{pn} of
 an SFP are compared only with @t{dot-config} entries that are without vendor
@@ -1309,7 +1601,7 @@ CONFIG_SFP02_PARAMS="pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
 CONFIG_SFP02_PARAMS will be matched to all SFPs with part number "AXGE-3454-0531",
 that were not matched by any of the configs above.
 
-@subheading Other Deployments
+@subsection Other Deployments
 
 Examples above match the choices we make at CERN, where our
 White Rabbit networks are all run with a single mono-modal fiber
@@ -1319,21 +1611,21 @@ If you are using dual-fiber transceivers, which is acceptable for
 short links, you use the same wavelength in both directions, over two
 fibers of the same length. In this case you may choose to avoid
 writing the @t{wl_txrx} parameter in @sc{sfp} configuration and the
-@t{alpha_XX_XX} parameter in fiber configuration.  The missing
+@t{alpha_@i{xx}_@i{xx}} parameter in fiber configuration.  The missing
 parameters will cause warning messages to log destination, but are not
 fatal, and a default alpha of 0 is used.
 
 If you are using a pair of transceivers with different wavelengths,
 and long fibers, you should provide an appropriate value of alpha,
 according to laboratory measures on your fiber type. The
-@t{CONFIG_FIBERxx_PARAMS} items are parsed as a list of
+@t{CONFIG_FIBER@i{xx}_PARAMS} items are parsed as a list of
 comma-separated assignments, so you can specify multiple
 wavelength pairs.  The accuracy of your value depends on the length
 of the fiber link.  For a 10km fiber (100us round-trip) you need to know
 alpha up to 1e-7 if you want the related uncertainty to be
 less than 10ps.
 
-@subheading Calibration
+@subsection Calibration
 
 Calibration of per-port and per-@sc{sfp} delays as well as alpha is described in the
 White Rabbit Calibration procedure:
@@ -1462,7 +1754,7 @@ interface. However, as it is in v5.0, the web-interface is not capable to store
 VLANs configuration into a @t{dot-config}.
 
 To have synchronization working with VLANs, the preferred way is to provide proper VIDs to
-configuration options like @t{CONFIG_VLANS_PORTXX_VID}. As an alternative you can
+configuration options like @t{CONFIG_VLANS_PORT@i{xx}_VID}. As an alternative you can
 write a custom @i{PPSi} configuration file with VLANs specified per-port.
 You can simply copy the file generated in the WRS filesystem
 (@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
@@ -1526,10 +1818,38 @@ To configure the switch in the way descibed in the
 following config options:
 
 @smallexample
-CONFIG_PORT01_PARAMS="name=wri1,proto=raw,tx=0,rx=0,role=slave,fiber=0"
-CONFIG_PORT02_PARAMS="name=wri2,proto=raw,tx=0,rx=0,role=master,fiber=0"
-CONFIG_PORT03_PARAMS="name=wri3,proto=raw,tx=0,rx=0,role=master,fiber=0"
-
+PTP_OPT_EXT_PORT_CONFIG_ENABLED=yes
+# Port 1 configuration
+CONFIG_PORT01_IFACE="wri1"
+CONFIG_PORT01_FIBER=0
+CONFIG_PORT01_INSTANCE_COUNT_1=yes
+CONFIG_PORT01_INST01_PROTOCOL_RAW=yes
+CONFIG_PORT01_INST01_PROFILE_WR=yes
+CONFIG_PORT01_INST01_DESIRADE_STATE_SLAVE=yes
+CONFIG_PORT01_INST01_EGRESS_LATENCY=0
+CONFIG_PORT01_INST01_INGRESS_LATENCY=0
+...
+# Port 2 configuration
+CONFIG_PORT02_IFACE="wri2"
+CONFIG_PORT02_FIBER=0
+CONFIG_PORT02_INSTANCE_COUNT_1=yes
+CONFIG_PORT02_INST01_PROTOCOL_RAW=yes
+CONFIG_PORT02_INST01_PROFILE_WR=yes
+CONFIG_PORT02_INST01_DESIRADE_STATE_MASTER=yes
+CONFIG_PORT02_INST01_EGRESS_LATENCY=0
+CONFIG_PORT02_INST01_INGRESS_LATENCY=0
+...
+# Port 3 configuration
+CONFIG_PORT03_IFACE="wri3"
+CONFIG_PORT03_FIBER=0
+CONFIG_PORT03_INSTANCE_COUNT_1=yes
+CONFIG_PORT03_INST01_PROTOCOL_RAW=yes
+CONFIG_PORT03_INST01_PROFILE_WR=yes
+CONFIG_PORT03_INST01_DESIRADE_STATE_MASTER=yes
+CONFIG_PORT03_INST01_EGRESS_LATENCY=0
+CONFIG_PORT03_INST01_INGRESS_LATENCY=0
+...
+# Vlans configuration
 CONFIG_VLANS_ENABLE=y
 CONFIG_VLANS_PORT01_MODE_ACCESS=y
 CONFIG_VLANS_PORT01_UNTAG_ALL=y
@@ -1610,7 +1930,7 @@ vlan 2
 There are two LEDs on the front panel describing switch status and two LEDs for
 each WR port. Each LED can be off, green or orange color, or the
 combination of both giving yellow.
-For more details please refer to following the sections.
+For more details please refer to following sections.
 
 @c =-------------------------------------------------------------------------
 @node Status LEDs
@@ -1904,6 +2224,7 @@ The following tools and scripts are provided:
         @t{on}, @t{off} or @t{read}.
 
 @item wr_date
+@anchor{wr_date}
 
 	The program can read or set the White Rabbit date. When setting,
         using ``@t{wr_date set} @i{value}'' assigns an arbitrary date,
@@ -1915,6 +2236,8 @@ The following tools and scripts are provided:
         run by @t{/etc/init.d/wr_date} -- this script uses NTP
         to set host time as a first step, if @t{/etc/wr_date.conf}
         exists and includes a line of the form @t{ntpserver 192.168.16.1}.
+        The file @t{/etc/wr_date.conf} is created at boot time by the script
+        @t{apply_dot-config} if a NTP server is defined (@t{CONFIG_NTP_SERVER}).
 
         With ``@t{wr_date get}'' you can read White Rabbit time, and
         by using @t{wr_date get tohost}'' you can set host time from
@@ -2468,9 +2791,9 @@ some details can be
 suboptimal, while some procedures may be tricky and need more explanation.
 We are collecting all those issues in our project pages. Please visit:
 @itemize
-   @item Frequently Asked Questions: @url{http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch}
-   @item Issues for WR Switch SW project: @url{http://www.ohwr.org/projects/wr-switch-sw/issues}
-   @item Issues for WR Switch HDL project: @url{http://www.ohwr.org/projects/wr-switch-hdl/issues}
+   @item Frequently Asked Questions: @url{http://www.ohwr.org/project/white-rabbit/wiki/FAQswitch}
+   @item Issues for WR Switch SW project: @url{http://www.ohwr.org/project/wr-switch-sw/issues}
+   @item Issues for WR Switch HDL project: @url{http://www.ohwr.org/project/wr-switch-hdl/issues}
 @end itemize
 If you have any problem with this firmware and you don't find help in the above links,
 feel free to reach us on the @i{white-rabbit-dev} mailing list.

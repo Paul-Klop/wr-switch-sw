@@ -113,9 +113,6 @@ static void wrn_update_link_status(struct net_device *dev)
 	if (!mii_link_ok(&ep->mii)) {
 		if(netif_carrier_ok(dev)) {
 			netif_carrier_off(dev);
-			/* Reset SFP */
-			value = wrn_phy_read(dev, 0, MII_BMCR);
-			wrn_phy_write(dev, 0, MII_BMCR, value | BMCR_RESET);
 			clear_bit(WRN_EP_UP, &ep->ep_flags);
 			printk(KERN_INFO "%s: Link down.\n", dev->name);
 			return;

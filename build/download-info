@@ -19,8 +19,8 @@ linux-3.16.38.tar.xz            1af111d8ee7b57329611d4d804e9fe78 \
    https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.16.38.tar.xz
 
 # our gateware binaries
-wrs-gw-v6.0-dev1-20200110.tar.gz e821bd2887d05da0d8acc24abfa84a1e \
-   https://ohwr.org/project/wr-switch-sw/wikis/uploads/91f75c0c57f936d92bdcca22011a4d3a/wrs-gw-v6.0-dev1-20200110.tar.gz
+wrs-gw-v6.0-dev2-20200122.tar.gz d00efce57c2bac00ae8de8be85959686 \
+   https://ohwr.org/project/wr-switch-sw/wikis/uploads/13eaa2f4feae9d0bf4f4350e8335442f/wrs-gw-v6.0-dev2-20200122.tar.gz
 
 # buildroot core and packages
 buildroot-2016.02.tar.bz2        fcf10ae55b0831f52d492b6939e95581 \

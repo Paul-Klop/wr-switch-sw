@@ -31,7 +31,8 @@
 
 static struct minipc_ch *client;
 
-//#define VERBOSE
+// #define VERBOSE
+#include <libwr/wrs-msg.h>
 
 /* Queries the RT CPU PLL state */
 int rts_get_state(struct rts_pll_state *state)
@@ -43,17 +44,20 @@ int rts_get_state(struct rts_pll_state *state)
 		return ret;
 
 #ifdef VERBOSE
-	pr_debug("RTS State Dump:\n");
-	pr_debug("CurrentRef: %d Mode: %d Flags: %x\n",
-	       state->current_ref, state->mode, state->flags);
-	for (i = 0; i < RTS_PLL_CHANNELS; i++)
-		pr_debug("Ch%d: setpoint: %dps current: %dps "
+	{
+		int i;
+
+		pr_info("RTS State Dump:\n");
+		pr_info("CurrentRef: %d Mode: %d Flags: %x\n",
+			   state->current_ref, state->mode, state->flags);
+		i = 17;
+		pr_info("Ch%d: setpoint: %dps current: %dps "
 			 "loopback: %dps flags: %x\n", i,
 			 state->channels[i].phase_setpoint,
 			 state->channels[i].phase_current,
 			 state->channels[i].phase_loopback,
 			 state->channels[i].flags);
-
+	}
 #endif
 	return 0;
 }

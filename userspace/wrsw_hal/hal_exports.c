@@ -25,7 +25,6 @@ static struct hal_port_state *ports;
    compatible WR master. */
 int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
-	int rval;
 
 /*	pr_debug("halexp_lock_cmd: cmd=%d port=%s\n", command, port_name); */
 
@@ -54,15 +53,20 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		   after calling "Start locking" to check if the PLL
 		   has already locked to and stabilized the reference
 		   frequency */
-	case HEXP_LOCK_CMD_CHECK:
-		rval = hal_port_check_lock_by_name(port_name);
 
-		if (rval > 0)
+#define returnValue(value) { pr_info("JCB: HEXP_LOCK_CMD_CHECK returns %d\n",value); return value;}
+
+	case HEXP_LOCK_CMD_CHECK:
+		switch ( hal_port_check_lock_by_name(port_name) ) {
+		case PORT_LOCK_STATE_LOCKED :
 			return HEXP_LOCK_STATUS_LOCKED;
-		else if ( rval==0 )
-			return HEXP_LOCK_STATUS_BUSY;
-		else
-			return HEXP_LOCK_STATUS_NONE;
+		case PORT_LOCK_STATE_UNLOCKED :
+			return HEXP_LOCK_STATUS_UNLOCKED;
+		case PORT_LOCK_STATE_RELOCK_ERROR :
+			return HEXP_LOCK_STATUS_RELOCK_ERROR;
+		default:
+			return HEXP_LOCK_STATUS_ERROR;
+		}
 		break;
 			
 	case HEXP_LOCK_CMD_RESET:

@@ -27,6 +27,13 @@ typedef struct {
 
 }hal_ports_t;
 
+typedef enum {
+	PORT_LOCK_STATE_ERROR=-1,
+	PORT_LOCK_STATE_LOCKED=0,
+	PORT_LOCK_STATE_UNLOCKED,
+	PORT_LOCK_STATE_RELOCK_ERROR
+}portLockState;
+
 typedef void (*hal_cleanup_callback_t)(void);
 
 

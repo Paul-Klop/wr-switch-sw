@@ -715,28 +715,23 @@ int hal_port_start_lock(const char *port_name, int priority)
 	return 0;
 }
 
-/* Returns 1 if the port is locked, 0 if unlocked, -1 in case of error */
-int hal_port_check_lock(const struct hal_port_state *ps)
+portLockState hal_port_check_lock(const struct hal_port_state *ps)
 {
 	struct rts_pll_state *hs = getRtsStatePtr();
 
-	if (!ps)
-		return -1;
-
-	if (!isRtsStateValid())
-		return -1;
+	if (!ps || !isRtsStateValid())
+		return PORT_LOCK_STATE_ERROR;
 
 	if (hs->delock_count > 0)
-		return -1;
+		return PORT_LOCK_STATE_RELOCK_ERROR;
 
 	return ( hs->mode==RTS_MODE_BC &&
 		hs->current_ref == ps->hw_index &&
 		(hs->flags & RTS_DMTD_LOCKED) &&
-		(hs->flags & RTS_REF_LOCKED));
+		(hs->flags & RTS_REF_LOCKED)) ? PORT_LOCK_STATE_LOCKED : PORT_LOCK_STATE_UNLOCKED;
 }
 
-/* Returns 1 if the port is locked */
-int hal_port_check_lock_by_name(const char *port_name)
+portLockState hal_port_check_lock_by_name(const char *port_name)
 {
 	const struct hal_port_state *ps = hal_lookup_port(halPorts.ports,
 			halPorts.numberOfPorts, port_name);

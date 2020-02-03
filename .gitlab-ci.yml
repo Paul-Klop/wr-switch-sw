@@ -1,0 +1,15 @@
+stages:
+- wrs_sw_compile
+
+job_wrs_compile:
+  stage: wrs_sw_compile
+  script:
+    - cd ..
+    - wr-switch-sw/build/wrs_build-all
+  artifacts:
+    name: WRS_SW_CI_$CI_JOB_ID
+    paths:
+    - ../*.tar
+
+  tags:
+    - wrs_sw

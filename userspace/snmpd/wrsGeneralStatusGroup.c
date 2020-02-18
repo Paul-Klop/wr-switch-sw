@@ -97,12 +97,21 @@ time_t wrsGeneralStatus_data_fill(void)
 		|| t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_ERROR
 		|| t->wrsSlaveLinksStatus == WRS_SLAVE_LINK_STATUS_ERROR
 		|| t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_ERROR
+		|| t->wrsSystemClockStatus == WRS_SYSTEM_CLOCK_STATUS_ERROR
+		|| t->wrsSystemClockStatus == WRS_SYSTEM_CLOCK_STATUS_THRESHOLD_EXCEEDED
+		|| t->wrsLeapSecStatus == WRS_LEAP_SEC_STATUS_ERROR
+		|| t->wrsLeapSecSourceStatus==WRS_LEAP_SEC_SRC_STATUS_ERROR
 	) {
 		wrsGeneralStatus_s.wrsTimingStatus =
 						WRS_TIMING_STATUS_ERROR;
 
 	} else if ( /* check if warning */
-		t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_WARNING
+		   t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_WARNING
+		|| t->wrsLeapSecStatus == WRS_LEAP_SEC_STATUS_ERROR_MINOR
+		|| t->wrsLeapSecSourceStatus == WRS_LEAP_SEC_SRC_STATUS_ERROR_MINOR
+		|| t->wrsLeapSecStatus == WRS_LEAP_SEC_STATUS_ERROR_MINOR
+		|| t->wrsLeapSecStatus == WRS_LEAP_SEC_STATUS_WARNING
+		|| t->wrsSystemClockStatus == WRS_SYSTEM_CLOCK_STATUS_ERROR_MINOR
 	) { /* warning */
 		wrsGeneralStatus_s.wrsTimingStatus =
 						WRS_TIMING_STATUS_WARNING;
@@ -115,6 +124,9 @@ time_t wrsGeneralStatus_data_fill(void)
 		|| t->wrsSlaveLinksStatus == WRS_SLAVE_LINK_STATUS_WARNING_NA
 		|| t->wrsPTPFramesFlowing == 0
 		|| t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_WARNING_NA
+		|| t->wrsLeapSecStatus == 0
+		|| t->wrsSystemClockStatus == 0
+		|| t->wrsLeapSecSourceStatus == 0
 	) { /* warning NA */
 		wrsGeneralStatus_s.wrsTimingStatus =
 					      WRS_TIMING_STATUS_WARNING_NA;
@@ -126,6 +138,10 @@ time_t wrsGeneralStatus_data_fill(void)
 		&& t->wrsSlaveLinksStatus == WRS_SLAVE_LINK_STATUS_OK
 		&& (t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_OK
 		    || t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_FR) /* FR */
+		&& (t->wrsSystemClockStatus==WRS_SYSTEM_CLOCK_STATUS_OK)
+		&& t->wrsLeapSecStatus == WRS_LEAP_SEC_STATUS_OK
+		&& t->wrsLeapSecSourceStatus == WRS_LEAP_SEC_SRC_STATUS_OK
+
 	) { /* OK */
 		wrsGeneralStatus_s.wrsTimingStatus =
 						WRS_TIMING_STATUS_OK;

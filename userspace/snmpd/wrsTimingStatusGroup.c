@@ -1,16 +1,31 @@
 #include "wrsSnmp.h"
+#include <libwr/util.h>
+#include <libwr/config.h>
 #include <snmp_shmem.h>
 #include "wrsPtpDataTable.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPortStatusTable.h"
 #include "wrsPtpInstanceTable.h"
 #include "wrsTimingStatusGroup.h"
+#include "wrsCurrentTimeGroup.h"
+
+/* Macros for fscanf function to read line with maximum of "x" characters
+ * without new line. Macro expands to something like: "%10[^\n]" */
+#define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
+#define LINE_READ_LEN(x) LINE_READ_LEN_HELPER(x)
+
+#define WRS_SYSTEMCLOCK_STATUS_CACHE_TIMEOUT 20 /* 20 seconds */
+#define WRS_LEAPSEC_STATUS_CACHE_TIMEOUT    20 /* 20 seconds */
+#define WRS_LEAPSEC_DOWNLOAD_CACHE_TIMEOUT    20 /* 20 seconds */
 
 static struct pickinfo wrsTimingStatus_pickinfo[] = {
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsPTPStatus),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSoftPLLStatus),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSlaveLinksStatus),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsPTPFramesFlowing),
+	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSystemClockStatus),
+	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsLeapSecStatus),
+	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsLeapSecSourceStatus),
 };
 
 struct wrsTimingStatus_s wrsTimingStatus_s;
@@ -24,6 +39,9 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta);
 static void get_wrsSoftPLLStatus();
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows);
 static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows);
+static void get_wrsSystemClockStatus(void);
+static void get_wrsLeapSecondStatus(void);
+static void get_wrsLeapSecondSourceStatus(void);
 
 time_t wrsTimingStatus_data_fill(void)
 {
@@ -34,6 +52,8 @@ time_t wrsTimingStatus_data_fill(void)
 	time_t time_ptp_instance; /* time when wrsPtpInstanceTable was updated */
 	static time_t time_ptp_data_prev; /* time when previous wrsPtpDataTable
 					   * table was updated */
+	static time_t time_current_time; /* time when previous wrsCurrentTime was updated */
+
 	unsigned int ptp_data_nrows; /* number of rows in wrsPtpDataTable */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
 	unsigned int ptp_instance_nrows;
@@ -42,6 +62,7 @@ time_t wrsTimingStatus_data_fill(void)
 	time_spll = wrsSpllStatus_data_fill();
 	time_port_status = wrsPortStatusTable_data_fill(&port_status_nrows);
 	time_ptp_instance = wrsPtpInstanceTable_data_fill(&ptp_instance_nrows);
+	time_current_time = wrsCurrentTime_data_fill();
 
 	if (ptp_data_nrows > WRS_MAX_N_SERVO_INSTANCES) {
 		snmp_log(LOG_ERR, "SNMP: wrsTimingStatusGroup too many PTP "
@@ -60,7 +81,8 @@ time_t wrsTimingStatus_data_fill(void)
 	if (time_ptp_data <= time_update
 	    && time_spll <= time_update
 	    && time_port_status <= time_update
-	    && time_ptp_instance <= time_update) {
+	    && time_ptp_instance <= time_update
+		&& time_current_time <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}
@@ -86,11 +108,17 @@ time_t wrsTimingStatus_data_fill(void)
 		get_wrsPTPFramesFlowing(port_status_nrows);
 	}
 
-	time_update = get_monotonic_sec();
+	if ( time_current_time > time_update) {
+		get_wrsLeapSecondStatus();
+		get_wrsSystemClockStatus();
+		get_wrsLeapSecondSourceStatus();
+	}
+
 	/* save the time of the last ptp_data copy */
 	time_ptp_data_prev = time_ptp_data;
+
 	/* there was an update, return current time */
-	return time_update;
+	return time_update=get_monotonic_sec();
 }
 
 static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta)
@@ -314,13 +342,85 @@ static void get_wrsSoftPLLStatus(void)
 	spll_DelCnt_prev = s->wrsSpllDelCnt;
 }
 
+static void get_wrsSystemClockStatus(void){
+	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
+	int status=0;
+
+	switch (t->wrsSystemClockStatusDetails) {
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK :
+			status=WRS_SYSTEM_CLOCK_STATUS_OK;
+			break;
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR :
+			status=WRS_SYSTEM_CLOCK_STATUS_ERROR_MINOR;
+			break;
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN  :
+			status=WRS_SYSTEM_CLOCK_STATUS_ERROR;
+			break;
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED :
+			status=WRS_SYSTEM_CLOCK_STATUS_THRESHOLD_EXCEEDED;
+			break;
+	}
+	wrsTimingStatus_s.wrsSystemClockStatus = status;
+}
+
+static void get_wrsLeapSecondStatus(void){
+
+	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
+	int status=0;
+
+	switch (t->wrsLeapSecStatusDetails ) {
+	case WRS_LEAP_SEC_STATUS_DETAILS_OK :
+	case WRS_LEAP_SEC_STATUS_DETAILS_SEC_INSERTED:
+	case WRS_LEAP_SEC_STATUS_DETAILS_SEC_DELETED:
+		status=WRS_LEAP_SEC_STATUS_OK;
+		break;
+	case WRS_LEAP_SEC_STATUS_DETAILS_IO_ERROR:
+		status=WRS_LEAP_SEC_STATUS_ERROR_MINOR;
+		break;
+	case WRS_LEAP_SEC_STATUS_DETAILS_UNKNOWN:
+	case WRS_LEAP_SEC_STATUS_DETAILS_INTERNAL_ERROR:
+	case WRS_LEAP_SEC_STATUS_DETAILS_TAI_READ_ERROR:
+		status=WRS_LEAP_SEC_STATUS_ERROR;
+		break;
+	case WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED:
+		// TODO: Check GM
+		status=WRS_LEAP_SEC_STATUS_WARNING;
+		break;
+	}
+	wrsTimingStatus_s.wrsLeapSecStatus = status;
+}
+
+static void get_wrsLeapSecondSourceStatus(void){
+
+	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
+	int status=0;
+
+	switch (t->wrsLeapSecSourceStatusDetails ) {
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_OK :
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_UPDATED:
+		status = WRS_LEAP_SEC_SRC_STATUS_OK;
+		break;
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_IO_ERROR:
+		status = WRS_LEAP_SEC_SRC_STATUS_ERROR_MINOR;
+		break;
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_UNKNOWN:
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_DHCP_ERROR:
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_URL:
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_FILE:
+	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_DOWNLOAD_ERROR:
+		status = WRS_LEAP_SEC_SRC_STATUS_ERROR;
+		break;
+	}
+	wrsTimingStatus_s.wrsLeapSecSourceStatus = status;
+}
+
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 {
-	struct wrsSpllStatus_s *s;
+	// struct wrsSpllStatus_s *s;
 	struct wrsPortStatusTable_s *p_a;
 	struct wrsPtpInstanceTable_s *i_a;
 	struct wrsTimingStatus_s *t;
-	struct pp_instance *ppsi_i;
+	// struct pp_instance *ppsi_i;
 	int phys_port;
 	int has_slave = 0;
 	int i;
@@ -333,7 +433,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	 * and when every slave port is down when switch in master/grandmaster
 	 * mode. Don't care about non-wr, none and auto ports.
 	*/
-	s = &wrsSpllStatus_s;
+	// s = &wrsSpllStatus_s;
 	p_a = wrsPortStatusTable_array;
 	i_a = wrsPtpInstanceTable_array;
 	t = &wrsTimingStatus_s;
@@ -348,7 +448,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	}
 	       
 	for (i = 0; i < *ppsi_ppi_nlinks; i++) {
-		ppsi_i = ppsi_ppi + i;
+		// ppsi_i = ppsi_ppi + i;
 		/* wrsSlaveLinksStatus is ERROR if any of the instances are ERROR */
 		if (i_a[i].wrsPtpInstanceStatusError == WRS_SLAVE_LINK_STATUS_ERROR) {
 			t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
@@ -451,6 +551,7 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 
 	first_run = 0;
 }
+
 
 #define GT_OID WRSTIMINGSTATUS_OID
 #define GT_PICKINFO wrsTimingStatus_pickinfo

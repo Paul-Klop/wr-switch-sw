@@ -318,6 +318,68 @@ wrsPTPFramesFlowing OBJECT-TYPE
             firstRead - cannot calculate value from only one read"
     ::= { wrsTimingStatusGroup 4 }
 
+wrsSystemClockStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3),                      
+                        thresholdExceeded(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "The system clock is compared to NTP time  
+            ok - system clock is under the threshold value
+            thresholdExceeded - system clock has exceeded the threshold value
+            error - Unexpected status
+            warningNA - there is N/A in one of object used to calculate this value"
+    ::= { wrsTimingStatusGroup 5 }
+
+wrsLeapSecStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+						ok(1),                        
+						error(2),
+                        errorMinor(3),
+						warning(4) 
+						}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Leap second status
+			ok -  Everything ok
+			leapSecFileExpired - The current leap second file is out-dated
+		    internalErrorDetected - Internal error detected (system,...)
+			taiReadError - Cannot read the TAI time
+			leaSecInserted - A leap second will be inserted at 00:00 
+			leapSecDeleted - A leap second will be deleted at 00:00
+            errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
+    ::= { wrsTimingStatusGroup 6 }
+
+wrsLeapSecSourceStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3)
+                    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Download status of the leap seconds file
+             ok - Everything is OK
+             updated  - Local leap seconds file has been updated
+             dhcpError - DHCP error detected
+             invalidUrl - The URL is not reachable or invalid
+             invalidFile - The download file is invalid
+             downloadError - Error detected during the download
+             errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
+    ::= { wrsTimingStatusGroup 7 }
+
+
 -- wrsNetworkingStatusGroup (.6.2.3)
 wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
 
@@ -526,6 +588,112 @@ wrsDateTAIString   OBJECT-TYPE
         "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
     ::= { wrsCurrentTimeGroup 2 }
 
+wrsSystemClockStatusDetails OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        thresholdExceeded(2),
+                        statusFileMissing(3),
+                        unknownStatus(4)
+                            }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "The system clock is compared to NTP time  
+            ok - system clock is under the threshold value
+            thresholdExceeded - system clock has exceeded the threshold value
+            error - Unexpected status
+            warningNA - there is N/A in one of object used to calculate this value"
+    ::= { wrsCurrentTimeGroup 3 }
+
+wrsSystemClockDrift OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Drift of system clock expressed in seconds"  
+    ::= { wrsCurrentTimeGroup 4 }
+
+wrsLeapSecSource OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        error(1),
+                        errorMinor(2),
+                        local(3),
+                        tryRemote(4),
+                        forceRemote(5)    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Source leap second file (leap-seconds.list)
+            local - The local file is used
+            tryRemote - Try to download the file, if it fails
+                        do not propagate error
+            forceRemote - Try to download the file, if it fails
+                        the error is propagated
+            errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
+    ::= { wrsCurrentTimeGroup 5 }
+
+wrsLeapSecStatusDetails OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        statusFileMissing(2),
+                        unknownStatus(3)
+						leapSecFileExpired(4),
+					    internalErrorDetected(5),
+						taiReadError(6),
+						leaSecInserted(7),
+						leapSecDeleted(8) 
+						}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Leap second status
+			ok -  Everything ok
+			leapSecFileExpired - The current leap second file is out-dated
+		    internalErrorDetected - Internal error detected (system,...)
+			taiReadError - Cannot read the TAI time
+			leaSecInserted - A leap second will be inserted at 00:00 
+			leapSecDeleted - A leap second will be deleted at 00:00
+            errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
+    ::= { wrsCurrentTimeGroup 6 }
+
+wrsLeapSecSourceStatusDetails OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        statusFileMissing(2),
+                        unknownStatus(3)
+                        updated(4),
+                        dhcpError(5),
+                        invalidUrl(6),
+                        invalidFile(7),
+                        downloadError(8)
+                    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Download status of the leap seconds file
+             ok - Everything is OK
+             updated  - Local leap seconds file has been updated
+             dhcpError - DHCP error detected
+             invalidUrl - The URL is not reachable or invalid
+             invalidFile - The download file is invalid
+             downloadError - Error detected during the download
+             errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
+    ::= { wrsCurrentTimeGroup 7 }
+
+wrsLeapSecSourceURL OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..128))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+        "Url to the leap second file"
+    ::= { wrsCurrentTimeGroup 8 }
 
 --wrsBootStatusGroup (.7.1.2)
 wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }
@@ -2968,8 +3136,9 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Coma separated list of VLANs used by an instance"
+            "Comma separated list of VLANs used by an instance"
     ::= { wrsPtpInstanceEntry 29 }
+
 
 --wrsNetworking
 --Configuration

@@ -366,6 +366,7 @@ static void get_wrsSystemClockStatus(void){
 static void get_wrsLeapSecondStatus(void){
 
 	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
+	struct wrsSpllStatus_s *s=&wrsSpllStatus_s;
 	int status=0;
 
 	switch (t->wrsLeapSecStatusDetails ) {
@@ -383,8 +384,9 @@ static void get_wrsLeapSecondStatus(void){
 		status=WRS_LEAP_SEC_STATUS_ERROR;
 		break;
 	case WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED:
-		// TODO: Check GM
-		status=WRS_LEAP_SEC_STATUS_WARNING;
+		status = ( s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER
+				|| s->wrsSpllMode == WRS_SPLL_MODE_MASTER)
+			? WRS_LEAP_SEC_STATUS_WARNING : WRS_LEAP_SEC_STATUS_DETAILS_OK;
 		break;
 	}
 	wrsTimingStatus_s.wrsLeapSecStatus = status;

@@ -72,7 +72,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	char *tmp_name;
 	portDS_t *portDS_i;
 	struct hal_port_state *p;
-	int phys_port;
+	int phys_port=0;
 	int last_port = 0;
 	int instance_on_port = 0;
 	char *tmpstr_p;
@@ -164,7 +164,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			i_a[i].wrsPtpInstanceAsymConstAsymPS = (int64_t)((((float)ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
 			tmpstr_p = i_a[i].wrsPtpInstanceAsymScDelayCoefHR;
-			tmp_f    = ((float)ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient)/((1<<62));
+			tmp_f    = ((float)ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient)/(((uint64_t)1<<62));
 			snprintf(tmpstr_p, 64, "%f,", tmp_f);
 			
 			i_a[i].wrsPtpInstanceTSCorrEgressLat = ppsi_i->timestampCorrectionPortDS.egressLatency;

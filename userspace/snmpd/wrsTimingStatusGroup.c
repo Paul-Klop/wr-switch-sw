@@ -441,7 +441,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	
 	t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
 
-	if (!shmem_ready_hald()) {
+	if (!shmem_ready_hald() || !shmem_ready_ppsi()) {
 		/* HAL shmem not available yet */
 		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
 		return;

@@ -14,7 +14,7 @@ struct pp_instance *ppsi_ppi;
 parentDS_t *ppsi_parentDS;
 defaultDS_t *ppsi_defaultDS;
 
-int *ppsi_ppi_nlinks;
+int *ppsi_ppi_nlinks=NULL;
 
 /* RTUd */
 struct wrs_shm_head *rtud_head;

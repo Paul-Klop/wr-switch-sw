@@ -98,7 +98,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	p_a = wrsPortStatusTable_array;
 
 	/* check whether shmem is available */
-	if (!shmem_ready_ppsi() && !ppsi_ppi_nlinks) {
+	if (!shmem_ready_ppsi() || ppsi_ppi_nlinks==NULL) {
 		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n", __func__);
 		/* If set to 0 all PPSI related OIDs disappear */
 		n_rows_local = 0;

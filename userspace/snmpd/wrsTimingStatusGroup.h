@@ -28,11 +28,28 @@
 					  * normal operation */
 #define WRS_PTP_FRAMES_FLOWING_FR 6		/* ok, first run */
 
+#define WRS_SYSTEM_CLOCK_STATUS_OK                 1		/* ok */
+#define WRS_SYSTEM_CLOCK_STATUS_ERROR              2		/* error */
+#define WRS_SYSTEM_CLOCK_STATUS_ERROR_MINOR        3		/* error minor */
+#define WRS_SYSTEM_CLOCK_STATUS_THRESHOLD_EXCEEDED 4		/* Threshold exceeded */
+
+#define WRS_LEAP_SEC_STATUS_OK                 1		/* Everything ok */
+#define WRS_LEAP_SEC_STATUS_ERROR              2		/* Error detected */
+#define WRS_LEAP_SEC_STATUS_ERROR_MINOR        3		/* Minor error detected */
+#define WRS_LEAP_SEC_STATUS_WARNING		       4		/* The current leap second file is out-dated */
+
+#define WRS_LEAP_SEC_SRC_STATUS_OK                 1		/* Everything ok  */
+#define WRS_LEAP_SEC_SRC_STATUS_ERROR              2		/* Error detected */
+#define WRS_LEAP_SEC_SRC_STATUS_ERROR_MINOR        3		/* Minor error detected */
+
 struct wrsTimingStatus_s {
 	int wrsPTPStatus;
 	int wrsSoftPLLStatus;
 	int wrsSlaveLinksStatus;
 	int wrsPTPFramesFlowing;
+	int wrsSystemClockStatus;
+	int wrsLeapSecSourceStatus;
+	int wrsLeapSecStatus;
 };
 
 extern struct wrsTimingStatus_s wrsTimingStatus_s;

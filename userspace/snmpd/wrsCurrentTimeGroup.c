@@ -1,6 +1,7 @@
+#include <libwr/util.h>
+#include <libwr/config.h>
 #include "wrsSnmp.h"
 #include "wrsCurrentTimeGroup.h"
-#include <libwr/util.h>
 
 /* defines for nic-hardware.h */
 #define WR_SWITCH
@@ -9,64 +10,406 @@
 #include "../../kernel/wr_nic/nic-hardware.h"
 #include "../../kernel/wbgen-regs/ppsg-regs.h"
 
+
+/* Macros for fscanf function to read line with maximum of "x" characters
+ * without new line. Macro expands to something like: "%10[^\n]" */
+#define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
+#define LINE_READ_LEN(x) LINE_READ_LEN_HELPER(x)
+
+#define WRS_SYSTEMCLOCK_STATUS_CACHE_TIMEOUT 20 /* 20 seconds */
+#define WRS_LEAPSEC_STATUS_CACHE_TIMEOUT    20 /* 20 seconds */
+#define WRS_LEAPSEC_DOWNLOAD_CACHE_TIMEOUT    20 /* 20 seconds */
+
+#define getStatusFromMapping(map, key) _getStatusFromMapping(map,ARRAY_SIZE(map),key)
+
+typedef struct {
+	char * key;
+	int status;
+}text_status_mapping_t;
+
+/* Expected services */
+typedef struct {
+	const char *configKey;
+	int enabled;	/* expected number of processes */
+	const char *snmpObjectName;
+}service_exp_t;
+
+typedef enum {
+	SRV_SYSTEM_CLOCK,
+	SRV_MAX_SERVICES
+}service;
+
+
 static struct PPSG_WB *pps;
 
 static struct pickinfo wrsCurrentTime_pickinfo[] = {
 	FIELD(wrsCurrentTime_s, ASN_COUNTER64, wrsDateTAI),
 	FIELD(wrsCurrentTime_s, ASN_OCTET_STR, wrsDateTAIString),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockStatusDetails),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockDrift),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecSource),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecStatusDetails),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecSourceStatusDetails),
+	FIELD(wrsCurrentTime_s, ASN_OCTET_STR, wrsLeapSecSourceUrl),
 };
+
+static service_exp_t services[]={
+		[SRV_SYSTEM_CLOCK]
+		 {.configKey="SNMP_SYSTEM_CLOCK_MONITOR_ENABLED",
+			.enabled=-1,
+			.snmpObjectName="wrsSystemClockStatus"
+		 }
+};
+
 
 struct wrsCurrentTime_s wrsCurrentTime_s;
 
+static char *wrsSystemClockStatusDetails_str = "wrsSystemClockStatusDetails";
+static char *wrsSystemClockDrift_str = "wrsSystemClockDrift";
+static char *wrsLeapSecStatusDetails_str = "wrsLeapSecStatus";
+static char *wrsLeapSecSourceStatusDetails_str = "wrsLeapSecSourceStatusDetails";
+static char *wrsLeapSecSource_str = "wrsLeapSecSource";
+static char *wrsLeapSecSourceUrl_str = "wrsLeapSecSourceUrl";
+
+static void get_TAI(void);
+static void update_expected_services(void);
+static int _getStatusFromMapping(text_status_mapping_t *map, int mapSize, const char *key);
+static void get_wrsSystemClockStatusDetails(void);
+static void get_wrsLeapSecondStatusDetails(void);
+static void get_wrsLeapSecondSourceStatusDetails(void);
+
+
 time_t wrsCurrentTime_data_fill(void)
 {
-	static time_t time_update;
-	time_t time_cur;
+	static time_t time_last_update;
+	static time_t time_tai_update;
+	static time_t time_system_clock; /* time when system clock data was updated */
+	static time_t time_leap_sec; /* time when leap seconds data was updated */
+	static time_t time_leap_sec_download; /* time when leap seconds download file data was updated */
+
+	time_t time_cur= get_monotonic_sec();
+
+	if (time_tai_update==0 ||  (time_cur - time_tai_update) >WRSCURRENTTIME_TAI_CACHE_TIMEOUT) {
+		time_tai_update=time_last_update=time_cur;
+		get_TAI();
+	}
+
+	/* Update System clock data every WRS_SYSTEMCLOCK_STATUS_CACHE_TIMEOUT seconds */
+	if ( time_system_clock==0 || (time_cur-time_system_clock) > WRS_SYSTEMCLOCK_STATUS_CACHE_TIMEOUT ) {
+		time_system_clock=time_last_update=time_cur;
+		get_wrsSystemClockStatusDetails();
+	}
+
+	/* Update leap second data every WRS_LEAPSEC_STATUS_CACHE_TIMEOUT seconds */
+	if ( time_leap_sec==0 || (time_cur-time_leap_sec) > WRS_LEAPSEC_STATUS_CACHE_TIMEOUT ) {
+		time_leap_sec=time_last_update=time_cur;
+		get_wrsLeapSecondStatusDetails();
+	}
+
+	/* Update leap second data every WRS_LEAPSEC_STATUS_CACHE_TIMEOUT seconds */
+	if ( time_leap_sec_download==0 || (time_cur-time_leap_sec_download) > WRS_LEAPSEC_DOWNLOAD_CACHE_TIMEOUT ) {
+		time_leap_sec_download=time_last_update=time_cur;
+		get_wrsLeapSecondSourceStatusDetails();
+	}
+
+
+	/* Return last update time */
+	return time_last_update;
+}
+
+static void get_TAI(void){
 	unsigned long utch, utcl, tmp1, tmp2;
 	time_t t;
 	struct tm tm;
 	uint64_t wrs_d_current_64;
 
-	time_cur = get_monotonic_sec();
-	if (time_update
-	    && time_cur - time_update < WRSCURRENTTIME_CACHE_TIMEOUT) {
-		/* cache not updated, return last update time */
-		return time_update;
-	}
-	time_update = time_cur;
-
-	memset(&wrsCurrentTime_s, 0, sizeof(wrsCurrentTime_s));
+	wrsCurrentTime_s.wrsDateTAI= 0;
+	wrsCurrentTime_s.wrsDateTAIString[0]= 0;
 
 	/* get TAI time from FPGA */
 
 	if (!pps) /* first time, map the fpga space */
 		pps = create_map(FPGA_BASE_PPSG, sizeof(*pps));
+
 	if (!pps) {
 		wrs_d_current_64 = 0;
 		strcpy(wrsCurrentTime_s.wrsDateTAIString,
 		       "0000-00-00-00:00:00 (failed)");
-		return time_update;
+	} else {
+
+		do {
+			utch = pps->CNTR_UTCHI;
+			utcl = pps->CNTR_UTCLO;
+			tmp1 = pps->CNTR_UTCHI;
+			tmp2 = pps->CNTR_UTCLO;
+		} while ((tmp1 != utch) || (tmp2 != utcl));
+
+		wrs_d_current_64 = (uint64_t)(utch) << 32 | utcl;
+		wrsCurrentTime_s.wrsDateTAI = wrs_d_current_64;
+
+		t = wrs_d_current_64;
+		localtime_r(&t, &tm);
+		strftime(wrsCurrentTime_s.wrsDateTAIString,
+			 sizeof(wrsCurrentTime_s.wrsDateTAIString),
+			 "%Y-%m-%d-%H:%M:%S", &tm);
+	}
+}
+
+#define SYSTEMCLOCK_DIR "/tmp"
+#define SYSTEMCLOCK_DRIFT SYSTEMCLOCK_DIR "/system_clock_monitor_drift"
+#define SYSTEMCLOCK_STATUS SYSTEMCLOCK_DIR "/system_clock_monitor_status"
+
+
+
+static text_status_mapping_t mapping_system_clock_monitor_status[]={
+		{ "no_error", WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK},
+		{ "exceeded_threshold",WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED},
+};
+
+static void get_wrsSystemClockStatusDetails(void){
+	char buff[21]; /* 1 for null char */
+	FILE *f;
+	int status=0, drift=0;
+
+	update_expected_services();
+
+
+	if (  services[SRV_SYSTEM_CLOCK].enabled ) {
+		// Service enabled
+
+		char * slog_obj_name = wrsSystemClockStatusDetails_str;
+		if ((f= fopen(SYSTEMCLOCK_STATUS, "r"))!=NULL) {
+
+			/* readline without newline */
+			fscanf(f, LINE_READ_LEN(sizeof(buff)-1), buff);
+			fclose(f);
+			status =getStatusFromMapping(mapping_system_clock_monitor_status, buff);
+			if ( status==0 ) {
+				status = WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid status (%s)\n",
+					 slog_obj_name,buff);
+			}
+		} else {
+			/* File not found, probably something else caused
+			 * a problem */
+			status = WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+				 "open " SYSTEMCLOCK_STATUS "\n",slog_obj_name);
+		}
+
+		/* Read drift value */
+		if ( status==WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED ||
+				status == WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK) {
+			slog_obj_name = wrsSystemClockDrift_str;
+
+			if ((f=fopen(SYSTEMCLOCK_DRIFT, "r"))!=NULL) {
+				/* readline without newline */
+				if ( fscanf(f, "%d", &drift)!=1 ) {
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid "
+						 "drift value in file " SYSTEMCLOCK_DRIFT "\n",slog_obj_name);
+					drift=0;
+				}
+				fclose(f);
+			} else {
+				/* File not found, probably something else caused
+				 * a problem */
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+					 "open " SYSTEMCLOCK_DRIFT "\n",slog_obj_name);
+			}
+		}
+	} else {
+		// System clock monitoring disabled
+		status=WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK;
+	}
+	wrsCurrentTime_s.wrsSystemClockStatusDetails = status;
+	wrsCurrentTime_s.wrsSystemClockDrift = drift;
+}
+
+
+#define LEAPSEC_CHECK_DIR "/tmp"
+#define LEAPSEC_CHECK LEAPSEC_CHECK_DIR "/leapseconds_check_status"
+
+static text_status_mapping_t mapping_leap_sec_status[]={
+		{ "no_changes",WRS_LEAP_SEC_STATUS_DETAILS_OK},
+		{ "leap_sec_file_expired",WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED},
+		{ "error_detected",WRS_LEAP_SEC_STATUS_DETAILS_INTERNAL_ERROR},
+		{ "tai_read_error",WRS_LEAP_SEC_STATUS_DETAILS_TAI_READ_ERROR},
+		{ "leap_sec_inserted",WRS_LEAP_SEC_STATUS_DETAILS_SEC_INSERTED},
+		{ "leap_sec_deleted",WRS_LEAP_SEC_STATUS_DETAILS_SEC_DELETED},
+};
+
+
+static void get_wrsLeapSecondStatusDetails(void){
+	char buff[31]; /* 1 for null char */
+	FILE *f;
+	int check_status=0;
+
+	char * slog_obj_name = wrsLeapSecStatusDetails_str;
+	if ((f= fopen(LEAPSEC_CHECK, "r"))!=NULL) {
+
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(sizeof(buff)-1), buff);
+		fclose(f);
+		check_status =getStatusFromMapping(mapping_leap_sec_status, buff);
+		if ( check_status==0 ) {
+			check_status=WRS_LEAP_SEC_STATUS_DETAILS_UNKNOWN;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid status (%s)\n",
+				 slog_obj_name,buff);
+		}
+	} else {
+		/* File not found, probably something else caused
+		 * a problem */
+		check_status = WRS_LEAP_SEC_STATUS_DETAILS_IO_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+			 "open " LEAPSEC_CHECK "\n",slog_obj_name);
 	}
 
-	do {
-		utch = pps->CNTR_UTCHI;
-		utcl = pps->CNTR_UTCLO;
-		tmp1 = pps->CNTR_UTCHI;
-		tmp2 = pps->CNTR_UTCLO;
-	} while ((tmp1 != utch) || (tmp2 != utcl));
-
-	wrs_d_current_64 = (uint64_t)(utch) << 32 | utcl;
-	wrsCurrentTime_s.wrsDateTAI = wrs_d_current_64;
-
-	t = wrs_d_current_64;
-	localtime_r(&t, &tm);
-	strftime(wrsCurrentTime_s.wrsDateTAIString,
-		 sizeof(wrsCurrentTime_s.wrsDateTAIString),
-		 "%Y-%m-%d-%H:%M:%S", &tm);
-
-	/* there was an update, return current time */
-	return time_update;
+	wrsCurrentTime_s.wrsLeapSecStatusDetails= check_status;
 }
+
+#define LEAPSEC_SOURCE_DIR "/tmp"
+#define LEAPSEC_SOURCE_STATUS LEAPSEC_SOURCE_DIR "/leapseconds_download_status"
+#define LEAPSEC_SOURCE        LEAPSEC_SOURCE_DIR "/leapseconds_download_source"
+#define LEAPSEC_SOURCE_URL    LEAPSEC_SOURCE_DIR "/leapseconds_download_url"
+
+static text_status_mapping_t mapping_leap_sec_src_status[]={
+		{ "no_changes",WRS_LEAP_SEC_SRC_STATUS_DETAILS_OK},
+		{ "dhcp_error",WRS_LEAP_SEC_SRC_STATUS_DETAILS_DHCP_ERROR},
+		{ "invalid_url",WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_URL},
+		{ "updated",WRS_LEAP_SEC_SRC_STATUS_DETAILS_UPDATED},
+		{ "file_invalid",WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_FILE},
+		{ "download_error",WRS_LEAP_SEC_SRC_STATUS_DETAILS_DOWNLOAD_ERROR},
+};
+
+static text_status_mapping_t mapping_leap_sec_src_mode[]={
+		{ "try_remote",WRS_LEAP_SEC_SOURCE_TRY_REMOTE},
+		{ "force_remote",WRS_LEAP_SEC_SOURCE_FORCE_REMOTE},
+		{ "local",WRS_LEAP_SEC_SOURCE_LOCAL}
+};
+
+static void get_wrsLeapSecondSourceStatusDetails(void){
+	char buff[WRS_LEAP_SECOND_SOURCE_URL_LEN]; /* 1 for null char */
+	FILE *f;
+	int check_status=0,source=0;
+	char *srcUrl=NULL;
+
+	char * slog_obj_name = wrsLeapSecSource_str;
+	if ((f= fopen(LEAPSEC_SOURCE, "r"))!=NULL) {
+
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(sizeof(buff)-1), buff);
+		fclose(f);
+		source =getStatusFromMapping(mapping_leap_sec_src_mode, buff);
+		if ( source==0 ) {
+			source=WRS_LEAP_SEC_SOURCE_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid source (%s)\n",
+				 slog_obj_name,buff);
+		}
+	} else {
+		/* File not found, probably something else caused
+		 * a problem */
+		source = WRS_LEAP_SEC_SOURCE_IO_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+			 "open " LEAPSEC_SOURCE "\n",slog_obj_name);
+	}
+
+	wrsCurrentTime_s.wrsLeapSecSource= source;
+
+	// get the URL source if needed
+	if ( source == WRS_LEAP_SEC_SOURCE_FORCE_REMOTE || source== WRS_LEAP_SEC_SOURCE_TRY_REMOTE ) {
+		slog_obj_name = wrsLeapSecSourceUrl_str;
+		if ((f= fopen(LEAPSEC_SOURCE_URL, "r"))!=NULL) {
+
+			/* readline without newline */
+			if ( fscanf(f, LINE_READ_LEN(WRS_LEAP_SECOND_SOURCE_URL_LEN), buff)==1 )
+				srcUrl=buff;
+			else
+				buff[0]=0;
+			fclose(f);
+			if ( !srcUrl ) {
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid file contents (%s)\n",
+					 slog_obj_name,buff);
+			}
+		} else {
+			/* File not found, probably something else caused
+			 * a problem */
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+				 "open " LEAPSEC_SOURCE_URL"\n",slog_obj_name);
+		}
+	}
+	if (srcUrl==NULL)
+		srcUrl="";
+	strcpy(wrsCurrentTime_s.wrsLeapSecSourceUrl,srcUrl);
+
+	// get the leap second source status
+	slog_obj_name = wrsLeapSecSourceStatusDetails_str;
+	if ((f= fopen(LEAPSEC_SOURCE_STATUS, "r"))!=NULL) {
+
+		/* readline without newline */
+		if ( fscanf(f, LINE_READ_LEN(sizeof(buff)-1), buff)==1)
+			check_status =getStatusFromMapping(mapping_leap_sec_src_status, buff);
+		else
+			buff[0]=0;
+		fclose(f);
+		if ( check_status==0 ) {
+			check_status=WRS_LEAP_SEC_SRC_STATUS_DETAILS_UNKNOWN;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid  status (%s)\n",
+				 slog_obj_name,buff);
+		}
+	} else {
+		/* File not found, probably something else caused
+		 * a problem */
+		check_status = WRS_LEAP_SEC_SRC_STATUS_DETAILS_IO_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+			 "open " LEAPSEC_SOURCE_STATUS "\n",slog_obj_name);
+	}
+	wrsCurrentTime_s.wrsLeapSecSourceStatusDetails=check_status;
+}
+
+static void update_expected_services(void)
+{
+	static int run_once = 1;
+	int i;
+
+	/* Read the information about disabled daemons from dot-config only
+	 * once. Another read makes no sense, because SNMP daemon reads
+	 * dot-config only once at startup */
+	if (!run_once)
+		return;
+
+	run_once = 0;
+
+	for ( i=0 ; i < SRV_MAX_SERVICES; i++ ){
+		service_exp_t *s=&services[i];
+
+		if ( s->configKey!=NULL) {
+			char *tmp;
+
+			tmp = libwr_cfg_get((char*)s->configKey);
+			if (tmp && !strncmp(tmp, "y",1)) {
+
+				s->enabled=1;
+				snmp_log(LOG_INFO, "SNMP: " SL_INFO " %s: "
+					"CONFIG_%s=y in dot-config\n",
+					 s->snmpObjectName, s->configKey);
+			} else {
+				s->enabled=0;
+			}
+		}
+	}
+}
+
+static int _getStatusFromMapping(text_status_mapping_t *map, int mapSize, const char *key) {
+	int i;
+	for( i=0; i<mapSize; i++ ) {
+		if (!strcmp(map->key,key)) {
+			return map->status;
+		}
+		map++;
+	}
+	return 0;
+}
+
 
 #define GT_OID WRSCURRENTTIME_OID
 #define GT_PICKINFO wrsCurrentTime_pickinfo

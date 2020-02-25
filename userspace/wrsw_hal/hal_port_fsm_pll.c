@@ -169,8 +169,8 @@ static int port_pll_fsm_build_events(fsm_t *fsm) {
 	}
 	if ( ps->hw_index==hwIndex && tm == HAL_TIMING_MODE_BC) {
 		int locked=hal_port_check_lock(ps);
-		if ( locked >=0 ) {
-			portEventMask|= locked ?
+		if ( locked != PORT_LOCK_STATE_ERROR ) {
+			portEventMask|= locked==PORT_LOCK_STATE_LOCKED ?
 				HAL_PORT_PLL_EVENT_LOCKED : HAL_PORT_PLL_EVENT_UNLOCKED;
 		}
 	} else {

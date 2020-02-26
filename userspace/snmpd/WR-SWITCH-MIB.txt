@@ -2843,7 +2843,8 @@ WrsPtpInstanceEntry ::=
         wrsPtpInstancePeerMac           PhysAddress,
         wrsPtpInstancePeerVid           INTEGER,
         wrsPtpInstanceVlanNum           INTEGER,
-        wrsPtpInstanceVlanListStr       DisplayString
+        wrsPtpInstanceVlanListStr       DisplayString,
+        wrsPtpInstanceStatusError       INTEGER
     }
 
 wrsPtpInstancePortIndex OBJECT-TYPE
@@ -3139,6 +3140,23 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
             "Comma separated list of VLANs used by an instance"
     ::= { wrsPtpInstanceEntry 29 }
 
+ wrsPtpInstanceStatusError  OBJECT-TYPE
+    SYNTAX         INTEGER { 
+                        na(0),
+                        ok(1), 
+                        error(2),
+                        warningNA(3) -- at least one field is equal to 0 (NA)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "PTP instance status error
+             ok - all SFPs are ok
+             error - there is an error in SFP
+             warningNA - at least one field is equal to 0 (NA),
+                         shouldn't happen in normal operation 
+             "
+    ::= { wrsPtpInstanceEntry 30 }
 
 --wrsNetworking
 --Configuration

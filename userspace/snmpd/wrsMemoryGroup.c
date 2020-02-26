@@ -71,14 +71,12 @@ time_t wrsMemory_data_fill(void)
 	fclose(f);
 
 	if (found == MEMINFO_ENTRIES && mem_total > 0) { /* avoid div 0 */
+		unsigned long allFreeMem= mem_free + mem_buffers +mem_cached;
 		wrsMemory_s.wrsMemoryTotal = (int) mem_total;
-		wrsMemory_s.wrsMemoryUsed = (int) (mem_total - mem_free
-						   - mem_buffers - mem_cached);
-		wrsMemory_s.wrsMemoryUsedPerc = (int) ((mem_total - mem_free
-						    - mem_buffers - mem_cached)
+		wrsMemory_s.wrsMemoryUsed = (int) (mem_total - allFreeMem);
+		wrsMemory_s.wrsMemoryUsedPerc = (int) ((mem_total - allFreeMem)
 						    * 100 / mem_total);
-		wrsMemory_s.wrsMemoryFree = (int) (mem_free + mem_buffers
-						   + mem_cached);
+		wrsMemory_s.wrsMemoryFree = (int) (allFreeMem);
 	} else { /* if not enough entries found */
 		snmp_log(LOG_ERR, "SNMP:  " SL_ER
 			 " wrsMemoryGroup error while reading "

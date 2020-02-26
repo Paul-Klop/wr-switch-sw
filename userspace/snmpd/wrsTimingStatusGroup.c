@@ -261,7 +261,7 @@ static void get_wrsSoftPLLStatus(void)
 	    && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED) {
 		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Allignment FSM state of SoftPLL is not LOCKED. "
+			 "Alignment FSM state of SoftPLL is not LOCKED. "
 			 "SoftPLL is not yet ready or has unlocked.\n",
 			 slog_obj_name);
 	}

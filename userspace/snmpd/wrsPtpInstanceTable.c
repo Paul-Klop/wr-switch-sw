@@ -31,7 +31,6 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceAsymScDelayCoefHR),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLatPS),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLatPS),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLatPS),
 
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtState),
@@ -165,7 +164,6 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			
 			i_a[i].wrsPtpInstanceTSCorrEgressLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.egressLatency)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceTSCorrIngLatPS = (int64_t)((((float)ppsi_i->timestampCorrectionPortDS.ingressLatency)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceTSCorrSemistLat = ppsi_i->timestampCorrectionPortDS.semistaticLatency;
 			i_a[i].wrsPtpInstanceTSCorrSemistLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.semistaticLatency)/(1<<16))*1000);
 
 			i_a[i].wrsPtpInstanceProtoDetectState = ppsi_i->pdstate+1;

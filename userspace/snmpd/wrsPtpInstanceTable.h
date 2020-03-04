@@ -37,7 +37,6 @@ struct wrsPtpInstanceTable_s {
 	char wrsPtpInstanceAsymScDelayCoefHR[64];
 	int64_t wrsPtpInstanceTSCorrEgressLatPS;
 	int64_t wrsPtpInstanceTSCorrIngLatPS;
-	int64_t wrsPtpInstanceTSCorrSemistLat;
 	int64_t wrsPtpInstanceTSCorrSemistLatPS;
 	int wrsPtpInstanceExtState;
 	int wrsPtpInstanceProtoDetectState;

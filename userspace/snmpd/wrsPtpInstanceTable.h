@@ -38,8 +38,8 @@ struct wrsPtpInstanceTable_s {
 	int64_t wrsPtpInstanceTSCorrEgressLatPS;
 	int64_t wrsPtpInstanceTSCorrIngLatPS;
 	int64_t wrsPtpInstanceTSCorrSemistLatPS;
-	int wrsPtpInstanceExtState;
 	int wrsPtpInstanceProtoDetectState;
+	int wrsPtpInstanceExtState;
 	char wrsPtpInstancePeerMac[ETH_ALEN];
 	int wrsPtpInstancePeerVid;
 	int wrsPtpInstanceVlanNum;

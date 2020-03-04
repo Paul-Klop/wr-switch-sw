@@ -26,7 +26,6 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtension),
 
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceAsymEnabled),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsym),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsymPS),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymScDelayCoef),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceAsymScDelayCoefHR),
@@ -160,7 +159,6 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			i_a[i].wrsPtpInstanceProfile = ppsi_i->cfg.profile + 1;
 			i_a[i].wrsPtpInstanceExtension = ppsi_i->protocol_extension+1;
 			i_a[i].wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
-			i_a[i].wrsPtpInstanceAsymConstAsym = ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry;
 			i_a[i].wrsPtpInstanceAsymConstAsymPS = (int64_t)((((float)ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
 			tmpstr_p = i_a[i].wrsPtpInstanceAsymScDelayCoefHR;

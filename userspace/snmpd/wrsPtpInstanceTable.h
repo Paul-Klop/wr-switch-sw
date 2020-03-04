@@ -32,7 +32,6 @@ struct wrsPtpInstanceTable_s {
 	int wrsPtpInstanceProfile;
 	int wrsPtpInstanceExtension;
 	int wrsPtpInstanceAsymEnabled;
-	int64_t wrsPtpInstanceAsymConstAsym;
 	int64_t wrsPtpInstanceAsymConstAsymPS;
 	int64_t wrsPtpInstanceAsymScDelayCoef;
 	char wrsPtpInstanceAsymScDelayCoefHR[64];

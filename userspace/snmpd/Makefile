@@ -20,13 +20,23 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
+# There is a static variable in pp-printf.c to accumulate stuff
+CONFIG_PRINT_BUFSIZE ?= 256
+
 # defer running "net-snmp-config --cflags" so it is visible in make output
 CFLAGS  += -fPIC -Wall  $$($(NET_SNMP_CONFIG) --cflags | sed s,-I/usr/include,,)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
-CFLAGS += -I../include -I../libwr/include -I../ppsi/include -I../ppsi/arch-wrs/include -I.
+CFLAGS += -I../include -I../libwr/include -I../ppsi/include -I../ppsi/pp_printf -I../ppsi/arch-wrs/include -I.
 CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG=0
+CFLAGS += -DCONFIG_PRINT_BUFSIZE=$(CONFIG_PRINT_BUFSIZE)
+
 
 SHLIB = wrsSnmp.so
+PPSI_SOURCES=\
+	../ppsi/lib/time-arith.c\
+	../ppsi/pp_printf/printf.c\
+	../ppsi/pp_printf/vsprintf-full.c
+
 SOURCES = \
 	shmem.c \
 	dot-config.c \
@@ -53,8 +63,8 @@ SOURCES = \
 	wrsPortStatusTable.c \
 	wrsPtpInstanceTable.c \
 	init.c \
-	../ppsi/lib/time-arith.c
-
+	$(PPSI_SOURCES)
+	
 MIBS = WR-SWITCH-MIB.txt
 
 OBJECTS = $(SOURCES:.c=.o)

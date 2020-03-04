@@ -593,8 +593,10 @@ wrsSystemClockStatusDetails OBJECT-TYPE
                         na(0),
                         ok(1),
                         thresholdExceeded(2),
-                        statusFileMissing(3),
-                        unknownStatus(4)
+                        ntpError(3),
+                        error(4),
+                        IOError(5),
+                        unknownStatus(6)
                             }
     MAX-ACCESS     read-only
     STATUS         current
@@ -602,7 +604,9 @@ wrsSystemClockStatusDetails OBJECT-TYPE
             "The system clock is compared to NTP time  
             ok - system clock is under the threshold value
             thresholdExceeded - system clock has exceeded the threshold value
-            error - Unexpected status
+            IOError - IO error detected (error) 
+            unknownStatus - Unexpected status (error)
+            error - Error detected
             warningNA - there is N/A in one of object used to calculate this value"
     ::= { wrsCurrentTimeGroup 3 }
 
@@ -613,6 +617,41 @@ wrsSystemClockDrift OBJECT-TYPE
     DESCRIPTION
             "Drift of system clock expressed in seconds"  
     ::= { wrsCurrentTimeGroup 4 }
+
+wrsSystemClockDriftThreshold OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level in seconds for system clock drift"  
+    ::= { wrsCurrentTimeGroup 5 }
+
+wrsSystemClockCheckInterval OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check interval of system clock drift. 
+            The unit is given by wrsSystemClockCheckIntervalUnit object."  
+            
+    ::= { wrsCurrentTimeGroup 6 }
+
+wrsSystemClockCheckIntervalUnit OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        error(1),
+                        minutes(2),
+                        hours(3),
+                        days(4) }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "System clock check interval unit (see wrsSystemClockCheckInterval)
+            seconds - System clock check interval expressed in seconds
+            minutes - System clock check interval expressed in minutes
+            days - System clock check interval expressed in number of days
+            "
+    ::= { wrsCurrentTimeGroup 7 }
 
 wrsLeapSecSource OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -633,7 +672,7 @@ wrsLeapSecSource OBJECT-TYPE
                         the error is propagated
             errorMinor - cannot read the status file, problem is probably somewhere
                      else"
-    ::= { wrsCurrentTimeGroup 5 }
+    ::= { wrsCurrentTimeGroup 8 }
 
 wrsLeapSecStatusDetails OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -659,7 +698,7 @@ wrsLeapSecStatusDetails OBJECT-TYPE
 			leapSecDeleted - A leap second will be deleted at 00:00
             errorMinor - cannot read the status file, problem is probably somewhere
                      else"
-    ::= { wrsCurrentTimeGroup 6 }
+    ::= { wrsCurrentTimeGroup 9 }
 
 wrsLeapSecSourceStatusDetails OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -685,7 +724,7 @@ wrsLeapSecSourceStatusDetails OBJECT-TYPE
              downloadError - Error detected during the download
              errorMinor - cannot read the status file, problem is probably somewhere
                      else"
-    ::= { wrsCurrentTimeGroup 7 }
+    ::= { wrsCurrentTimeGroup 10 }
 
 wrsLeapSecSourceURL OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..128))
@@ -693,7 +732,7 @@ wrsLeapSecSourceURL OBJECT-TYPE
     STATUS         current
     DESCRIPTION
         "Url to the leap second file"
-    ::= { wrsCurrentTimeGroup 8 }
+    ::= { wrsCurrentTimeGroup 11 }
 
 --wrsBootStatusGroup (.7.1.2)
 wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }

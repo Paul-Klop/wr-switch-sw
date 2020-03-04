@@ -156,15 +156,16 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			i_a[i].wrsPtpInstanceProfile = ppsi_i->cfg.profile + 1;
 			i_a[i].wrsPtpInstanceExtension = ppsi_i->protocol_extension+1;
 			i_a[i].wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
-			i_a[i].wrsPtpInstanceAsymConstAsymPS = (int64_t)((((float)ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry)/(1<<16))*1000);
+			i_a[i].wrsPtpInstanceAsymConstAsymPS = interval_to_picos(ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry);
+
 			i_a[i].wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
 			tmpstr_p = i_a[i].wrsPtpInstanceAsymScDelayCoefHR;
 			tmp_f    = ((float)ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient)/(((uint64_t)1<<62));
-			snprintf(tmpstr_p, 64, "%f,", tmp_f);
+			snprintf(tmpstr_p, 64, "%.9f,", tmp_f);
 			
-			i_a[i].wrsPtpInstanceTSCorrEgressLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.egressLatency)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceTSCorrIngLatPS = (int64_t)((((float)ppsi_i->timestampCorrectionPortDS.ingressLatency)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceTSCorrSemistLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.semistaticLatency)/(1<<16))*1000);
+			i_a[i].wrsPtpInstanceTSCorrEgressLatPS =interval_to_picos(ppsi_i->timestampCorrectionPortDS.egressLatency);
+			i_a[i].wrsPtpInstanceTSCorrIngLatPS = interval_to_picos(ppsi_i->timestampCorrectionPortDS.ingressLatency);
+			i_a[i].wrsPtpInstanceTSCorrSemistLatPS =interval_to_picos(ppsi_i->timestampCorrectionPortDS.semistaticLatency);
 
 			i_a[i].wrsPtpInstanceProtoDetectState = ppsi_i->pdstate+1;
 			i_a[i].wrsPtpInstanceExtState = ppsi_i->extState+1;

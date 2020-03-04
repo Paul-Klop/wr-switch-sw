@@ -595,7 +595,7 @@ wrsSystemClockStatusDetails OBJECT-TYPE
                         thresholdExceeded(2),
                         ntpError(3),
                         error(4),
-                        IOError(5),
+                        ioError(5),
                         unknownStatus(6)
                             }
     MAX-ACCESS     read-only
@@ -679,7 +679,7 @@ wrsLeapSecStatusDetails OBJECT-TYPE
                         na(0),
                         ok(1),
                         statusFileMissing(2),
-                        unknownStatus(3)
+                        unknownStatus(3),
 						leapSecFileExpired(4),
 					    internalErrorDetected(5),
 						taiReadError(6),
@@ -705,7 +705,7 @@ wrsLeapSecSourceStatusDetails OBJECT-TYPE
                         na(0),
                         ok(1),
                         statusFileMissing(2),
-                        unknownStatus(3)
+                        unknownStatus(3),
                         updated(4),
                         dhcpError(5),
                         invalidUrl(6),
@@ -3117,7 +3117,7 @@ wrsPtpInstancePeerMac  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "MAC used by an instance"
-    ::= { wrsPtpInstanceEntry 23 }
+    ::= { wrsPtpInstanceEntry 22 }
 
 wrsPtpInstancePeerVid  OBJECT-TYPE
     SYNTAX             Integer32
@@ -3125,7 +3125,7 @@ wrsPtpInstancePeerVid  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "VID used by an instance"
-    ::= { wrsPtpInstanceEntry 22 }
+    ::= { wrsPtpInstanceEntry 23 }
 
 wrsPtpInstanceVlanNum  OBJECT-TYPE
     SYNTAX             Integer32
@@ -3133,7 +3133,7 @@ wrsPtpInstanceVlanNum  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "Number of VLANs used by an instance"
-    ::= { wrsPtpInstanceEntry 23 }
+    ::= { wrsPtpInstanceEntry 24 }
 
 wrsPtpInstanceVlanListStr  OBJECT-TYPE
     SYNTAX             DisplayString (SIZE (0..160)) --32*5-
@@ -3141,7 +3141,7 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "Comma separated list of VLANs used by an instance"
-    ::= { wrsPtpInstanceEntry 24 }
+    ::= { wrsPtpInstanceEntry 25 }
 
  wrsPtpInstanceStatusError  OBJECT-TYPE
     SYNTAX         INTEGER { 
@@ -3159,7 +3159,7 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
              warningNA - at least one field is equal to 0 (NA),
                          shouldn't happen in normal operation 
              "
-    ::= { wrsPtpInstanceEntry 25 }
+    ::= { wrsPtpInstanceEntry 26 }
 
 --wrsNetworking
 --Configuration

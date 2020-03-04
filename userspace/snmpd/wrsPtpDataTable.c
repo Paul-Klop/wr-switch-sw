@@ -33,14 +33,6 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 
 };
 
-//FIXME: make a library in ppsi with all such functions, use it all around
-int64_t pp_time_to_picos(struct pp_time *ts)
-{
-	return ts->secs * PP_NSEC_PER_SEC
-		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
-}
-
-
 static int32_t int_saturate(int64_t value)
 {
 	if (value >= INT32_MAX)

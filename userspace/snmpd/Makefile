@@ -53,6 +53,7 @@ SOURCES = \
 	wrsPortStatusTable.c \
 	wrsPtpInstanceTable.c \
 	init.c \
+	../ppsi/lib/time-arith.c
 
 MIBS = WR-SWITCH-MIB.txt
 

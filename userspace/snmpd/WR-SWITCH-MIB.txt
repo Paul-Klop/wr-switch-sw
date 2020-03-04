@@ -2870,9 +2870,7 @@ WrsPtpInstanceEntry ::=
         wrsPtpInstanceAsymConstAsymPS   Counter64,
         wrsPtpInstanceAsymScDelayCoef   Counter64,
         wrsPtpInstanceAsymScDelayCoefHR DisplayString,
-        wrsPtpInstanceTSCorrEgressLat   Counter64,
         wrsPtpInstanceTSCorrEgressLatPS Counter64,
-        wrsPtpInstanceTSCorrIngLat      Counter64,
         wrsPtpInstanceTSCorrIngLatPS    Counter64,
         wrsPtpInstanceTSCorrSemistLat   Counter64,
         wrsPtpInstanceTSCorrSemistLatPS Counter64,
@@ -3061,29 +3059,13 @@ wrsPtpInstanceAsymScDelayCoefHR OBJECT-TYPE
         "Relative Delay Coefficient in a floating form"
     ::= { wrsPtpInstanceEntry 16 }
 
-wrsPtpInstanceTSCorrEgressLat OBJECT-TYPE
-    SYNTAX         Counter64
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Egress Latency (Tx Fixed Delay) in scaled nanoseconds"
-    ::= { wrsPtpInstanceEntry 17 }
-
 wrsPtpInstanceTSCorrEgressLatPS OBJECT-TYPE
     SYNTAX         Counter64
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Egress Latency (Tx Fixed Delay) in picoseconds"
-    ::= { wrsPtpInstanceEntry 18 }
-
-wrsPtpInstanceTSCorrIngLat OBJECT-TYPE
-    SYNTAX         Counter64
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Ingress Latency (Rx Fixed Delay) in scaled nanoseconds"
-    ::= { wrsPtpInstanceEntry 19 }
+    ::= { wrsPtpInstanceEntry 17 }
 
 wrsPtpInstanceTSCorrIngLatPS OBJECT-TYPE
     SYNTAX         Counter64
@@ -3091,7 +3073,7 @@ wrsPtpInstanceTSCorrIngLatPS OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Ingress Latency (Rx Fixed Delay) in picoseconds"
-    ::= { wrsPtpInstanceEntry 20 }
+    ::= { wrsPtpInstanceEntry 18 }
 
 wrsPtpInstanceTSCorrSemistLat OBJECT-TYPE
     SYNTAX         Counter64
@@ -3099,7 +3081,7 @@ wrsPtpInstanceTSCorrSemistLat OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Semi-static latency (bitslide) in scaled nanoseconds"
-    ::= { wrsPtpInstanceEntry 21 }
+    ::= { wrsPtpInstanceEntry 19 }
 
 wrsPtpInstanceTSCorrSemistLatPS OBJECT-TYPE
     SYNTAX         Counter64
@@ -3107,7 +3089,7 @@ wrsPtpInstanceTSCorrSemistLatPS OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Semi-static latency (bitslide) in picoseconds"
-    ::= { wrsPtpInstanceEntry 22 }
+    ::= { wrsPtpInstanceEntry 20 }
 
 wrsPtpInstanceProtoDetectState  OBJECT-TYPE
     SYNTAX         INTEGER {             -- ppsi/include/ppsi/pp-instance.h
@@ -3122,7 +3104,7 @@ wrsPtpInstanceProtoDetectState  OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Protocol detection state"
-    ::= { wrsPtpInstanceEntry 23 }
+    ::= { wrsPtpInstanceEntry 21 }
 
     wrsPtpInstanceExtState  OBJECT-TYPE
     SYNTAX         INTEGER {         -- ppsi/include/ppsi/pp-instance.h
@@ -3135,7 +3117,7 @@ wrsPtpInstanceProtoDetectState  OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "State of PTP extension (more than one are allowed per 1 physical port)"
-    ::= { wrsPtpInstanceEntry 24 }
+    ::= { wrsPtpInstanceEntry 22 }
 
 
 wrsPtpInstancePeerMac  OBJECT-TYPE
@@ -3144,7 +3126,7 @@ wrsPtpInstancePeerMac  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "MAC used by an instance"
-    ::= { wrsPtpInstanceEntry 25 }
+    ::= { wrsPtpInstanceEntry 23 }
 
 wrsPtpInstancePeerVid  OBJECT-TYPE
     SYNTAX             Integer32
@@ -3152,7 +3134,7 @@ wrsPtpInstancePeerVid  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "VID used by an instance"
-    ::= { wrsPtpInstanceEntry 26 }
+    ::= { wrsPtpInstanceEntry 24 }
 
 wrsPtpInstanceVlanNum  OBJECT-TYPE
     SYNTAX             Integer32
@@ -3160,7 +3142,7 @@ wrsPtpInstanceVlanNum  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "Number of VLANs used by an instance"
-    ::= { wrsPtpInstanceEntry 27 }
+    ::= { wrsPtpInstanceEntry 25 }
 
 wrsPtpInstanceVlanListStr  OBJECT-TYPE
     SYNTAX             DisplayString (SIZE (0..160)) --32*5-
@@ -3168,7 +3150,7 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
     STATUS             current
     DESCRIPTION
             "Comma separated list of VLANs used by an instance"
-    ::= { wrsPtpInstanceEntry 28 }
+    ::= { wrsPtpInstanceEntry 26 }
 
  wrsPtpInstanceStatusError  OBJECT-TYPE
     SYNTAX         INTEGER { 
@@ -3186,7 +3168,7 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
              warningNA - at least one field is equal to 0 (NA),
                          shouldn't happen in normal operation 
              "
-    ::= { wrsPtpInstanceEntry 29 }
+    ::= { wrsPtpInstanceEntry 27 }
 
 --wrsNetworking
 --Configuration

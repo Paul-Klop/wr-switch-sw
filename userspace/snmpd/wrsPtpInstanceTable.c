@@ -29,9 +29,7 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsymPS),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymScDelayCoef),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceAsymScDelayCoefHR),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLatPS),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLatPS),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLatPS),
@@ -165,9 +163,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 			tmp_f    = ((float)ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient)/(((uint64_t)1<<62));
 			snprintf(tmpstr_p, 64, "%f,", tmp_f);
 			
-			i_a[i].wrsPtpInstanceTSCorrEgressLat = ppsi_i->timestampCorrectionPortDS.egressLatency;
 			i_a[i].wrsPtpInstanceTSCorrEgressLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.egressLatency)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceTSCorrIngLat = ppsi_i->timestampCorrectionPortDS.ingressLatency;
 			i_a[i].wrsPtpInstanceTSCorrIngLatPS = (int64_t)((((float)ppsi_i->timestampCorrectionPortDS.ingressLatency)/(1<<16))*1000);
 			i_a[i].wrsPtpInstanceTSCorrSemistLat = ppsi_i->timestampCorrectionPortDS.semistaticLatency;
 			i_a[i].wrsPtpInstanceTSCorrSemistLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.semistaticLatency)/(1<<16))*1000);

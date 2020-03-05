@@ -159,8 +159,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				}
 
 				/* wrsPtpClockOffsetPs */
-				ptp_a[si].wrsPtpClockOffsetPs =
-				pp_time_to_picos(&ppsi_servo->offsetFromMaster);
+				ptp_a[si].wrsPtpClockOffsetPs = pp_time_to_picos(&ppsi_servo->offsetFromMaster);
+				if ( ptp_a[si].wrsPtpClockOffsetPs<0)
+					ptp_a[si].wrsPtpClockOffsetPs*=-1;
 
 				/* wrsPtpClockOffsetPsHR */
 				ptp_a[si].wrsPtpClockOffsetPsHR =

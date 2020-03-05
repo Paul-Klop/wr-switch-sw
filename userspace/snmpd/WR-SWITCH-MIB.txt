@@ -2051,7 +2051,7 @@ wrsPtpSyncSource OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "The port name that is currently the synchronization source"
+            "The interface name that is currently the synchronization source"
     ::= { wrsPtpDataEntry 9 }
 
 wrsPtpClockOffsetPs OBJECT-TYPE
@@ -2059,7 +2059,7 @@ wrsPtpClockOffsetPs OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Current clock offset from master, in picoseconds"
+            "Absolute value of current clock offset from master, in picoseconds"
     ::= { wrsPtpDataEntry 10 }
 
 wrsPtpClockOffsetPsHR OBJECT-TYPE

@@ -1422,7 +1422,8 @@ wrsSpllMode        OBJECT-TYPE
                 na(0),
                 grandmaster(1),
                 master(2),
-                slave(3)
+                slave(3),
+                disabled(4)
     }
     MAX-ACCESS     read-only
     STATUS         current

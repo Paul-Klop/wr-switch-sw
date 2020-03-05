@@ -59,6 +59,14 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	struct wr_servo_ext *wr_servo;
 	struct wrh_servo_t *wrh_servo;
 	char *tmp_name;
+	static int servoStateMapping[]={
+			[WRH_UNINITIALIZED]= PTP_SERVO_STATE_N_UNINTIALIZED,
+			[WRH_SYNC_NSEC]= PTP_SERVO_STATE_N_SYNC_NSEC,
+			[WRH_SYNC_TAI]= PTP_SERVO_STATE_N_SYNC_SEC,
+			[WRH_SYNC_PHASE]= PTP_SERVO_STATE_N_SYNC_PHASE,
+			[WRH_TRACK_PHASE]= PTP_SERVO_STATE_N_TRACK_PHASE,
+			[WRH_WAIT_OFFSET_STABLE]= PTP_SERVO_STATE_N_WAIT_OFFSET_STABLE,
+	};
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -139,9 +147,16 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				sizeof(ppsi_servo->servo_state_name));
 
 				/* wrsPtpServoStateN */
-				ptp_a[si].wrsPtpServoStateN= ( ppsi_i->extState == PP_EXSTATE_DISABLE
-						|| ppsi_i->extState == PP_EXSTATE_PTP ) ?
-								PTP_SERVO_STATE_N_STANDARD_PTP :  ppsi_servo->state;
+				if ( ppsi_i->extState == PP_EXSTATE_DISABLE
+						|| ppsi_i->extState == PP_EXSTATE_PTP ) {
+					ptp_a[si].wrsPtpServoStateN= PTP_SERVO_STATE_N_STANDARD_PTP;
+				} else {
+					if ( ppsi_servo->state>=0 && ppsi_servo->state < ARRAY_SIZE(servoStateMapping) ) {
+						ptp_a[si].wrsPtpServoStateN=servoStateMapping[ppsi_servo->state];
+					} else {
+						ptp_a[si].wrsPtpServoStateN=ppsi_servo->state;
+					}
+				}
 
 				/* wrsPtpClockOffsetPs */
 				ptp_a[si].wrsPtpClockOffsetPs =

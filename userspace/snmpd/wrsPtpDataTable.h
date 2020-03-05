@@ -7,7 +7,13 @@
  * when switchover is implemented */
 #define WRS_MAX_N_SERVO_INSTANCES 1
 
-#define PTP_SERVO_STATE_N_STANDARD_PTP	99
+#define PTP_SERVO_STATE_N_UNINTIALIZED         0
+#define PTP_SERVO_STATE_N_SYNC_NSEC            1
+#define PTP_SERVO_STATE_N_SYNC_SEC             2
+#define PTP_SERVO_STATE_N_SYNC_PHASE    	   3
+#define PTP_SERVO_STATE_N_TRACK_PHASE   	   4
+#define PTP_SERVO_STATE_N_WAIT_OFFSET_STABLE   5
+#define PTP_SERVO_STATE_N_STANDARD_PTP	       99
 
 struct wrsPtpDataTable_s {
 	uint32_t wrsPtpDataIndex;		/* not reported, index fields has to be marked

@@ -36,7 +36,7 @@ struct wrsPortStatusTable_s {
 				 * as not-accessible in MIB */
 	char wrsPortStatusPortName[12];	/* port name */
 	int wrsPortStatusConfiguredMode;
-	ClockIdentity wrsPortStatusPeer;
+	ClockIdentity wrsPortStatusPeer_obsolete;
 	/* These can't be "unsigned char" because we scanf a %i in there */
 	unsigned wrsPortStatusLink;
 	unsigned wrsPortStatusLocked;

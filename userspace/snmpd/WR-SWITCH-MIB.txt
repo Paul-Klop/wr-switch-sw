@@ -2005,7 +2005,7 @@ wrsPtpMode OBJECT-TYPE
                 slave(3)
     }
     MAX-ACCESS  read-only
-    STATUS      current
+    STATUS      obsolete
     DESCRIPTION
             "The mode of this clock"
     ::= { wrsPtpDataEntry 5 }
@@ -2279,7 +2279,7 @@ wrsPortStatusLocked OBJECT-TYPE
 wrsPortStatusPeer OBJECT-TYPE
     SYNTAX         OCTET STRING (SIZE(8))
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         obsolete
     DESCRIPTION
             "the ClockID of the peer, if available. Or 0"
     ::= { wrsPortStatusEntry 6 }

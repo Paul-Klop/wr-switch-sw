@@ -14,7 +14,7 @@ struct wrsPtpDataTable_s {
 				 * running FIXME: not implemented */
 	ClockIdentity wrsPtpGrandmasterID;	/* FIXME: not implemented */
 	ClockIdentity wrsPtpOwnID;	/* FIXME: not implemented */
-	int wrsPtpMode;		/* FIXME: not implemented */
+	int wrsPtpMode_obsolete;		/* Obsolete */
 	char wrsPtpServoState[32]; /* State as string */
 	int wrsPtpServoStateN;	/* state number */
 	int wrsPtpPhaseTracking;

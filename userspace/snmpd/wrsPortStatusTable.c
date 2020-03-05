@@ -14,7 +14,7 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLink),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusConfiguredMode),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLocked),
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPeer),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPeer_obsolete),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVN),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpPN),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVS),
@@ -113,9 +113,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			/* Keep value 0 for Not available */
 			wrsPortStatusTable->wrsPortStatusLocked =
 							1 + port_state->locked;
-			/* FIXME: get real peer_id */
-			memset(&wrsPortStatusTable->wrsPortStatusPeer, 0xff,
-			       sizeof(ClockIdentity));
 			if (port_state->sfpPresent && (port_state->calib.sfp.flags & SFP_FLAG_IN_DB)) {
 				wrsPortStatusTable->wrsPortStatusSfpInDB =
 					WRS_PORT_STATUS_SFP_IN_DB_IN_DATA_BASE;

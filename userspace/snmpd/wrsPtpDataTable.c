@@ -10,7 +10,7 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpPortName),
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpGrandmasterID),
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpOwnID),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpMode),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpMode_obsolete),/* obsolete */
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpServoState),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoStateN),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpPhaseTracking),
@@ -132,9 +132,6 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				memcpy(&ptp_a[si].wrsPtpOwnID,
 					&ppsi_defaultDS->clockIdentity,
 					sizeof(ClockIdentity));
-
-				/* wrsPtpMode */
-				//TODO
 
 				/* wrsPtpServoState */
 				strncpy(ptp_a[si].wrsPtpServoState,

@@ -7,6 +7,8 @@
  * when switchover is implemented */
 #define WRS_MAX_N_SERVO_INSTANCES 1
 
+#define PTP_SERVO_STATE_N_STANDARD_PTP	99
+
 struct wrsPtpDataTable_s {
 	uint32_t wrsPtpDataIndex;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */

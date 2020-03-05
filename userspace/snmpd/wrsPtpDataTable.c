@@ -139,7 +139,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				sizeof(ppsi_servo->servo_state_name));
 
 				/* wrsPtpServoStateN */
-				ptp_a[si].wrsPtpServoStateN = ppsi_servo->state;
+				ptp_a[si].wrsPtpServoStateN= ( ppsi_i->extState == PP_EXSTATE_DISABLE
+						|| ppsi_i->extState == PP_EXSTATE_PTP ) ?
+								PTP_SERVO_STATE_N_STANDARD_PTP :  ppsi_servo->state;
 
 				/* wrsPtpClockOffsetPs */
 				ptp_a[si].wrsPtpClockOffsetPs =

@@ -2025,7 +2025,8 @@ wrsPtpServoStateN OBJECT-TYPE
                 syncSec(2),
                 syncPhase(3),
                 trackPhase(4),
-                waitOffsetStable(5)
+                waitOffsetStable(5),
+                standardPTP(99)
     }
     MAX-ACCESS  read-only
     STATUS      current

@@ -69,10 +69,15 @@ MIBS = WR-SWITCH-MIB.txt
 
 OBJECTS = $(SOURCES:.c=.o)
 
-all: $(SHLIB)
+OID_FILE = oids.txt
+
+all: $(SHLIB) $(OID_FILE)
 
 $(SHLIB): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@
+
+$(OID_FILE): $(MIBS)
+	snmptranslate -Pu -Tz -M /usr/share/snmp/mibs -m ./$(MIBS) >$(OID_FILE)
 
 clean:
 	rm -f $(SHLIB) $(OBJECTS)

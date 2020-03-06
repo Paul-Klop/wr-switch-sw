@@ -26,19 +26,15 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtension),
 
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceAsymEnabled),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsym),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymConstAsymPS),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceAsymScDelayCoef),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceAsymScDelayCoefHR),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrEgressLatPS),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrIngLatPS),
-	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLat),
 	FIELD(wrsPtpInstanceTable_s, ASN_COUNTER64, wrsPtpInstanceTSCorrSemistLatPS),
 
-	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtState),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceProtoDetectState),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtState),
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstancePeerMac),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstancePeerVid),
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceVlanNum),
@@ -113,6 +109,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 	while (1) {
 		ii = wrs_shm_seqbegin(ppsi_head);
 		for (i = 0; i < *ppsi_ppi_nlinks; i++) {
+			struct wrsPtpInstanceTable_s *pit=&i_a[i];
 
 			ppsi_i = ppsi_ppi + i;
 			/* (ppsi_ppi + i)->iface_name is a pointer in
@@ -123,18 +120,18 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 
 			tmp_name = (char *) wrs_shm_follow(ppsi_head,
 					       ppsi_i->port_name);
-			strncpy(i_a[i].wrsPtpInstanceName, tmp_name, 16);
-			i_a[i].wrsPtpInstanceName[15] = '\0';
+			strncpy(pit->wrsPtpInstanceName, tmp_name, 16);
+			pit->wrsPtpInstanceName[15] = '\0';
 
 			tmp_name = (char *) wrs_shm_follow(ppsi_head,
 					       ppsi_i->iface_name);
-			strncpy(i_a[i].wrsPtpInstancePortName, tmp_name, 16);
-			i_a[i].wrsPtpInstancePortName[15] = '\0';
+			strncpy(pit->wrsPtpInstancePortName, tmp_name, 16);
+			pit->wrsPtpInstancePortName[15] = '\0';
 
 			p = pp_wrs_lookup_port(tmp_name);
 			if (p) {
 				phys_port = p->hw_index + 1;
-				i_a[i].wrsPtpInstancePort = phys_port;
+				pit->wrsPtpInstancePort = phys_port;
 				
 				if (last_port == phys_port)
 					instance_on_port++;
@@ -144,49 +141,46 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 				last_port = phys_port;
 			}
 
-			i_a[i].wrsPtpInstancePortInstance = instance_on_port;
+			pit->wrsPtpInstancePortInstance = instance_on_port;
 
-			i_a[i].wrsPtpInstanceState = ppsi_i->state;
+			pit->wrsPtpInstanceState = ppsi_i->state;
 			/* follow portDS */
 			portDS_i = (portDS_t *) wrs_shm_follow(ppsi_head,
 							       ppsi_i->portDS);
 			if (portDS_i)
-				i_a[i].wrsPtpInstanceMasterOnly = portDS_i->masterOnly ? 2 : 1 ;
+				pit->wrsPtpInstanceMasterOnly = portDS_i->masterOnly ? 2 : 1 ;
 			else 
-				i_a[i].wrsPtpInstanceMasterOnly = 0;
+				pit->wrsPtpInstanceMasterOnly = 0;
 
-			i_a[i].wrsPtpInstanceExtPortCfgDesSt = ppsi_i->externalPortConfigurationPortDS.desiredState;
-			i_a[i].wrsPtpInstanceMechanism = ppsi_i->delayMechanism;
-			i_a[i].wrsPtpInstanceProfile = ppsi_i->cfg.profile + 1;
-			i_a[i].wrsPtpInstanceExtension = ppsi_i->protocol_extension+1;
-			i_a[i].wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
-			i_a[i].wrsPtpInstanceAsymConstAsym = ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry;
-			i_a[i].wrsPtpInstanceAsymConstAsymPS = (int64_t)((((float)ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
-			tmpstr_p = i_a[i].wrsPtpInstanceAsymScDelayCoefHR;
+			pit->wrsPtpInstanceExtPortCfgDesSt = ppsi_i->externalPortConfigurationPortDS.desiredState;
+			pit->wrsPtpInstanceMechanism = ppsi_i->delayMechanism;
+			pit->wrsPtpInstanceProfile = ppsi_i->cfg.profile + 1;
+			pit->wrsPtpInstanceExtension = ppsi_i->protocol_extension+1;
+			pit->wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
+			pit->wrsPtpInstanceAsymConstAsymPS = interval_to_picos(ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry);
+
+			pit->wrsPtpInstanceAsymScDelayCoef = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient;
+			tmpstr_p = pit->wrsPtpInstanceAsymScDelayCoefHR;
 			tmp_f    = ((float)ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient)/(((uint64_t)1<<62));
-			snprintf(tmpstr_p, 64, "%f,", tmp_f);
+			snprintf(tmpstr_p, 64, "%.9f,", tmp_f);
 			
-			i_a[i].wrsPtpInstanceTSCorrEgressLat = ppsi_i->timestampCorrectionPortDS.egressLatency;
-			i_a[i].wrsPtpInstanceTSCorrEgressLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.egressLatency)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceTSCorrIngLat = ppsi_i->timestampCorrectionPortDS.ingressLatency;
-			i_a[i].wrsPtpInstanceTSCorrIngLatPS = (int64_t)((((float)ppsi_i->timestampCorrectionPortDS.ingressLatency)/(1<<16))*1000);
-			i_a[i].wrsPtpInstanceTSCorrSemistLat = ppsi_i->timestampCorrectionPortDS.semistaticLatency;
-			i_a[i].wrsPtpInstanceTSCorrSemistLatPS =(int64_t)((((float)ppsi_i->timestampCorrectionPortDS.semistaticLatency)/(1<<16))*1000);
+			pit->wrsPtpInstanceTSCorrEgressLatPS =interval_to_picos(ppsi_i->timestampCorrectionPortDS.egressLatency);
+			pit->wrsPtpInstanceTSCorrIngLatPS = interval_to_picos(ppsi_i->timestampCorrectionPortDS.ingressLatency);
+			pit->wrsPtpInstanceTSCorrSemistLatPS =interval_to_picos(ppsi_i->timestampCorrectionPortDS.semistaticLatency);
 
-			i_a[i].wrsPtpInstanceProtoDetectState = ppsi_i->pdstate+1;
-			i_a[i].wrsPtpInstanceExtState = ppsi_i->extState+1;
+			pit->wrsPtpInstanceProtoDetectState = ppsi_i->pdstate+1;
+			pit->wrsPtpInstanceExtState = ppsi_i->extState+1;
 
-			memcpy(i_a[i].wrsPtpInstancePeerMac, ppsi_i->peer, ETH_ALEN);
-			i_a[i].wrsPtpInstancePeerVid = ppsi_i->peer_vid;
+			memcpy(pit->wrsPtpInstancePeerMac, ppsi_i->peer, ETH_ALEN);
+			pit->wrsPtpInstancePeerVid = ppsi_i->peer_vid;
 
-			i_a[i].wrsPtpInstanceVlanNum = ppsi_i->nvlans;
-			tmpstr_p = i_a[i].wrsPtpInstanceVlanListStr;
+			pit->wrsPtpInstanceVlanNum = ppsi_i->nvlans;
+			tmpstr_p = pit->wrsPtpInstanceVlanListStr;
 			for (vlan_i = 0; vlan_i < ppsi_i->nvlans; vlan_i++){
 				int ret_len;
 				int str_space_left;
 
-				str_space_left = WRSPTPINSTANCEVLANLISTSTRLEN - (tmpstr_p - i_a[i].wrsPtpInstanceVlanListStr);
+				str_space_left = WRSPTPINSTANCEVLANLISTSTRLEN - (tmpstr_p - pit->wrsPtpInstanceVlanListStr);
 				ret_len = snprintf(tmpstr_p, str_space_left, "%d,", ppsi_i->vlans[vlan_i]);
 				tmpstr_p += ret_len;
 			}
@@ -195,66 +189,63 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 				int list_len;
 				char *last_char;
 
-				list_len = strnlen(i_a[i].wrsPtpInstanceVlanListStr,
+				list_len = strnlen(pit->wrsPtpInstanceVlanListStr,
 						   WRSPTPINSTANCEVLANLISTSTRLEN);
 				
-				last_char = &i_a[i].wrsPtpInstanceVlanListStr[list_len - 1];
+				last_char = &pit->wrsPtpInstanceVlanListStr[list_len - 1];
 				if (*last_char == ',')
 					*last_char = 0;
 			}
 			
-			if (shmem_ready_hald())
-                        {
-				i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_OK;
+			if (shmem_ready_hald()) {
+				struct wrsPortStatusTable_s *ps = &p_a[phys_port - 1];
 
-				/* error when there is an active Slave port in GM of FM mode */
-				if ((p_a[phys_port-1].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
-				    (p_a[phys_port-1].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP))
-				{
-					if ((i_a[i].wrsPtpInstanceState == PPS_SLAVE ||
-					     i_a[i].wrsPtpInstanceState == PPS_UNCALIBRATED) &&
-					    (hal_shmem->hal_mode        == HAL_TIMING_MODE_GRAND_MASTER))
-					{
-						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
-						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-							 "In Grand Master mode, instance %d on port %d (%s) "
-							 "is in SLAVE or UNCALIBRATED state.\n",
-							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
-					}
-					if ((i_a[i].wrsPtpInstanceState == PPS_SLAVE ||
-					     i_a[i].wrsPtpInstanceState == PPS_UNCALIBRATED) &&
-					    (hal_shmem->hal_mode        == HAL_TIMING_MODE_FREE_MASTER)) // THIS is wrogn
-					{
-						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
-						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-							 "In Free Running mode, instance %d on port %d (%s) "
-							 "is in SLAVE or UNCALIBRATED state.\n",
-							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
-					}
-				}
+				pit->wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_OK;
 
-				if ((p_a[phys_port-1].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) &&
-				    (hal_shmem->hal_mode == HAL_TIMING_MODE_BC) &&
-				    (i_a[i].wrsPtpInstanceExtPortCfgDesSt == PPS_SLAVE))
-				{
-					if(i_a[i].wrsPtpInstanceState != PPS_DISABLED &&
-					   i_a[i].wrsPtpInstanceState != PPS_SLAVE)
-					{
-						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
-						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-							 "In Boundary Clock mode, External Port Configuration is enabled "
-							 "and desiredState is set to SLAVE but instance %d on port %d (%s) "
-							 "is not in SLAVE state.\n",
-							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
+				if (ps->wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) {
+					/* error when there is an active Slave port in GM of FM mode */
+					if (ps->wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP) {
+
+						if ((pit->wrsPtpInstanceState == PPS_SLAVE
+								|| pit->wrsPtpInstanceState == PPS_UNCALIBRATED)
+								&& (hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER)) {
+							pit->wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+							snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							"In Grand Master mode, instance %d on port %d (%s) "
+							"is in SLAVE or UNCALIBRATED state.\n", slog_obj_name, i, phys_port, pit->wrsPtpInstancePortName);
+						}
+
+						if ((pit->wrsPtpInstanceState == PPS_SLAVE
+								|| pit->wrsPtpInstanceState == PPS_UNCALIBRATED)
+								&& (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER)) {
+
+							pit->wrsPtpInstanceStatusError =	WRS_SLAVE_LINK_STATUS_ERROR;
+							snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							"In Free Running mode, instance %d on port %d (%s) "
+							"is in SLAVE or UNCALIBRATED state.\n", slog_obj_name, i, phys_port, pit->wrsPtpInstancePortName);
+						}
 					}
-					if(p_a[phys_port-1].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)
-					{
-						i_a[i].wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
-						snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-							 "In Boundary Clock mode, External Port Configuration is enabled "
-							 "and desiredState is set to SLAVE on instance %d, yet port %d (%s) "
-							 "is DOWN.\n",
-							 slog_obj_name, i, phys_port, i_a[i].wrsPtpInstancePortName);
+
+					if ((hal_shmem->hal_mode == HAL_TIMING_MODE_BC)
+							&& (pit->wrsPtpInstanceExtPortCfgDesSt == PPS_SLAVE)) {
+
+						if (pit->wrsPtpInstanceState != PPS_DISABLED
+								&& pit->wrsPtpInstanceState != PPS_SLAVE) {
+
+							pit->wrsPtpInstanceStatusError =	WRS_SLAVE_LINK_STATUS_ERROR;
+							snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							"In Boundary Clock mode, External Port Configuration is enabled "
+							"and desiredState is set to SLAVE but instance %d on port %d (%s) "
+							"is not in SLAVE state.\n", slog_obj_name, i, phys_port, pit->wrsPtpInstancePortName);
+						}
+						if (ps->wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN) {
+
+							pit->wrsPtpInstanceStatusError = WRS_SLAVE_LINK_STATUS_ERROR;
+							snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+							"In Boundary Clock mode, External Port Configuration is enabled "
+							"and desiredState is set to SLAVE on instance %d, yet port %d (%s) "
+							"is DOWN.\n", slog_obj_name, i, phys_port, pit->wrsPtpInstancePortName);
+						}
 					}
 				}
 			}

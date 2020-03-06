@@ -179,7 +179,7 @@
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllMlock}} equals to 0 (for
     Boundary Clock mode).\\
     \texttt{Warning} when \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}}
-    $>$ 0 (for Grand Master mode) or
+    is greater then 0 (for Grand Master mode) or
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}} has changed (for all
     other modes).\\
     \underline{On error:}\\
@@ -266,6 +266,69 @@
     \end{pck_proc}
     \glspar \underline{Related problems:}}
 
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSystemClockStatus}{
+    \underline{Description:}
+    Reports \texttt{Error} when the system clock monitoring system is not able
+    to measure the delta time between system clock and NTP time.\\
+	In case of error or warning, please check the values of \\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockStatusDetails}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockDrift}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockDriftThreshold}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckInterval}} and \\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckIntervalUnit}} \\
+     to find out which subsystem causes the problem and to verify your configuration.\\ 
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Check Syslog message to find a message similar to this one:\\
+        \texttt{SNMP: wrsSystemClockStatusDetails failed}.\\
+        It may help you to retrieve the origin of the problem.
+      \item Check that your configured NTP server is reachable using the 
+        'ping' command in the switch.
+      \item Restart the switch.
+      \item If the problem persists, please contact WR experts for in-depth
+        investigation.        
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsLeapSecStatus}{
+    \underline{Description:}
+    Reports \texttt{Error} when an internal error has been detected.\\
+    In case of error, please check the value of
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecStatusDetails}} \\
+    which may give you more details about the problem.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Check Syslog message to find a message similar to :\\
+        \texttt{SNMP: wrsLeapSecStatus failed} or \\
+        \texttt{SNMP: wrsLeapSecStatusDetails failed}. \\
+        It may help you to retrieve the origin of the problem.
+      \item Check if the command '\path{/wr/bin/wr_date get}' executed in the switch returns
+        correctly the WR and system time. 
+      \item Restart the switch.
+      \item If the problem persists, please contact WR experts for in-depth
+        investigation.        
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsLeapSecSourceStatus}{
+    \underline{Description:}
+    Reports \texttt{Error} when the leap seconds file cannot be downloaded or
+    is invalid. \\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Check first your configuration by reading values of :\\
+   		\texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSource}} and \\
+   		\texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceURL}}.\\
+        Verify that the given URL is valid and reachable.
+      \item  Check Syslog message to find a message similar to :\\
+        \texttt{SNMP: wrsLeapSecSourceStatus failed} or \\
+        \texttt{SNMP: wrsLeapSecSourceStatusDetails failed}. \\
+        It may help you to retrieve the origin of the problem.
+      \item Restart the switch.
+      \item If the problem persists, please contact WR experts for in-depth
+        investigation.        
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
   %------------------------------------------------------------------------
 
   \snmpentrys{WR-SWITCH-MIB}{wrsDetailedStatusesGroup}{wrsNetworkingStatusGroup}{
@@ -424,7 +487,29 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsCurrentTimeGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsDateTAI}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsDateTAIString}{}
-
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockStatusDetails}{
+  Result of the comparison of system clock and the NTP time to detect a drift.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockDrift}{
+  Last measured drift value.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockDriftThreshold}{
+  Configure drift threshold that will be used to rise an error.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockCheckInterval}{
+  Interval between 2 measures of the system clock drift.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockCheckIntervalUnit}{
+  Unit of time used by the system clock check interval (See:
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckInterval}})
+  }
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecSource}{
+    Source of the leap seconds file. When it is set to \texttt{tryDhcp}, 
+    then a failure of  getting the URL via DHCP does not rise an error in \\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceStatus}} and \\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceStatusDetails}}. }
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecStatusDetails}{
+  Result of the management of the leap second (inserted, deleted, \ldots) }
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecSourceStatusDetails}{
+    Result of the leap seconds file download. }
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecSourceURL}{
+  Path to the leap seconds file on a remote server (if local file is not used).}
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsBootStatusGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootCnt}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRebootCnt}{}
@@ -621,7 +706,8 @@
     than 1000ps or smaller than -1000ps.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoUpdateTime.<n>}{
     TAI Nanosecond of the last servo's update.}
-
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoExt.<n>}{}
+  
   \snmpentrye{WR-SWITCH-MIB}{}{wrsPortStatusTable}{Table with a port per row.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusIndex.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPortName.<n>}{}
@@ -656,15 +742,25 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePortInstance.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePortName.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceState.<n>.<m>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceStateNext.<n>.<m>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceRole.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceMasterOnly.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceExtPortCfgDesSt.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceMechanism.<n>.<m>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceProto.<n>.<m>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceExt.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceProfile.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceExtension.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceAsymEnabled.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceAsymConstAsymPS.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceAsymScDelayCoef.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceAsymScDelayCoefHR.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceTSCorrEgressLatPS.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceTSCorrIngLatPS.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceTSCorrSemistLatPS.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceProtoDetectState.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceExtState.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePeerMac.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstancePeerVid.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceVlanNum.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceVlanListStr.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceStatusError.<n>.<m>}{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add entries from other MIBs.

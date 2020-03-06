@@ -261,7 +261,7 @@ static void get_wrsSoftPLLStatus(void)
 	    && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED) {
 		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Allignment FSM state of SoftPLL is not LOCKED. "
+			 "Alignment FSM state of SoftPLL is not LOCKED. "
 			 "SoftPLL is not yet ready or has unlocked.\n",
 			 slog_obj_name);
 	}
@@ -354,9 +354,11 @@ static void get_wrsSystemClockStatus(void){
 			status=WRS_SYSTEM_CLOCK_STATUS_ERROR_MINOR;
 			break;
 		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN  :
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_ERROR  :
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR  :
 			status=WRS_SYSTEM_CLOCK_STATUS_ERROR;
 			break;
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED :
+		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED :
 			status=WRS_SYSTEM_CLOCK_STATUS_THRESHOLD_EXCEEDED;
 			break;
 	}

@@ -37,6 +37,7 @@ enum dump_type {
 	dump_type_uint32_t,
 	dump_type_uint16_t,
 	dump_type_int,
+	dump_type_unsigned,
 	dump_type_unsigned_long,
 	dump_type_long_long,
 	dump_type_unsigned_char,

@@ -11,6 +11,7 @@
 #define WRS_PORT_STATUS_LINK_DOWN 1
 #define WRS_PORT_STATUS_LINK_UP 2
 
+#define WRS_PORT_STATUS_CONFIGURED_MODE_UNKNOWN 0
 #define WRS_PORT_STATUS_CONFIGURED_MODE_MASTER 1
 #define WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE 2
 #define WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR 3
@@ -34,7 +35,8 @@ struct wrsPortStatusTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
 	char wrsPortStatusPortName[12];	/* port name */
-	ClockIdentity wrsPortStatusPeer;
+	int wrsPortStatusConfiguredMode;
+	ClockIdentity wrsPortStatusPeer_obsolete;
 	/* These can't be "unsigned char" because we scanf a %i in there */
 	unsigned wrsPortStatusLink;
 	unsigned wrsPortStatusLocked;

@@ -47,6 +47,9 @@ static struct pickinfo wrsCurrentTime_pickinfo[] = {
 	FIELD(wrsCurrentTime_s, ASN_OCTET_STR, wrsDateTAIString),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockStatusDetails),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockDrift),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockDriftThreshold),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockCheckInterval),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockCheckIntervalUnit),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecSource),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecStatusDetails),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecSourceStatusDetails),
@@ -66,6 +69,8 @@ struct wrsCurrentTime_s wrsCurrentTime_s;
 
 static char *wrsSystemClockStatusDetails_str = "wrsSystemClockStatusDetails";
 static char *wrsSystemClockDrift_str = "wrsSystemClockDrift";
+static char *wrsSystemClockDriftThreshold_str = "wrsSystemClockDriftThreshold";
+static char *wrsSystemClockCheckInterval_str = "wrsSystemClockCheckInterval";
 static char *wrsLeapSecStatusDetails_str = "wrsLeapSecStatus";
 static char *wrsLeapSecSourceStatusDetails_str = "wrsLeapSecSourceStatusDetails";
 static char *wrsLeapSecSource_str = "wrsLeapSecSource";
@@ -163,13 +168,16 @@ static void get_TAI(void){
 
 static text_status_mapping_t mapping_system_clock_monitor_status[]={
 		{ "no_error", WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK},
-		{ "exceeded_threshold",WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED},
+		{ "exceeded_threshold",WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED},
+		{ "ntp_error",WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR},
 };
 
 static void get_wrsSystemClockStatusDetails(void){
+	static int first_run=1;
 	char buff[21]; /* 1 for null char */
 	FILE *f;
 	int status=0, drift=0;
+	static int 	threshold=0, unit=0, checkInterval=0;
 
 	update_expected_services();
 
@@ -198,7 +206,7 @@ static void get_wrsSystemClockStatusDetails(void){
 		}
 
 		/* Read drift value */
-		if ( status==WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED ||
+		if ( status==WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED ||
 				status == WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK) {
 			slog_obj_name = wrsSystemClockDrift_str;
 
@@ -217,12 +225,54 @@ static void get_wrsSystemClockStatusDetails(void){
 					 "open " SYSTEMCLOCK_DRIFT "\n",slog_obj_name);
 			}
 		}
+
+		// Read values depending of dot-config
+		if (first_run) {
+			char *config_item;
+
+			// Threshold
+			slog_obj_name  = wrsSystemClockDriftThreshold_str;
+
+			config_item = libwr_cfg_get("SNMP_SYSTEM_CLOCK_DRIFT_THOLD");
+			if (config_item) {
+				threshold= atoi(config_item);
+			} else {
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+					 "read SNMP_SYSTEM_CLOCK_DRIFT_THOLD key in dot-config file\n",slog_obj_name);
+			}
+
+			// Check interval value and unit
+			slog_obj_name  = wrsSystemClockCheckInterval_str;
+			if ( (config_item =
+					libwr_cfg_get("SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES"))!=NULL) {
+				checkInterval=atoi(config_item);
+				unit=WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_MINUTES;
+			} else if ( (config_item =
+					libwr_cfg_get("SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS"))!=NULL) {
+				checkInterval=atoi(config_item);
+				unit=WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_HOURS;
+			} else if ( (config_item =
+					libwr_cfg_get("SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS"))!=NULL) {
+				checkInterval=atoi(config_item);
+				unit=WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_DAYS;
+			} else {
+				unit=WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+					 "read SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_XXXX key in dot-config file\n",slog_obj_name);
+			}
+
+			first_run = 0;
+		}
+
 	} else {
 		// System clock monitoring disabled
 		status=WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK;
 	}
 	wrsCurrentTime_s.wrsSystemClockStatusDetails = status;
 	wrsCurrentTime_s.wrsSystemClockDrift = drift;
+	wrsCurrentTime_s.wrsSystemClockDriftThreshold=threshold;
+	wrsCurrentTime_s.wrsSystemClockCheckInterval=checkInterval;
+	wrsCurrentTime_s.wrsSystemClockCheckIntervalUnit=unit;
 }
 
 

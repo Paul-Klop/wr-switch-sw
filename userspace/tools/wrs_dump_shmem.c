@@ -155,6 +155,9 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%i\n", *(int *)p);
 		break;
 	case dump_type_UInteger32:
+	case dump_type_unsigned:
+		printf("%u\n", *(uint32_t *)p);
+		break;
 	case dump_type_unsigned_long:
 		printf("%li\n", *(unsigned long *)p);
 		break;
@@ -490,6 +493,17 @@ struct dump_info hal_port_info_lpdc_rxsetup [] = {
 		DUMP_FIELD(int, attempts),
 };
 
+/* Generic share memory head */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wrs_shm_head
+struct dump_info shm_head [] = {
+		DUMP_FIELD(int, version),
+		DUMP_FIELD(unsigned, pidsequence),
+		DUMP_FIELD(unsigned, pid),
+		DUMP_FIELD(unsigned, data_size),
+		DUMP_FIELD(unsigned_long, stamp)
+};
+
 int dump_hal_mem(struct wrs_shm_head *head)
 {
 	struct hal_shmem_header *h;
@@ -502,6 +516,9 @@ int dump_hal_mem(struct wrs_shm_head *head)
 		return -1;
 	}
 	h = (void *)head + head->data_off;
+
+	/* dump shmem header*/
+	dump_many_fields(head, shm_head, ARRAY_SIZE(shm_head),"HAL.shm");
 
 	/* dump hal's shmem */
 	dump_many_fields(h, hal_shmem_info, ARRAY_SIZE(hal_shmem_info),"HAL");
@@ -617,6 +634,9 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 		fprintf(stderr, "dump rtu: cannot follow pointer in shm\n");
 		return -1;
 	}
+
+	/* dump shmem header*/
+	dump_many_fields(head, shm_head, ARRAY_SIZE(shm_head),"rtu.shm");
 
 	for (i = 0; i < HTAB_ENTRIES; i++) {
 		for (j = 0; j < RTU_BUCKETS; j++) {

@@ -12,8 +12,9 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_UNSIGNED, index), /* not reported */
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPortName),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLink),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusConfiguredMode),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLocked),
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPeer),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPeer_obsolete),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVN),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpPN),
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVS),
@@ -38,7 +39,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	unsigned retries = 0;
 	static time_t time_update;
 	time_t time_cur;
-	char *ppsi_iface_name;
 	static int n_rows_local = 0;
 
 	/* number of rows does not change for wrsPortStatusTable */
@@ -74,13 +74,16 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		for (i = 0; i < hal_nports_local; ++i) {
+			int mainPortState;
+			struct wrsPortStatusTable_s *wrsPortStatusTable=&wrsPortStatusTable_array[i];
+
 			/* Assume that number of ports does not change between
 			 * reads */
-			snprintf(wrsPortStatusTable_array[i].wrsPortStatusPortName, 10,
+			snprintf(wrsPortStatusTable->wrsPortStatusPortName, 10,
 				 "wri%d", i + 1);
 			port_state = hal_lookup_port(hal_ports,
 					hal_nports_local,
-					wrsPortStatusTable_array[i].wrsPortStatusPortName);
+					wrsPortStatusTable->wrsPortStatusPortName);
 			if(!port_state) {
 				/* It looks like we're in strange situation
 				 * that HAL is up but hal_ports is not filled
@@ -88,7 +91,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				continue;
 			}
 
-			wrsPortStatusTable_array[i].wrsPortStatusMonitor =
+			wrsPortStatusTable->wrsPortStatusMonitor =
 							port_state->monitor;
 
 			/* No need to copy all ports structures, only what
@@ -96,64 +99,63 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			 * Keep value 0 for Not available
 			 * values defined as WRS_PORT_STATUS_LINK_*
 			*/
-			wrsPortStatusTable_array[i].wrsPortStatusLink =
+			wrsPortStatusTable->wrsPortStatusLink =
 					1 + state_up(port_state);
-			if (get_port_state(port_state) == HAL_PORT_STATE_DISABLED) {
-				wrsPortStatusTable_array[i].wrsPortStatusSfpError =
+			mainPortState=get_port_state(port_state);
+			if (mainPortState== HAL_PORT_STATE_DISABLED ||
+					mainPortState== HAL_PORT_STATE_INIT) {
+				wrsPortStatusTable->wrsPortStatusSfpError =
 					  WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN;
-				/* if port is disabled don't fill
+				/* if port is in initialization state or disabled don't fill
 				 * other fields */
 				continue;
 			}
 			/* Keep value 0 for Not available */
-			wrsPortStatusTable_array[i].wrsPortStatusLocked =
+			wrsPortStatusTable->wrsPortStatusLocked =
 							1 + port_state->locked;
-			/* FIXME: get real peer_id */
-			memset(&wrsPortStatusTable_array[i].wrsPortStatusPeer, 0xff,
-			       sizeof(ClockIdentity));
-			if (port_state->sfpPresent && port_state->calib.sfp.flags & SFP_FLAG_IN_DB) {
-				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
+			if (port_state->sfpPresent && (port_state->calib.sfp.flags & SFP_FLAG_IN_DB)) {
+				wrsPortStatusTable->wrsPortStatusSfpInDB =
 					WRS_PORT_STATUS_SFP_IN_DB_IN_DATA_BASE;
 			} else if (port_state->sfpPresent) {
-				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
+				wrsPortStatusTable->wrsPortStatusSfpInDB =
 					WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE;
 			}
-			if (port_state->sfpPresent && port_state->calib.sfp.flags & SFP_FLAG_1GbE) {
-				wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
+			if (port_state->sfpPresent && (port_state->calib.sfp.flags & SFP_FLAG_1GbE)) {
+				wrsPortStatusTable->wrsPortStatusSfpGbE =
 					WRS_PORT_STATUS_SFP_GBE_LINK_GBE;
 			} else if (port_state->sfpPresent) {
-				wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
+				wrsPortStatusTable->wrsPortStatusSfpGbE =
 					WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE;
 			}
-			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVN,
+			strncpy(wrsPortStatusTable->wrsPortStatusSfpVN,
 				port_state->calib.sfp.vendor_name,
-				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVN));
-			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpPN,
+				sizeof(wrsPortStatusTable->wrsPortStatusSfpVN));
+			strncpy(wrsPortStatusTable->wrsPortStatusSfpPN,
 				port_state->calib.sfp.part_num,
-				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpPN));
-			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVS,
+				sizeof(wrsPortStatusTable->wrsPortStatusSfpPN));
+			strncpy(wrsPortStatusTable->wrsPortStatusSfpVS,
 				port_state->calib.sfp.vendor_serial,
-				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVS));
+				sizeof(wrsPortStatusTable->wrsPortStatusSfpVS));
 
 			/* Copy DOM data for SFP */
 			if (hal_shmem->read_sfp_diag) {
 				if (port_state->has_sfp_diag) {
-					wrsPortStatusTable_array[i].wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_ENABLE;
+					wrsPortStatusTable->wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_ENABLE;
 					/* temp in C */
-					wrsPortStatusTable_array[i].wrsPortStatusSfpTemp = ntohs(*port_state->calib.sfp_dom_raw.temp)/256;
+					wrsPortStatusTable->wrsPortStatusSfpTemp = ntohs(*port_state->calib.sfp_dom_raw.temp)/256;
 					/* vcc in mV */
-					wrsPortStatusTable_array[i].wrsPortStatusSfpVcc = ntohs(*port_state->calib.sfp_dom_raw.vcc)/10;
+					wrsPortStatusTable->wrsPortStatusSfpVcc = ntohs(*port_state->calib.sfp_dom_raw.vcc)/10;
 					/* tx_bias in uA */
-					wrsPortStatusTable_array[i].wrsPortStatusSfpTxBias = ntohs(*port_state->calib.sfp_dom_raw.tx_bias)*2;
+					wrsPortStatusTable->wrsPortStatusSfpTxBias = ntohs(*port_state->calib.sfp_dom_raw.tx_bias)*2;
 					/* tx_pow in uW */
-					wrsPortStatusTable_array[i].wrsPortStatusSfpTxPower = ntohs(*port_state->calib.sfp_dom_raw.tx_pow)/10;
+					wrsPortStatusTable->wrsPortStatusSfpTxPower = ntohs(*port_state->calib.sfp_dom_raw.tx_pow)/10;
 					/* rx_pow in uW */
-					wrsPortStatusTable_array[i].wrsPortStatusSfpRxPower = ntohs(*port_state->calib.sfp_dom_raw.rx_pow)/10;
+					wrsPortStatusTable->wrsPortStatusSfpRxPower = ntohs(*port_state->calib.sfp_dom_raw.rx_pow)/10;
 				} else {
-					wrsPortStatusTable_array[i].wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_NOT_SUPPORTED;
+					wrsPortStatusTable->wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_NOT_SUPPORTED;
 				}
 			} else {
-				wrsPortStatusTable_array[i].wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_DISABLE;
+				wrsPortStatusTable->wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_DISABLE;
 			}
 		}
 
@@ -174,19 +176,21 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	 * retries */
 	slog_obj_name = wrsPortStatusSfpError_str;
 	for (i = 0; i < hal_nports_local; ++i) {
+		struct wrsPortStatusTable_s *wrsPortStatusTable=&wrsPortStatusTable_array[i];
+
 		/* If info about wrsPortStatusSfpGbE is not filled skip further
 		 * checking. NOTE: there is no need to check the fill of others
 		 * like:
 		 * - wrsPortStatusSfpInDB
 		 */
-		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == 0) {
+		if (wrsPortStatusTable->wrsPortStatusSfpGbE == 0) {
 			/* if this is not filled, it means SFP is not plugged,
 			 * so there is no error on that port */
-			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
+			wrsPortStatusTable->wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
 			continue;
 		}
 		/* Don't check if WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN */
-		if(wrsPortStatusTable_array[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
+		if(wrsPortStatusTable->wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
 			continue;
 		}
 
@@ -194,32 +198,32 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		  * (port is not "non-wr", "none" mode and sfp not in data base)
 		  * port down, is set above
 		  * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
-		wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
+		wrsPortStatusTable->wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
 		
 		snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG
 			" reading ports name %s link %d, "
 			"locked %d\n",
-			wrsPortStatusTable_array[i].wrsPortStatusPortName,
-			wrsPortStatusTable_array[i].wrsPortStatusLink,
-			wrsPortStatusTable_array[i].wrsPortStatusLocked);
+			wrsPortStatusTable->wrsPortStatusPortName,
+			wrsPortStatusTable->wrsPortStatusLink,
+			wrsPortStatusTable->wrsPortStatusLocked);
 		
-		if (wrsPortStatusTable_array[i].wrsPortStatusMonitor == WRS_PORT_STATUS_MONITOR_DISABLE)
+		if (wrsPortStatusTable->wrsPortStatusMonitor == WRS_PORT_STATUS_MONITOR_DISABLE)
 		{
 			snmp_log(LOG_DEBUG, "SNMP: " SL_DEBUG " ignoring any "
 				"problems on port %s as monitoring is disabled\n",
-				wrsPortStatusTable_array[i].wrsPortStatusPortName);
+				wrsPortStatusTable->wrsPortStatusPortName);
 			continue;
 		}
-		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {
+		if (wrsPortStatusTable->wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {
 			/* error, SFP is not 1 GbE */
-			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
+			wrsPortStatusTable->wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
 			snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
 				  "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
 				  slog_obj_name, i + 1, i + 1);
 		}
-		if (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE) {
+		if (wrsPortStatusTable->wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE) {
 			/* error, port is not non-wr mode and sfp not in data base */
-			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
+			wrsPortStatusTable->wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
 			snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
 				  "SFP in port %d (wri%d) is not in the database. "
 				  "Change the SFP or declare port as non-wr or none\n",
@@ -254,15 +258,49 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			 * NOTE: ppi->cfg.port_name cannot be used instead,
 			 * because it is not used when ppsi is configured from
 			 * cmdline */
-			ppsi_iface_name = (char *) wrs_shm_follow(ppsi_head,
-					       (ppsi_ppi + ppi_i)->iface_name);
+			struct pp_instance *ppi=ppsi_ppi + ppi_i;
+			portDS_t *portDS = (portDS_t *) wrs_shm_follow(ppsi_head,ppi->portDS);
+			char *ppsi_iface_name = (char *) wrs_shm_follow(ppsi_head,ppi->iface_name);
+
 			for (i = 0; i < hal_nports_local; ++i) {
-				if (!strncmp(wrsPortStatusTable_array[i].wrsPortStatusPortName,
+				struct wrsPortStatusTable_s *wrsPortStatusTable=&wrsPortStatusTable_array[i];
+
+
+				if (!strncmp(wrsPortStatusTable->wrsPortStatusPortName,
 					     ppsi_iface_name, 12)) {
-					wrsPortStatusTable_array[i].wrsPortStatusPtpTxFrames +=
-					      (ppsi_ppi + ppi_i)->ptp_tx_count;
-					wrsPortStatusTable_array[i].wrsPortStatusPtpRxFrames +=
-					      (ppsi_ppi + ppi_i)->ptp_rx_count;
+					int configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_UNKNOWN;
+
+					wrsPortStatusTable->wrsPortStatusPtpTxFrames +=
+							ppi->ptp_tx_count;
+					wrsPortStatusTable->wrsPortStatusPtpRxFrames +=
+							ppi->ptp_rx_count;
+
+					/* Update wrsPortStatusConfiguredMode */
+					if ( ppi->protocol_extension==PPSI_EXT_WR ) {
+						if ( wrsPortStatusTable->wrsPortStatusMonitor == WRS_PORT_STATUS_MONITOR_DISABLE) {
+							configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR;
+						} else {
+							if ( (ppsi_defaultDS->externalPortConfigurationEnabled &&
+								  ppi->externalPortConfigurationPortDS.desiredState==PPS_MASTER)
+								|| portDS->masterOnly) {
+								// MASTER
+								configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_MASTER;
+							} else if ( (ppsi_defaultDS->externalPortConfigurationEnabled &&
+								  ppi->externalPortConfigurationPortDS.desiredState==PPS_SLAVE)
+								|| ppsi_defaultDS->slaveOnly) {
+								// SLAVE
+								configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE;
+							} else if ( !ppsi_defaultDS->externalPortConfigurationEnabled &&
+									!portDS->masterOnly &&
+									!ppsi_defaultDS->slaveOnly ) {
+								// AUTO
+								configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_AUTO;
+							}
+						}
+					} else {
+						configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_NONE;
+					}
+					wrsPortStatusTable->wrsPortStatusConfiguredMode=configuredMode;
 					/* speed up a little, break here */
 					break;
 				}

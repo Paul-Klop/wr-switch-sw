@@ -13,10 +13,17 @@
 #define WRS_LEAP_SEC_SOURCE_FORCE_REMOTE           		5       /* Try to download the file (propagate errors) */
 
 #define WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK         		1		/* ok */
-#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR        2		/* Status file is missing */
-#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN    		3		/* Unknown status */
-#define WRS_SYSTEM_CLOCK_STATUS_DETAILTS_THRESHOLD_EXCEEDED 	\
-														4		/* Threshold exceeded */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED 	\
+														2		/* Threshold exceeded */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR  		3		/* Error accessing NTP server */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_ERROR           4       /* Generic error */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR        5		/* Error: Status file is missing */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN    		6		/* Error: Unknown status */
+
+#define WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_ERROR      1		/* ok */
+#define WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_MINUTES    2		/* Minutes */
+#define WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_HOURS    	3		/* Hours */
+#define WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_DAYS       4 	    /* Days */
 
 #define WRS_LEAP_SEC_STATUS_DETAILS_OK                 1		/* Everything ok */
 #define WRS_LEAP_SEC_STATUS_DETAILS_IO_ERROR           2		/* Status file is missing */
@@ -40,7 +47,10 @@ struct wrsCurrentTime_s {
 	uint64_t wrsDateTAI;		/* current time in TAI */
 	char wrsDateTAIString[32];	/* current time in TAI as string */
 	int wrsSystemClockStatusDetails;   /* System clock status details*/
-	int wrsSystemClockDrift;    /* System monitoring clock */
+	int wrsSystemClockDrift;    /* Current system clock drift value */
+	int wrsSystemClockDriftThreshold;    /* System clock drift threshold*/
+	int wrsSystemClockCheckInterval;    /* System clock check interval */
+	int wrsSystemClockCheckIntervalUnit;    /* System clock check interval unit */
 	int wrsLeapSecStatusDetails; /* Leap seconds details */
 	int wrsLeapSecSourceStatusDetails; /* Leap second source status details*/
 	int wrsLeapSecSource;       /* Source of the leap seconds file */

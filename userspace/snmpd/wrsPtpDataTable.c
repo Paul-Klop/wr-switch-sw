@@ -10,7 +10,7 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpPortName),
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpGrandmasterID),
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpOwnID),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpMode),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpMode_obsolete),/* obsolete */
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpServoState),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoStateN),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpPhaseTracking),
@@ -32,14 +32,6 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoExt),
 
 };
-
-//FIXME: make a library in ppsi with all such functions, use it all around
-int64_t pp_time_to_picos(struct pp_time *ts)
-{
-	return ts->secs * PP_NSEC_PER_SEC
-		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
-}
-
 
 static int32_t int_saturate(int64_t value)
 {
@@ -67,6 +59,14 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	struct wr_servo_ext *wr_servo;
 	struct wrh_servo_t *wrh_servo;
 	char *tmp_name;
+	static int servoStateMapping[]={
+			[WRH_UNINITIALIZED]= PTP_SERVO_STATE_N_UNINTIALIZED,
+			[WRH_SYNC_NSEC]= PTP_SERVO_STATE_N_SYNC_NSEC,
+			[WRH_SYNC_TAI]= PTP_SERVO_STATE_N_SYNC_SEC,
+			[WRH_SYNC_PHASE]= PTP_SERVO_STATE_N_SYNC_PHASE,
+			[WRH_TRACK_PHASE]= PTP_SERVO_STATE_N_TRACK_PHASE,
+			[WRH_WAIT_OFFSET_STABLE]= PTP_SERVO_STATE_N_WAIT_OFFSET_STABLE,
+	};
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -141,20 +141,27 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					&ppsi_defaultDS->clockIdentity,
 					sizeof(ClockIdentity));
 
-				/* wrsPtpMode */
-				//TODO
-
 				/* wrsPtpServoState */
 				strncpy(ptp_a[si].wrsPtpServoState,
 				ppsi_servo->servo_state_name,
 				sizeof(ppsi_servo->servo_state_name));
 
 				/* wrsPtpServoStateN */
-				ptp_a[si].wrsPtpServoStateN = ppsi_servo->state;
+				if ( ppsi_i->extState == PP_EXSTATE_DISABLE
+						|| ppsi_i->extState == PP_EXSTATE_PTP ) {
+					ptp_a[si].wrsPtpServoStateN= PTP_SERVO_STATE_N_STANDARD_PTP;
+				} else {
+					if ( ppsi_servo->state>=0 && ppsi_servo->state < ARRAY_SIZE(servoStateMapping) ) {
+						ptp_a[si].wrsPtpServoStateN=servoStateMapping[ppsi_servo->state];
+					} else {
+						ptp_a[si].wrsPtpServoStateN=ppsi_servo->state;
+					}
+				}
 
 				/* wrsPtpClockOffsetPs */
-				ptp_a[si].wrsPtpClockOffsetPs =
-				pp_time_to_picos(&ppsi_servo->offsetFromMaster);
+				ptp_a[si].wrsPtpClockOffsetPs = pp_time_to_picos(&ppsi_servo->offsetFromMaster);
+				if ( ptp_a[si].wrsPtpClockOffsetPs<0)
+					ptp_a[si].wrsPtpClockOffsetPs*=-1;
 
 				/* wrsPtpClockOffsetPsHR */
 				ptp_a[si].wrsPtpClockOffsetPsHR =

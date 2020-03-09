@@ -542,11 +542,12 @@ for i_port in {01..18}; do # scan all the physical ports
 		
 		# add vlans
 		if [ "$CONFIG_VLANS_ENABLE" = "y" ]; then
-			unset ppsi_vlans;
+			unset port_vid;
 			unset port_mode_access;
 			unset port_mode_trunk;
 			unset port_mode_unqualified;
 			unset port_mode_disabled;
+			unset port_ptp_vid
 	
 			# check port mode
 			port_mode_access=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_MODE_ACCESS")
@@ -554,16 +555,22 @@ for i_port in {01..18}; do # scan all the physical ports
 			port_mode_unqualified=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_MODE_UNQUALIFIED")
 			port_mode_disabled=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_MODE_DISABLED")
 	
+		    port_vid=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_VID")
+		    port_ptp_vid=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_PTP_VID")
+			
+			if [ -z "$port_ptp_vid" ] ; then
+				port_ptp_vid=$port_vid
+			fi		    
+		    
 			# check port mode
 			if [ "$port_mode_access" = "y" ]; then
-				ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_VID")
 				# use "&> /dev/null" to avoid error when $ppsi_vlans
 				# is not a number
-				if [ "$ppsi_vlans" -ge 0 ]  &> /dev/null \
-				    && [ "$ppsi_vlans" -le 4094 ] &> /dev/null; then
-					v="$inst_vn[vlan]"; eval ${v}="$ppsi_vlans"
+				if [ "$port_ptp_vid" -ge 0 ]  &> /dev/null \
+				    && [ "$port_ptp_vid" -le 4094 ] &> /dev/null; then
+					v="$inst_vn[vlan]"; eval ${v}="$port_ptp_vid"
 				else
-					echo "$script_name: Wrong value \"$ppsi_vlans\" in CONFIG_VLANS_PORT"$i_port"_VID" | tee $log_output
+					echo "$script_name: Wrong value \"$port_ptp_vid\" in CONFIG_VLANS_PORT"$i_port"_VID" | tee $log_output
 					continue;
 				fi
 			fi
@@ -571,9 +578,8 @@ for i_port in {01..18}; do # scan all the physical ports
 			if [ "$port_mode_trunk" = "y" ] \
 			    || [ "$port_mode_disabled" = "y" ] \
 			    || [ "$port_mode_unqualified" = "y" ]; then
-				ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_VID")
-				if [ -n "$ppsi_vlans" ]; then
-					mod_vlans=${ppsi_vlans//;/,}
+				if [ -n "$port_ptp_vid" ]; then
+					mod_vlans=${port_ptp_vid//;/,}
 					v="$inst_vn[vlan]"; eval ${v}="$mod_vlans"
 				fi
 			fi

@@ -9,7 +9,7 @@ config VLANS_ENABLE
 
 config VLANS_RAW_PORT_CONFIG
 	depends on VLANS_ENABLE
-	bool "Enable raw configuration for VLANS"
+	bool "Enable raw ports configuration"
 	default n
 	help
 	  Enable raw configuration for VLANS
@@ -106,7 +106,8 @@ endchoice # choice VLANS_PORT01_MODE
 
 choice VLANS_PORT01_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT01_UNTAG_ALL
+	default VLANS_PORT01_UNTAG_ALL if VLANS_PORT01_MODE_ACCESS
+	default VLANS_PORT01_UNTAG_NONE
 	depends on VLANS_PORT01_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -124,6 +125,7 @@ endchoice #choice VLANS_PORT01_UNTAG
 
 config VLANS_PORT01_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_DISABLED || VLANS_PORT01_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -133,6 +135,7 @@ config VLANS_PORT01_PRIO
 
 config VLANS_PORT01_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT01_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -149,8 +152,9 @@ config VLANS_PORT01_VID
 
 config VLANS_PORT01_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT01_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT01_MODE_TRUNK || VLANS_PORT01_MODE_DISABLED || VLANS_PORT01_MODE_UNQUALIFIED
+	default VLANS_PORT01_VID if VLANS_PORT01_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -242,7 +246,8 @@ endchoice # choice VLANS_PORT02_MODE
 
 choice VLANS_PORT02_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT02_UNTAG_ALL
+	default VLANS_PORT02_UNTAG_ALL if VLANS_PORT02_MODE_ACCESS
+	default VLANS_PORT02_UNTAG_NONE
 	depends on VLANS_PORT02_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -260,6 +265,7 @@ endchoice #choice VLANS_PORT02_UNTAG
 
 config VLANS_PORT02_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT02_MODE_ACCESS || VLANS_PORT02_MODE_DISABLED || VLANS_PORT02_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -269,6 +275,7 @@ config VLANS_PORT02_PRIO
 
 config VLANS_PORT02_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT02_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -285,8 +292,9 @@ config VLANS_PORT02_VID
 
 config VLANS_PORT02_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT02_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT02_MODE_TRUNK || VLANS_PORT02_MODE_DISABLED || VLANS_PORT02_MODE_UNQUALIFIED
+	default VLANS_PORT02_VID if VLANS_PORT02_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -378,7 +386,8 @@ endchoice # choice VLANS_PORT03_MODE
 
 choice VLANS_PORT03_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT03_UNTAG_ALL
+	default VLANS_PORT03_UNTAG_ALL if VLANS_PORT03_MODE_ACCESS
+	default VLANS_PORT03_UNTAG_NONE
 	depends on VLANS_PORT03_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -396,6 +405,7 @@ endchoice #choice VLANS_PORT03_UNTAG
 
 config VLANS_PORT03_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT03_MODE_ACCESS || VLANS_PORT03_MODE_DISABLED || VLANS_PORT03_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -405,6 +415,7 @@ config VLANS_PORT03_PRIO
 
 config VLANS_PORT03_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT03_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -421,8 +432,9 @@ config VLANS_PORT03_VID
 
 config VLANS_PORT03_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT03_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT03_MODE_TRUNK || VLANS_PORT03_MODE_DISABLED || VLANS_PORT03_MODE_UNQUALIFIED
+	default VLANS_PORT03_VID if VLANS_PORT03_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -514,7 +526,8 @@ endchoice # choice VLANS_PORT04_MODE
 
 choice VLANS_PORT04_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT04_UNTAG_ALL
+	default VLANS_PORT04_UNTAG_ALL if VLANS_PORT04_MODE_ACCESS
+	default VLANS_PORT04_UNTAG_NONE
 	depends on VLANS_PORT04_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -532,6 +545,7 @@ endchoice #choice VLANS_PORT04_UNTAG
 
 config VLANS_PORT04_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT04_MODE_ACCESS || VLANS_PORT04_MODE_DISABLED || VLANS_PORT04_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -541,6 +555,7 @@ config VLANS_PORT04_PRIO
 
 config VLANS_PORT04_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT04_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -557,8 +572,9 @@ config VLANS_PORT04_VID
 
 config VLANS_PORT04_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT04_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT04_MODE_TRUNK || VLANS_PORT04_MODE_DISABLED || VLANS_PORT04_MODE_UNQUALIFIED
+	default VLANS_PORT04_VID if VLANS_PORT04_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -650,7 +666,8 @@ endchoice # choice VLANS_PORT05_MODE
 
 choice VLANS_PORT05_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT05_UNTAG_ALL
+	default VLANS_PORT05_UNTAG_ALL if VLANS_PORT05_MODE_ACCESS
+	default VLANS_PORT05_UNTAG_NONE
 	depends on VLANS_PORT05_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -668,6 +685,7 @@ endchoice #choice VLANS_PORT05_UNTAG
 
 config VLANS_PORT05_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT05_MODE_ACCESS || VLANS_PORT05_MODE_DISABLED || VLANS_PORT05_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -677,6 +695,7 @@ config VLANS_PORT05_PRIO
 
 config VLANS_PORT05_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT05_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -693,8 +712,9 @@ config VLANS_PORT05_VID
 
 config VLANS_PORT05_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT05_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT05_MODE_TRUNK || VLANS_PORT05_MODE_DISABLED || VLANS_PORT05_MODE_UNQUALIFIED
+	default VLANS_PORT05_VID if VLANS_PORT05_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -786,7 +806,8 @@ endchoice # choice VLANS_PORT06_MODE
 
 choice VLANS_PORT06_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT06_UNTAG_ALL
+	default VLANS_PORT06_UNTAG_ALL if VLANS_PORT06_MODE_ACCESS
+	default VLANS_PORT06_UNTAG_NONE
 	depends on VLANS_PORT06_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -804,6 +825,7 @@ endchoice #choice VLANS_PORT06_UNTAG
 
 config VLANS_PORT06_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT06_MODE_ACCESS || VLANS_PORT06_MODE_DISABLED || VLANS_PORT06_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -813,6 +835,7 @@ config VLANS_PORT06_PRIO
 
 config VLANS_PORT06_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT06_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -829,8 +852,9 @@ config VLANS_PORT06_VID
 
 config VLANS_PORT06_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT06_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT06_MODE_TRUNK || VLANS_PORT06_MODE_DISABLED || VLANS_PORT06_MODE_UNQUALIFIED
+	default VLANS_PORT06_VID if VLANS_PORT06_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -922,7 +946,8 @@ endchoice # choice VLANS_PORT07_MODE
 
 choice VLANS_PORT07_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT07_UNTAG_ALL
+	default VLANS_PORT07_UNTAG_ALL if VLANS_PORT07_MODE_ACCESS
+	default VLANS_PORT07_UNTAG_NONE
 	depends on VLANS_PORT07_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -940,6 +965,7 @@ endchoice #choice VLANS_PORT07_UNTAG
 
 config VLANS_PORT07_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT07_MODE_ACCESS || VLANS_PORT07_MODE_DISABLED || VLANS_PORT07_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -949,6 +975,7 @@ config VLANS_PORT07_PRIO
 
 config VLANS_PORT07_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT07_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -965,8 +992,9 @@ config VLANS_PORT07_VID
 
 config VLANS_PORT07_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT07_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT07_MODE_TRUNK || VLANS_PORT07_MODE_DISABLED || VLANS_PORT07_MODE_UNQUALIFIED
+	default VLANS_PORT07_VID if VLANS_PORT07_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1058,7 +1086,8 @@ endchoice # choice VLANS_PORT08_MODE
 
 choice VLANS_PORT08_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT08_UNTAG_ALL
+	default VLANS_PORT08_UNTAG_ALL if VLANS_PORT08_MODE_ACCESS
+	default VLANS_PORT08_UNTAG_NONE
 	depends on VLANS_PORT08_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1076,6 +1105,7 @@ endchoice #choice VLANS_PORT08_UNTAG
 
 config VLANS_PORT08_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT08_MODE_ACCESS || VLANS_PORT08_MODE_DISABLED || VLANS_PORT08_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1085,6 +1115,7 @@ config VLANS_PORT08_PRIO
 
 config VLANS_PORT08_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT08_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1101,8 +1132,9 @@ config VLANS_PORT08_VID
 
 config VLANS_PORT08_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT08_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT08_MODE_TRUNK || VLANS_PORT08_MODE_DISABLED || VLANS_PORT08_MODE_UNQUALIFIED
+	default VLANS_PORT08_VID if VLANS_PORT08_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1194,7 +1226,8 @@ endchoice # choice VLANS_PORT09_MODE
 
 choice VLANS_PORT09_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT09_UNTAG_ALL
+	default VLANS_PORT09_UNTAG_ALL if VLANS_PORT09_MODE_ACCESS
+	default VLANS_PORT09_UNTAG_NONE
 	depends on VLANS_PORT09_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1212,6 +1245,7 @@ endchoice #choice VLANS_PORT09_UNTAG
 
 config VLANS_PORT09_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT09_MODE_ACCESS || VLANS_PORT09_MODE_DISABLED || VLANS_PORT09_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1221,6 +1255,7 @@ config VLANS_PORT09_PRIO
 
 config VLANS_PORT09_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT09_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1237,8 +1272,9 @@ config VLANS_PORT09_VID
 
 config VLANS_PORT09_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT09_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT09_MODE_TRUNK || VLANS_PORT09_MODE_DISABLED || VLANS_PORT09_MODE_UNQUALIFIED
+	default VLANS_PORT09_VID if VLANS_PORT09_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1330,7 +1366,8 @@ endchoice # choice VLANS_PORT10_MODE
 
 choice VLANS_PORT10_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT10_UNTAG_ALL
+	default VLANS_PORT10_UNTAG_ALL if VLANS_PORT10_MODE_ACCESS
+	default VLANS_PORT10_UNTAG_NONE
 	depends on VLANS_PORT10_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1348,6 +1385,7 @@ endchoice #choice VLANS_PORT10_UNTAG
 
 config VLANS_PORT10_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT10_MODE_ACCESS || VLANS_PORT10_MODE_DISABLED || VLANS_PORT10_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1357,6 +1395,7 @@ config VLANS_PORT10_PRIO
 
 config VLANS_PORT10_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT10_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1373,8 +1412,9 @@ config VLANS_PORT10_VID
 
 config VLANS_PORT10_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT10_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT10_MODE_TRUNK || VLANS_PORT10_MODE_DISABLED || VLANS_PORT10_MODE_UNQUALIFIED
+	default VLANS_PORT10_VID if VLANS_PORT10_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1466,7 +1506,8 @@ endchoice # choice VLANS_PORT11_MODE
 
 choice VLANS_PORT11_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT11_UNTAG_ALL
+	default VLANS_PORT11_UNTAG_ALL if VLANS_PORT11_MODE_ACCESS
+	default VLANS_PORT11_UNTAG_NONE
 	depends on VLANS_PORT11_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1484,6 +1525,7 @@ endchoice #choice VLANS_PORT11_UNTAG
 
 config VLANS_PORT11_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT11_MODE_ACCESS || VLANS_PORT11_MODE_DISABLED || VLANS_PORT11_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1493,6 +1535,7 @@ config VLANS_PORT11_PRIO
 
 config VLANS_PORT11_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT11_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1509,8 +1552,9 @@ config VLANS_PORT11_VID
 
 config VLANS_PORT11_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT11_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT11_MODE_TRUNK || VLANS_PORT11_MODE_DISABLED || VLANS_PORT11_MODE_UNQUALIFIED
+	default VLANS_PORT11_VID if VLANS_PORT11_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1602,7 +1646,8 @@ endchoice # choice VLANS_PORT12_MODE
 
 choice VLANS_PORT12_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT12_UNTAG_ALL
+	default VLANS_PORT12_UNTAG_ALL if VLANS_PORT12_MODE_ACCESS
+	default VLANS_PORT12_UNTAG_NONE
 	depends on VLANS_PORT12_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1620,6 +1665,7 @@ endchoice #choice VLANS_PORT12_UNTAG
 
 config VLANS_PORT12_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT12_MODE_ACCESS || VLANS_PORT12_MODE_DISABLED || VLANS_PORT12_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1629,6 +1675,7 @@ config VLANS_PORT12_PRIO
 
 config VLANS_PORT12_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT12_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1645,8 +1692,9 @@ config VLANS_PORT12_VID
 
 config VLANS_PORT12_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT12_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT12_MODE_TRUNK || VLANS_PORT12_MODE_DISABLED || VLANS_PORT12_MODE_UNQUALIFIED
+	default VLANS_PORT12_VID if VLANS_PORT12_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1738,7 +1786,8 @@ endchoice # choice VLANS_PORT13_MODE
 
 choice VLANS_PORT13_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT13_UNTAG_ALL
+	default VLANS_PORT13_UNTAG_ALL if VLANS_PORT13_MODE_ACCESS
+	default VLANS_PORT13_UNTAG_NONE
 	depends on VLANS_PORT13_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1756,6 +1805,7 @@ endchoice #choice VLANS_PORT13_UNTAG
 
 config VLANS_PORT13_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT13_MODE_ACCESS || VLANS_PORT13_MODE_DISABLED || VLANS_PORT13_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1765,6 +1815,7 @@ config VLANS_PORT13_PRIO
 
 config VLANS_PORT13_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT13_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1781,8 +1832,9 @@ config VLANS_PORT13_VID
 
 config VLANS_PORT13_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT13_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT13_MODE_TRUNK || VLANS_PORT13_MODE_DISABLED || VLANS_PORT13_MODE_UNQUALIFIED
+	default VLANS_PORT13_VID if VLANS_PORT13_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -1874,7 +1926,8 @@ endchoice # choice VLANS_PORT14_MODE
 
 choice VLANS_PORT14_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT14_UNTAG_ALL
+	default VLANS_PORT14_UNTAG_ALL if VLANS_PORT14_MODE_ACCESS
+	default VLANS_PORT14_UNTAG_NONE
 	depends on VLANS_PORT14_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -1892,6 +1945,7 @@ endchoice #choice VLANS_PORT14_UNTAG
 
 config VLANS_PORT14_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT14_MODE_ACCESS || VLANS_PORT14_MODE_DISABLED || VLANS_PORT14_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -1901,6 +1955,7 @@ config VLANS_PORT14_PRIO
 
 config VLANS_PORT14_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT14_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -1917,8 +1972,9 @@ config VLANS_PORT14_VID
 
 config VLANS_PORT14_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT14_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT14_MODE_TRUNK || VLANS_PORT14_MODE_DISABLED || VLANS_PORT14_MODE_UNQUALIFIED
+	default VLANS_PORT14_VID if VLANS_PORT14_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -2010,7 +2066,8 @@ endchoice # choice VLANS_PORT15_MODE
 
 choice VLANS_PORT15_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT15_UNTAG_ALL
+	default VLANS_PORT15_UNTAG_ALL if VLANS_PORT15_MODE_ACCESS
+	default VLANS_PORT15_UNTAG_NONE
 	depends on VLANS_PORT15_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -2028,6 +2085,7 @@ endchoice #choice VLANS_PORT15_UNTAG
 
 config VLANS_PORT15_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT15_MODE_ACCESS || VLANS_PORT15_MODE_DISABLED || VLANS_PORT15_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -2037,6 +2095,7 @@ config VLANS_PORT15_PRIO
 
 config VLANS_PORT15_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT15_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -2053,8 +2112,9 @@ config VLANS_PORT15_VID
 
 config VLANS_PORT15_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT15_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT15_MODE_TRUNK || VLANS_PORT15_MODE_DISABLED || VLANS_PORT15_MODE_UNQUALIFIED
+	default VLANS_PORT15_VID if VLANS_PORT15_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -2146,7 +2206,8 @@ endchoice # choice VLANS_PORT16_MODE
 
 choice VLANS_PORT16_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT16_UNTAG_ALL
+	default VLANS_PORT16_UNTAG_ALL if VLANS_PORT16_MODE_ACCESS
+	default VLANS_PORT16_UNTAG_NONE
 	depends on VLANS_PORT16_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -2164,6 +2225,7 @@ endchoice #choice VLANS_PORT16_UNTAG
 
 config VLANS_PORT16_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT16_MODE_ACCESS || VLANS_PORT16_MODE_DISABLED || VLANS_PORT16_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -2173,6 +2235,7 @@ config VLANS_PORT16_PRIO
 
 config VLANS_PORT16_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT16_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -2189,8 +2252,9 @@ config VLANS_PORT16_VID
 
 config VLANS_PORT16_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT16_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT16_MODE_TRUNK || VLANS_PORT16_MODE_DISABLED || VLANS_PORT16_MODE_UNQUALIFIED
+	default VLANS_PORT16_VID if VLANS_PORT16_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -2282,7 +2346,8 @@ endchoice # choice VLANS_PORT17_MODE
 
 choice VLANS_PORT17_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT17_UNTAG_ALL
+	default VLANS_PORT17_UNTAG_ALL if VLANS_PORT17_MODE_ACCESS
+	default VLANS_PORT17_UNTAG_NONE
 	depends on VLANS_PORT17_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -2300,6 +2365,7 @@ endchoice #choice VLANS_PORT17_UNTAG
 
 config VLANS_PORT17_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT17_MODE_ACCESS || VLANS_PORT17_MODE_DISABLED || VLANS_PORT17_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -2309,6 +2375,7 @@ config VLANS_PORT17_PRIO
 
 config VLANS_PORT17_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT17_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -2325,8 +2392,9 @@ config VLANS_PORT17_VID
 
 config VLANS_PORT17_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT17_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT17_MODE_TRUNK || VLANS_PORT17_MODE_DISABLED || VLANS_PORT17_MODE_UNQUALIFIED
+	default VLANS_PORT17_VID if VLANS_PORT17_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 
@@ -2418,7 +2486,8 @@ endchoice # choice VLANS_PORT18_MODE
 
 choice VLANS_PORT18_UNTAG
 	prompt "Untag frames"
-	default VLANS_PORT18_UNTAG_ALL
+	default VLANS_PORT18_UNTAG_ALL if VLANS_PORT18_MODE_ACCESS
+	default VLANS_PORT18_UNTAG_NONE
 	depends on VLANS_PORT18_MODE_ACCESS || VLANS_RAW_PORT_CONFIG
 	help
 	 Decide whether VLAN-tags should be removed
@@ -2436,6 +2505,7 @@ endchoice #choice VLANS_PORT18_UNTAG
 
 config VLANS_PORT18_PRIO
 	int "Priority"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT18_MODE_ACCESS || VLANS_PORT18_MODE_DISABLED || VLANS_PORT18_MODE_UNQUALIFIED
 	default -1
 	range -1 7
 	help
@@ -2445,6 +2515,7 @@ config VLANS_PORT18_PRIO
 
 config VLANS_PORT18_VID
 	string "VID"
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT18_MODE_ACCESS
 	default ""
 	help
 	  This value based on the port's mode is used as:
@@ -2461,8 +2532,9 @@ config VLANS_PORT18_VID
 
 config VLANS_PORT18_PTP_VID
 	string "PTP VID"
-	depends on VLANS_RAW_PORT_CONFIG
-	default VLANS_PORT18_VID
+	depends on VLANS_RAW_PORT_CONFIG || VLANS_PORT18_MODE_TRUNK || VLANS_PORT18_MODE_DISABLED || VLANS_PORT18_MODE_UNQUALIFIED
+	default VLANS_PORT18_VID if VLANS_PORT18_MODE_ACCESS
+	default ""
 	help
 	 VID used for the PTP messages
 

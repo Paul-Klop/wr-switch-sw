@@ -35,7 +35,7 @@ function print_header() {
 	echo -e "\t  Enable VLAN configuration via dot-config"
 	echo -e "\nconfig VLANS_RAW_PORT_CONFIG"
 	echo -e "\tdepends on VLANS_ENABLE"
-	echo -e "\tbool \"Enable raw configuration for VLANS\""
+	echo -e "\tbool \"Enable raw ports configuration\""
 	echo -e "\tdefault n"
 	echo -e "\thelp"
 	echo -e "\t  Enable raw configuration for VLANS\n"
@@ -96,7 +96,8 @@ function print_port_config() {
 
 	echo -e "\nchoice VLANS_PORT${portStr}_UNTAG"
 	echo -e "\tprompt \"Untag frames\""
-	echo -e "\tdefault VLANS_PORT${portStr}_UNTAG_ALL"
+	echo -e "\tdefault VLANS_PORT${portStr}_UNTAG_ALL if VLANS_PORT${portStr}_MODE_ACCESS"
+	echo -e "\tdefault VLANS_PORT${portStr}_UNTAG_NONE"
 	echo -e "\tdepends on VLANS_PORT${portStr}_MODE_ACCESS || VLANS_RAW_PORT_CONFIG"
 	echo -e "\thelp"
 	echo -e "\t Decide whether VLAN-tags should be removed"
@@ -115,6 +116,7 @@ function print_port_config() {
 
 	echo -e "\nconfig VLANS_PORT${portStr}_PRIO"
 	echo -e "\tint \"Priority\""
+	echo -e "\tdepends on VLANS_RAW_PORT_CONFIG || VLANS_PORT${portStr}_MODE_ACCESS || VLANS_PORT${portStr}_MODE_DISABLED || VLANS_PORT${portStr}_MODE_UNQUALIFIED"
 	echo -e "\tdefault -1"
 	echo -e "\trange -1 7"
 	echo -e "\thelp"
@@ -124,13 +126,15 @@ function print_port_config() {
 
 	echo -e "\nconfig VLANS_PORT${portStr}_VID"
 	echo -e "\tstring \"VID\""
+	echo -e "\tdepends on VLANS_RAW_PORT_CONFIG || VLANS_PORT${portStr}_MODE_ACCESS"
 	echo -e "\tdefault \"\""
 	help_vlan_port_vid
 	
 	echo -e "\nconfig VLANS_PORT${portStr}_PTP_VID"
 	echo -e "\tstring \"PTP VID\""
-	echo -e "\tdepends on VLANS_RAW_PORT_CONFIG"
-	echo -e "\tdefault VLANS_PORT${portStr}_VID"
+	echo -e "\tdepends on VLANS_RAW_PORT_CONFIG || VLANS_PORT${portStr}_MODE_TRUNK || VLANS_PORT${portStr}_MODE_DISABLED || VLANS_PORT${portStr}_MODE_UNQUALIFIED"
+	echo -e "\tdefault VLANS_PORT${portStr}_VID if VLANS_PORT${portStr}_MODE_ACCESS"
+	echo -e "\tdefault \"\""
 	echo -e "\thelp"
 	echo -e "\t VID used for the PTP messages"
 	

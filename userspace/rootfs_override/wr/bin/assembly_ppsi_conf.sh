@@ -554,16 +554,16 @@ for i_port in {01..18}; do # scan all the physical ports
 			port_mode_trunk=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_MODE_TRUNK")
 			port_mode_unqualified=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_MODE_UNQUALIFIED")
 			port_mode_disabled=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_MODE_DISABLED")
+			raw_config=$(eval "echo \$CONFIG_VLANS_RAW_PORT_CONFIG")
 	
 		    port_vid=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_VID")
 		    port_ptp_vid=$(eval "echo \$CONFIG_VLANS_PORT"$i_port"_PTP_VID")
 			
-			if [ -z "$port_ptp_vid" ] ; then
-				port_ptp_vid=$port_vid
-			fi		    
-		    
 			# check port mode
 			if [ "$port_mode_access" = "y" ]; then
+				if [ "$raw_config" != "y" ]; then
+					port_ptp_vid=$port_vid
+				fi
 				# use "&> /dev/null" to avoid error when $ppsi_vlans
 				# is not a number
 				if [ "$port_ptp_vid" -ge 0 ]  &> /dev/null \

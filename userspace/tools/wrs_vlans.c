@@ -26,6 +26,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <ctype.h>
 #include <minipc.h>
 #include <rtud_exports.h>
 #include "regs/endpoint-regs.h"
@@ -387,6 +388,25 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+static char *trimWhitespace(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+
+  return str;
+}
 static void set_p_pmode(int ep, int arg_mode)
 {
 	vlans[ep].pmode = arg_mode;
@@ -985,6 +1005,7 @@ static int read_dot_config(char *dot_config_file)
 	char *val_ch;
 	int i;
 	int mode;
+	int rawPortConfig;
 	int vlan0_port_mask = 0;
 
 	if (access(dot_config_file, R_OK)) {
@@ -1035,6 +1056,10 @@ static int read_dot_config(char *dot_config_file)
 		return -2;
 	}
 
+	/* Check if raw configuration is enabled  */
+	ret = libwr_cfg_get("VLANS_RAW_PORT_CONFIG");
+	rawPortConfig= ret && (!strcmp(ret, "y"));
+
 	for (port = 1; port <= NPORTS; port++) {
 		portmask = portmask | (1 << (port - 1));
 		mode = QMODE_INVALID;
@@ -1073,8 +1098,10 @@ static int read_dot_config(char *dot_config_file)
 		}
 		
 		/* check UNTAG all or none only for ACCESS
-		 * for other modes use untag none by default */
-		if (mode == QMODE_ACCESS) {
+		 * for other modes use untag none by default.
+		 * If raw port configuration is enable, does not
+		 * take care of the mode */
+		if (rawPortConfig || mode == QMODE_ACCESS) {
 			sprintf(buff, "VLANS_PORT%02d_UNTAG_ALL", port);
 			ret = libwr_cfg_get(buff);
 			if (ret && !strcmp(ret, "y")) {
@@ -1099,28 +1126,51 @@ static int read_dot_config(char *dot_config_file)
 		}
 
 		/* update a mask for vlan0 */
-		if (mode != QMODE_ACCESS && mode != QMODE_TRUNK) {
+		if (rawPortConfig || (mode != QMODE_ACCESS && mode != QMODE_TRUNK) ) {
 			vlan0_port_mask |= 1 << (port - 1);
 		}
 
-		sprintf(buff, "VLANS_PORT%02d_PRIO", port);
-		val_ch = libwr_cfg_get(buff);
-		if (val_ch) {
-			if (wrs_msg_level >= LOG_DEBUG)
-				printf("Found %s=%s\n", buff, val_ch);
-			set_p_prio(port - 1, val_ch);
+		// Priority
+		if (rawPortConfig || mode != QMODE_TRUNK) {
+			char *strPrio;
+
+			sprintf(buff, "VLANS_PORT%02d_PRIO", port);
+			val_ch = libwr_cfg_get(buff);
+			strPrio= val_ch ? trimWhitespace(val_ch) : "";
+			if (strPrio[0]!=0 ) {
+				if (wrs_msg_level >= LOG_DEBUG)
+					printf("Found %s=%s\n", buff, strPrio);
+				set_p_prio(port - 1, strPrio);
+			} else {
+				if ( mode != QMODE_TRUNK ) {
+					pr_error("Priority not defined for the port (%d) in"
+						 " TRUNK mode!\n", port);
+				}
+				if ( !rawPortConfig ) {
+					exit(1); /* Exit only if not raw port configuration */
+				}
+			}
 		}
-		if (mode == QMODE_ACCESS) {
+
+		// PVID
+		if (rawPortConfig || mode == QMODE_ACCESS) {
+			char *strVid;
+
 			sprintf(buff, "VLANS_PORT%02d_VID", port);
 			val_ch = libwr_cfg_get(buff);
-			if (val_ch) {
+
+			strVid= val_ch ? trimWhitespace(val_ch) : "";
+			if (strVid[0]!=0 ) {
 				if (wrs_msg_level >= LOG_DEBUG)
-					printf("Found %s=%s\n", buff, val_ch);
-				set_p_vid(port - 1, val_ch);
+					printf("Found %s=%s\n", buff, strVid);
+				set_p_vid(port - 1, strVid);
 			} else {
-				pr_error("VID not defined for the port (%d) in"
-					 " ACCESS mode!\n", port);
-				exit(1);
+				if ( mode == QMODE_ACCESS )
+					pr_error("VID not defined for the port (%d) in"
+						 " ACCESS mode!\n", port);
+				if ( !rawPortConfig ) {
+					exit(1); /* Exit only if not raw port configuration */
+				}
 			}
 		}
 	}

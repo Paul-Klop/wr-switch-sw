@@ -54,7 +54,7 @@ int wrn_phy_read(struct net_device *dev, int phy_id, int location)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	u32 val;
-  int ctrl_adr, retries;
+	int ctrl_adr, retries;
 
 	if (WR_IS_NODE) {
 		/*
@@ -66,31 +66,31 @@ int wrn_phy_read(struct net_device *dev, int phy_id, int location)
 		return -1;
 	}
 
-  /* First check if there is previous MDIO operation still ongoing */
+	/* First check if there is previous MDIO operation still ongoing */
 	while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
-    ;
+		;
 
-  retries = 100;
-  while(retries > 0) {
-	  wrn_ep_write(ep, MDIO_CR, EP_MDIO_CR_ADDR_W(location));
-	  while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
-	  	;
-	  val = wrn_ep_read(ep, MDIO_ASR);
+	retries = 100;
+	while(retries > 0) {
+		wrn_ep_write(ep, MDIO_CR, EP_MDIO_CR_ADDR_W(location));
+		while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
+			;
+		val = wrn_ep_read(ep, MDIO_ASR);
 
-    /* control read from MDIO_CR to be sure we read value from requested
-     * register */
-    ctrl_adr = EP_MDIO_CR_ADDR_R(wrn_ep_read(ep, MDIO_CR));
-    if (ctrl_adr == location)
-      break;
-    else {
-      /* there was a conflict, retry the read */
-      retries--;
-    }
-  }
-  /* If we got here with retries == 0, this means the read failed... */
-  if (retries == 0) {
-    printk("%s readout error on port wri%d\n", __func__, ep->ep_number + 1);
-  }
+		/* control read from MDIO_CR to be sure we read value from
+		 * requested register */
+		ctrl_adr = EP_MDIO_CR_ADDR_R(wrn_ep_read(ep, MDIO_CR));
+		if (ctrl_adr == location)
+			break;
+		else {
+			/* there was a conflict, retry the read */
+			retries--;
+		}
+	}
+	/* If we got here with retries == 0, this means the read failed... */
+	if (retries == 0) {
+		printk("%s readout error on port wri%d\n", __func__, ep->ep_number + 1);
+	}
 	/* mask from wbgen macros */
 	return EP_MDIO_ASR_RDATA_R(val);
 }
@@ -110,9 +110,9 @@ void wrn_phy_write(struct net_device *dev, int phy_id, int location,
 		return;
 	}
 
-  /* First check if there is previous MDIO operation still ongoing */
+	/* First check if there is previous MDIO operation still ongoing */
 	while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
-    ;
+		;
 
 	wrn_ep_write(ep, MDIO_CR,
 		     EP_MDIO_CR_ADDR_W(location)

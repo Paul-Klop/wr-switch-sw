@@ -386,33 +386,33 @@ static void get_wrsLeapSecondSourceStatusDetails(void){
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
 				 "open " LEAPSEC_SOURCE_URL"\n",slog_obj_name);
 		}
+
+		// get the leap second source status
+		slog_obj_name = wrsLeapSecSourceStatusDetails_str;
+		if ((f= fopen(LEAPSEC_SOURCE_STATUS, "r"))!=NULL) {
+
+			/* readline without newline */
+			if ( fscanf(f, LINE_READ_LEN(sizeof(buff)-1), buff)==1)
+				check_status =getStatusFromMapping(mapping_leap_sec_src_status, buff);
+			else
+				buff[0]=0;
+			fclose(f);
+			if ( check_status==0 ) {
+				check_status=WRS_LEAP_SEC_SRC_STATUS_DETAILS_UNKNOWN;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid  status (%s)\n",
+					 slog_obj_name,buff);
+			}
+		} else {
+			/* File not found, probably something else caused
+			 * a problem */
+			check_status = WRS_LEAP_SEC_SRC_STATUS_DETAILS_IO_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+				 "open " LEAPSEC_SOURCE_STATUS "\n",slog_obj_name);
+		}
 	}
 	if (srcUrl==NULL)
 		srcUrl="";
 	strcpy(wrsCurrentTime_s.wrsLeapSecSourceUrl,srcUrl);
-
-	// get the leap second source status
-	slog_obj_name = wrsLeapSecSourceStatusDetails_str;
-	if ((f= fopen(LEAPSEC_SOURCE_STATUS, "r"))!=NULL) {
-
-		/* readline without newline */
-		if ( fscanf(f, LINE_READ_LEN(sizeof(buff)-1), buff)==1)
-			check_status =getStatusFromMapping(mapping_leap_sec_src_status, buff);
-		else
-			buff[0]=0;
-		fclose(f);
-		if ( check_status==0 ) {
-			check_status=WRS_LEAP_SEC_SRC_STATUS_DETAILS_UNKNOWN;
-			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid  status (%s)\n",
-				 slog_obj_name,buff);
-		}
-	} else {
-		/* File not found, probably something else caused
-		 * a problem */
-		check_status = WRS_LEAP_SEC_SRC_STATUS_DETAILS_IO_ERROR;
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
-			 "open " LEAPSEC_SOURCE_STATUS "\n",slog_obj_name);
-	}
 	wrsCurrentTime_s.wrsLeapSecSourceStatusDetails=check_status;
 }
 

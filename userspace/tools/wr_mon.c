@@ -840,7 +840,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 {
 
 	wrh_servo_t * wr_servo;
-	wr_servo_ext_t * wr_servo_ext;
+	wr_servo_ext_t * wr_servo_ext=NULL;
 
 	char buf[128];
 	wrh_servo_t * l1e_servo;
@@ -895,9 +895,13 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMS          : ");
 		term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&servo->servo_snapshot.delayMS,buf));
-
-		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMM          : ");
-		term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&servo->servo_snapshot.delayMM,buf));
+		{
+			struct pp_time *delayMM= wr_servo_ext ?
+					&wr_servo_ext->rawDelayMM :
+					&servo->servo_snapshot.delayMM;
+			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMM          : ");
+			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(delayMM,buf));
+		}
 
 		//term_cprintf(C_BLUE, "Estimated link length:     ");
 		/* (RTT - deltas) / 2 * c / ri

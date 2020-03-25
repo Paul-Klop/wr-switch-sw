@@ -167,10 +167,6 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				ptp_a[si].wrsPtpClockOffsetPsHR =
 				int_saturate(ptp_a[si].wrsPtpClockOffsetPs);
 
-				/* wrsPtpRTT */
-				ptp_a[si].wrsPtpRTT = 2*
-				pp_time_to_picos(&ppsi_servo->meanDelay);
-
 				/* wrsPtpLinkLength */
 				ptp_a[si].wrsPtpLinkLength =
 				(uint32_t)(pp_time_to_picos(&ppsi_servo->delayMS)
@@ -190,8 +186,7 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				ppsi_i->protocol_extension;
 
 				/******** from extensions-specific ************/
-				if (ppsi_i->protocol_extension == PPSI_EXT_WR)
-                                {
+				if (ppsi_i->protocol_extension == PPSI_EXT_WR) {
 					wr_d       = (struct wr_data *)
 							wrs_shm_follow(ppsi_head,
 							ppsi_i->ext_data);
@@ -236,9 +231,11 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					/* wrsPtpRTTErrCnt */
 					ptp_a[si].wrsPtpRTTErrCnt =
 					wrh_servo->n_err_delta_rtt;
-				}
-				else
-                                {
+
+					/* wrsPtpRTT */
+					ptp_a[si].wrsPtpRTT = pp_time_to_picos(&wr_servo->rawDelayMM);
+
+				} else {
 					memset(ptp_a[si].wrsPtpSyncSource,
 					0, 32 * sizeof(char));
 
@@ -251,6 +248,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					ptp_a[si].wrsPtpServoStateErrCnt  = 0;
 					ptp_a[si].wrsPtpClockOffsetErrCnt = 0;
 					ptp_a[si].wrsPtpRTTErrCnt         = 0;
+
+					/* wrsPtpRTT */
+					ptp_a[si].wrsPtpRTT = 2 * pp_time_to_picos(&ppsi_servo->meanDelay);
 				}
 				/* look for next PTP Instance in Slave state*/
 				si++;

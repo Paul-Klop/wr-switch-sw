@@ -339,23 +339,22 @@ wrsSystemClockStatus OBJECT-TYPE
 wrsLeapSecStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-						ok(1),                        
-						error(2),
+                        ok(1),                        
+                        error(2),
                         errorMinor(3),
-						warning(4) 
-						}
+                        warning(4) 
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Leap second status
-			ok -  Everything ok
-			leapSecFileExpired - The current leap second file is out-dated
-		    internalErrorDetected - Internal error detected (system,...)
-			taiReadError - Cannot read the TAI time
-			leaSecInserted - A leap second will be inserted at 00:00 
-			leapSecDeleted - A leap second will be deleted at 00:00
-            errorMinor - cannot read the status file, problem is probably somewhere
-                     else"
+            ok -  Everything ok
+            leapSecFileExpired - The current leap second file is out-dated
+            internalErrorDetected - Internal error detected (system,...)
+            taiReadError - Cannot read the TAI time
+            leaSecInserted - A leap second will be inserted at 00:00 
+            leapSecDeleted - A leap second will be deleted at 00:00
+            errorMinor - cannot read the status file, problem is probably somewhere else"
     ::= { wrsTimingStatusGroup 6 }
 
 wrsLeapSecSourceStatus OBJECT-TYPE
@@ -680,12 +679,12 @@ wrsLeapSecStatusDetails OBJECT-TYPE
                         ok(1),
                         statusFileMissing(2),
                         unknownStatus(3),
-						leapSecFileExpired(4),
-					    internalErrorDetected(5),
-						taiReadError(6),
-						leaSecInserted(7),
-						leapSecDeleted(8) 
-						}
+                        leapSecFileExpired(4),
+                        internalErrorDetected(5),
+                        taiReadError(6),
+                        leaSecInserted(7),
+                        leapSecDeleted(8) 
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION

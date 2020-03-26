@@ -409,6 +409,9 @@ static void get_wrsLeapSecondSourceStatusDetails(void){
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
 				 "open " LEAPSEC_SOURCE_STATUS "\n",slog_obj_name);
 		}
+	} else {
+		/* Local leapsecond file, no error */
+		check_status = WRS_LEAP_SEC_SRC_STATUS_DETAILS_OK;
 	}
 	if (srcUrl==NULL)
 		srcUrl="";

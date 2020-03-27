@@ -268,67 +268,44 @@
 
   \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSystemClockStatus}{
     \underline{Description:}
-    Reports \texttt{Error} when the system clock monitoring system is not able
-    to measure the delta time between system clock and NTP time.\\
-	In case of error or warning, please check the values of \\
+    Reports the status of system time. \texttt{Error} when either the system
+    clock diverged from the reference NTP time more than the configured
+    threshold or incorrect leap seconds file was provided to the switch. The
+    \texttt{Error} is also generated when any of the related services failed.
+    Please refer to related SNMP detailed objects for more information on the
+    type of failure. \texttt{Warning} when the switch is configured in Master or
+    GrandMaster mode and the currently used leap seconds file has expired.
+    In case of error or warning, please check the values of \\
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockStatusDetails}} ,\\
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockDrift}} ,\\
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockDriftThreshold}} ,\\
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckInterval}} and \\
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckIntervalUnit}} \\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckInterval}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSystemClockCheckIntervalUnit}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecStatusDetails}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSource}} ,\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceURL}}.\\
      to find out which subsystem causes the problem and to verify your configuration.\\ 
     \underline{On error:}
     \begin{pck_proc}
-      \item Check Syslog message to find a message similar to this one:\\
-        \texttt{SNMP: wrsSystemClockStatusDetails failed}.\\
-        It may help you to retrieve the origin of the problem.
+      \item Check Syslog message to find one of the messages similar to:\\
+        \texttt{SNMP: wrsSystemClockStatusDetails failed} \\
+        \texttt{SNMP: wrsLeapSecStatus failed} \\
+        \texttt{SNMP: wrsLeapSecStatusDetails failed} \\
+        \texttt{SNMP: wrsLeapSecSourceStatus failed}  \\
+        \texttt{SNMP: wrsLeapSecSourceStatusDetails failed} \\
+        It may help you to retrieve the configuration problem.
       \item Check that your configured NTP server is reachable using the 
         'ping' command in the switch.
+      \item Check that your configuration of leap seconds file points to the
+	local file and that it has not expired. In case you configured the
+	switch to fetch the leap seconds file from remote server, verify the URL
+	entered in the configuration.
       \item Restart the switch.
       \item If the problem persists, please contact WR experts for in-depth
         investigation.        
     \end{pck_proc}
     \glspar \underline{Related problems:}}
 
-  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsLeapSecStatus}{
-    \underline{Description:}
-    Reports \texttt{Error} when an internal error has been detected.\\
-    In case of error, please check the value of
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecStatusDetails}} \\
-    which may give you more details about the problem.\\
-    \underline{On error:}
-    \begin{pck_proc}
-      \item Check Syslog message to find a message similar to :\\
-        \texttt{SNMP: wrsLeapSecStatus failed} or \\
-        \texttt{SNMP: wrsLeapSecStatusDetails failed}. \\
-        It may help you to retrieve the origin of the problem.
-      \item Check if the command '\path{/wr/bin/wr_date get}' executed in the switch returns
-        correctly the WR and system time. 
-      \item Restart the switch.
-      \item If the problem persists, please contact WR experts for in-depth
-        investigation.        
-    \end{pck_proc}
-    \glspar \underline{Related problems:}}
-
-  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsLeapSecSourceStatus}{
-    \underline{Description:}
-    Reports \texttt{Error} when the leap seconds file cannot be downloaded or
-    is invalid. \\
-    \underline{On error:}
-    \begin{pck_proc}
-      \item Check first your configuration by reading values of :\\
-   		\texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSource}} and \\
-   		\texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceURL}}.\\
-        Verify that the given URL is valid and reachable.
-      \item  Check Syslog message to find a message similar to :\\
-        \texttt{SNMP: wrsLeapSecSourceStatus failed} or \\
-        \texttt{SNMP: wrsLeapSecSourceStatusDetails failed}. \\
-        It may help you to retrieve the origin of the problem.
-      \item Restart the switch.
-      \item If the problem persists, please contact WR experts for in-depth
-        investigation.        
-    \end{pck_proc}
-    \glspar \underline{Related problems:}}
   %------------------------------------------------------------------------
 
   \snmpentrys{WR-SWITCH-MIB}{wrsDetailedStatusesGroup}{wrsNetworkingStatusGroup}{

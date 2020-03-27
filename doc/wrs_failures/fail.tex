@@ -349,6 +349,47 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 		\end{pck_descr}
 
+\subsubsection{\bf System/WR time has diverged from the reference NTP time}
+		\label{fail:timing:systime}
+		\begin{pck_descr}
+			\item [] \underline{Status}: DONE
+			\item [] \underline{Severity}: ERROR
+			\item [] \underline{Mode}: \emph{all}
+			\item [] \underline{Description}:\\
+				System clock monitoring periodically checks
+				whether the system (and thus White Rabbit time)
+				have not diverged above the configured
+				thresholde from the reference NTP time.
+			\item [] \underline{SNMP objects}:\\
+				{\footnotesize
+    				\snmpadd{WR-SWITCH-MIB::wrsSystemClockStatus}\\
+    				\snmpadd{WR-SWITCH-MIB::wrsSystemClockStatusDetails}\\
+    				\snmpadd{WR-SWITCH-MIB::wrsSystemClockDrift}\\
+    				\snmpadd{WR-SWITCH-MIB::wrsSystemClockDriftThreshold}\\
+    				\snmpadd{WR-SWITCH-MIB::wrsSystemClockCheckInterval}\\
+				\snmpadd{WR-SWITCH-MIB::wrsSystemClockCheckIntervalUnit} }
+		\end{pck_descr}
+
+\subsubsection{\bf Leap seconds file is incorrect or expired}
+		\label{fail:timing:systime}
+		\begin{pck_descr}
+			\item [] \underline{Status}: DONE
+			\item [] \underline{Severity}: WARNING/ERROR
+			\item [] \underline{Mode}: \emph{all}
+			\item [] \underline{Description}:\\
+				This problem does not affect applications
+				relying on TAI time. However if an incorrect
+				leap seconds file is used, applications relying
+				on UTC will receive incorrect/outdated
+				information.
+			\item [] \underline{SNMP objects}:\\
+				{\footnotesize
+    				\snmpadd{WR-SWITCH-MIB::wrsSystemClockStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsLeapSecStatusDetails}\\
+				\snmpadd{WR-SWITCH-MIB::wrsLeapSecSource}\\
+				\snmpadd{WR-SWITCH-MIB::wrsLeapSecSourceURL} }
+		\end{pck_descr}
+
 \subsubsection{\bf Wrong configuration applied}
 		\label{fail:timing:wrong_config}
 		\begin{pck_descr}

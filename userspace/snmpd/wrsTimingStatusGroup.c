@@ -24,8 +24,6 @@ static struct pickinfo wrsTimingStatus_pickinfo[] = {
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSlaveLinksStatus),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsPTPFramesFlowing),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSystemClockStatus),
-	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsLeapSecStatus),
-	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsLeapSecSourceStatus),
 };
 
 struct wrsTimingStatus_s wrsTimingStatus_s;
@@ -40,8 +38,6 @@ static void get_wrsSoftPLLStatus();
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows);
 static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows);
 static void get_wrsSystemClockStatus(void);
-static void get_wrsLeapSecondStatus(void);
-static void get_wrsLeapSecondSourceStatus(void);
 
 time_t wrsTimingStatus_data_fill(void)
 {
@@ -109,9 +105,7 @@ time_t wrsTimingStatus_data_fill(void)
 	}
 
 	if ( time_current_time > time_update) {
-		get_wrsLeapSecondStatus();
 		get_wrsSystemClockStatus();
-		get_wrsLeapSecondSourceStatus();
 	}
 
 	/* save the time of the last ptp_data copy */
@@ -344,78 +338,66 @@ static void get_wrsSoftPLLStatus(void)
 
 static void get_wrsSystemClockStatus(void){
 	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
+	struct wrsSpllStatus_s  *s=&wrsSpllStatus_s;
 	int status=0;
 
-	switch (t->wrsSystemClockStatusDetails) {
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK :
-			status=WRS_SYSTEM_CLOCK_STATUS_OK;
-			break;
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR :
-			status=WRS_SYSTEM_CLOCK_STATUS_ERROR_MINOR;
-			break;
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN  :
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_ERROR  :
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR  :
-			status=WRS_SYSTEM_CLOCK_STATUS_ERROR;
-			break;
-		case WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED :
-			status=WRS_SYSTEM_CLOCK_STATUS_THRESHOLD_EXCEEDED;
-			break;
-	}
+	status = WRS_SYSTEM_CLOCK_STATUS_OK;
+	/* systemClockStatus is OK when everything is ok with with SystemClock
+	 * monitoring */
+	if ( t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK &&
+	     /* and LeapSec file has correct syntax */
+	     (t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_OK           ||
+	      t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_SEC_INSERTED ||
+	      t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_SEC_DELETED  ||
+	       /* if LeapSec file is expired it matters only for GM or FreeRunning
+	        * Master */
+	      (t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED
+	       && s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER
+	       && s->wrsSpllMode != WRS_SPLL_MODE_MASTER)
+	     ) &&
+	     /* and LeapSec file was retrieved successfully */ 
+	     (t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_OK ||
+	      t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_UPDATED)
+	   )
+		status = WRS_SYSTEM_CLOCK_STATUS_OK;
+	/* ERROR */
+	else if (
+	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR ||
+	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED ||
+	     t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_INTERNAL_ERROR    ||
+	     t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_TAI_READ_ERROR    ||
+	     t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_URL ||
+	     t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_FILE ||
+	     /* download error only for configured "force remote" */
+	     (t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_DOWNLOAD_ERROR &&
+	      t->wrsLeapSecSource == WRS_LEAP_SEC_SOURCE_FORCE_REMOTE)                   ||
+	     /* dhcp error only for configured "force remote" */
+	     (t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_DHCP_ERROR &&
+	      t->wrsLeapSecSource == WRS_LEAP_SEC_SOURCE_FORCE_REMOTE)
+	     )
+		status = WRS_SYSTEM_CLOCK_STATUS_ERROR;
+	/* Warning */
+	else if (
+	     /* Leapsecond file expired counts for GM or FM modes */
+	     (t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED
+	       && s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER)                      ||
+	     (t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED
+	       && s->wrsSpllMode == WRS_SPLL_MODE_MASTER)
+	     )
+		status = WRS_SYSTEM_CLOCK_STATUS_WARNING;
+	/* WarningNA */
+	else if (
+	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR   ||
+	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN    ||
+	     t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_IO_ERROR		  ||
+	     t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_UNKNOWN		  ||
+	     t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_IO_ERROR ||
+	     t->wrsLeapSecSourceStatusDetails == WRS_LEAP_SEC_SRC_STATUS_DETAILS_UNKNOWN
+	     )
+		status = WRS_SYSTEM_CLOCK_STATUS_WARNING_NA;
+
+
 	wrsTimingStatus_s.wrsSystemClockStatus = status;
-}
-
-static void get_wrsLeapSecondStatus(void){
-
-	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
-	struct wrsSpllStatus_s *s=&wrsSpllStatus_s;
-	int status=0;
-
-	switch (t->wrsLeapSecStatusDetails ) {
-	case WRS_LEAP_SEC_STATUS_DETAILS_OK :
-	case WRS_LEAP_SEC_STATUS_DETAILS_SEC_INSERTED:
-	case WRS_LEAP_SEC_STATUS_DETAILS_SEC_DELETED:
-		status=WRS_LEAP_SEC_STATUS_OK;
-		break;
-	case WRS_LEAP_SEC_STATUS_DETAILS_IO_ERROR:
-		status=WRS_LEAP_SEC_STATUS_ERROR_MINOR;
-		break;
-	case WRS_LEAP_SEC_STATUS_DETAILS_UNKNOWN:
-	case WRS_LEAP_SEC_STATUS_DETAILS_INTERNAL_ERROR:
-	case WRS_LEAP_SEC_STATUS_DETAILS_TAI_READ_ERROR:
-		status=WRS_LEAP_SEC_STATUS_ERROR;
-		break;
-	case WRS_LEAP_SEC_STATUS_DETAILS_FILE_EXPIRED:
-		status = ( s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER
-				|| s->wrsSpllMode == WRS_SPLL_MODE_MASTER)
-			? WRS_LEAP_SEC_STATUS_WARNING : WRS_LEAP_SEC_STATUS_DETAILS_OK;
-		break;
-	}
-	wrsTimingStatus_s.wrsLeapSecStatus = status;
-}
-
-static void get_wrsLeapSecondSourceStatus(void){
-
-	struct wrsCurrentTime_s *t=&wrsCurrentTime_s;
-	int status=0;
-
-	switch (t->wrsLeapSecSourceStatusDetails ) {
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_OK :
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_UPDATED:
-		status = WRS_LEAP_SEC_SRC_STATUS_OK;
-		break;
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_IO_ERROR:
-		status = WRS_LEAP_SEC_SRC_STATUS_ERROR_MINOR;
-		break;
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_UNKNOWN:
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_DHCP_ERROR:
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_URL:
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_FILE:
-	case WRS_LEAP_SEC_SRC_STATUS_DETAILS_DOWNLOAD_ERROR:
-		status = WRS_LEAP_SEC_SRC_STATUS_ERROR;
-		break;
-	}
-	wrsTimingStatus_s.wrsLeapSecSourceStatus = status;
 }
 
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)

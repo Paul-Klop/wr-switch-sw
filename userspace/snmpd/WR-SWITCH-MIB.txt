@@ -323,61 +323,22 @@ wrsSystemClockStatus OBJECT-TYPE
                         na(0),
                         ok(1),
                         error(2),
-                        errorMinor(3),                      
-                        thresholdExceeded(4)
+                        warning(3),                      
+                        warningNA(4)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "The system clock is compared to NTP time  
-            ok - system clock is under the threshold value
-            thresholdExceeded - system clock has exceeded the threshold value
-            error - Unexpected status
-            warningNA - there is N/A in one of object used to calculate this value"
+            "Grouped status of system clock
+            ok - system clock is withing threshold (set in WRS configuration)
+                 to NTP time and correct leap seconds file was loaded
+            error - system clock problem, either it diverged or incorrect leap
+                 seconds file is used
+            warning - leapseconds file is not valid anymore and should be
+                 updated
+            warningNA - some information could not be retrieved to calculate the
+                 value of this object"
     ::= { wrsTimingStatusGroup 5 }
-
-wrsLeapSecStatus OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        na(0),
-                        ok(1),                        
-                        error(2),
-                        errorMinor(3),
-                        warning(4) 
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Leap second status
-            ok -  Everything ok
-            leapSecFileExpired - The current leap second file is out-dated
-            internalErrorDetected - Internal error detected (system,...)
-            taiReadError - Cannot read the TAI time
-            leaSecInserted - A leap second will be inserted at 00:00 
-            leapSecDeleted - A leap second will be deleted at 00:00
-            errorMinor - cannot read the status file, problem is probably somewhere else"
-    ::= { wrsTimingStatusGroup 6 }
-
-wrsLeapSecSourceStatus OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        na(0),
-                        ok(1),
-                        error(2),
-                        errorMinor(3)
-                    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Download status of the leap seconds file
-             ok - Everything is OK
-             updated  - Local leap seconds file has been updated
-             dhcpError - DHCP error detected
-             invalidUrl - The URL is not reachable or invalid
-             invalidFile - The download file is invalid
-             downloadError - Error detected during the download
-             errorMinor - cannot read the status file, problem is probably somewhere
-                     else"
-    ::= { wrsTimingStatusGroup 7 }
-
 
 -- wrsNetworkingStatusGroup (.6.2.3)
 wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }

@@ -47,6 +47,7 @@ time_t wrsOSStatus_data_fill(void)
 	time_t time_free_mem; /* time when free memory data was updated */
 	time_t time_cpu_load; /* time when cpu load data was updated */
 	time_t time_disk_space; /* time when disk space data was updated */
+	time_t time_version; /* time when version data was updated */
 	unsigned int n_rows_disk_space; /* number of rows in wrsDiskTable_array
 					 */
 	unsigned int i;
@@ -64,12 +65,14 @@ time_t wrsOSStatus_data_fill(void)
 	time_free_mem = wrsMemory_data_fill();
 	time_cpu_load = wrsCpuLoad_data_fill();
 	time_disk_space = wrsDiskTable_data_fill(&n_rows_disk_space);
+	time_version = wrsVersion_data_fill();
 
 	if (time_boot <= time_update
 		&& time_temp <= time_update
 		&& time_free_mem <= time_update
 		&& time_cpu_load <= time_update
-		&& time_disk_space <= time_update) {
+		&& time_disk_space <= time_update
+		&& time_version <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}

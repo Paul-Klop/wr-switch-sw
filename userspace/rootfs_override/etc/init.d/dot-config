@@ -28,8 +28,17 @@ wait_dhcp_forever()
 		if [ "$?" -eq "0" ]; then
 			break
 		fi
-		echo "$me: waiting DHCP service...."
-		sleep 5
+		echo "$me: waiting DHCP service (press ENTER to abandon) ...."
+		# wait for input for 5s, timeout if no input.
+		read -t 5
+		# any input will result in the returned value to be zero
+		if [ "$?" -eq "0" ]; then
+			# report to log that something went wrong
+			echo "WARNING: Obtaining dot-config source URL from "\
+			     "DHCP service was abandoned by the user."\
+			     | tee $log_output  >& 2
+			return 1
+		fi
 	done
 }
 
@@ -86,6 +95,16 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 		if [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ] && [ "$CONFIG_ETH0_DHCP" = "y" ]; then
 			# Wait DHCP forever only if DHCP is also forced on management port  
 		    wait_dhcp_forever
+		    # check whether the DHCP loop was abandoned by the user (return 1)
+		    if [ "$?" -eq "1" ]; then
+		       # no DHCP, complain properly and apply the local/old dot-config
+		       echo "dhcp_error" > "$tmpdir"/dot-config_status
+		       echo "Unable to get dot-config's URL via DHCP, using old dot-config"\
+		            | tee $log_output >& 2
+		       # apply old dot-config
+		       /wr/bin/apply_dot-config
+		       exit
+		    fi
 		fi
 		# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
 		# from DHCP (which contain url with dot-config).

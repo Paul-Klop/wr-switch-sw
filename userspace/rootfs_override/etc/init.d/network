@@ -19,8 +19,17 @@ wait_dhcp_forever()
 		if [ "$?" -eq "0" ]; then
 			break
 		fi
-		echo "$me: waiting DHCP service ...."
-		sleep 5
+		echo "$me: waiting DHCP service (press ENTER to abandon) ...."
+		# wait for input for 5s, timeout if no input.
+		read -t 5
+		# any input will result in the returned value to be zero
+		if [ "$?" -eq "0" ]; then
+			# report to log that something went wrong
+			echo "WARNING: Obtaining IP from DHCP service was" \
+			     "abandoned by the user."\
+			     | tee $log_output
+			break
+		fi
 	done
 }
 

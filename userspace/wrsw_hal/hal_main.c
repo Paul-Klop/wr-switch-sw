@@ -98,6 +98,9 @@ static void sighandler(int sig)
 	shw_io_write(shw_io_led_state_o, 1);
 	shw_io_write(shw_io_led_state_g, 0);
 
+	// Reset all port leds
+	led_clear_all_ports();
+
 	call_cleanup_cbs();
 	exit(0);
 }

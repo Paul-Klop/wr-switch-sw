@@ -31,7 +31,7 @@ int led_get_blink_state(void) {
 	return led_blink_state;
 }
 
-void led_init_all_ports(struct hal_port_state *ps ) {
+void led_clear_all_ports(void) {
 	int i;
 
 	// Clear data

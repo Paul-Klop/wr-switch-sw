@@ -260,7 +260,7 @@ int hal_port_shmem_init(char *logfilename)
 
 	hal_port_state_fsm_init_all(halPorts.ports, &halPorts.globalLpdc); // Init main port FSM for all ports
 	
-	led_init_all_ports(halPorts.ports); // Reset all leds
+	led_clear_all_ports(); // Reset all leds
 	halPorts.numberOfPorts = index;
 
 	pr_info("Number of physical ports supported in HW: %d\n",

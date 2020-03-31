@@ -22,6 +22,7 @@
 #include "hal_ports.h"
 #include "hal_port_fsm_txP.h"
 #include "hal_port_fsm.h"
+#include <libwr/shw_io.h>
 
 /**
  * State machine
@@ -339,6 +340,14 @@ static int port_tx_setup_fsm_state_wait_other_ports(fsm_t *fsm, int eventMsk, in
  * Return final state machine reached
  */
 static int port_tx_setup_fsm_state_done(fsm_t *fsm, int eventMsk, int isNewState) {
+	/* Set status led to green when the tx LPDC is completed (the DONE
+	   state is entered by EACH port when ALL the ports are done,
+	   virtually at the same moment).
+	   This is Suboptimal: should be done only ONCE for ALL the ports
+	   are done, yet it does not harm to do it 18 times...and it simplifies
+	   the code. */
+	shw_io_write(shw_io_led_state_o, 0);
+	shw_io_write(shw_io_led_state_g, 1);
 	return 1; /* Final state reached */
 }
 

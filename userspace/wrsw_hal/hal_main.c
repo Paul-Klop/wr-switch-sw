@@ -153,9 +153,12 @@ static int hal_init(void)
 	/* Initialize IPC/RPC - see hal_ports.c */
 	assert_init(hal_port_wripc_init(logfilename));
 
-	//everything is fine up to here, we can blink green LED
-	shw_io_write(shw_io_led_state_o, 0);
-	shw_io_write(shw_io_led_state_g, 1);
+	/* While we are leaving initialization function, there might be
+	   still LPDC tx calibation ongoing - this is still initialization.
+	   The status LED is set to green once the LPDC tx calibration is
+	   completed. This is done in hal_port_fms_tx.c, whenit is detected
+	   that all the ports have been calibrated (i.e. in the 
+	   port_tx_setup_fsm_state_done state.*/
 
 	if (daemon_mode)
 		hal_daemonize();

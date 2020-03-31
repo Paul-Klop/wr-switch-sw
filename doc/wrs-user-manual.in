@@ -1994,13 +1994,17 @@ a kernel crash the LED remains unchanged.
 @node Ports' LEDs
 @subsection Ports' LEDs
 
-Under each WR port there are two LEDs. The left LED is on when particular
+Under each WR port there are two LEDs, left and right. The left LED has two
+functions. First: it blinks @i{orange} when a particular port is populated
+with an SFP and the Low Phase Drift Calibration is ongoing; this happens after
+inserting a fiber and after the WR switch start/reboots.
+Second: it is on (permanently, not blinking) when a particular
 port is populated with an SFP and the link is up. Its color depends on
-the role of PTP instances:
+the state of PTP instance running on the port:
 @itemize
-    @item @i{green}: WR slave role
-    @item @i{yellow}: WR master role
-    @item @i{orange}: all other roles
+    @item @i{green}: WR slave
+    @item @i{yellow}: WR master
+    @item @i{orange}: all other
 @end itemize
 If there are multiple instances on a particular port the slave state (green)
 takes precedence over master (orange). Master takes precedence over other

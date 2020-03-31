@@ -162,7 +162,8 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
 			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
 			      MDIO_LPC_CTRL);
 
-		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_TX_CALIB);
+		/* start indicating LPDC rx calibration. */
+		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_CALIB);
 		fsm_fire_state(fsm, HAL_PORT_TX_SETUP_STATE_RESET_PCS);
 	}
 	return 0;

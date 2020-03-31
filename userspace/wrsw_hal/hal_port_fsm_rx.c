@@ -185,6 +185,7 @@ static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewSta
 
 			rxSetup->attempts = 0;
 			rts_enable_ptracker(ps->hw_index, 0);
+			led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_CALIB);
 			fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_RESET_PCS);
 		} else {
 			// Restart the time-out

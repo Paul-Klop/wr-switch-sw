@@ -215,6 +215,9 @@ static int port_fsm_state_link_down(fsm_t *fsm, int eventMsk, int isNewState) {
 		/* measure bitslide regardless of LPDC support,
 		 (if not supported, the value of the register will be zero) */
 		uint32_t bit_slide_steps;
+		/* Finish blinking for LPCC rx calibration, the led will be
+		   set appropriately if it gets to the link_up state. */
+		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 		if (pcs_readl(ps, 16, &bit_slide_steps) >= 0) {
 			bit_slide_steps = (bit_slide_steps >> 4) & 0x1f;
 			/* FIXME: use proper register names */

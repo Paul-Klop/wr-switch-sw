@@ -14,7 +14,7 @@
 #define SFP_LED_WRMODE_OTHER	(2) /* orange */
 #define SFP_LED_WRMODE_MASTER	(3) /* yellow */
 #define SFP_LED_WRMODE_OFF	(4) /* to off entire WRMODE LED */
-#define SFP_LED_WRMODE_TX_CALIB	(5) /* LPDC Tx calibration */
+#define SFP_LED_WRMODE_CALIB	(5) /* LPDC calibration */
 
 /* Prototypes */
 

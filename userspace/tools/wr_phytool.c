@@ -140,7 +140,7 @@ void dump_pcs_regs(int ep, int argc, char *argv[])
 {
 	int i;
 	printf("PCS registers dump for endpoint %d:\n", ep);
-	for(i=0;i<17;i++)
+	for(i=0;i<20;i++)
 		printf("R%d = 0x%08x\n",i,pcs_read(ep, i));
 }
 

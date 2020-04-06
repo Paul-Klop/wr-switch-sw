@@ -25,6 +25,7 @@
 				      * 1000BASE-X. */
 #define SFP_SPEED_1Gb_10   0x0A /* Unfortunatelly the above is not always true,
               * e.g. Cisco copper SFP (MGBT1) says simply 10 and not 13.*/
+#define SFP_SPEED_1Gb_12   0x0C /* Some fiber SFPs say 12 and not 13 */
 
 #define SFP_DIAGNOSTIC_IMPLEMENTED (1 << 6) /* Digital diagnostic monitoring
 					       implemented. "1" for compliance

@@ -482,6 +482,7 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 	/* check if SFP is 1GbE */
 	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
 	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_10 ? SFP_FLAG_1GbE : 0;
+	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_12 ? SFP_FLAG_1GbE : 0;
 
 	/*
 	 * Now, we should fix the alpha value according to fiber

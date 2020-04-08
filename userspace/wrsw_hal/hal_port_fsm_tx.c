@@ -90,7 +90,7 @@ static fsm_event_table_entry_t port_tx_setup_fsm_events[] = {
 //         hal_port_rts_state
 static struct rts_pll_state _pll_state;
 /* path to the file where Low Phase Drift calib parameters are stored */
-static char *_calibrationFileName = "/update/tx_phase_cal.conf";
+static char *_calibrationFileName = "/wr/etc/tx_phase_cal.conf";
 struct config_file *_calibrationConfig; // Calibration config form file
 static char *_fpgaStatusFileName = "/tmp/load_fpga_status";
 

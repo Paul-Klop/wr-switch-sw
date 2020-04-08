@@ -175,6 +175,28 @@ int cfg_set_int(struct config_file *cfg, const char *key, int value)
 	return 1;
 }
 
+int cfg_set_str(struct config_file *cfg, const char *key, char *value)
+{
+	struct key_value *kv = cfg_find_key(cfg, key, 1);
+
+	if (!kv)
+		return 0;
+
+	kv->value = strdup(value);
+	return 1;
+}
+
+int cfg_get_str(struct config_file *cfg, const char *key, char *value)
+{
+	struct key_value *kv = cfg_find_key(cfg, key, 1);
+
+	if (!kv)
+		return 0;
+
+	strcpy(value, kv->value);
+	return 1;
+}
+
 int cfg_save(struct config_file *cfg, const char *filename)
 {
 	FILE *f = fopen(filename, "wb");

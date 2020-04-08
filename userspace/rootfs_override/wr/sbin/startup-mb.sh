@@ -52,6 +52,7 @@ $WR_HOME/bin/load-virtex $FP_FILE
 if [ $? -eq 0 ];
 then
     echo "load_ok" > $LOAD_FPGA_STATUS_FILE
+    md5sum $FP_FILE | cut -d ' ' -f 1 >> $LOAD_FPGA_STATUS_FILE
 else
     echo "Fatal: load FPGA failed" >& 2
     echo "load_error" > $LOAD_FPGA_STATUS_FILE

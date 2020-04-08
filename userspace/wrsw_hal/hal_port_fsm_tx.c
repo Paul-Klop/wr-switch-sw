@@ -90,8 +90,9 @@ static fsm_event_table_entry_t port_tx_setup_fsm_events[] = {
 //         hal_port_rts_state
 static struct rts_pll_state _pll_state;
 /* path to the file where Low Phase Drift calib parameters are stored */
-static char *_calibrationFileName = "/update/tx_phase_cal.conf";
+static char *_calibrationFileName = "/wr/etc/tx_phase_cal.conf";
 struct config_file *_calibrationConfig; // Calibration config form file
+static char *_fpgaStatusFileName = "/tmp/load_fpga_status";
 
 static inline void updatePllState(struct hal_port_state * ps) {
 	// update PLL state once for all ports
@@ -470,11 +471,32 @@ int  hal_port_tx_setup_fsm_run( struct hal_port_state * ps )
 	return fsm_generic_run(&ps->lpdc.txSetupFSM);
 }
 
+static int get_fpga_md5(char *buf)
+{
+	FILE *fpga_status = fopen(_fpgaStatusFileName, "r");
+
+	if (!fpga_status)
+		return 0;
+	/* first line is the status */
+	fscanf(fpga_status, "%33s\n", buf);
+	if (strncmp(buf, "load_ok", 20) || feof(fpga_status)) {
+		/* something went wrong and FPGA is not loaded or MD5 not
+		 * present in the file */
+		fclose(fpga_status);
+		return 0;
+	}
+	fscanf(fpga_status, "%33s\n", buf);
+	fclose(fpga_status);
+	return 1;
+}
+
+
 /* if config is present then update the calibration data */
 static void _load_tx_calibration_file(struct hal_port_state * ports) {
 
 	int i = 0;
 	halGlobalLPDC_t * gl = ports[0].lpdc.globalLpdc;
+	char md5[33], lpdc_md5[33];
 
 	// Read calibration file, if it exists
 	_calibrationConfig = cfg_load(_calibrationFileName, 0);
@@ -485,7 +507,22 @@ static void _load_tx_calibration_file(struct hal_port_state * ports) {
 			_calibrationFileName);
 		gl->calFileSynced = 0;
 		return;
-    }
+	}
+	/* use tx_phase_cal.conf file only if it was generated for the currently
+	 * running FPGA bitstream */
+	if (get_fpga_md5(md5) && cfg_get_str(_calibrationConfig, "MD5", lpdc_md5)) {
+		if (strncmp(md5, lpdc_md5, 32)) {
+			pr_error("FPGA bitstream MD5 not matching, cannot load LPDC file\n");
+			pr_error("loaded md5 = %32s\n", md5);
+			pr_error("lpdc   md5 = %32s\n", lpdc_md5);
+			cfg_close(_calibrationConfig);
+			return;
+		} else
+			pr_info("Matched FPGA bitstream MD5, loading LPDC file\n");
+	} else {
+		pr_warning("Can't get MD5 of loaded bitstream\n");
+	}
+
 
 	pr_info("Loading LPCD config data from %s\n", _calibrationFileName);
 
@@ -528,6 +565,7 @@ static void _write_tx_calibration_file(struct hal_port_state * ps)
 {
 	int i;
 	halGlobalLPDC_t * gl = ps->lpdc.globalLpdc;
+	char md5[33];
 
 	/* Only the first LPDC-supporting port writes the file. Otherwise,
 	   there is problem with pointers when looping through port structures
@@ -538,15 +576,14 @@ static void _write_tx_calibration_file(struct hal_port_state * ps)
 	if(gl->calFileSynced)
 		return;
 
-	if (file_exists(_calibrationFileName))
-	{
-		pr_warning("Tx calibration file exists, yet it has not been"
-		    " synched. Something seems wrong. Should not get here\n");
-		return;
-	}
 
 	struct config_file *cfg = cfg_load(_calibrationFileName, 1);
 	struct hal_port_state *_ps=ps;
+
+	/* first, store MD5 of the bitstream */
+	if (!get_fpga_md5(md5))
+		sprintf(md5, "ERROR");
+	cfg_set_str(cfg, "MD5", md5);
 
 	for (i = gl->firstLpdcPort; i <= gl->lastLpdcPort; i++) {		
 

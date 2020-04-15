@@ -384,12 +384,13 @@ config WRS_LOG_HAL
 	help
 	  The string can be:
 	  - a pathname (e.g. /dev/kmsg), or
-	  - a <facility>.<level> spefification like "daemon.debug", or
+	  - a <facility>.<level> specification like "daemon.debug", or
 	  - "default_syslog", or 
 	  - an empty string
 	  An empty string is used to represent no logging (like /dev/null).
 	  When the string is "default_syslog", messages are sent to syslog with
-	  the <facility>.<level> inheritet from the messages.
+	  the <facility>.<level> inherited from the messages (if not specified
+	  in the message, daemon.info is used by default).
 	  When the string is "<facility>.<level>", all messages produced by
 	  the WR HAL if  syslog is configured will be passed to the syslog at 
 	  the same  <facility>.<level>, no matter of verbosity of a message.
@@ -419,12 +420,13 @@ config WRS_LOG_RTU
 	help
 	The string can be:
 	  - a pathname (e.g. /dev/kmsg), or
-	  - a <facility>.<level> spefification like "daemon.debug", or
+	  - a <facility>.<level> specification like "daemon.debug", or
 	  - "default_syslog", or 
 	  - an empty string
 	  An empty string is used to represent no logging (like /dev/null).
 	  When the string is "default_syslog", messages are sent to syslog with
-	  the <facility>.<level> inheritet from the messages.
+	  the <facility>.<level> inherited from the messages(if not specified
+	  in the message, daemon.info is used by default).
 	  When the string is "<facility>.<level>", all messages produced by
 	  the RTU if  syslog is configured will be passed to the syslog at 
 	  the same  <facility>.<level>, no matter of verbosity of a message.
@@ -510,12 +512,13 @@ config WRS_LOG_OTHER
 	  This collective entry is to avoid number of entries in dot-config.
 	  The string can be:
 	  - a pathname (e.g. /dev/kmsg), or
-	  - a <facility>.<level> spefification like "daemon.debug", or
+	  - a <facility>.<level> specification like "daemon.debug", or
 	  - "default_syslog", or 
 	  - an empty string
 	  An empty string is used to represent no logging (like /dev/null).
 	  When the string is "default_syslog", messages are sent to syslog with
-	  the <facility>.<level> inheritet from the messages.
+	  the <facility>.<level> inherited from the messages (if not specified
+	  in the message, daemon.info is used by default).
 	  When the string is "<facility>.<level>", all messages produced by
 	  the programs if  syslog is configured will be passed to the syslog at
 	  the same  <facility>.<level>, no matter of verbosity of a message.

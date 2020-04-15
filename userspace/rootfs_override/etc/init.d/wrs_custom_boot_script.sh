@@ -35,7 +35,7 @@ start() {
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
     elif [ "$WRS_LOG" == "default_syslog" ]; then
 	# not a pathname: use verbatim
-	eval LOGPIPE=\" 2\>\&1 \| logger -t custom_boot_script --prio-prefix\"
+	eval LOGPIPE=\" 2\>\&1 \| logger -t custom_boot_script --prio-prefix -p daemon.info\"
     else
 	# not a pathname: use verbatim
 	eval LOGPIPE=\" 2\>\&1 \| logger -t custom_boot_script -p $WRS_LOG\"
@@ -141,7 +141,7 @@ stop() {
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
     elif "$WRS_LOG" = "default_syslog"; then
 	# not a pathname: use verbatim
-	eval LOGPIPE=\" 2\>\&1 \| logger -t custom_boot_script --prio-prefix\"
+	eval LOGPIPE=\" 2\>\&1 \| logger -t custom_boot_script --prio-prefix -p daemon.info\"
     else
 	# not a pathname: use verbatim
 	eval LOGPIPE=\" 2\>\&1 \| logger -t custom_boot_script -p $WRS_LOG\"

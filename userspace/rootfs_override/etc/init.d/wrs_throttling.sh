@@ -29,7 +29,7 @@ start() {
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
     elif [ "$WRS_LOG" == "default_syslog" ]; then
 	# not a pathname: use verbatim
-	eval LOGPIPE=\" 2\>\&1 \| logger -t throttling --prio-prefix\"
+	eval LOGPIPE=\" 2\>\&1 \| logger -t throttling --prio-prefix -p daemon.info\"
     else
 	# not a pathname: use verbatim
 	eval LOGPIPE=\" 2\>\&1 \| logger -t throttling -p $WRS_LOG\"

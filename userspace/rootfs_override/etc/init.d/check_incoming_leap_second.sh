@@ -26,7 +26,7 @@ if echo "$WRS_LOG" | grep / > /dev/null; then
 else
 	# not a pathname: use verbatim
 	if [ "$WRS_LOG" = "default_syslog" ]; then
-		eval LOGPIPE=\" 2\>\&1 \| logger -t $pBaseName --prio-prefix\"
+		eval LOGPIPE=\" 2\>\&1 \| logger -t $pBaseName --prio-prefix -p daemon.info\"
     else
 		eval LOGPIPE=\" 2\>\&1 \| logger -t $pBaseName -p $WRS_LOG\"
 	fi

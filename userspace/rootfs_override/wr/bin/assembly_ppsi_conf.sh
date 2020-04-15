@@ -570,7 +570,7 @@ for i_port in {01..18}; do # scan all the physical ports
 				    && [ "$port_ptp_vid" -le 4094 ] &> /dev/null; then
 					v="$inst_vn[vlan]"; eval ${v}="$port_ptp_vid"
 				else
-					echo "$script_name: Wrong value \"$port_ptp_vid\" in CONFIG_VLANS_PORT"$i_port"_VID" | tee $log_output
+					echo "$script_name: Wrong value \"$port_ptp_vid\" in CONFIG_VLANS_PORT"$i_port"_PTP_VID" | tee $log_output
 					continue;
 				fi
 			fi

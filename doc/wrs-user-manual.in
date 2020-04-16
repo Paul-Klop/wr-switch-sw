@@ -173,10 +173,174 @@ explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
 
 @c ==========================================================================
-@node Upgrade from pre-v5.0 to v@value{release_version}
-@section Upgrade from pre-v5.0 to v@value{release_version}
+@node Upgrade from v5.0.1 to v@value{release_version}
+@section Upgrade from v5.0.1 to v@value{release_version}
 
-During the update from the pre-v5.0 firmware to v@value{release_version} (or later) you might see
+Apart from following the instructions in the previous section, there
+is no special action needed from the user when upgrading firmware from
+v5.0.1 to v@value{release_version}. Yet, special attention should be payed
+to a number of improvements in configuration and slight changes in
+the behavior of the WR Switch. Here are highlights:
+@itemize
+
+@item @b{Low Phase Drift Calibration (LPDC)} [placeholder for Greg]
+
+  The LPDC requires rx and tx calibration of each port. The tx calibration is performed
+  once for all ports at startup of the WR switch. The tx calibration is perform
+  each time a link goes up on a port (e.g. cable is connected). Rx and tx
+  calibration is indicated by blinking of @i{Link/WR Mode} LED (left).
+  Note that the calibration makes startup of the WR switch significantly longer.
+  Similarly, the time between connecting a fiber and the link going up
+  (e.g. as observed in @i{wr_mon}) is noticeably longer.
+
+@item @b{Configuration of the WR switch} - while it was feasible to edit by
+  hand the @i{dot-config} file in the pre-v6.0 firmware versions, it is
+  highly discouraged now. Since the number of configuration options increased
+  greatly, the @i{dot-config} file is very long and complex. Therefore,
+  @b{it is highly recommended to use the menuconfig to generate the
+  @i{dot-config}} (e.g.  @i{wrs_menuconfig} tool on the WR switch).
+  Highlights of the changes to configuration are provided in the following 
+  bullet points.
+
+@item @b{Configuration of PTP/PPSi in menuconfig} - up to firmware
+  v5.0.1, the configuration of PPSi in @i{menuconfig} was limited to a global timing
+  mode (e.g. GM, BC) and per-port proto (raw, udp), rx/tx delays, role (e.g, 
+  master, slave, auto) and fiber id. Any more complex configuration of PPSi had to
+  be done via a custom @t{ppsi.conf} file and this was also limited. It was
+  a known issue that the @i{auto} role that uses PTP's Best Master Clock
+  Algorithm was not implemented correctly. We have updated PPSi fixing all known
+  issues related to compliance with IEEE1588-2008 (PTPv2) and we have already
+  introduced a number of new features from the IEEE1588-2019 (PTPv2.1) edition.
+  This resulted in a substantial increase and reorganization of configuration 
+  parameters for PPSi in @i{menconfig} and @t{dot-config}. In short, the default
+  behavior of Grand-Master, Free-Running Master and Boundary Clock are preserved,
+  yet with different names for the configuration options which are compliant
+  with the  IEEE1588-2019. Here are the highlights of the changes
+  @itemize
+  @item @b{Port Timing Configuration} is organized in per-port sub-menus 
+    instead of a simple configuration strings. On each physical port,
+    zero or one PTP Instance can configured (in future release we will allow more
+    than one PTP Instance). If you do not want to use PTP on a given physical port,
+    zero PTP Instances should be used. For each PTP Instance, a number of
+    configuration parameters can be selected, including:
+    @itemize
+    @item @b{Network Protocol} - it allows to set PTP Mapping to 
+      IEEE 802.3 or UPD/Ipv4, it used to be called @b{proto}
+    @item @b{Delay Mechanism} - it allows to set E2P or P2P mechanism, previously
+      possibly only via custom @t{ppsi.conf}
+    @item @b{SNMP monitoring} - it can be disabled which was the case
+      previously when @b{role} was set to @b{non-wr}
+    @item @b{Profile} - it allows to chose between WR and standard PTP,
+      the choice made previously via the @b{role} setting
+    @item @b{Desired State} for BC or @b{BMCA mode} for GM - they replaces the
+       @b{role} function for the Master/Slave/auto settings.
+    @item @b{timestampCorrectionPortDS.egressLatency} - it replaces the @b{tx} delay
+    @item @b{timestampCorrectionPortDS.ingressLatency} - it replaces the @b{rx} delay
+    @item @b{externalPortConfigurationEnabled} - External Port Configuration is
+      a new concept (optional feature) introduced in the IEEE1588-2019 (PTPv2.1)
+      that legalizes what had been done in WR switches since long: manual
+      assignment of the Master/Slave role per port. This option is used
+      when a WR switch is set to @b{Boundary Clocks} Timing Mode. With this option
+      enabled, the Best Master Clock Algorithm is disabled and each port must be
+      assigned with the @b{Desired State}: Master/Slave/Passive. If External Port
+      Configuration is disabled, the Best Master Clock Algorithm is used. Note
+      that this option is global, i.e. it is not allowed to use it only on some
+      ports.
+    @item @b{MasterOnly} - MasterOnly is a new concept (optional feature) introduced
+      in the IEEE1588-2019 (PTPv2.1) that legalizes per-port assigment of
+      Master role, equivalent of setting role to be Master in the pre-v6.0 firmware.
+      This assigment can be done on per-port basis and it coexists with the
+      Best Master Clock Algorithm. This option is used when a WR switch is set
+      to @b{Grand-Master}, @b{Free-Running Master}, or @b{Arbitrary Grand-Master}.
+    @end itemize
+  @item @b{PTP options} - it is a new sub-menu that allows to set a number
+    of global PTP parameters which previously had to be modified by customizing
+    @t{ppsi.conf} file. Thise include: domain, priority1, priority2, clockClass.
+    While these parameters are pre-filled automatically depending on the Timing
+    Mode, they can be overriden if need be.
+  @item @b{Timing Mode} - setting timing mode provides default configuration for
+    all the above-mentioned options such that the behavior of the WR switch is
+    equivalent to the same Timing Mode in pre-v6.0 firmware versions. There are
+    two new modes available now: @b{Arbitrary Grand-Master} and @b{Custom}. The
+    @b{Arbitrary Grand-Master} mode is similar to @b{Grand-Master} but has 
+    different clockClass and ARB timescale. The @b{Custom} allows full control
+    over PTP settings, otherwise limited to options allowed for a given Timing
+    Mode. 
+  @end itemize
+@item @b{Configuration of VLANs in menuconfig} - pre-v6.0 firmware provided
+  limited/simplified VLAN per-port configuration that did not allow setting some
+  less-common configurations, otherwise allowed by CLI (@i{wrsw_vlan}).
+  As of v6.0 firmware, such more user-friendly setting is still provided by
+  default, yet it can be extended by setting @b{Enable raw ports configuration}.
+@item @b{New configuration options in menuconfig}
+  @itemize
+  @item @b{Source for a run-time replacement of leap seconds file} - the 
+    leap seconds file can be now fetch from a server and updated in
+    runtime.
+  @item @b{PPS generation} - it is now possible to specify a number
+    of aspects of the PPS generation, @b{the default configuration might be
+    slightly different from the pre-v6.0 firmware}.
+  @item @b{LLDP options} - it provides configuration of Link Layer Discovery
+    Protocol is supported.
+  @item @b{Disable web interface} - web interface is now disabled by default
+    and considered deprecated (no effort was put in making sure it works
+    properly). @b{Users are strongly discouraged from using the web interface}.
+  @end itemize
+@item @b{DHCP forever configuration in menuconfig} - this behavior can be set 
+  for two parameters:
+  @b{Management port configuration} and @b{Source for a run-time replacement
+  of dot-config} (it is called @i{Force to get the URL to a dot-config via
+  DHCP} in the second case). In case the DHCP server was not available, in 
+  the pre-v6.0 firmware, the WR switch would start with local dot-config and
+  no IP. As of v6.0, with these settings, the WR switch waits forever
+  for the DHCP server to reply. While waiting, it is not accessible via
+  the management port or management USB. The only way to stop the endless loop
+  is to connect via the back USB (ARM Test) and follow the instructions, i.e.
+  press Enter.
+@item @b{Updated look of wr_mon} - this mostly commonly used Command Line 
+  Interface tool in the WR switch has been updated to provide more information,
+  here are the highlights:
+    @itemize
+    @item @b{Timing Mode} indicates the current timing mode of the Soft PLL,
+      it is not the intended @i{Timing Mode} configured in the @t{dot-config}
+      file. So, a GM or BC switch will show the @b{Timing Mode} to be @i{FR}
+      (free running) until it locks to the source of time, i.e. input 10MHz &
+      1PPS or Slave port, respectively. 
+    @item @b{PTP/EXT/PDETECT states} provides information about
+      @itemize
+      @item @b{PTP} - indicates the PTP state of a given port, as established
+        by Best Master Clock Algorithm, or configured via External Port 
+        Configuration. Note that ports which are down (not connected) are always
+        placed in @i{DISABLED} state.
+      @item @b{EXT} - indicates the state of the currently used extension,
+        for v6.0 firmware, it is the state of the White Rabbit state machine
+        (more extensions in future will be supported). In the pre-v6.0 firmware,
+        the state of PTP or extension was provided in the @i{PTP state} column.
+      @item @b{PDETECT} - indicates the state of a state machine that governs
+        the detection of extensions. When a WR link is being established, it 
+        shows @i{WA_MSG}, when it is succesfully established, it shows 
+        @i{EXT_ON}
+      @end itemize
+    @item @b{Synchronization status} - most of the parameter names were replaced
+      with their equivalents used in the IEEE1588 standard:
+      @itemize
+      @item @b{DelayMM} is the previously  @i{Round-trip time (mu)}
+      @item @b{DelayMS} is the previously  @i{Master-slave delay}
+      @item @b{Total link asymmetry}is the previously  @i{delayAsymmetry}
+      @item @b{delayCoefficient} is the previously @i{alpha}
+      @item @b{ingressLatency} is the previously @i{Slave PHY delay RX} without the bitslide
+      @item @b{egressLatency}  @i{Slave PHY delay TX}
+      @item @b{offsetFrmoMaster} is the previously @i{Clock offset}
+      @item @b{semistaticLatency} is a new parameter that inditactes the bistlide value
+      @end itemize
+    @end itemize
+@end itemize
+
+@c ==========================================================================
+@node Upgrade from pre-v5.0 to v5.0.1 or later
+@section Upgrade from pre-v5.0 to v5.0.1 or later
+
+During the update from the pre-v5.0 firmware to v5.0.1 or later (or later) you might see
 the following errors on the console.
 @example
 /wr/bin/sdb-read: can't load library 'libm.so.1'

@@ -134,6 +134,7 @@ function print_port_config() {
 	echo -e "\tstring \"PTP VID\""
 	echo -e "\tdepends on VLANS_RAW_PORT_CONFIG || VLANS_PORT${portStr}_MODE_TRUNK || VLANS_PORT${portStr}_MODE_DISABLED || VLANS_PORT${portStr}_MODE_UNQUALIFIED"
 	echo -e "\tdefault VLANS_PORT${portStr}_VID if VLANS_PORT${portStr}_MODE_ACCESS"
+	echo -e "\tdefault 4094 if VLANS_PORT${portStr}_MODE_TRUNK"
 	echo -e "\tdefault \"\""
 	echo -e "\thelp"
 	echo -e "\t VID used for the PTP messages"

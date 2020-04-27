@@ -1468,26 +1468,30 @@ appropriate way, before the respective service is started.
 
 @item CONFIG_VLANS_PORT@i{xx}_VID
 
-	The meaning of this value and whether it is mandatory or optional,
-	depends on the port mode:
-	@itemize
-	@item @t{MODE_ACCESS} -- (mandatory) use as VID for tagging incoming
-	  frames and notify PPSi which VLAN shall be used for
-	  synchronization; only one VLAN number shall be used in this mode
-	@item @t{MODE_TRUNK} - (optional) notify PPSi which VLAN(s) shall
-	  it use for synchronization; semicolon separated list is allowed
-	@item @t{MODE_DISABLED} - (optional) notify PPSi which VLAN(s)
-	  shall it use for synchronization; semicolon separated list is allowed
-	@item @t{MODE_UNQUALIFIED} - (optional) notify PPSi which VLAN(s)
-	  shall it use for synchronization; semicolon separated list is allowed
-	@end itemize
+  Define the  VID tagging incoming frames and notify PPSi which 
+  VLAN shall be used for synchronization; only one VLAN number 
+  shall be used.
+  This parameter is available for @t{MODE_ACCESS} mode.
 	The range of a valid VID is from 0 to 4094.
 
-	@b{Note:} In firmware v5.0 it is not possible to set via
-	@t{dot-config} an override of VLAN tag for @t{UNQUALIFIED} mode.
+ 	For details please refer to the @ref{VLANs Configuration}
+
+@item CONFIG_VLANS_PORT@i{xx}_PTP_VID
+
+  Notify PPSi which VLAN(s) shall it use for synchronization; semicolon separated list is allowed.
+  This parameter is available for @t{MODE_TRUNK}, @t{MODE_DISABLED} and
+  @t{MODE_UNQUALIFIED} modes. 
+  The range of a valid VID is from 0 to 4094.
 
 	For details please refer to the @ref{VLANs Configuration}
 
+@item CONFIG_VLANS_RAW_PORT_CONFIG
+
+  Expert mode. Allow to control all VLAN parameters (CONFIG_VLANS_PORT@i{xx}_PTP_VID,
+  CONFIG_VLANS_PORT@i{xx}_VID, CONFIG_VLANS_PORT@i{xx}_MODE_@i{yy} and
+  CONFIG_VLANS_PORT@i{xx}_UNTAG_@i{xx} ) without any restrictions. 
+  The user must be aware of what it is doing.
+  
 @item CONFIG_VLANS_VLAN@i{xxxx}
 
 	Provide a configuration for VLAN from the range 0000-4094.

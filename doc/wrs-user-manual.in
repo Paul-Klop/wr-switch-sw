@@ -281,7 +281,16 @@ the behavior of the WR Switch. Here are highlights:
     of aspects of the PPS generation, @b{the default configuration might be
     slightly different from the pre-v6.0 firmware}.
   @item @b{LLDP options} - it provides configuration of Link Layer Discovery
-    Protocol is supported.
+    Protocol (LLDP) which is now supported. It is enabled by default. @b{Note that
+    LLDP sends Ethernet frames of approximately 200 bytes. In the worst-case,
+    transmission of such frames can increase traffic latency by 0.8us
+     @footnote{The maximum PTP frame size is 96 bytes which translates into 0.76us
+     latency increase to the data traffic, in case the PTP frame is sent to a
+     port at the same time as the data traffic frame is to be forwarded to
+     this port. An additional 100 bytes of the LLDP 
+     frame, translates into additional 0.8us latency introduced by protocol 
+     frames.}.} If you
+    do not use LLDP and latency is of concern, you should disable LLDP option.
   @item @b{Disable web interface} - web interface is now disabled by default
     and considered deprecated (no effort was put in making sure it works
     properly). @b{Users are strongly discouraged from using the web interface}.

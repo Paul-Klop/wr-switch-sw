@@ -123,6 +123,12 @@ static inline void updatePllState(struct hal_port_state * ps) {
 static int _hal_port_rx_setup_state_init(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 
+	/* Turn off LED, this is needed mainly when INIT state is entered
+         * as a fall-back during the RX FSM execution (say the link was
+         * unplugged when the calibration was ongoing, or a timeout occured).
+         */
+	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
+
 	if ( ps->lpdc.globalLpdc->numberOfLpdcPorts ) {
 		if (ps->lpdc.isSupported) {
 			if ( _isHalRxSetupEventEarlyLinkUp(eventMsk) )

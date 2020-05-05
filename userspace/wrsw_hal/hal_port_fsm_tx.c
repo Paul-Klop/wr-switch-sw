@@ -139,6 +139,9 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
 	/* Disable TX light on this port */
 	shw_sfp_gpio_set(ps->hw_index, SFP_TX_DISABLE);
 
+	/* Bring LED to a known state (i.e. OFF), just in case*/
+	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
+
 	txSetupNotDone(ps);
 	if ( !ps->lpdc.isSupported ) {
 		// NO LPDC support

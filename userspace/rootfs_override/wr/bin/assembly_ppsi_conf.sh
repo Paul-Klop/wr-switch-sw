@@ -458,6 +458,8 @@ if [ -n "$CONFIG_PPSGEN_FORCE" ]; then
 	globals[forcePpsGen]="$CONFIG_PPSGEN_FORCE"
 fi
 
+vlan_error_detected=0 # If a VLAN error is detected, then VLAN are disabled on all ports 
+
 for i_port in {01..18}; do # scan all the physical ports
 
 	port_vn="port${i_port}"
@@ -561,9 +563,8 @@ for i_port in {01..18}; do # scan all the physical ports
 			
 			# check port mode
 			if [ "$port_mode_access" = "y" ]; then
-				if [ "$raw_config" != "y" ]; then
-					port_ptp_vid=$port_vid
-				fi
+				[[ "$raw_config" != "y" ]] && port_ptp_vid=$port_vid
+				
 				# use "&> /dev/null" to avoid error when $ppsi_vlans
 				# is not a number
 				if [ "$port_ptp_vid" -ge 0 ]  &> /dev/null \
@@ -571,6 +572,7 @@ for i_port in {01..18}; do # scan all the physical ports
 					v="$inst_vn[vlan]"; eval ${v}="$port_ptp_vid"
 				else
 					echo "$script_name: Wrong value \"$port_ptp_vid\" in CONFIG_VLANS_PORT"$i_port"_PTP_VID" | tee $log_output
+					[[ "$raw_config" != "y" ]] && vlan_error_detected=1
 					continue;
 				fi
 			fi
@@ -587,6 +589,18 @@ for i_port in {01..18}; do # scan all the physical ports
 	
 	done # scan all the ppsi instances in a port
 done # scan all the physical ports
+
+if [ "$vlan_error_detected" -ne "0" ] ; then
+	# VLAN error detected: Remove VLAN configuration on all ports 
+	echo "$script_name: Wrong VLAN configurations. VLAN configuration removed on all ports." | tee $log_output
+	for i_port in {01..18}; do # scan all the physical ports
+		port_vn="port${i_port}"
+		for j_inst in {01..02}; do  # scan all the ppsi instances for a given port
+			inst_vn="${port_vn}inst${j_inst}"
+			v="$inst_vn[vlan]";[[ -n "${!v}" ]] && unset ${v}
+		done
+	done
+fi
 
 if [ -v JSON_FORMAT ] ; then
 	gen_ppsi_conf_json  ${OUTPUT_FILE} ${PRE_FILE}

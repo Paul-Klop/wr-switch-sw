@@ -316,10 +316,10 @@ void calc_trans(int ep, int argc, char *argv[])
 		struct wr_sockaddr to;
 		struct rts_pll_state pstate;
 
-		pcs_write(ep, MII_BMCR, BMCR_PDOWN);
+	/*	pcs_write(ep, MII_BMCR, BMCR_PDOWN);
 		usleep(10000);
-		pcs_write(ep, MII_BMCR, 0); //BMCR_ANENABLE | BMCR_ANRESTART);
-		pcs_read(ep, MII_BMSR);
+		pcs_write(ep, MII_BMCR, 0);
+		pcs_read(ep, MII_BMSR);*/
 
 
 		while(! (pcs_read(ep, MII_BMSR) & BMSR_LSTATUS)) usleep(10000);
@@ -1319,6 +1319,14 @@ void rt_command(int ep, int argc, char *argv[])
 	}
 }
 
+int measure_t24p(int endpoint, uint32_t *value);
+
+void cmd_t24p_new(int ep, int argc, char *argv[])
+{
+	uint32_t value;
+	measure_t24p( ep, &value );
+}
+
 
 struct {
 	char *cmd;
@@ -1338,10 +1346,10 @@ struct {
 	try_autonegotiation},
 
 	{
-	"ttrans",
+	"t24p",
 	"",
-	"determine transition point",
-	calc_trans},
+	"determine transition point (new algo)",
+	cmd_t24p_new},
 
 	{
 	"dump",
@@ -1380,6 +1388,259 @@ struct {
 	{NULL}
 
 };
+
+
+
+/* New calibrator for the transition phase value. A major pain in the ass for
+   the folks who frequently rebuild their gatewares. The idea is described
+   below:
+   - lock the PLL to the master
+   - scan the whole phase shifter range
+   - at each scanning step, generate a fake RX timestamp.
+   - check if the rising edge counter is ahead of the falling edge counter
+     (added a special bit for it in the TSU).
+   - determine phases at which positive/negative transitions occur
+   - transition phase value is in the middle between the rising and falling
+     edges.
+   
+   This calibration procedure is fast enough to be run on slave nodes whenever
+   the link goes up. For master mode, the core must be run at least once as a
+   slave to calibrate itself and store the current transition phase value in
+   the EEPROM.
+*/
+
+/* how finely we scan the phase shift range to determine where we have the bit
+ * flip */
+#define CAL_SCAN_STEP 100
+
+/* deglitcher threshold (to remove 1->0->1 flip bit glitches that might occur
+   due to jitter) */
+#define CAL_DEGLITCH_THRESHOLD 5
+
+/* we scan at least one clock period to look for rising->falling edge transition
+   plus some headroom */
+#define CAL_SCAN_RANGE (REF_CLOCK_PERIOD_PS + \
+		(3 * CAL_DEGLITCH_THRESHOLD * CAL_SCAN_STEP))
+
+#define TD_WAIT_INACTIVE	0
+#define TD_GOT_TRANSITION	1
+#define TD_DONE			2
+
+/* Number of retries for rxts_calibration_update
+ * value found experimentally */
+#define CALIB_RETRIES 1000
+
+
+/* state of transition detector */
+struct trans_detect_state {
+	int prev_val;
+	int sample_count;
+	int state;
+	int trans_phase;
+};
+
+/* finds the transition in the value of flip_bit and returns phase associated
+   with it. If no transition phase has been found yet, returns 0. Non-zero
+   polarity means we are looking for positive transitions, 0 - negative
+   transitions */
+static int lookup_transition(struct trans_detect_state *state, int flip_bit,
+			     int phase, int polarity)
+{
+	if (polarity)
+		polarity = 1;
+
+	switch (state->state) {
+	case TD_WAIT_INACTIVE:
+		/* first, wait until we have at least CAL_DEGLITCH_THRESHOLD of
+		   inactive state samples */
+		if (flip_bit != polarity)
+			state->sample_count++;
+		else
+			state->sample_count = 0;
+
+		if (state->sample_count >= CAL_DEGLITCH_THRESHOLD) {
+			state->state = TD_GOT_TRANSITION;
+			state->sample_count = 0;
+		}
+
+		break;
+
+	case TD_GOT_TRANSITION:
+		if (flip_bit != polarity)
+			state->sample_count = 0;
+		else {
+			state->sample_count++;
+			if (state->sample_count >= CAL_DEGLITCH_THRESHOLD) {
+				state->state = TD_DONE;
+				state->trans_phase =
+				    phase -
+				    CAL_DEGLITCH_THRESHOLD * CAL_SCAN_STEP;
+			}
+		}
+		break;
+
+	case TD_DONE:
+		return 1;
+		break;
+	}
+	return 0;
+}
+
+static struct trans_detect_state det_rising, det_falling;
+static int cal_cur_phase;
+static int cal_endpoint;
+static struct rts_pll_state cal_pstate;
+
+
+static void rxts_calibration_init(int endpoint)
+{
+	if(	rts_connect(NULL) < 0)
+	{
+		printf("Can't connect to the RT subsys\n");
+		exit(1);
+	}
+
+	cal_endpoint = endpoint;
+}
+
+static void cal_spll_set_phase_shift(int endpoint, int shift )
+{
+	printf("adjp ep %d shift %d\n", endpoint, shift );
+	rts_adjust_phase(endpoint, shift);
+}
+
+static int cal_spll_shifter_busy()
+{
+	rts_get_state(&cal_pstate);
+	
+	return ( cal_pstate.channels[cal_endpoint].flags & CHAN_SHIFTING ? 1 : 0);
+}
+
+/* Starts RX timestamper calibration process state machine. Invoked by
+   ptpnetif's check lock function when the PLL has already locked, to avoid
+   complicating the API of ptp-noposix/ppsi. */
+
+void rxts_calibration_start(void)
+{
+	cal_cur_phase = 0;
+	det_rising.prev_val = det_falling.prev_val = -1;
+	det_rising.state = det_falling.state = TD_WAIT_INACTIVE;
+	det_rising.sample_count = 0;
+	det_falling.sample_count = 0;
+	det_rising.trans_phase = 0;
+	det_falling.trans_phase = 0;
+	cal_spll_set_phase_shift(cal_endpoint, 0);
+}
+
+/* Updates RX timestamper state machine. Non-zero return value means that
+   calibration is done. */
+int rxts_calibration_update(uint32_t *t24p_value)
+{
+	int32_t ttrans = 0;
+
+	if (cal_spll_shifter_busy(cal_endpoint))
+		return 0;
+
+	/* generate a fake RX timestamp and check if falling edge counter is
+	   ahead of rising edge counter */
+	int flip = cal_ep_timestamper_cal_pulse(cal_endpoint);
+
+	/* look for transitions (with deglitching) */
+	lookup_transition(&det_rising, flip, cal_cur_phase, 1);
+	lookup_transition(&det_falling, flip, cal_cur_phase, 0);
+
+	if (cal_cur_phase >= CAL_SCAN_RANGE) {
+		if (det_rising.state != TD_DONE || det_falling.state != TD_DONE) 
+		{
+			printf("RXTS calibration error.\n");
+			return -1;
+		}
+
+		/* normalize */
+		while (det_falling.trans_phase >= REF_CLOCK_PERIOD_PS)
+			det_falling.trans_phase -= REF_CLOCK_PERIOD_PS;
+		while (det_rising.trans_phase >= REF_CLOCK_PERIOD_PS)
+			det_rising.trans_phase -= REF_CLOCK_PERIOD_PS;
+
+		/* Use falling edge as second sample of rising edge */
+		if (det_falling.trans_phase > det_rising.trans_phase)
+			ttrans = det_falling.trans_phase - REF_CLOCK_PERIOD_PS/2;
+		else if(det_falling.trans_phase < det_rising.trans_phase)
+			ttrans = det_falling.trans_phase + REF_CLOCK_PERIOD_PS/2;
+		ttrans += det_rising.trans_phase;
+		ttrans /= 2;
+
+		/*normalize ttrans*/
+		if(ttrans < 0) ttrans += REF_CLOCK_PERIOD_PS;
+		if(ttrans >= REF_CLOCK_PERIOD_PS) ttrans -= REF_CLOCK_PERIOD_PS;
+
+
+		printf("RXTS calibration: R@%dps, F@%dps, transition@%dps\n",
+			  det_rising.trans_phase, det_falling.trans_phase,
+			  ttrans);
+
+		*t24p_value = (uint32_t)ttrans;
+		return 1;
+	}
+
+	printf("Try phase %d flip %d\n", cal_cur_phase, flip );
+	cal_cur_phase += CAL_SCAN_STEP;
+
+	
+
+	cal_spll_set_phase_shift(cal_endpoint, cal_cur_phase);
+
+	return 0;
+}
+
+int cal_ep_timestamper_cal_pulse()
+{
+	uint32_t tscr = fpga_readl( IDX_TO_EP(cal_endpoint) + EP_REG(TSCR) ); 
+	
+	tscr |= EP_TSCR_RX_CAL_START;
+
+	fpga_writel(tscr, IDX_TO_EP(cal_endpoint) + EP_REG(TSCR));
+	shw_udelay(1000);
+
+	tscr = fpga_readl( IDX_TO_EP(cal_endpoint) + EP_REG(TSCR) ); 
+	return tscr & EP_TSCR_RX_CAL_RESULT ? 1 : 0;
+}
+
+
+/* legacy function for 'calibration force' command */
+int measure_t24p(int endpoint, uint32_t *value)
+{
+	int rv;
+
+	printf("Measuring t24p for endpoint %d\n", endpoint );
+
+	rxts_calibration_init( endpoint );
+
+	printf("Waiting for link...\n");
+	while(! (pcs_read(cal_endpoint, MII_BMSR) & BMSR_LSTATUS))
+	{
+		shw_udelay(1000);
+	}
+			
+	rts_set_mode( RTS_MODE_BC );
+	rts_lock_channel( endpoint, 0 );
+	printf("Locking PLL...\n");
+	while (1)
+	{
+		rts_get_state(&cal_pstate);
+		//printf("PState flags %x\n", cal_pstate.flags );
+		if (cal_pstate.flags & RTS_REF_LOCKED)
+			break;
+		shw_udelay(100000);
+	}
+	printf("\n");
+
+	printf("Calibrating RX timestamper...\n");
+	rxts_calibration_start();
+
+	while (!(rv = rxts_calibration_update(value))) ;
+	return rv;
+}
 
 
 int main(int argc, char **argv)

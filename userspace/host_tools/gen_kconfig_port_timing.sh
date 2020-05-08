@@ -106,6 +106,7 @@ function print_instance_header() {
 	if [ $instIdx -eq 1 ] ; then prof=WR ; else prof=HA ; fi
 	local tx=${port_tx[$1]}
 	local rx=${port_rx[$1]}
+	local t24p=${port_t24p[$1]}
 	echo -e "\nmenu \"Instance ${instIdx}\"" >>$OUTPUT_FILE
 	echo -n "	depends on " >>$OUTPUT_FILE
 	for inst in `seq $instIdx $instCount` ; do
@@ -190,6 +191,12 @@ function print_instance_header() {
 	echo -e "    default ${rx}" >>$OUTPUT_FILE
 	echo -e " help" >>$OUTPUT_FILE
 	echo -e "	 Defines the reception constant delay (ps)" >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${portStr}_INST${instStr}_T24P_TRANS_POINT" >>$OUTPUT_FILE
+	echo -e "    int \"timestampCorrectionPortDS.t24p_trans_point (ps)\"" >>$OUTPUT_FILE
+	echo -e "    default ${t24p}" >>$OUTPUT_FILE
+	echo -e " help" >>$OUTPUT_FILE
+	echo -e "	 Defines the phase transition point for reception timestamps t2/t4 (ps)" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL" >>$OUTPUT_FILE
 	echo -e "	int \"logAnnounceInterval\" " >>$OUTPUT_FILE
@@ -337,6 +344,12 @@ declare -A port_rx=(
 	[1]=226273 [2]=226377 [3]=226638 [4]=226471 [5]=227679 [6]=227891
 	[7]=228055 [8]=228178 [9]=228277 [10]=228435 [11]=228963 [12]=229107
 	[13]=229225 [14]=229463 [15]=229850 [16]=229907 [17]=230106 [18]=230273
+)
+
+declare -A port_t24p=(
+	[1]=13600 [2]=10800 [3]=13650 [4]=12150 [5]=13550 [6]=14500
+	[7]=13950 [8]=14450 [9]=14750 [10]=15100 [11]=14500 [12]=9850
+	[13]=14150 [14]=11950 [15]=12900 [16]=13800 [17]=14200 [18]=14350
 )
 
 # Profile configuration

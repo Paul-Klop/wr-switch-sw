@@ -127,6 +127,12 @@ config PORT01_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT01_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 13600
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT01_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -291,6 +297,12 @@ config PORT02_INST01_INGRESS_LATENCY
     default 226377
  help
 	 Defines the reception constant delay (ps)
+
+config PORT02_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 10800
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT02_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -457,6 +469,12 @@ config PORT03_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT03_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 13650
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT03_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -621,6 +639,12 @@ config PORT04_INST01_INGRESS_LATENCY
     default 226471
  help
 	 Defines the reception constant delay (ps)
+
+config PORT04_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 12150
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT04_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -787,6 +811,12 @@ config PORT05_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT05_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 13550
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT05_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -951,6 +981,12 @@ config PORT06_INST01_INGRESS_LATENCY
     default 227891
  help
 	 Defines the reception constant delay (ps)
+
+config PORT06_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14500
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT06_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -1117,6 +1153,12 @@ config PORT07_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT07_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 13950
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT07_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -1281,6 +1323,12 @@ config PORT08_INST01_INGRESS_LATENCY
     default 228178
  help
 	 Defines the reception constant delay (ps)
+
+config PORT08_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14450
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT08_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -1447,6 +1495,12 @@ config PORT09_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT09_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14750
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT09_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -1611,6 +1665,12 @@ config PORT10_INST01_INGRESS_LATENCY
     default 228435
  help
 	 Defines the reception constant delay (ps)
+
+config PORT10_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 15100
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT10_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -1777,6 +1837,12 @@ config PORT11_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT11_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14500
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT11_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -1941,6 +2007,12 @@ config PORT12_INST01_INGRESS_LATENCY
     default 229107
  help
 	 Defines the reception constant delay (ps)
+
+config PORT12_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 9850
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT12_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -2107,6 +2179,12 @@ config PORT13_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT13_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14150
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT13_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -2271,6 +2349,12 @@ config PORT14_INST01_INGRESS_LATENCY
     default 229463
  help
 	 Defines the reception constant delay (ps)
+
+config PORT14_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 11950
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT14_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -2437,6 +2521,12 @@ config PORT15_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT15_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 12900
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT15_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -2601,6 +2691,12 @@ config PORT16_INST01_INGRESS_LATENCY
     default 229907
  help
 	 Defines the reception constant delay (ps)
+
+config PORT16_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 13800
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT16_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
@@ -2767,6 +2863,12 @@ config PORT17_INST01_INGRESS_LATENCY
  help
 	 Defines the reception constant delay (ps)
 
+config PORT17_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14200
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
+
 config PORT17_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 
 	default 1
@@ -2931,6 +3033,12 @@ config PORT18_INST01_INGRESS_LATENCY
     default 230273
  help
 	 Defines the reception constant delay (ps)
+
+config PORT18_INST01_T24P_TRANS_POINT
+    int "timestampCorrectionPortDS.t24p_trans_point (ps)"
+    default 14350
+ help
+	 Defines the phase transition point for reception timestamps t2/t4 (ps)
 
 config PORT18_INST01_ANNOUNCE_INTERVAL
 	int "logAnnounceInterval" 

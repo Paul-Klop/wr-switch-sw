@@ -19,6 +19,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/generic_fsm.h>
+#include <libwr/config.h>
 
 #include "driver_stuff.h"
 #include "hal_exports.h"
@@ -448,10 +449,28 @@ static void reset_port(struct hal_port_state * ps)
 /* Port initialization */
 static void init_port(struct hal_port_state * ps)
 {
+	char *retValue;
+	int t24p;
+	char key[128];
+
 	reset_port(ps);
-	ps->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
-	ps->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
 	ps->clock_period = REF_CLOCK_PERIOD_PS;
+
+	/* Rading t24p from the dot-config file could be done once in hal_ports, but
+	 * I leave it here since we will implement automatic measurement procedure
+	 * in the future release */
+	sprintf(key, "PORT%02i_INST01_T24P_TRANS_POINT", ps->hw_index+1);
+	if( (retValue=libwr_cfg_get(key))==NULL ) {
+		pr_error("port %i (%s): no key \"%s\" specified.\n",
+			ps->hw_index+1, ps->name, key);
+		t24p = DEFAULT_T2_PHASE_TRANS;
+	} else if (sscanf(retValue, "%i", &t24p) != 1) {
+		pr_error("port %i (%s): Invalid key \"%s\" value (%d).\n",
+			ps->hw_index+1, ps->name, key,*retValue);
+
+	}
+	ps->t2_phase_transition = t24p;
+	ps->t4_phase_transition = t24p;
 }
 
 

@@ -117,13 +117,13 @@ endchoice
 
 config PORT01_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 223897
+    default 238903
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT01_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 226273
+    default 275901
  help
 	 Defines the reception constant delay (ps)
 
@@ -288,13 +288,13 @@ endchoice
 
 config PORT02_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224037
+    default 239923
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT02_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 226377
+    default 278835
  help
 	 Defines the reception constant delay (ps)
 
@@ -459,13 +459,13 @@ endchoice
 
 config PORT03_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224142
+    default 238566
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT03_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 226638
+    default 277396
  help
 	 Defines the reception constant delay (ps)
 
@@ -630,13 +630,13 @@ endchoice
 
 config PORT04_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224313
+    default 239491
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT04_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 226471
+    default 277469
  help
 	 Defines the reception constant delay (ps)
 
@@ -801,13 +801,13 @@ endchoice
 
 config PORT05_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224455
+    default 238040
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT05_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 227679
+    default 277694
  help
 	 Defines the reception constant delay (ps)
 
@@ -972,13 +972,13 @@ endchoice
 
 config PORT06_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224603
+    default 237334
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT06_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 227891
+    default 277146
  help
 	 Defines the reception constant delay (ps)
 
@@ -1143,13 +1143,13 @@ endchoice
 
 config PORT07_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224761
+    default 237543
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT07_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 228055
+    default 278371
  help
 	 Defines the reception constant delay (ps)
 
@@ -1314,13 +1314,13 @@ endchoice
 
 config PORT08_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 224898
+    default 237687
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT08_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 228178
+    default 278687
  help
 	 Defines the reception constant delay (ps)
 
@@ -1485,13 +1485,13 @@ endchoice
 
 config PORT09_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 225069
+    default 238676
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT09_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 228277
+    default 278256
  help
 	 Defines the reception constant delay (ps)
 
@@ -1656,13 +1656,13 @@ endchoice
 
 config PORT10_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 225245
+    default 238848
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT10_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 228435
+    default 278678
  help
 	 Defines the reception constant delay (ps)
 
@@ -1827,13 +1827,13 @@ endchoice
 
 config PORT11_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 225463
+    default 238294
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT11_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 228963
+    default 279326
  help
 	 Defines the reception constant delay (ps)
 
@@ -1998,13 +1998,13 @@ endchoice
 
 config PORT12_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 225645
+    default 239243
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT12_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 229107
+    default 278867
  help
 	 Defines the reception constant delay (ps)
 
@@ -2169,13 +2169,13 @@ endchoice
 
 config PORT13_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 225801
+    default 225920
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT13_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 229225
+    default 231130
  help
 	 Defines the reception constant delay (ps)
 
@@ -2340,13 +2340,13 @@ endchoice
 
 config PORT14_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 225983
+    default 226071
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT14_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 229463
+    default 233579
  help
 	 Defines the reception constant delay (ps)
 
@@ -2511,13 +2511,13 @@ endchoice
 
 config PORT15_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 226208
+    default 226329
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT15_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 229850
+    default 233041
  help
 	 Defines the reception constant delay (ps)
 
@@ -2682,13 +2682,13 @@ endchoice
 
 config PORT16_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 226393
+    default 226467
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT16_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 229907
+    default 232311
  help
 	 Defines the reception constant delay (ps)
 
@@ -2853,13 +2853,13 @@ endchoice
 
 config PORT17_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 226594
+    default 226596
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT17_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 230106
+    default 230376
  help
 	 Defines the reception constant delay (ps)
 
@@ -3024,13 +3024,13 @@ endchoice
 
 config PORT18_INST01_EGRESS_LATENCY
     int "timestampCorrectionPortDS.egressLatency (ps)"
-    default 226737
+    default 226835
  help
 	 Defines the transmission constant delay (ps)
 
 config PORT18_INST01_INGRESS_LATENCY
     int "timestampCorrectionPortDS.ingressLatency (ps)"
-    default 230273
+    default 230323
  help
 	 Defines the reception constant delay (ps)
 

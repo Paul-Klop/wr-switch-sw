@@ -131,7 +131,7 @@ static inline void fsm_consume_state(fsm_t *fsm)
 {
 	fsm->st.state = fsm_get_next_state(fsm);
 	if (FSM_GEN_DEBUG)
-		printf("%s: Enter state %s\n", fsm->fsm_name, fsm_get_state_name(fsm));
+		pr_info("%s: Enter state %s\n", fsm->fsm_name, fsm_get_state_name(fsm));
 }
 
 /* schedules next state of the FSM to newState */

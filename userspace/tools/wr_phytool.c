@@ -1610,11 +1610,18 @@ int cal_ep_timestamper_cal_pulse()
 /* legacy function for 'calibration force' command */
 int measure_t24p(int endpoint, uint32_t *value)
 {
-	int rv;
+	int rv, initial_mode, initial_current_ref;
 
 	printf("Measuring t24p for endpoint %d\n", endpoint );
 
 	rxts_calibration_init( endpoint );
+	
+	/* read/remember mode/reference before the measurment,
+	   to be restored at the end */
+	rts_get_state(&cal_pstate);
+	initial_mode = cal_pstate.mode;
+	initial_current_ref = cal_pstate.current_ref;
+	
 
 	printf("Waiting for link...\n");
 	while(! (pcs_read(cal_endpoint, MII_BMSR) & BMSR_LSTATUS))
@@ -1639,6 +1646,18 @@ int measure_t24p(int endpoint, uint32_t *value)
 	rxts_calibration_start();
 
 	while (!(rv = rxts_calibration_update(value))) ;
+
+	/* Go back to old settings of reference while still in BC mode */
+	rts_lock_channel( initial_current_ref, 0 );
+
+	/* Go back to the previous mode of PLL, only if it's not BC mode
+	   NOTE: the rts_set_mode() function initializes softPLL to
+	   DISABLED mode if it is called with RTS_MODE_BC argument), it
+	   needs to be followed by rts_lock_channel() function which
+	   initializes spll with SLAVE mode... */
+	if (initial_mode != RTS_MODE_BC)
+		rts_set_mode( initial_mode );
+
 	return rv;
 }
 

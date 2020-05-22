@@ -2179,7 +2179,9 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpVcc      INTEGER,
         wrsPortStatusSfpTxBias   INTEGER,
         wrsPortStatusSfpTxPower  INTEGER,
-        wrsPortStatusSfpRxPower  INTEGER
+        wrsPortStatusSfpRxPower  INTEGER,
+        wrsPortStatusT24p        INTEGER,
+        wrsPortStatusT24pValid   INTEGER
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -2385,6 +2387,25 @@ wrsPortStatusSfpRxPower OBJECT-TYPE
             "Measured RX output power in uW reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3dB%"
     ::= { wrsPortStatusEntry 21 }
+
+wrsPortStatusT24p OBJECT-TYPE
+    SYNTAX             Integer32
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "T2/T4 phase transition point used for Rx timestamps correction"
+    ::= { wrsPortStatusEntry 22 }
+
+wrsPortStatusT24pValid OBJECT-TYPE
+    SYNTAX             INTEGER {
+                           invalid(0),
+                           readFromConfig(1)
+    }
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Validity of wrsPortStatusT24p"
+    ::= { wrsPortStatusEntry 23 }
 
 -- wrsPstatsHCTable (.7.7)
 wrsPstatsHCTable OBJECT-TYPE

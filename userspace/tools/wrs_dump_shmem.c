@@ -446,6 +446,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(uint32_t, clock_period),
 	DUMP_FIELD(uint32_t, t2_phase_transition),
 	DUMP_FIELD(uint32_t, t4_phase_transition),
+	DUMP_FIELD(int, t24p_from_config),
 	DUMP_FIELD(uint32_t, ep_base),
 	DUMP_FIELD(int, sfpPresent),
 	DUMP_FIELD(int, has_sfp_diag),

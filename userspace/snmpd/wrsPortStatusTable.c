@@ -30,6 +30,8 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpTxBias),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpTxPower),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpRxPower),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusT24p),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusT24pValid),
 };
 
 
@@ -93,6 +95,10 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 
 			wrsPortStatusTable->wrsPortStatusMonitor =
 							port_state->monitor;
+
+			/* wrsPtpT24p */
+			wrsPortStatusTable->wrsPortStatusT24p = port_state->t2_phase_transition;
+			wrsPortStatusTable->wrsPortStatusT24pValid = port_state->t24p_from_config;
 
 			/* No need to copy all ports structures, only what
 			 * we're interested in.

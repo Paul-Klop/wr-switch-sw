@@ -55,6 +55,8 @@ struct wrsPortStatusTable_s {
 	int wrsPortStatusSfpTxBias;
 	int wrsPortStatusSfpTxPower;
 	int wrsPortStatusSfpRxPower;
+	int wrsPortStatusT24p;
+	int wrsPortStatusT24pValid;
 };
 
 

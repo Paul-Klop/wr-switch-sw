@@ -451,6 +451,7 @@ static void init_port(struct hal_port_state * ps)
 {
 	char *retValue;
 	int t24p;
+	int from_config;
 	char key[128];
 
 	reset_port(ps);
@@ -459,18 +460,22 @@ static void init_port(struct hal_port_state * ps)
 	/* Rading t24p from the dot-config file could be done once in hal_ports, but
 	 * I leave it here since we will implement automatic measurement procedure
 	 * in the future release */
+	from_config = 1;
 	sprintf(key, "PORT%02i_INST01_T24P_TRANS_POINT", ps->hw_index+1);
 	if( (retValue=libwr_cfg_get(key))==NULL ) {
 		pr_error("port %i (%s): no key \"%s\" specified.\n",
 			ps->hw_index+1, ps->name, key);
 		t24p = DEFAULT_T2_PHASE_TRANS;
+		from_config = 0;
 	} else if (sscanf(retValue, "%i", &t24p) != 1) {
 		pr_error("port %i (%s): Invalid key \"%s\" value (%d).\n",
 			ps->hw_index+1, ps->name, key,*retValue);
+		from_config = 0;
 
 	}
 	ps->t2_phase_transition = t24p;
 	ps->t4_phase_transition = t24p;
+	ps->t24p_from_config = from_config;
 }
 
 

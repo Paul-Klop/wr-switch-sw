@@ -448,6 +448,27 @@ WR network.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{pck_descr}
 
+\subsubsection{\bf T2/T4 phase transition point was not provided in the configuration}
+		\label{fail:timing:t24p}
+		\begin{pck_descr}
+			\item [] \underline{Status}: DONE
+			\item [] \underline{Severity}: ERROR
+			\item [] \underline{Mode}: \emph{all}
+			\item [] \underline{Description}:\\
+				Starting from release v6.0 WR switch needs to have T2/T4 phase transition\
+				point (T24P) value provided in the configuration file. In case the switch
+				is booted with configuration file of the previous release, this parameter
+				is not present and can result in wrong correction of reception timestamps.
+				This can cause on some switches occasional synchronization problems.
+			\item [] \underline{SNMP objects}:\\
+				{\footnotesize
+				\snmpadd{WR-SWITCH-MIB::wrsPortStatusT24p.<n>}\\
+				\snmpadd{WR-SWITCH-MIB::wrsPortStatusT24pValid.<n>}\\
+				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsTimingStatus} \\
+				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
+		\end{pck_descr}
+
 \newpage
 \subsection{Data error}
 When the WR switch is not able to forward Ethernet traffic between devices

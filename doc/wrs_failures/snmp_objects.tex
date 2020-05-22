@@ -151,11 +151,15 @@
     \ref{fail:timing:ppsi_track_phase},
     \ref{fail:timing:offset_jump}, \ref{fail:timing:rtt_jump}), at least one of
     the $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ is 0
-    (issue \ref{fail:timing:deltas_report}) or PTP servo update counter is not
-    increasing.\\
+    (issue \ref{fail:timing:deltas_report}), \emph{T24P} phase transition value
+    was not provided for at least one port (issue \ref{fail:timing:t24p}) or PTP
+    servo update counter is not increasing.\\
     \underline{On error:}
     \begin{pck_proc}
       \item Dump state
+      \item Check to configuration of WR Switch to make sure proper
+	$\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ and
+	\emph{T24P} are defined for each port.
       \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSoftPLLStatus}} on the
         Master (WR device one step higher in a timing hierarchy). Eventually
         proceed to investigate the problem on the Master switch. Otherwise,
@@ -707,6 +711,8 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxBiax.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxPower.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpRxPower.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusT24p.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusT24pValid.<n>}{}
 
   \snmpentrye{WR-SWITCH-MIB}{}{wrsPtpInstanceTable}{Table with all PTP instances.
     This table has two indexes. The first one \textit{n}, corresponds to port

@@ -33,7 +33,7 @@ static char *wrsSoftPLLStatus_str = "wrsSoftPLLStatus";
 static char *wrsSlaveLinksStatus_str = "wrsSlaveLinksStatus";
 static char *wrsPTPFramesFlowing_str = "wrsPTPFramesFlowing";
 
-static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta);
+static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_status_nrows, int t_delta);
 static void get_wrsSoftPLLStatus();
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows);
 static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows);
@@ -87,7 +87,7 @@ time_t wrsTimingStatus_data_fill(void)
 	 * otherwise there may be comparison between the same data */
 	if (time_ptp_data > time_update
 	    && time_spll > time_update) {
-		get_wrsPTPStatus(ptp_data_nrows,
+		get_wrsPTPStatus(ptp_data_nrows, port_status_nrows,
 				 time_ptp_data - time_ptp_data_prev);
 	}
 
@@ -115,11 +115,12 @@ time_t wrsTimingStatus_data_fill(void)
 	return time_update=get_monotonic_sec();
 }
 
-static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta)
+static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_status_nrows, int t_delta)
 {
 	struct wrsSpllStatus_s *s;
 	struct wrsPtpDataTable_s *pd_a;
 	struct wrsTimingStatus_s *t;
+	struct wrsPortStatusTable_s *p_a;
 	int i;
 	static int first_run = 1;
 
@@ -138,6 +139,7 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta)
 	 */
 	s = &wrsSpllStatus_s;
 	pd_a = wrsPtpDataTable_array;
+	p_a = wrsPortStatusTable_array;
 	t = &wrsTimingStatus_s;
 	slog_obj_name = wrsPTPStatus_str;
 
@@ -216,6 +218,16 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta)
 		wrsPtpServoStateErrCnt_prev[i] = pd_a[i].wrsPtpServoStateErrCnt;
 		wrsPtpClockOffsetErrCnt_prev[i] = pd_a[i].wrsPtpClockOffsetErrCnt;
 		wrsPtpRTTErrCnt_prev[i] = pd_a[i].wrsPtpRTTErrCnt;
+	}
+
+	/* Check if all ports have valid T24P configuration */
+	for (i = 0; i < port_status_nrows; i++) {
+		if (p_a[i].wrsPortStatusT24pValid == 0) {
+			t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				 "T24P for port %d not found in configuration\n",
+				 slog_obj_name, i + 1);
+		}
 	}
 
 	first_run = 0;

@@ -143,6 +143,7 @@ struct hal_port_state {
 	/* approximate phase value (on master port) at which RX timestamp (T4)
 	 * counter transistion occurs (picoseconds) */
 	uint32_t t4_phase_transition;
+	int t24p_from_config; /* non-zero: t24p was loaded from config file */
 
 	uint32_t ep_base;/* Endpoint's base address */
 

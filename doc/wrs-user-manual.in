@@ -183,13 +183,17 @@ to a number of improvements in configuration and slight changes in
 the behavior of the WR Switch. Here are highlights:
 @itemize
 
-@item @b{Low Phase Drift Calibration (LPDC)} [placeholder for Greg]
+@item @b{Low Phase Drift Calibration (LPDC)}
 
-  The LPDC requires rx and tx calibration of each port. The tx calibration is performed
-  once for all ports at startup of the WR switch. The tx calibration is perform
-  each time a link goes up on a port (e.g. cable is connected). Rx and tx
-  calibration is indicated by blinking of @i{Link/WR Mode} LED (left).
-  Note that the calibration makes startup of the WR switch significantly longer.
+  Low Phase Drift Calibration is a new feature added in release v6.0 that
+  improves phase stability between WR switch restarts to <10ps. Due to FPGA
+  limitations this functionality is present only on ports 1-12. 
+  The LPDC requires an additional, automated calibration procedure to run for Tx
+  and Rx path of each affected FPGA transceiver. The Tx calibration is performed
+  once for all ports at startup of the WR switch. The Rx calibration is performed
+  each time a link goes up on a port. Both Tx and Rx calibration is indicated by
+  blinking of @i{Link/WR Mode} LED (left).
+  The downside is that the calibration makes startup of the WR switch longer.
   Similarly, the time between connecting a fiber and the link going up
   (e.g. as observed in @i{wr_mon}) is noticeably longer.
 

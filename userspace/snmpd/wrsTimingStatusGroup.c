@@ -222,7 +222,8 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 
 	/* Check if all ports have valid T24P configuration */
 	for (i = 0; i < port_status_nrows; i++) {
-		if (p_a[i].wrsPortStatusT24pValid == 0) {
+		if (p_a[i].wrsPortStatusT24pValid == 0 &&
+		    p_a[i].wrsPortStatusMonitor != WRS_PORT_STATUS_MONITOR_DISABLE) {
 			t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
 				 "T24P for port %d not found in configuration\n",

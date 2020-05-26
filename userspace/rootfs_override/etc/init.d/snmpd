@@ -3,10 +3,10 @@
 SNMP_PID=/var/run/snmpd.pid
 SNMP_CONF=/etc/snmpd.conf
 dotconfig=/wr/etc/dot-config
+COUNTER_FILE="/tmp/start_cnt_snmpd"
 
 start_counter() {
 	# increase boot counter
-	COUNTER_FILE="/tmp/start_cnt_snmpd"
 	START_COUNTER=1
 	if [ -f "$COUNTER_FILE" ];
 	then
@@ -35,6 +35,14 @@ start() {
     else
 	# not a pathname: use verbatim
 	LOG="-L$WRS_LOG"
+    fi
+
+    if [ ! -f "$COUNTER_FILE" ];
+    then
+        # file doesn't exist yet so it's a boot call, delay to avoid spurious
+	# errors
+	echo "Delaying the start of snmp daemon"
+	sleep 60
     fi
 
     # Log source address (-a)

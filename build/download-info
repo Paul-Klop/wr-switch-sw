@@ -26,3 +26,7 @@ wrs-gw-v6.0-20200408.tar.gz 16e69c948d967154c3ab0f6803aecd66 \
 buildroot-2016.02.tar.bz2        fcf10ae55b0831f52d492b6939e95581 \
    http://www.buildroot.org/downloads/buildroot-2016.02.tar.bz2
 
+###########################################################
+# OHWR-mirrored legacy packages
+pam-krb5-4.8.tar.gz	1cc53b61435e151bd52dae3d59ae4f30 \
+   https://ohwr.org/project/wr-switch-sw/wikis/uploads/7f1ca15108f87fc2b50060b8f56399b9/pam-krb5-4.8.tar.gz

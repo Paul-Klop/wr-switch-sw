@@ -183,6 +183,20 @@ to a number of improvements in configuration and slight changes in
 the behavior of the WR Switch. Here are highlights:
 @itemize
 
+@item @b{IP address of the management port}
+
+  WR switch running the defult configuration file included in the v6.0 release
+  will try to get dynamic IP address for the management port at boot time.
+  In case the DHCP server is not responding, WR switch will use default static
+  IP assignment:
+  @smallexample
+  IP address: 192.168.1.254
+  Netmask:    255.255.255.0
+  Network:    192.168.1.0
+  Broadcast:  192.168.1.255
+  Gateway:    192.168.1.1
+  @end smallexample
+  
 @item @b{Low Phase Drift Calibration (LPDC)}
 
   Low Phase Drift Calibration is a new feature added in release v6.0 that
@@ -299,6 +313,7 @@ the behavior of the WR Switch. Here are highlights:
     and considered deprecated (no effort was put in making sure it works
     properly). @b{Users are strongly discouraged from using the web interface}.
   @end itemize
+
 @item @b{DHCP forever configuration in menuconfig} - this behavior can be set 
   for two parameters:
   @b{Management port configuration} and @b{Source for a run-time replacement
@@ -306,10 +321,15 @@ the behavior of the WR Switch. Here are highlights:
   DHCP} in the second case). In case the DHCP server was not available, in 
   the pre-v6.0 firmware, the WR switch would start with local dot-config and
   no IP. As of v6.0, with these settings, the WR switch waits forever
-  for the DHCP server to reply. While waiting, it is not accessible via
+  for the DHCP server to reply. This behavior was introduced to ensure that
+  operational WR switches always boot with desired remote dot-config file.
+  Even if, in case of a power cut, DHCP server takes longer to boot than a WR
+  Switch. Unfortunately, the downside is that while waiting for the DHCP server,
+  WR switch it is not accessible via
   the management port or management USB. The only way to stop the endless loop
   is to connect via the back USB (ARM Test) and follow the instructions, i.e.
   press Enter.
+
 @item @b{Updated look of wr_mon} - this mostly commonly used Command Line 
   Interface tool in the WR switch has been updated to provide more information,
   here are the highlights:

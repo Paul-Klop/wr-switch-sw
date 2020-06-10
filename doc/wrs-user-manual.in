@@ -32,10 +32,14 @@
 @end iftex
 @paragraphindent none
 @comment %**end of header
+@copying
+Copyright CERN 2020.
+This document is licensed under the Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) license.
+@end copying
 
 @setchapternewpage off
 
-@set update-month February 2020
+@set update-month June 2020
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -50,7 +54,9 @@
 @title White Rabbit Switch: User's Manual
 @subtitle Information about configuring the White Rabbit switch, for final users
 @subtitle @value{update-month} (@value{release})
-@author A. Rubini, A. Wujek, B. Rat, F. Vaga, J-C. Bau ...
+@author J-C. Bau, G. Daniluk, M. Lipinski, B. Rat, A. Rubini,
+@author F. Vaga, A. Wujek
+@insertcopying
 @end titlepage
 @headings single
 

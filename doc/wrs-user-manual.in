@@ -2590,6 +2590,11 @@ The following tools and scripts are provided:
   The tool allows to setup the parameters of a clock generated on the @i{clk2}
   SMC output on the front panel.
 
+@item wrs_pstats
+	The tool is used to read various per-port statistics counters from the
+	console. Please note that the same values are also provided through SNMP
+	objects.
+
 @item wrs_sfp_dump
 	Dump the content of SFPs internal memory. This tool can read SFP info
 	from HAL's shmem or directly from SFPs via i2c bus. Please note that
@@ -2615,7 +2620,6 @@ The following tools and scripts are provided:
 	@ref{Configuration Items that Apply at Run Time}.
 
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
-@c FIXME: document wrs_pstats
 @end table
 
 @c --------------------------------------------------------------------------
@@ -2878,6 +2882,44 @@ options:
   
 
 @end table
+
+@section wrs_pstats
+
+The @i{wrs_pstats} shell tool can be used to read per-port statistics counters
+from FPGA. When it is executed without any parameters all displayed values are
+counted from the moment the tool was started. In case you're interested in the
+values gathered from the start of WR switch, you can use @i{-s} option. The
+following counters for each port are reported:
+
+@multitable @columnfractions .18 .8
+@headitem Counter @tab Description
+@item @code{0:Tu-run} @tab Number of TX underrun errors
+@item @code{1:Ro-run} @tab Number of RX overrun errors
+@item @code{2:Riv-cd} @tab Number of invalid 8B10B characters received
+@item @code{3:Rsyn-l} @tab Number of RX link synchronization lost events
+@item @code{4:Rpause} @tab Number of received pause frames
+@item @code{5:Rpf-dp} @tab Number of received frames dropped by the Packet Filter
+@item @code{6:Rpcs-e} @tab Number of PCS errors during frame reception
+@item @code{7:Rgiant} @tab Number of received giant frames
+@item @code{8:Rrunt} @tab Number of received runt frames (smaller than 64 bytes)
+@item @code{9:Rcrc_e} @tab Number of CRC errors in received frames
+@item @code{10-17:Rpcl_0-7} @tab Number of received frames qualified by Packet Filter to classes 0 to 7
+@item @code{18:Tframe} @tab Number of transmitted frames
+@item @code{19:Rframe} @tab Number of received frames
+@item @code{20:Rrtu_f} @tab Number of RX frames dropped due to RTU full
+@item @code{21-28:Rpri_0-7} @tab Number of received 802.1Q frames with priorities 0 to 7
+@item @code{29:RTUreq} @tab Number of RTU requests
+@item @code{30:RTUrsp} @tab Number of RTU responses
+@item @code{31:RTUdrp} @tab Number of frames dropped by the RTU
+@item @code{32:RTUhp} @tab Number of high priority frames routed by RTU
+@item @code{33:RTUf-f} @tab Number of forwarded frames matched by RTU fast match engine
+@item @code{34:RTUn-f} @tab Number of not forwarded frames matched by RTU fast match engine
+@item @code{35:RTUfst} @tab Number of RTU fast match decisions
+@item @code{36:RTUful} @tab Number of RTU full match decisions
+@item @code{37:RTUfwd} @tab Total number of frames forwarded by RTU
+@item @code{39:NIC_Tx} @tab Number of frames sent from WR Switch ARM to that port
+
+@end multitable
 
 @c ##########################################################################
 @node SNMP Support

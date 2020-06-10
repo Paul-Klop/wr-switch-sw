@@ -546,8 +546,8 @@ This configuration file can be found in the filesystem of @sc{wrs} under
 provided with the stable firmware release. If you are running a small WR
 network, or just a single switch for lab tests, you can modify various
 settings directly from the shell or web interface. After logging to @sc{wrs}
-(e.g. using @t{ssh}) you can call ``@t{make menuconfig}`` command from @t{/wr/etc}
-location to modify the locally stored configuration file in a convenient way.
+(e.g. using @t{ssh}) you can call ``@t{wrs_menuconfig}`` command
+to modify the locally stored configuration file in a convenient way.
 However, this approach doesn't scale well to large installations, because if a device
 needs to be replaced, its own configuration is lost.
 

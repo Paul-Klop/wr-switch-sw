@@ -2472,6 +2472,13 @@ The following tools and scripts are provided:
 
 @table @file
 
+@item lm32-vuart
+	The tool allows connecting to the virtual UART of the LM32 soft-core CPU.
+	It can be used to observe log messages from the SoftPLL (the same as
+	@i{FPGA Test}
+	physical UART port available in the back of a WR switch). Use
+	@code{Ctrl+C} escape combination to go back to WR Switch Linux shell.
+
 @item load-virtex
 @itemx load-lm32
 
@@ -2619,7 +2626,7 @@ The following tools and scripts are provided:
 	information, please refer to the
 	@ref{Configuration Items that Apply at Run Time}.
 
-@c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
+@c FIXME: document rtu_stat spll_dbg_proxy
 @end table
 
 @c --------------------------------------------------------------------------

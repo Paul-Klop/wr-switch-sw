@@ -98,6 +98,9 @@ fi
 
 if [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
     echo "Try DHCP to get IP" | tee $log_output
+    # Configure shell to report pipe failure it af least one of the processes
+    # fails.
+    set -o pipefail
     # try dhcp, if fail use static IP
     udhcpc -i $management_port -n $DHCP_OPT_EXTRA | tee $log_output
     if [ $? -ne 0 ]; then

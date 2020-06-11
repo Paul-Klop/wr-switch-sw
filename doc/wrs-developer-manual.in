@@ -214,8 +214,8 @@ both the @i{gateware} image and the @i{lm32} firmware binary
 are built from sources external to this package.
 
 The @i{gateware} is being downloaded as a pre-build tar archive
-(currently called @code{wrs-gw-v5.0-20161214.tar.gz}).  This
-is built from the @code{wr-switch-sw-v5.0} tag of the @code{wr-switch-hdl}
+(currently called @code{wrs-gw-v6.0-20200408.tar.gz}).  This
+is built from the @code{wr-switch-sw-v6.0} tag of the @code{wr-switch-hdl}
 repository.  Please note that the repository uses @i{git} submodules,
 so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
@@ -232,7 +232,7 @@ The LM32 program is provided as a pre-compiled binary in
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
 in @i{wrpc-sw} and then @t{make}. Please checkout the
-@code{wr-switch-sw-v5.0}
+@code{wr-switch-sw-v6.0}
 tag to get the exact commit.
 
 @c --------------------------------------------------------------------------
@@ -366,7 +366,7 @@ The messages of a download run are like the following ones:
     2016-12-14 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
     2016-12-14 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
     2016-12-14 17:11:21: Retrieved linux-3.16.38.tar.xz from upstream
-    2016-12-14 17:11:22: Retrieved wrs-gw-v5.0-20161214.tar.gz from upstream
+    2016-12-14 17:11:22: Retrieved wrs-gw-v6.0-20200408.tar.gz from upstream
     2016-12-14 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
 @end smallexample
 
@@ -432,9 +432,9 @@ step takes only a few seconds, as shown, to verify the checksums:
 2016-12-14 17:48:56: --- PTP daemon (ppsi repository as a submodule)
 2016-12-14 17:49:05: --- User space tools
 2016-12-14 17:49:15: --- Deploying FPGA firmware
-2016-12-14 17:49:15: Using pre-built binaries from wrs-gw-v5.0-20161214.tar.gz
+2016-12-14 17:49:15: Using pre-built binaries from wrs-gw-v6.0-20200408.tar.gz
 2016-12-14 17:49:16: --- Wrapping filesystem
-2016-12-14 17:49:21: --- Packing into wr-switch-sw-v5.0-20161214_binaries.tar
+2016-12-14 17:49:21: --- Packing into wr-switch-sw-v6.0-20200611_binaries.tar
 2016-12-14 17:49:21: Complete build succeeded, apparently
 @end smallexample
 
@@ -482,7 +482,7 @@ i.e. a @i{tar} archive of all files needed to flash a brand new WR
 Switch.  The example above shows that the name is something like:
 
 @example
-	wr-switch-sw-v5.0.1-20170825_binaries.tar
+	wr-switch-sw-v6.0-20200611_binaries.tar
 @end example
 
 In other words, we include both the tag name (from @t{git describe})

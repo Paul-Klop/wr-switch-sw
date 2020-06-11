@@ -875,8 +875,10 @@ appropriate way, before the respective service is started.
         if unset it selects TCP communication.
 	    @t{CONFIG_LOCAL_SYSLOG_FILE} option indicates the file to which
       syslog messages will be stored in a local filesystem of the @sc{wrs}.
-	  	The file is rotated when reaching 1MB. If remote
-	  	server is specified, the messages go to both, server and local file.
+	The file is rotated when reaching 1MB. The rotation is done through 10
+	indexed files @i{syslog}, @i{syslog.1-9}. By default these files are
+	created in @i{/tmp} filder.
+	If remote server is specified, the messages go to both, server and local file.
 
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU

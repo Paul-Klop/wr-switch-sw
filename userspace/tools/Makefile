@@ -14,6 +14,7 @@ TOOLS += wrs_status_led
 TOOLS += mkpasswd
 TOOLS += wrs_sfp_dump
 TOOLS += wrs_throttling
+TOOLS += ioctl
 TOOLS += utc_leap_test
 TOOLS += radiusvlan
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h

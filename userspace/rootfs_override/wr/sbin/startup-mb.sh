@@ -1,5 +1,12 @@
 #!/bin/ash
 export WR_HOME="/wr"
+
+insmod $WR_HOME/lib/modules/asix.ko
+if [ -e /proc/sys/net/ipv4/conf/eth1 ]; then
+	echo "Using DHCP to get IP for eth1"
+	udhcpc -b -i eth1
+fi
+
 LOAD_FPGA_STATUS_FILE="/tmp/load_fpga_status"
 LOAD_LM32_STATUS_FILE="/tmp/load_lm32_status"
 #files for monit's restart reason

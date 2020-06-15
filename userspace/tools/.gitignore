@@ -28,3 +28,4 @@ wrs_throttling
 utc_leap_test
 /wrs_leapsec
 radiusvlan
+ioctl

@@ -170,7 +170,7 @@ Additionally, the @t{wrs-firmware.tar} containing corrupted file is renamed to
 the next successful update.
 
 When checksums in the @t{wrs-firmware.tar} are not available
-(for example during downgrading to version pre-@value{release_version}) appropriate warning
+(for example during downgrading to version pre-v5.0) appropriate warning
 message is printed to the console.
 
 If this method of upgrading firmware works for you, you can ignore the rest of
@@ -315,6 +315,8 @@ the behavior of the WR Switch. Here are highlights:
      frame, translates into additional 0.8us latency introduced by protocol 
      frames.}.} If you
     do not use LLDP and latency is of concern, you should disable LLDP option.
+    Alternatively consider use of the option to limit LLDP frame size to about 
+    60-70 bytes.
   @item @b{Disable web interface} - web interface is now disabled by default
     and considered deprecated (no effort was put in making sure it works
     properly). @b{Users are strongly discouraged from using the web interface}.

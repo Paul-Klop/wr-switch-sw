@@ -18,8 +18,8 @@ start_counter() {
     COUNTER_FILE="/tmp/start_cnt_lldpd"
     START_COUNTER=1
     if [ -f "$COUNTER_FILE" ] ; then
-		read -r START_COUNTER < $COUNTER_FILE
-		START_COUNTER=$((START_COUNTER+1))
+	read -r START_COUNTER < $COUNTER_FILE
+	START_COUNTER=$((START_COUNTER+1))
     fi
     echo "$START_COUNTER" > $COUNTER_FILE
 }
@@ -28,17 +28,17 @@ start() {
     echo -n "Starting lldpd: "
 
     if [ -f $dotconfig ]; then
-		. $dotconfig
+	. $dotconfig
     else
-		echo "$0 unable to source dot-config ($dotconfig)!"
+	echo "$0 unable to source dot-config ($dotconfig)!"
     fi
 
     if [ "$CONFIG_LLDPD_DISABLE" = "y" ]; then
-		echo "lldpd disabled in dot-config!"
-		if [ "$1" != "force" ]; then
-	    	exit 0
-		fi
-		echo -n "Force start of lldpd: "
+	echo "lldpd disabled in dot-config!"
+	if [ "$1" != "force" ]; then
+	    exit 0
+	fi
+	echo -n "Force start of lldpd: "
     fi
 
     # Creating lldpd config
@@ -48,38 +48,38 @@ start() {
 
     tx_interval=5
     if [ ! -z "$CONFIG_LLDPD_TX_INTERVAL" ]; then
-		tx_int=$CONFIG_LLDPD_TX_INTERVAL
-		# check if given value is an int
-		case $tx_int in
-		    ''|*[!0-9]*) echo -n "wrong CONFIG_LLDPD_TX_INTERVAL "$tx_int". Using 5 as the default interval. " ;;
-		    *) echo tx_interval=$tx_int ;;
-		esac
+	tx_int=$CONFIG_LLDPD_TX_INTERVAL
+	# check if given value is an int
+	case $tx_int in
+	    ''|*[!0-9]*) echo -n "wrong CONFIG_LLDPD_TX_INTERVAL "$tx_int". Using 5 as the default interval. " ;;
+	    *) echo tx_interval=$tx_int ;;
+	esac
     fi
     echo "configure lldp tx-interval $tx_interval" >> $LLDPD_CONFIG
 
     if [ "$CONFIG_LLDPD_MINIMUM_FRAME_SIZE" = "y" ]; then 
-		echo "configure system description  'WR-SWITCH'" >> $LLDPD_CONFIG
-		# disable capabilities-advertisements
-		echo "unconfigure ports all lldp capabilities-advertisements" >> $LLDPD_CONFIG
-		# disable management ip advertisements
-		echo "unconfigure ports all lldp management-addresses-advertisements" >> $LLDPD_CONFIG
+	echo "configure system description  'WR-SWITCH'" >> $LLDPD_CONFIG
+	# disable capabilities-advertisements
+	echo "unconfigure ports all lldp capabilities-advertisements" >> $LLDPD_CONFIG
+	# disable management ip advertisements
+	echo "unconfigure ports all lldp management-addresses-advertisements" >> $LLDPD_CONFIG
     else
-		echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $LLDPD_CONFIG
+	echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $LLDPD_CONFIG
     fi
     if [ "$CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE" = "y" ]; then
-		echo "configure system interface pattern '!eth*'" >> $LLDPD_CONFIG
+	echo "configure system interface pattern '!eth*'" >> $LLDPD_CONFIG
     fi
     echo "resume" >> $LLDPD_CONFIG
 
     start-stop-daemon -S -q -p /var/run/lldpd.pid --exec $LLDPD -- $LLDPD_OPT
     ret=$?
     if [ $ret -eq 0 ]; then
-		start_counter
-		echo "OK"
+	start_counter
+	echo "OK"
     elif [ $ret -eq 1 ]; then
-		echo "Failed (already running?)"
+	echo "Failed (already running?)"
     else
-		echo "Failed"
+	echo "Failed"
     fi
 }
 
@@ -87,9 +87,9 @@ stop() {
     echo -n "Stopping lldpd: "
 	start-stop-daemon -K -q -p /var/run/lldpd.pid
     if [ $? -eq 0 ]; then
-		echo "OK"
+	echo "OK"
     else
-		echo "Failed"
+	echo "Failed"
     fi
 }
 
@@ -99,16 +99,16 @@ restart() {
 }
 
 case "$1" in
-  start)           
-  	start "$2"	
-  	;;
-  stop)
-	stop	    
+    start)
+	start "$2"	
 	;;
-  restart|reload)	
-  	restart	    
-  	;;
-  *)
+    stop)
+	stop
+	;;
+    restart|reload)	
+	restart
+	;;
+    *)
 	echo "Usage: $0 {start <force>|stop|restart}"
 	echo "    start force -- enable lldpd even it is disabled in the dot-config"
 	exit 1

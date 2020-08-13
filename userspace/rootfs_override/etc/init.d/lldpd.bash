@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Controls lldpd.
 #
@@ -69,6 +69,18 @@ start() {
     if [ "$CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE" = "y" ]; then
 	echo "configure system interface pattern '!eth*'" >> $LLDPD_CONFIG
     fi
+    for i_port in {1..18}; do # scan all the physical ports
+	printf -v i_port_zero "%02d" $i_port
+	vlan=$(eval "echo \$CONFIG_VLANS_PORT"$i_port_zero"_LLDP_TX_VID")
+	if [ ! -z "$vlan" ]; then
+	    prio=$(eval "echo \$CONFIG_VLANS_PORT"$i_port_zero"_LLDP_TX_PRIO")
+	    # set default priority
+	    if [ -z "$prio" ]; then
+		prio=0
+	    fi
+	    echo "configure ports wri$i_port lldp vlan-tx $vlan priority $prio" dei 0 >> $LLDPD_CONFIG
+	fi
+    done
     echo "resume" >> $LLDPD_CONFIG
 
     start-stop-daemon -S -q -p /var/run/lldpd.pid --exec $LLDPD -- $LLDPD_OPT

@@ -1,0 +1,1675 @@
+From 8cbf67b5bd2802c0367a4538b5300f770482d2d5 Mon Sep 17 00:00:00 2001
+From: Michal Wasiak <michal.wasiak@gmail.com>
+Date: Fri, 14 Aug 2020 00:40:21 +0200
+Subject: [PATCH 2/3] lldpd: add patches since 1.0.5
+
+As of 2020.08.14
+
+Signed-off-by: Michal Wasiak <michal.wasiak@gmail.com>
+---
+ .../0002-build-provide-a-default.nix-file.patch    |  37 +++
+ ...es-don-t-modify-chassis-ID-when-overriden.patch |  48 +++
+ ...rash-on-AgentX-reconnect-with-NetSNMP-5.8.patch |  38 +++
+ ...t-fix-crash-on-AgentX-reconnect-with-NetS.patch |  41 +++
+ .../lldpd/0011-agent-simpler-code-with-ifdef.patch |  67 ++++
+ ...ze-conn-cannot-be-used-after-lldpctl_watc.patch |  47 +++
+ ...-prevent-use-of-a-connection-used-to-watc.patch | 101 ++++++
+ ...014-lib-introduce-lldpctl_watch_callback2.patch | 255 +++++++++++++++
+ .../lldpd/0015-v0.9.5-seccomp-add-socket-ops.patch |  25 ++
+ package/lldpd/0016-v1.0.1-seccomp-add-brk.patch    |  25 ++
+ .../lldpd/0017-v1.0.5-seccomp-add-gettime.patch    |  26 ++
+ ...NMP-walk-on-lldpRemTable-when-missing-rem.patch | 155 ++++++++++
+ ...0019-build-do-not-hardcode-cpp-invocation.patch |  27 ++
+ ...e-build-process-stops-if-not-able-to-gene.patch |  37 +++
+ .../0021-build-fix-syscall-names-extraction.patch  |  25 ++
+ .../lldpd/0022-priv-fix-missing-semi-colon.patch   |  25 ++
+ .../0027-build-add-lldpd.stp-to-CLEANFILES.patch   |  25 ++
+ ...doc-fix-wording-about-interface-exclusion.patch |  46 +++
+ ...e-no-name-no-address-message-a-debug-mess.patch |  29 ++
+ ...30-code-remove-use-of-blacklist-whitelist.patch | 341 +++++++++++++++++++++
+ ...remove-limit-on-system-description-length.patch |  41 +++
+ ...35-doc-add-a-NEWS-entry-for-latest-commit.patch |  24 ++
+ 22 files changed, 1485 insertions(+)
+ create mode 100644 package/lldpd/0002-build-provide-a-default.nix-file.patch
+ create mode 100644 package/lldpd/0008-interfaces-don-t-modify-chassis-ID-when-overriden.patch
+ create mode 100644 package/lldpd/0009-agent-fix-crash-on-AgentX-reconnect-with-NetSNMP-5.8.patch
+ create mode 100644 package/lldpd/0010-Revert-agent-fix-crash-on-AgentX-reconnect-with-NetS.patch
+ create mode 100644 package/lldpd/0011-agent-simpler-code-with-ifdef.patch
+ create mode 100644 package/lldpd/0012-lib-emphasize-conn-cannot-be-used-after-lldpctl_watc.patch
+ create mode 100644 package/lldpd/0013-lib-stricly-prevent-use-of-a-connection-used-to-watc.patch
+ create mode 100644 package/lldpd/0014-lib-introduce-lldpctl_watch_callback2.patch
+ create mode 100644 package/lldpd/0015-v0.9.5-seccomp-add-socket-ops.patch
+ create mode 100644 package/lldpd/0016-v1.0.1-seccomp-add-brk.patch
+ create mode 100644 package/lldpd/0017-v1.0.5-seccomp-add-gettime.patch
+ create mode 100644 package/lldpd/0018-agent-fix-SNMP-walk-on-lldpRemTable-when-missing-rem.patch
+ create mode 100644 package/lldpd/0019-build-do-not-hardcode-cpp-invocation.patch
+ create mode 100644 package/lldpd/0020-build-ensure-build-process-stops-if-not-able-to-gene.patch
+ create mode 100644 package/lldpd/0021-build-fix-syscall-names-extraction.patch
+ create mode 100644 package/lldpd/0022-priv-fix-missing-semi-colon.patch
+ create mode 100644 package/lldpd/0027-build-add-lldpd.stp-to-CLEANFILES.patch
+ create mode 100644 package/lldpd/0028-doc-fix-wording-about-interface-exclusion.patch
+ create mode 100644 package/lldpd/0029-netlink-make-no-name-no-address-message-a-debug-mess.patch
+ create mode 100644 package/lldpd/0030-code-remove-use-of-blacklist-whitelist.patch
+ create mode 100644 package/lldpd/0034-lib-remove-limit-on-system-description-length.patch
+ create mode 100644 package/lldpd/0035-doc-add-a-NEWS-entry-for-latest-commit.patch
+
+diff --git a/package/lldpd/0002-build-provide-a-default.nix-file.patch b/package/lldpd/0002-build-provide-a-default.nix-file.patch
+new file mode 100644
+index 0000000..31488b0
+--- /dev/null
++++ b/package/lldpd/0002-build-provide-a-default.nix-file.patch
+@@ -0,0 +1,37 @@
++From c168c1536c6c3671eaed569c58656f67726288d4 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Thu, 12 Mar 2020 09:29:13 +0100
++Subject: [PATCH 02/36] build: provide a default.nix file
++
++---
++ .gitignore  |  1 +
++ default.nix | 17 +++++++++++++++++
++ 2 files changed, 18 insertions(+)
++ create mode 100644 default.nix
++
++diff --git a/default.nix b/default.nix
++new file mode 100644
++index 0000000..b7146a6
++--- /dev/null
+++++ b/default.nix
++@@ -0,0 +1,17 @@
+++{ pkgs ? import <nixpkgs> {}
+++}:
+++
+++pkgs.stdenv.mkDerivation rec {
+++  name = "lldpd";
+++  src = pkgs.nix-gitignore.gitignoreSource [] ./.;
+++  configureFlags = [
+++    "--localstatedir=/var"
+++    "--enable-pie"
+++    "--with-snmp"
+++    "--with-systemdsystemunitdir=\${out}/lib/systemd/system"
+++  ];
+++
+++  nativeBuildInputs = [ pkgs.pkgconfig pkgs.autoreconfHook ];
+++  buildInputs = [ pkgs.libevent pkgs.readline pkgs.net-snmp pkgs.openssl ];
+++  outputs = [ "out" "dev" "man" "doc" ];
+++}
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0008-interfaces-don-t-modify-chassis-ID-when-overriden.patch b/package/lldpd/0008-interfaces-don-t-modify-chassis-ID-when-overriden.patch
+new file mode 100644
+index 0000000..24bb4a8
+--- /dev/null
++++ b/package/lldpd/0008-interfaces-don-t-modify-chassis-ID-when-overriden.patch
+@@ -0,0 +1,48 @@
++From d7afa6a181e40bc083268edc4b21019b4e086987 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sat, 11 Apr 2020 16:21:30 +0200
++Subject: [PATCH 08/36] interfaces: don't modify chassis ID when overriden
++
++If the chassis ID has been overriden by the user, do not modify it.
++
++Fix #385
++---
++ NEWS                            |  4 ++++
++ src/daemon/interfaces.c         |  8 ++++++--
++ tests/integration/test_basic.py | 15 +++++++++++++++
++ 3 files changed, 25 insertions(+), 2 deletions(-)
++
++diff --git a/NEWS b/NEWS
++index 2f2756b..f986091 100644
++--- a/NEWS
+++++ b/NEWS
++@@ -1,3 +1,7 @@
+++lldpd (1.0.6)
+++  * Fix:
+++    + Do not loose chassis local information when interface status changes.
+++
++ lldpd (1.0.5)
++   * Changes:
++     + Interface names are also matched for management addresses.
++diff --git a/src/daemon/interfaces.c b/src/daemon/interfaces.c
++index 5664b2d..b9521f6 100644
++--- a/src/daemon/interfaces.c
+++++ b/src/daemon/interfaces.c
++@@ -364,8 +364,12 @@ interfaces_helper_chassis(struct lldpd *cfg,
++ 		(LOCAL_CHASSIS(cfg)->c_cap_enabled == 0))
++ 	    LOCAL_CHASSIS(cfg)->c_cap_enabled = LLDP_CAP_STATION;
++ 
++-	if (LOCAL_CHASSIS(cfg)->c_id != NULL &&
++-	    LOCAL_CHASSIS(cfg)->c_id_subtype == LLDP_CHASSISID_SUBTYPE_LLADDR)
+++	/* Do not modify the chassis if it's already set to a MAC address or if
+++	 * it's set to a local address equal to the user-provided
+++	 * configuration. */
+++	if ((LOCAL_CHASSIS(cfg)->c_id != NULL &&
+++	    LOCAL_CHASSIS(cfg)->c_id_subtype == LLDP_CHASSISID_SUBTYPE_LLADDR) ||
+++	    cfg->g_config.c_cid_string != NULL)
++ 		return;		/* We already have one */
++ 
++ 	TAILQ_FOREACH(iface, interfaces, next) {
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0009-agent-fix-crash-on-AgentX-reconnect-with-NetSNMP-5.8.patch b/package/lldpd/0009-agent-fix-crash-on-AgentX-reconnect-with-NetSNMP-5.8.patch
+new file mode 100644
+index 0000000..2c6c4a5
+--- /dev/null
++++ b/package/lldpd/0009-agent-fix-crash-on-AgentX-reconnect-with-NetSNMP-5.8.patch
+@@ -0,0 +1,38 @@
++From c0b9ad5fc83e913e6ef761390c6211d6d240c212 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Mon, 13 Apr 2020 14:17:10 +0200
++Subject: [PATCH 09/36] agent: fix crash on AgentX reconnect with NetSNMP 5.8
++
++---
++ NEWS                    | 1 +
++ src/daemon/agent_priv.c | 2 +-
++ 2 files changed, 2 insertions(+), 1 deletion(-)
++
++diff --git a/NEWS b/NEWS
++index f986091..bbf8584 100644
++--- a/NEWS
+++++ b/NEWS
++@@ -1,6 +1,7 @@
++ lldpd (1.0.6)
++   * Fix:
++     + Do not loose chassis local information when interface status changes.
+++    + Fix crash on AgentX reconnect with NetSNMP 5.8.
++ 
++ lldpd (1.0.5)
++   * Changes:
++diff --git a/src/daemon/agent_priv.c b/src/daemon/agent_priv.c
++index 59054cc..6901df8 100644
++--- a/src/daemon/agent_priv.c
+++++ b/src/daemon/agent_priv.c
++@@ -45,7 +45,7 @@
++ #endif
++ 
++ static oid netsnmp_unix[] = { TRANSPORT_DOMAIN_LOCAL };
++-static netsnmp_tdomain unixDomain;
+++static netsnmp_tdomain unixDomain = {};
++ 
++ static char *
++ agent_priv_unix_fmtaddr(F_FMTADDR_SIGNATURE)
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0010-Revert-agent-fix-crash-on-AgentX-reconnect-with-NetS.patch b/package/lldpd/0010-Revert-agent-fix-crash-on-AgentX-reconnect-with-NetS.patch
+new file mode 100644
+index 0000000..800abbd
+--- /dev/null
++++ b/package/lldpd/0010-Revert-agent-fix-crash-on-AgentX-reconnect-with-NetS.patch
+@@ -0,0 +1,41 @@
++From 68c3556d4e702eac4874d6d0907685fdc921ab5d Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Mon, 13 Apr 2020 19:58:20 +0200
++Subject: [PATCH 10/36] Revert "agent: fix crash on AgentX reconnect with
++ NetSNMP 5.8"
++
++This reverts commit c0b9ad5fc83e913e6ef761390c6211d6d240c212. This is
++not needed: global and static variables are zero-initialized in C89.
++---
++ NEWS                    | 1 -
++ src/daemon/agent_priv.c | 2 +-
++ 2 files changed, 1 insertion(+), 2 deletions(-)
++
++diff --git a/NEWS b/NEWS
++index bbf8584..f986091 100644
++--- a/NEWS
+++++ b/NEWS
++@@ -1,7 +1,6 @@
++ lldpd (1.0.6)
++   * Fix:
++     + Do not loose chassis local information when interface status changes.
++-    + Fix crash on AgentX reconnect with NetSNMP 5.8.
++ 
++ lldpd (1.0.5)
++   * Changes:
++diff --git a/src/daemon/agent_priv.c b/src/daemon/agent_priv.c
++index 6901df8..59054cc 100644
++--- a/src/daemon/agent_priv.c
+++++ b/src/daemon/agent_priv.c
++@@ -45,7 +45,7 @@
++ #endif
++ 
++ static oid netsnmp_unix[] = { TRANSPORT_DOMAIN_LOCAL };
++-static netsnmp_tdomain unixDomain = {};
+++static netsnmp_tdomain unixDomain;
++ 
++ static char *
++ agent_priv_unix_fmtaddr(F_FMTADDR_SIGNATURE)
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0011-agent-simpler-code-with-ifdef.patch b/package/lldpd/0011-agent-simpler-code-with-ifdef.patch
+new file mode 100644
+index 0000000..fbddc92
+--- /dev/null
++++ b/package/lldpd/0011-agent-simpler-code-with-ifdef.patch
+@@ -0,0 +1,67 @@
++From 15062dfd11b61bf78b511d44fedb9a13456cafd2 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Mon, 13 Apr 2020 19:59:24 +0200
++Subject: [PATCH 11/36] agent: simpler code with #ifdef
++
++The use #ifdef to avoid some line duplications makes the code harder
++to read. Prefer duplicating the lines when needed.
++---
++ src/daemon/agent_priv.c | 26 ++++++++++++++------------
++ 1 file changed, 14 insertions(+), 12 deletions(-)
++
++diff --git a/src/daemon/agent_priv.c b/src/daemon/agent_priv.c
++index 59054cc..2f9d8da 100644
++--- a/src/daemon/agent_priv.c
+++++ b/src/daemon/agent_priv.c
++@@ -208,23 +208,25 @@ agent_priv_unix_transport(const char *string, int len, int local)
++ 	return t;
++ }
++ 
+++#if HAVE_NETSNMP_TDOMAIN_F_CREATE_FROM_TSTRING_NEW
++ netsnmp_transport *
++-#if !HAVE_NETSNMP_TDOMAIN_F_CREATE_FROM_TSTRING_NEW
++-agent_priv_unix_create_tstring(const char *string, int local)
++-#else
++-agent_priv_unix_create_tstring(const char *string, int local, const char *default_target)
++-#endif
+++agent_priv_unix_create_tstring_new(const char *string, int local, const char *default_target)
++ {
++-#if HAVE_NETSNMP_TDOMAIN_F_CREATE_FROM_TSTRING_NEW
++ 	if ((!string || *string == '\0') && default_target &&
++ 	    *default_target != '\0') {
++ 		string = default_target;
++ 	}
++-#endif
++-	if (!string)
++-		return NULL;
+++	if (!string) return NULL;
+++	return agent_priv_unix_transport(string, strlen(string), local);
+++}
+++#else
+++netsnmp_transport *
+++agent_priv_unix_create_tstring(const char *string, int local)
+++{
+++	if (!string) return NULL;
++ 	return agent_priv_unix_transport(string, strlen(string), local);
++ }
+++#endif
++ 
++ static netsnmp_transport *
++ agent_priv_unix_create_ostring(F_FROM_OSTRING_SIGNATURE)
++@@ -239,10 +241,10 @@ agent_priv_register_domain()
++ 	unixDomain.name_length = sizeof(netsnmp_unix) / sizeof(oid);
++ 	unixDomain.prefix = (const char**)calloc(2, sizeof(char *));
++ 	unixDomain.prefix[0] = "unix";
++-#if !HAVE_NETSNMP_TDOMAIN_F_CREATE_FROM_TSTRING_NEW
++-	unixDomain.f_create_from_tstring = agent_priv_unix_create_tstring;
+++#if HAVE_NETSNMP_TDOMAIN_F_CREATE_FROM_TSTRING_NEW
+++	unixDomain.f_create_from_tstring_new = agent_priv_unix_create_tstring_new;
++ #else
++-	unixDomain.f_create_from_tstring_new = agent_priv_unix_create_tstring;
+++	unixDomain.f_create_from_tstring = agent_priv_unix_create_tstring;
++ #endif
++ 	unixDomain.f_create_from_ostring = agent_priv_unix_create_ostring;
++ 	netsnmp_tdomain_register(&unixDomain);
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0012-lib-emphasize-conn-cannot-be-used-after-lldpctl_watc.patch b/package/lldpd/0012-lib-emphasize-conn-cannot-be-used-after-lldpctl_watc.patch
+new file mode 100644
+index 0000000..5a4e3c0
+--- /dev/null
++++ b/package/lldpd/0012-lib-emphasize-conn-cannot-be-used-after-lldpctl_watc.patch
+@@ -0,0 +1,47 @@
++From c0363157dc48a1da273261ecbf24792d9dfe9725 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Thu, 23 Apr 2020 21:27:23 +0200
++Subject: [PATCH 12/36] lib: emphasize `conn` cannot be used after
++ lldpctl_watch_callback()
++
++---
++ src/lib/lldpctl.h | 9 ++++++---
++ 1 file changed, 6 insertions(+), 3 deletions(-)
++
++diff --git a/src/lib/lldpctl.h b/src/lib/lldpctl.h
++index 5e676e9..c9f4d47 100644
++--- a/src/lib/lldpctl.h
+++++ b/src/lib/lldpctl.h
++@@ -460,7 +460,7 @@ typedef enum {
++ /**
++  * Callback function invoked when a change is detected.
++  *
++- * @param conn      Connection with lldpd.
+++ * @param conn      Connection with lldpd. Should not be used.
++  * @param type      Type of change detected.
++  * @param interface Physical interface on which the change has happened.
++  * @param neighbor  Changed neighbor.
++@@ -470,6 +470,9 @@ typedef enum {
++  * reference count are decremented when the callback ends. If you want to keep a
++  * reference to it, be sure to increment the reference count in the callback.
++  *
+++ * @warning The provided connection should not be used at all. Do not use @c
+++ * lldpctl_atom_set_*() functions on @c interface or @c neighbor either.
+++ *
++  * @see lldpctl_watch_callback
++  */
++ typedef void (*lldpctl_change_callback)(lldpctl_conn_t *conn,
++@@ -490,8 +493,8 @@ typedef void (*lldpctl_change_callback)(lldpctl_conn_t *conn,
++  * and therefore will issue IO operations. The error code could then be @c
++  * LLDPCTL_ERR_WOULDBLOCK.
++  *
++- * Once a callback is registered, the connection shouldn't be used for anything
++- * else than receiving notifications.
+++ * @warning Once a callback is registered, the connection shouldn't be used for
+++ * anything else than receiving notifications.
++  */
++ int lldpctl_watch_callback(lldpctl_conn_t *conn,
++     lldpctl_change_callback cb,
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0013-lib-stricly-prevent-use-of-a-connection-used-to-watc.patch b/package/lldpd/0013-lib-stricly-prevent-use-of-a-connection-used-to-watc.patch
+new file mode 100644
+index 0000000..7fed202
+--- /dev/null
++++ b/package/lldpd/0013-lib-stricly-prevent-use-of-a-connection-used-to-watc.patch
+@@ -0,0 +1,101 @@
++From cb38337c2b6f28cf56b29ffc2519012b7d342e61 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Fri, 24 Apr 2020 19:09:42 +0200
++Subject: [PATCH 13/36] lib: stricly-prevent use of a connection used to watch
++ events
++
++The protocol cannot handle received events mixed with regular
++messages. Once the connection is dedicated to a watch, prevent its
++regular use.
++---
++ src/lib/atom.c       | 7 ++++++-
++ src/lib/atom.h       | 1 +
++ src/lib/connection.c | 3 ++-
++ src/lib/lldpctl.h    | 6 ++++--
++ 4 files changed, 13 insertions(+), 4 deletions(-)
++
++diff --git a/src/lib/atom.c b/src/lib/atom.c
++index f81d3bb..54e94ae 100644
++--- a/src/lib/atom.c
+++++ b/src/lib/atom.c
++@@ -314,6 +314,10 @@ _lldpctl_do_something(lldpctl_conn_t *conn,
++ {
++ 	ssize_t rc;
++ 
+++	if (conn->state == CONN_STATE_WATCHING)
+++		/* The connection cannot be used anymore. */
+++		return SET_ERROR(conn, LLDPCTL_ERR_INVALID_STATE);
+++
++ 	if (conn->state == CONN_STATE_IDLE) {
++ 		/* We need to build the message to send, then send
++ 		 * it. */
++@@ -371,6 +375,7 @@ lldpctl_watch_callback(lldpctl_conn_t *conn,
++ 	if (rc == 0) {
++ 		conn->watch_cb = cb;
++ 		conn->watch_data = data;
+++		conn->state = CONN_STATE_WATCHING;
++ 	}
++ 	return rc;
++ }
++@@ -382,7 +387,7 @@ lldpctl_watch(lldpctl_conn_t *conn)
++ 
++ 	RESET_ERROR(conn);
++ 
++-	if (conn->state != CONN_STATE_IDLE)
+++	if (conn->state != CONN_STATE_WATCHING)
++ 		return SET_ERROR(conn, LLDPCTL_ERR_INVALID_STATE);
++ 
++ 	conn->watch_triggered = 0;
++diff --git a/src/lib/atom.h b/src/lib/atom.h
++index a818f7a..d6ae218 100644
++--- a/src/lib/atom.h
+++++ b/src/lib/atom.h
++@@ -54,6 +54,7 @@ struct lldpctl_conn_t {
++ #define CONN_STATE_GET_CHASSIS_RECV	14
++ #define CONN_STATE_GET_DEFAULT_PORT_SEND 15
++ #define CONN_STATE_GET_DEFAULT_PORT_RECV 16
+++#define CONN_STATE_WATCHING		17
++ 	int state;		/* Current state */
++ 	/* Data attached to the state. It is used to check that we are using the
++ 	 * same data as a previous call until the state machine goes to
++diff --git a/src/lib/connection.c b/src/lib/connection.c
++index aa88dad..191d7c6 100644
++--- a/src/lib/connection.c
+++++ b/src/lib/connection.c
++@@ -262,7 +262,8 @@ lldpctl_recv(lldpctl_conn_t *conn, const uint8_t *data, size_t length)
++ 	return conn->input_buffer_len;
++ }
++ 
++-int lldpctl_process_conn_buffer(lldpctl_conn_t *conn)
+++int
+++lldpctl_process_conn_buffer(lldpctl_conn_t *conn)
++ {
++ 	int rc;
++ 
++diff --git a/src/lib/lldpctl.h b/src/lib/lldpctl.h
++index c9f4d47..2369bf2 100644
++--- a/src/lib/lldpctl.h
+++++ b/src/lib/lldpctl.h
++@@ -471,7 +471,8 @@ typedef enum {
++  * reference to it, be sure to increment the reference count in the callback.
++  *
++  * @warning The provided connection should not be used at all. Do not use @c
++- * lldpctl_atom_set_*() functions on @c interface or @c neighbor either.
+++ * lldpctl_atom_set_*() functions on @c interface or @c neighbor either. If you
+++ * do, you will get a @c LLDPCTL_ERR_INVALID_STATE error.
++  *
++  * @see lldpctl_watch_callback
++  */
++@@ -494,7 +495,8 @@ typedef void (*lldpctl_change_callback)(lldpctl_conn_t *conn,
++  * LLDPCTL_ERR_WOULDBLOCK.
++  *
++  * @warning Once a callback is registered, the connection shouldn't be used for
++- * anything else than receiving notifications.
+++ * anything else than receiving notifications. If you do, you will get a @c
+++ * LLDPCTL_ERR_INVALID_STATE error.
++  */
++ int lldpctl_watch_callback(lldpctl_conn_t *conn,
++     lldpctl_change_callback cb,
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0014-lib-introduce-lldpctl_watch_callback2.patch b/package/lldpd/0014-lib-introduce-lldpctl_watch_callback2.patch
+new file mode 100644
+index 0000000..1195930
+--- /dev/null
++++ b/package/lldpd/0014-lib-introduce-lldpctl_watch_callback2.patch
+@@ -0,0 +1,255 @@
++From 9d7e82a1e45050d9fe8adb458cb967aa68f646b0 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Fri, 24 Apr 2020 19:29:36 +0200
++Subject: [PATCH 14/36] lib: introduce lldpctl_watch_callback2()
++
++This is similar to `lldpctl_watch_callback()` (which is getting
++deprecated), except the callback won't receive the current connection.
++This prevents a user to use the connection which is unusable because
++it is now dedicated to watch events.
++
++Minor ABI dump due to new function, but everything is
++backward-compatible, except you may now get an error if you use the
++connection while watching (but this was already not supported).
++
++Fix #380
++---
++ NEWS                 |  3 +++
++ src/client/display.c |  2 +-
++ src/client/show.c    |  7 +++----
++ src/lib/Makefile.am  |  2 +-
++ src/lib/atom.c       | 20 ++++++++++++++++++++
++ src/lib/atom.h       |  1 +
++ src/lib/connection.c |  7 +++++--
++ src/lib/lldpctl.h    | 44 +++++++++++++++++++++++++++++++++++++++++++-
++ src/lib/lldpctl.map  |  5 +++++
++ 9 files changed, 82 insertions(+), 9 deletions(-)
++
++diff --git a/NEWS b/NEWS
++index f986091..2f3bc55 100644
++--- a/NEWS
+++++ b/NEWS
++@@ -1,6 +1,9 @@
++ lldpd (1.0.6)
++   * Fix:
++     + Do not loose chassis local information when interface status changes.
+++  * Changes:
+++    + Deprecate use of lldpctl_watch_callback(). Use
+++      lldpctl_watch_callback2() instead.
++ 
++ lldpd (1.0.5)
++   * Changes:
++diff --git a/src/client/display.c b/src/client/display.c
++index faaa8b1..5dd914c 100644
++--- a/src/client/display.c
+++++ b/src/client/display.c
++@@ -714,7 +714,7 @@ display_interface(lldpctl_conn_t *conn, struct writer *w, int hidden,
++ 
++ 	display_chassis(w, chassis, details);
++ 	display_port(w, port, details);
++-	if (details && local)
+++	if (details && local && conn)
++ 		display_local_ttl(w, conn, details);
++ 	if (details == DISPLAY_DETAILS) {
++ 		display_vlans(w, port);
++diff --git a/src/client/show.c b/src/client/show.c
++index 8ba8acb..139a3cb 100644
++--- a/src/client/show.c
+++++ b/src/client/show.c
++@@ -154,8 +154,7 @@ struct watcharg {
++  * Callback for the next function to display a new neighbor.
++  */
++ static void
++-watchcb(lldpctl_conn_t *conn,
++-    lldpctl_change_t type,
+++watchcb(lldpctl_change_t type,
++     lldpctl_atom_t *interface,
++     lldpctl_atom_t *neighbor,
++     void *data)
++@@ -201,7 +200,7 @@ watchcb(lldpctl_conn_t *conn,
++ 		break;
++ 	default: return;
++ 	}
++-	display_interface(conn, w, 1, interface, neighbor,
+++	display_interface(NULL, w, 1, interface, neighbor,
++ 	    cmdenv_get(env, "summary")?DISPLAY_BRIEF:
++ 	    cmdenv_get(env, "detailed")?DISPLAY_DETAILS:
++ 	    DISPLAY_NORMAL, protocol);
++@@ -234,7 +233,7 @@ cmd_watch_neighbors(struct lldpctl_conn_t *conn, struct writer *w,
++ 	}
++ 
++ 	log_debug("lldpctl", "watch for neighbor changes");
++-	if (lldpctl_watch_callback(conn, watchcb, &wa) < 0) {
+++	if (lldpctl_watch_callback2(conn, watchcb, &wa) < 0) {
++ 		log_warnx("lldpctl", "unable to watch for neighbors. %s",
++ 		    lldpctl_last_strerror(conn));
++ 		return 0;
++diff --git a/src/lib/Makefile.am b/src/lib/Makefile.am
++index 2a5cdb3..f981039 100644
++--- a/src/lib/Makefile.am
+++++ b/src/lib/Makefile.am
++@@ -54,7 +54,7 @@ CLEANFILES = atom-glue.c
++ # -version-number could be computed from -version-info, mostly major
++ # is `current` - `age`, minor is `age` and revision is `revision' and
++ # major.minor should be used when updaing lldpctl.map.
++-liblldpctl_la_LDFLAGS = $(AM_LDFLAGS) -version-info 12:0:8
+++liblldpctl_la_LDFLAGS = $(AM_LDFLAGS) -version-info 13:0:9
++ liblldpctl_la_DEPENDENCIES = libfixedpoint.la
++ 
++ if HAVE_LD_VERSION_SCRIPT
++diff --git a/src/lib/atom.c b/src/lib/atom.c
++index 54e94ae..39ea5f8 100644
++--- a/src/lib/atom.c
+++++ b/src/lib/atom.c
++@@ -381,6 +381,26 @@ lldpctl_watch_callback(lldpctl_conn_t *conn,
++ }
++ 
++ int
+++lldpctl_watch_callback2(lldpctl_conn_t *conn,
+++    lldpctl_change_callback2 cb,
+++    void *data)
+++{
+++	int rc;
+++
+++	RESET_ERROR(conn);
+++
+++	rc = _lldpctl_do_something(conn,
+++	    CONN_STATE_SET_WATCH_SEND, CONN_STATE_SET_WATCH_RECV, NULL,
+++	    SUBSCRIBE, NULL, NULL, NULL, NULL);
+++	if (rc == 0) {
+++		conn->watch_cb2 = cb;
+++		conn->watch_data = data;
+++		conn->state = CONN_STATE_WATCHING;
+++	}
+++	return rc;
+++}
+++
+++int
++ lldpctl_watch(lldpctl_conn_t *conn)
++ {
++ 	int rc = 0;
++diff --git a/src/lib/atom.h b/src/lib/atom.h
++index d6ae218..0b1d4bc 100644
++--- a/src/lib/atom.h
+++++ b/src/lib/atom.h
++@@ -65,6 +65,7 @@ struct lldpctl_conn_t {
++ 
++ 	/* Handling notifications */
++ 	lldpctl_change_callback watch_cb;
+++	lldpctl_change_callback2 watch_cb2;
++ 	void *watch_data;
++ 	int watch_triggered;
++ };
++diff --git a/src/lib/connection.c b/src/lib/connection.c
++index 191d7c6..0310744 100644
++--- a/src/lib/connection.c
+++++ b/src/lib/connection.c
++@@ -196,7 +196,7 @@ check_for_notification(lldpctl_conn_t *conn)
++ 	change = p;
++ 
++ 	/* We have a notification, call the callback */
++-	if (conn->watch_cb) {
+++	if (conn->watch_cb || conn->watch_cb2) {
++ 		switch (change->state) {
++ 		case NEIGHBOR_CHANGE_DELETED: type = lldpctl_c_deleted; break;
++ 		case NEIGHBOR_CHANGE_ADDED: type = lldpctl_c_added; break;
++@@ -212,7 +212,10 @@ check_for_notification(lldpctl_conn_t *conn)
++ 		neighbor = _lldpctl_new_atom(conn, atom_port, 0,
++ 		    NULL, change->neighbor, NULL);
++ 		if (neighbor == NULL) goto end;
++-		conn->watch_cb(conn, type, interface, neighbor, conn->watch_data);
+++		if (conn->watch_cb)
+++			conn->watch_cb(conn, type, interface, neighbor, conn->watch_data);
+++		else
+++			conn->watch_cb2(type, interface, neighbor, conn->watch_data);
++ 		conn->watch_triggered = 1;
++ 		goto end;
++ 	}
++diff --git a/src/lib/lldpctl.h b/src/lib/lldpctl.h
++index 2369bf2..21222bb 100644
++--- a/src/lib/lldpctl.h
+++++ b/src/lib/lldpctl.h
++@@ -449,7 +449,7 @@ void lldpctl_atom_dec_ref(lldpctl_atom_t *atom);
++ /**
++  * Possible events for a change (notification).
++  *
++- * @see lldpctl_watch_callback
+++ * @see lldpctl_watch_callback2
++  */
++ typedef enum {
++ 	lldpctl_c_deleted,	/**< The neighbor has been deleted */
++@@ -483,6 +483,25 @@ typedef void (*lldpctl_change_callback)(lldpctl_conn_t *conn,
++     void *data);
++ 
++ /**
+++ * Callback function invoked when a change is detected.
+++ *
+++ * @param type      Type of change detected.
+++ * @param interface Physical interface on which the change has happened.
+++ * @param neighbor  Changed neighbor.
+++ * @param data      Data provided when registering the callback.
+++ *
+++ * The provided interface and neighbor atoms are stolen by the callback: their
+++ * reference count are decremented when the callback ends. If you want to keep a
+++ * reference to it, be sure to increment the reference count in the callback.
+++ *
+++ * @see lldpctl_watch_callback2
+++ */
+++typedef void (*lldpctl_change_callback2)(lldpctl_change_t type,
+++    lldpctl_atom_t *interface,
+++    lldpctl_atom_t *neighbor,
+++    void *data);
+++
+++/**
++  * Register a callback to be called on changes.
++  *
++  * @param conn Connection with lldpd.
++@@ -497,9 +516,32 @@ typedef void (*lldpctl_change_callback)(lldpctl_conn_t *conn,
++  * @warning Once a callback is registered, the connection shouldn't be used for
++  * anything else than receiving notifications. If you do, you will get a @c
++  * LLDPCTL_ERR_INVALID_STATE error.
+++ *
+++ * @deprecated This function is deprecated and lldpctl_watch_callback2 should be
+++ * used instead.
++  */
++ int lldpctl_watch_callback(lldpctl_conn_t *conn,
++     lldpctl_change_callback cb,
+++    void *data) __attribute__ ((deprecated));
+++
+++/**
+++ * Register a callback to be called on changes.
+++ *
+++ * @param conn Connection with lldpd.
+++ * @param cb   Replace the current callback with the provided one.
+++ * @param data Data that will be passed to the callback.
+++ * @return 0 in case of success or -1 in case of errors.
+++ *
+++ * This function will register the necessity to push neighbor changes to lldpd
+++ * and therefore will issue IO operations. The error code could then be @c
+++ * LLDPCTL_ERR_WOULDBLOCK.
+++ *
+++ * @warning Once a callback is registered, the connection shouldn't be used for
+++ * anything else than receiving notifications. If you do, you will get a @c
+++ * LLDPCTL_ERR_INVALID_STATE error.
+++ */
+++int lldpctl_watch_callback2(lldpctl_conn_t *conn,
+++    lldpctl_change_callback2 cb,
++     void *data);
++ 
++ /**
++diff --git a/src/lib/lldpctl.map b/src/lib/lldpctl.map
++index c725381..c602b64 100644
++--- a/src/lib/lldpctl.map
+++++ b/src/lib/lldpctl.map
++@@ -1,3 +1,8 @@
+++LIBLLDPCTL_4.9 {
+++ global:
+++  lldpctl_watch_callback2;
+++};
+++
++ LIBLLDPCTL_4.8 {
++  global:
++   lldpctl_get_default_port;
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0015-v0.9.5-seccomp-add-socket-ops.patch b/package/lldpd/0015-v0.9.5-seccomp-add-socket-ops.patch
+new file mode 100644
+index 0000000..4fbdc4b
+--- /dev/null
++++ b/package/lldpd/0015-v0.9.5-seccomp-add-socket-ops.patch
+@@ -0,0 +1,25 @@
++From 3ab8ebbc6e068728c6b4123cea0c6e5316e221ee Mon Sep 17 00:00:00 2001
++From: Patrick McLean <chutzpah@gentoo.org>
++Date: Mon, 27 Apr 2020 20:37:56 +0200
++Subject: [PATCH 15/36] v0.9.5: seccomp - add socket ops
++
++Signed-off-by: Lars Wendler <polynomial-c@gentoo.org>
++---
++ src/daemon/priv-seccomp.c | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/src/daemon/priv-seccomp.c b/src/daemon/priv-seccomp.c
++index 5a6e2ae..19689fe 100644
++--- a/src/daemon/priv-seccomp.c
+++++ b/src/daemon/priv-seccomp.c
++@@ -172,6 +172,7 @@ priv_seccomp_init(int remote, int child)
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(recvfrom), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(readv), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mprotect), 0)) < 0 ||
+++	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sendmmsg), 0)) < 0 ||
++ 	    /* The following are for resolving addresses */
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(munmap), 0)) < 0 ||
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0016-v1.0.1-seccomp-add-brk.patch b/package/lldpd/0016-v1.0.1-seccomp-add-brk.patch
+new file mode 100644
+index 0000000..acf7ef7
+--- /dev/null
++++ b/package/lldpd/0016-v1.0.1-seccomp-add-brk.patch
+@@ -0,0 +1,25 @@
++From 546bf8fe865dc9c1d188b3a8cf426d68dc34a436 Mon Sep 17 00:00:00 2001
++From: Patrick McLean <chutzpah@gentoo.org>
++Date: Mon, 27 Apr 2020 20:38:42 +0200
++Subject: [PATCH 16/36] v1.0.1: seccomp - add brk
++
++Signed-off-by: Lars Wendler <polynomial-c@gentoo.org>
++---
++ src/daemon/priv-seccomp.c | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/src/daemon/priv-seccomp.c b/src/daemon/priv-seccomp.c
++index 19689fe..d305856 100644
++--- a/src/daemon/priv-seccomp.c
+++++ b/src/daemon/priv-seccomp.c
++@@ -163,6 +163,7 @@ priv_seccomp_init(int remote, int child)
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sendmmsg), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(wait4), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(stat), 0)) < 0 ||
+++	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(brk), 0)) < 0 || /* brk needed for newer libc */
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getpid), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigreturn), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0)) < 0 ||
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0017-v1.0.5-seccomp-add-gettime.patch b/package/lldpd/0017-v1.0.5-seccomp-add-gettime.patch
+new file mode 100644
+index 0000000..bef1a58
+--- /dev/null
++++ b/package/lldpd/0017-v1.0.5-seccomp-add-gettime.patch
+@@ -0,0 +1,26 @@
++From d2bbdb6cadeaf443efbef11965368b43b476f332 Mon Sep 17 00:00:00 2001
++From: Patrick McLean <chutzpah@gentoo.org>
++Date: Mon, 27 Apr 2020 20:40:20 +0200
++Subject: [PATCH 17/36] v1.0.5: seccomp - add gettime
++
++Signed-off-by: Lars Wendler <polynomial-c@gentoo.org>
++---
++ src/daemon/priv-seccomp.c | 2 ++
++ 1 file changed, 2 insertions(+)
++
++diff --git a/src/daemon/priv-seccomp.c b/src/daemon/priv-seccomp.c
++index d305856..6d2736a 100644
++--- a/src/daemon/priv-seccomp.c
+++++ b/src/daemon/priv-seccomp.c
++@@ -174,6 +174,8 @@ priv_seccomp_init(int remote, int child)
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(readv), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mprotect), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sendmmsg), 0)) < 0 ||
+++	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(clock_gettime), 0)) < 0 ||
+++	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(gettimeofday), 0)) < 0 ||
++ 	    /* The following are for resolving addresses */
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0)) < 0 ||
++ 	    (rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(munmap), 0)) < 0 ||
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0018-agent-fix-SNMP-walk-on-lldpRemTable-when-missing-rem.patch b/package/lldpd/0018-agent-fix-SNMP-walk-on-lldpRemTable-when-missing-rem.patch
+new file mode 100644
+index 0000000..419031b
+--- /dev/null
++++ b/package/lldpd/0018-agent-fix-SNMP-walk-on-lldpRemTable-when-missing-rem.patch
+@@ -0,0 +1,155 @@
++From 351a4b1d149ac2d7445f3e7e7748dff345161817 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sat, 23 May 2020 14:32:39 +0200
++Subject: [PATCH 18/36] agent: fix SNMP walk on lldpRemTable when missing
++ remote sysName
++
++When enumerating lldpRemSysName (and some others), one row could have
++a NULL value because the remote system didn't provide a value. In this
++case, we should return the next row.
++
++There was already some code around that but it was not systematically
++used. Therefore, we fix the issue for lldpRemTable and
++lldpLocalSystemData. To ensure we catch future cases, we ensure
++helpers functions use `default: return NULL` when no missing value is
++allowed (no `break`, compiler would catch if it was the case) and
++therefore, we don't need to try next OID and `default: break` when a
++value may be missing and in this case, the caller should try next OID
++upon receiving NULL.
++
++Fix #392
++---
++ NEWS                                 |   2 ++
++ src/daemon/agent.c                   |  31 ++++++++++++++++---------------
++ tests/integration/conftest.py        |  11 +++++++++++
++ tests/integration/data/connectx.pcap | Bin 0 -> 112 bytes
++ tests/integration/requirements.txt   |   1 +
++ tests/integration/test_pcap.py       |  11 ++---------
++ tests/integration/test_snmp.py       |  31 ++++++++++++++++++++++++++++++-
++ 7 files changed, 62 insertions(+), 25 deletions(-)
++ create mode 100644 tests/integration/data/connectx.pcap
++
++diff --git a/NEWS b/NEWS
++index 2f3bc55..d883926 100644
++--- a/NEWS
+++++ b/NEWS
++@@ -1,6 +1,8 @@
++ lldpd (1.0.6)
++   * Fix:
++     + Do not loose chassis local information when interface status changes.
+++    + Fix SNMP walk on lldpRemTable when missing remote system
+++      name or description.
++   * Changes:
++     + Deprecate use of lldpctl_watch_callback(). Use
++       lldpctl_watch_callback2() instead.
++diff --git a/src/daemon/agent.c b/src/daemon/agent.c
++index 39560c2..2fd1a4a 100644
++--- a/src/daemon/agent.c
+++++ b/src/daemon/agent.c
++@@ -1048,22 +1048,29 @@ static u_char*
++ agent_h_local_chassis(struct variable *vp, oid *name, size_t *length,
++     int exact, size_t *var_len, WriteMethod **write_method)
++ {
+++	u_char *a;
+++
++ 	if (header_generic(vp, name, length, exact, var_len, write_method))
++ 		return NULL;
++ 
++-	return agent_v_chassis(vp, var_len, LOCAL_CHASSIS(scfg));
+++	if ((a = agent_v_chassis(vp, var_len, LOCAL_CHASSIS(scfg))) != NULL)
+++		return a;
+++	TRYNEXT(agent_h_local_chassis);
++ }
++ static u_char*
++ agent_h_remote_chassis(struct variable *vp, oid*name, size_t *length,
++     int exact, size_t *var_len, WriteMethod **write_method)
++ {
++ 	struct lldpd_port *port;
+++	u_char *a;
++ 
++ 	if ((port = header_tprindexed_table(vp, name, length,
++ 					    exact, var_len, write_method, 0)) == NULL)
++ 		return NULL;
++ 
++-	return agent_v_chassis(vp, var_len, port->p_chassis);
+++	if ((a = agent_v_chassis(vp, var_len, port->p_chassis)) != NULL)
+++		return a;
+++	TRYNEXT(agent_h_remote_chassis);
++ }
++ 
++ static u_char*
++@@ -1100,9 +1107,8 @@ agent_h_stats(struct variable *vp, oid *name, size_t *length,
++                 long_ret = hardware->h_ageout_cnt;
++ 		return (u_char *)&long_ret;
++ 	default:
++-		break;
+++		return NULL;
++         }
++-        return NULL;
++ }
++ 
++ #ifdef ENABLE_DOT1
++@@ -1114,9 +1120,8 @@ agent_v_vlan(struct variable *vp, size_t *var_len, struct lldpd_vlan *vlan)
++ 		*var_len = strlen(vlan->v_name);
++ 		return (u_char *)vlan->v_name;
++ 	default:
++-		break;
+++		return NULL;
++         }
++-        return NULL;	
++ }
++ static u_char*
++ agent_h_local_vlan(struct variable *vp, oid *name, size_t *length,
++@@ -1156,9 +1161,8 @@ agent_v_ppvid(struct variable *vp, size_t *var_len, struct lldpd_ppvid *ppvid)
++ 		long_ret = (ppvid->p_cap_status & LLDP_PPVID_CAP_ENABLED)?1:2;
++ 		return (u_char *)&long_ret;
++ 	default:
++-		break;
+++		return NULL;
++         }
++-        return NULL;	
++ }
++ static u_char*
++ agent_h_local_ppvid(struct variable *vp, oid *name, size_t *length,
++@@ -1194,14 +1198,13 @@ agent_v_pi(struct variable *vp, size_t *var_len, struct lldpd_pi *pi)
++ 		*var_len = pi->p_pi_len;
++ 		return (u_char *)pi->p_pi;
++ 	default:
++-		break;
+++		return NULL;
++         }
++-        return NULL;
++ }
++ static u_char*
++ agent_h_local_pi(struct variable *vp, oid *name, size_t *length,
++ 		 int exact, size_t *var_len, WriteMethod **write_method)
++-{	
+++{
++ 	struct lldpd_pi *pi;
++ 
++ 	if ((pi = header_ppiindexed_table(vp, name, length,
++@@ -1413,9 +1416,8 @@ agent_v_management(struct variable *vp, size_t *var_len, struct lldpd_mgmt *mgmt
++                 *var_len = sizeof(zeroDotZero);
++                 return (u_char*)zeroDotZero;
++ 	default:
++-		break;
+++		return NULL;
++         }
++-        return NULL;
++ }
++ static u_char*
++ agent_h_local_management(struct variable *vp, oid *name, size_t *length,
++@@ -1452,9 +1454,8 @@ agent_v_custom(struct variable *vp, size_t *var_len, struct lldpd_custom *custom
++ 		*var_len = custom->oui_info_len;
++ 		return (u_char *)custom->oui_info;
++ 	default:
++-		break;
+++		return NULL;
++         }
++-        return NULL;
++ }
++ static u_char*
++ agent_h_remote_custom(struct variable *vp, oid *name, size_t *length,
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0019-build-do-not-hardcode-cpp-invocation.patch b/package/lldpd/0019-build-do-not-hardcode-cpp-invocation.patch
+new file mode 100644
+index 0000000..8810e04
+--- /dev/null
++++ b/package/lldpd/0019-build-do-not-hardcode-cpp-invocation.patch
+@@ -0,0 +1,27 @@
++From d1b6636359a6efa79231a18926095ace23d3b1a3 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sat, 30 May 2020 23:52:39 +0200
++Subject: [PATCH 19/36] build: do not hardcode cpp invocation
++
++This needs to be overridable by using $(CPP) instead. Patch from
++Patrick McLean (Sony Interactive Entertainment Inc).
++---
++ src/daemon/Makefile.am | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/src/daemon/Makefile.am b/src/daemon/Makefile.am
++index 0d5f2f3..cc41a8a 100644
++--- a/src/daemon/Makefile.am
+++++ b/src/daemon/Makefile.am
++@@ -108,7 +108,7 @@ CLEANFILES    += syscall-names.h
++ syscall-names.h:
++ 	$(AM_V_GEN)
++ 	$(AM_V_at)echo "static const char *syscall_names[] = {" > $@ ;\
++-	echo "#include <sys/syscall.h>" | cpp -dM | grep '^#define __NR_' | \
+++	echo "#include <sys/syscall.h>" | $(CPP) -dM | grep '^#define __NR_' | \
++ 		LC_ALL=C sed -r -n -e 's/^\#define[ \t]+__NR_([a-z0-9_]+)[ \t]+([0-9]+)(.*)/ [\2] = "\1",/p' >> $@ ;\
++ 	echo "};" >> $@
++ nodist_liblldpd_la_SOURCES += syscall-names.h
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0020-build-ensure-build-process-stops-if-not-able-to-gene.patch b/package/lldpd/0020-build-ensure-build-process-stops-if-not-able-to-gene.patch
+new file mode 100644
+index 0000000..c7f8bec
+--- /dev/null
++++ b/package/lldpd/0020-build-ensure-build-process-stops-if-not-able-to-gene.patch
+@@ -0,0 +1,37 @@
++From b74e151dcfa98411abc354ab52a5e090c44a7e82 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sun, 31 May 2020 07:22:47 +0200
++Subject: [PATCH 20/36] build: ensure build process stops if not able to
++ generate syscall-names.h
++
++---
++ src/daemon/Makefile.am | 10 ++++++----
++ 1 file changed, 6 insertions(+), 4 deletions(-)
++
++diff --git a/src/daemon/Makefile.am b/src/daemon/Makefile.am
++index cc41a8a..740a058 100644
++--- a/src/daemon/Makefile.am
+++++ b/src/daemon/Makefile.am
++@@ -104,13 +104,15 @@ endif
++ # seccomp support
++ if USE_SECCOMP
++ BUILT_SOURCES += syscall-names.h
++-CLEANFILES    += syscall-names.h
+++CLEANFILES    += syscall-names.h syscall-names.h.tmp
++ syscall-names.h:
++ 	$(AM_V_GEN)
++-	$(AM_V_at)echo "static const char *syscall_names[] = {" > $@ ;\
++-	echo "#include <sys/syscall.h>" | $(CPP) -dM | grep '^#define __NR_' | \
+++	$(AM_V_at)echo "#include <sys/syscall.h>" | $(CPP) -dM > $@.tmp ;\
+++	echo "static const char *syscall_names[] = {" > $@ ;\
+++	grep '^#define __NR_' $@.tmp | \
++ 		LC_ALL=C sed -r -n -e 's/^\#define[ \t]+__NR_([a-z0-9_]+)[ \t]+([0-9]+)(.*)/ [\2] = "\1",/p' >> $@ ;\
++-	echo "};" >> $@
+++	echo "};" >> $@ ;\
+++	rm $@.tmp
++ nodist_liblldpd_la_SOURCES += syscall-names.h
++ liblldpd_la_SOURCES += priv-seccomp.c
++ liblldpd_la_CFLAGS  += @libseccomp_CFLAGS@
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0021-build-fix-syscall-names-extraction.patch b/package/lldpd/0021-build-fix-syscall-names-extraction.patch
+new file mode 100644
+index 0000000..fe04c4a
+--- /dev/null
++++ b/package/lldpd/0021-build-fix-syscall-names-extraction.patch
+@@ -0,0 +1,25 @@
++From f0659826050f3fe92e78987dbc1790c47e76eb98 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sun, 31 May 2020 07:23:42 +0200
++Subject: [PATCH 21/36] build: fix syscall names extraction
++
++---
++ src/daemon/Makefile.am | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/src/daemon/Makefile.am b/src/daemon/Makefile.am
++index 740a058..3e76449 100644
++--- a/src/daemon/Makefile.am
+++++ b/src/daemon/Makefile.am
++@@ -107,7 +107,7 @@ BUILT_SOURCES += syscall-names.h
++ CLEANFILES    += syscall-names.h syscall-names.h.tmp
++ syscall-names.h:
++ 	$(AM_V_GEN)
++-	$(AM_V_at)echo "#include <sys/syscall.h>" | $(CPP) -dM > $@.tmp ;\
+++	$(AM_V_at)echo "#include <sys/syscall.h>" | $(CPP) -dM - > $@.tmp ;\
++ 	echo "static const char *syscall_names[] = {" > $@ ;\
++ 	grep '^#define __NR_' $@.tmp | \
++ 		LC_ALL=C sed -r -n -e 's/^\#define[ \t]+__NR_([a-z0-9_]+)[ \t]+([0-9]+)(.*)/ [\2] = "\1",/p' >> $@ ;\
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0022-priv-fix-missing-semi-colon.patch b/package/lldpd/0022-priv-fix-missing-semi-colon.patch
+new file mode 100644
+index 0000000..891e3e9
+--- /dev/null
++++ b/package/lldpd/0022-priv-fix-missing-semi-colon.patch
+@@ -0,0 +1,25 @@
++From 262743857bb123678e6d7be54df030e22343bcb3 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sun, 31 May 2020 07:33:55 +0200
++Subject: [PATCH 22/36] priv: fix missing semi-colon
++
++---
++ src/daemon/priv.c | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/src/daemon/priv.c b/src/daemon/priv.c
++index 551cac1..05ee355 100644
++--- a/src/daemon/priv.c
+++++ b/src/daemon/priv.c
++@@ -256,7 +256,7 @@ asroot_iface_init()
++ 	must_read(PRIV_PRIVILEGED, &ifindex, sizeof(ifindex));
++ 	must_read(PRIV_PRIVILEGED, &name, sizeof(name));
++ 	name[sizeof(name) - 1] = '\0';
++-	must_read(PRIV_PRIVILEGED, &proto, sizeof(proto))
+++	must_read(PRIV_PRIVILEGED, &proto, sizeof(proto));
++ 
++ 	TRACE(LLDPD_PRIV_INTERFACE_INIT(name));
++ 	rc = asroot_iface_init_os(ifindex, name, &fd, proto);
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0027-build-add-lldpd.stp-to-CLEANFILES.patch b/package/lldpd/0027-build-add-lldpd.stp-to-CLEANFILES.patch
+new file mode 100644
+index 0000000..124f431
+--- /dev/null
++++ b/package/lldpd/0027-build-add-lldpd.stp-to-CLEANFILES.patch
+@@ -0,0 +1,25 @@
++From d21599d2e6fa08dcf4a0b49e0b9bc35c52311286 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sun, 31 May 2020 08:19:52 +0200
++Subject: [PATCH 27/36] build: add lldpd.stp to CLEANFILES
++
++---
++ src/daemon/Makefile.am | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/src/daemon/Makefile.am b/src/daemon/Makefile.am
++index 3e76449..42240a4 100644
++--- a/src/daemon/Makefile.am
+++++ b/src/daemon/Makefile.am
++@@ -133,7 +133,7 @@ endif
++ EXTRA_DIST = dtrace2systemtap.awk
++ if ENABLE_SYSTEMTAP
++ BUILT_SOURCES += probes.h
++-CLEANFILES    += probes.h
+++CLEANFILES    += probes.h lldpd.stp
++ probes.h: probes.d
++ 	$(AM_V_GEN)
++ 	$(AM_V_at)$(DTRACE) -C -h -s $< -o $@
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0028-doc-fix-wording-about-interface-exclusion.patch b/package/lldpd/0028-doc-fix-wording-about-interface-exclusion.patch
+new file mode 100644
+index 0000000..4d92f75
+--- /dev/null
++++ b/package/lldpd/0028-doc-fix-wording-about-interface-exclusion.patch
+@@ -0,0 +1,46 @@
++From 21a542b64563c19abf9f5a31829457e065168237 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Fri, 12 Jun 2020 07:41:21 +0200
++Subject: [PATCH 28/36] doc: fix wording about interface exclusion
++
++Reported in #398.
++---
++ src/client/lldpcli.8.in | 4 ++--
++ src/daemon/lldpd.8.in   | 4 ++--
++ 2 files changed, 4 insertions(+), 4 deletions(-)
++
++diff --git a/src/client/lldpcli.8.in b/src/client/lldpcli.8.in
++index 53f5b53..f5aa537 100644
++--- a/src/client/lldpcli.8.in
+++++ b/src/client/lldpcli.8.in
++@@ -275,9 +275,9 @@ option,
++ .Nm lldpd
++ will use all available physical interfaces. This option can use
++ wildcards. Several interfaces can be specified separated by commas.
++-It is also possible to blacklist an interface by suffixing it with an
+++It is also possible to blacklist an interface by prefixing it with an
++ exclamation mark. It is possible to whitelist an interface by
++-suffixing it with two exclamation marks. A whitelisted interface beats
+++prefixing it with two exclamation marks. A whitelisted interface beats
++ a blacklisted interfaces which beats a simple matched interface. For
++ example, with
++ .Em eth*,!eth1,!eth2
++diff --git a/src/daemon/lldpd.8.in b/src/daemon/lldpd.8.in
++index e504043..697514d 100644
++--- a/src/daemon/lldpd.8.in
+++++ b/src/daemon/lldpd.8.in
++@@ -209,9 +209,9 @@ option,
++ .Nm
++ will use all available physical interfaces. This option can use
++ wildcards. Several interfaces can be specified separated by commas.
++-It is also possible to blacklist an interface by suffixing it with an
+++It is also possible to blacklist an interface by prefixing it with an
++ exclamation mark. It is possible to whitelist an interface by
++-suffixing it with two exclamation marks. A whitelisted interface beats
+++prefixing it with two exclamation marks. A whitelisted interface beats
++ a blacklisted interface which beats a simple matched interface. For
++ example, with
++ .Em eth*,!eth1,!eth2
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0029-netlink-make-no-name-no-address-message-a-debug-mess.patch b/package/lldpd/0029-netlink-make-no-name-no-address-message-a-debug-mess.patch
+new file mode 100644
+index 0000000..33b6e97
+--- /dev/null
++++ b/package/lldpd/0029-netlink-make-no-name-no-address-message-a-debug-mess.patch
+@@ -0,0 +1,29 @@
++From 79d65340b35b7335b27bb9e8379efc441cc53035 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Fri, 12 Jun 2020 20:05:46 +0200
++Subject: [PATCH 29/36] netlink: make "no name/no address" message a debug
++ message
++
++It seems it can happen on WLAN interfaces during AAA.
++
++Fix #398
++---
++ src/daemon/netlink.c | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/src/daemon/netlink.c b/src/daemon/netlink.c
++index f75dceb..2c04252 100644
++--- a/src/daemon/netlink.c
+++++ b/src/daemon/netlink.c
++@@ -385,7 +385,7 @@ netlink_parse_link(struct nlmsghdr *msg,
++ 		}
++ 	}
++ 	if (!iff->name || !iff->address) {
++-		log_info("netlink", "interface %d does not have a name or an address, skip",
+++		log_debug("netlink", "interface %d does not have a name or an address, skip",
++ 		    iff->index);
++ 		return -1;
++ 	}
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0030-code-remove-use-of-blacklist-whitelist.patch b/package/lldpd/0030-code-remove-use-of-blacklist-whitelist.patch
+new file mode 100644
+index 0000000..ecc7627
+--- /dev/null
++++ b/package/lldpd/0030-code-remove-use-of-blacklist-whitelist.patch
+@@ -0,0 +1,341 @@
++From 28fb48859cd2bd664f86da95f95a3585a7ade100 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Sat, 27 Jun 2020 10:20:55 +0200
++Subject: [PATCH 30/36] code: remove use of blacklist/whitelist
++
++Use allowlist and denylist and adapt the documentation.
++---
++ src/client/lldpcli.8.in         | 10 +++++-----
++ src/daemon/interfaces-bsd.c     |  8 ++++----
++ src/daemon/interfaces-linux.c   | 12 ++++++------
++ src/daemon/interfaces-solaris.c |  2 +-
++ src/daemon/interfaces.c         |  8 ++++----
++ src/daemon/lldpd.8.in           | 12 ++++++------
++ src/daemon/lldpd.h              |  4 ++--
++ src/daemon/pattern.c            | 22 +++++++++++-----------
++ tests/check_pattern.c           | 16 ++++++++--------
++ 9 files changed, 47 insertions(+), 47 deletions(-)
++
++diff --git a/src/client/lldpcli.8.in b/src/client/lldpcli.8.in
++index f5aa537..08b25d8 100644
++--- a/src/client/lldpcli.8.in
+++++ b/src/client/lldpcli.8.in
++@@ -275,10 +275,10 @@ option,
++ .Nm lldpd
++ will use all available physical interfaces. This option can use
++ wildcards. Several interfaces can be specified separated by commas.
++-It is also possible to blacklist an interface by prefixing it with an
++-exclamation mark. It is possible to whitelist an interface by
++-prefixing it with two exclamation marks. A whitelisted interface beats
++-a blacklisted interfaces which beats a simple matched interface. For
+++It is also possible to remove an interface by prefixing it with an
+++exclamation mark. It is possible to allow an interface by
+++prefixing it with two exclamation marks. An allowed interface beats
+++a forbidden interfaces which beats a simple matched interface. For
++ example, with
++ .Em eth*,!eth1,!eth2
++ .Nm lldpd
++@@ -389,7 +389,7 @@ Without this option, the first IPv4 and the first IPv6 are used. If an
++ exact IP address is provided, it is used as a management address
++ without any check. If only negative patterns are provided, only one
++ IPv4 and one IPv6 addresses are chosen. Otherwise, many of them can be
++-selected. If you want to blacklist IPv6 addresses, you can use
+++selected. If you want to remove IPv6 addresses, you can use
++ .Em !*:* .
++ If an interface name is matched, the first IPv4 address and the first
++ IPv6 address associated to this interface will be chosen.
++diff --git a/src/daemon/interfaces-bsd.c b/src/daemon/interfaces-bsd.c
++index ee35fc2..e8c9303 100644
++--- a/src/daemon/interfaces-bsd.c
+++++ b/src/daemon/interfaces-bsd.c
++@@ -331,12 +331,12 @@ ifbsd_check_physical(struct lldpd *cfg,
++ 	iface->type |= IFACE_PHYSICAL_T;
++ }
++ 
++-/* Blacklist any dangerous interface. Currently, only p2p0 is blacklisted as it
+++/* Remove any dangerous interface. Currently, only p2p0 is removed as it
++  * triggers some AirDrop functionality when we send something on it.
++  *  See: https://github.com/vincentbernat/lldpd/issues/61
++  */
++ static void
++-ifbsd_blacklist(struct lldpd *cfg,
+++ifbsd_denylist(struct lldpd *cfg,
++     struct interfaces_device_list *interfaces)
++ {
++ #ifdef HOST_OS_OSX
++@@ -665,8 +665,8 @@ interfaces_update(struct lldpd *cfg)
++ 		ifbsd_check_physical(cfg, interfaces, iface);
++ 	}
++ 
++-	ifbsd_blacklist(cfg, interfaces);
++-	interfaces_helper_whitelist(cfg, interfaces);
+++	ifbsd_denylist(cfg, interfaces);
+++	interfaces_helper_allowlist(cfg, interfaces);
++ 	interfaces_helper_physical(cfg, interfaces,
++ 	    &bpf_ops, ifbpf_phys_init);
++ #ifdef ENABLE_DOT1
++diff --git a/src/daemon/interfaces-linux.c b/src/daemon/interfaces-linux.c
++index c9e1647..72863f9 100644
++--- a/src/daemon/interfaces-linux.c
+++++ b/src/daemon/interfaces-linux.c
++@@ -952,9 +952,9 @@ iflinux_add_physical(struct lldpd *cfg,
++     struct interfaces_device_list *interfaces)
++ {
++ 	struct interfaces_device *iface;
++-	/* Blacklist some drivers */
+++	/* Deny some drivers */
++ 	const char * const *rif;
++-	const char * const blacklisted_drivers[] = {
+++	const char * const denied_drivers[] = {
++ 		"cdc_mbim",
++ 		"vxlan",
++ 		NULL
++@@ -975,12 +975,12 @@ iflinux_add_physical(struct lldpd *cfg,
++ 			continue;
++ 		}
++ 
++-		/* Check if the driver is not blacklisted */
+++		/* Check if the driver is not denied */
++ 		if (iface->driver) {
++ 			int skip = 0;
++-			for (rif = blacklisted_drivers; *rif; rif++) {
+++			for (rif = denied_drivers; *rif; rif++) {
++ 				if (strcmp(iface->driver, *rif) == 0) {
++-					log_debug("interfaces", "skip %s: blacklisted driver",
+++					log_debug("interfaces", "skip %s: denied driver",
++ 					    iface->name);
++ 					skip = 1;
++ 					break;
++@@ -1029,7 +1029,7 @@ interfaces_update(struct lldpd *cfg)
++ 	iflinux_add_vlan(cfg, interfaces);
++ 	iflinux_add_physical(cfg, interfaces);
++ 
++-	interfaces_helper_whitelist(cfg, interfaces);
+++	interfaces_helper_allowlist(cfg, interfaces);
++ #ifdef ENABLE_OLDIES
++ 	iflinux_handle_bond(cfg, interfaces);
++ #endif
++diff --git a/src/daemon/interfaces-solaris.c b/src/daemon/interfaces-solaris.c
++index f9d8bc5..fd61d38 100644
++--- a/src/daemon/interfaces-solaris.c
+++++ b/src/daemon/interfaces-solaris.c
++@@ -161,7 +161,7 @@ interfaces_update(struct lldpd *cfg) {
++ 	for (int n = 0; n < num; n++, lifrp++)
++ 		ifsolaris_extract(cfg, interfaces, addresses, lifrp);
++ 
++-	interfaces_helper_whitelist(cfg, interfaces);
+++	interfaces_helper_allowlist(cfg, interfaces);
++ 	interfaces_helper_physical(cfg, interfaces,
++ 	    &bpf_ops, ifbpf_phys_init);
++ 	interfaces_helper_mgmt(cfg, addresses, interfaces);
++diff --git a/src/daemon/interfaces.c b/src/daemon/interfaces.c
++index b9521f6..df7d55b 100644
++--- a/src/daemon/interfaces.c
+++++ b/src/daemon/interfaces.c
++@@ -177,7 +177,7 @@ interfaces_indextointerface(struct interfaces_device_list *interfaces,
++ }
++ 
++ void
++-interfaces_helper_whitelist(struct lldpd *cfg,
+++interfaces_helper_allowlist(struct lldpd *cfg,
++     struct interfaces_device_list *interfaces)
++ {
++ 	struct interfaces_device *iface;
++@@ -189,11 +189,11 @@ interfaces_helper_whitelist(struct lldpd *cfg,
++ 		int m = pattern_match(iface->name, cfg->g_config.c_iface_pattern, 0);
++ 		switch (m) {
++ 		case 0:
++-			log_debug("interfaces", "blacklist %s", iface->name);
+++			log_debug("interfaces", "deny %s", iface->name);
++ 			iface->ignore = 1;
++ 			continue;
++ 		case 2:
++-			log_debug("interfaces", "whitelist %s (consider it as a physical interface)",
+++			log_debug("interfaces", "allow %s (consider it as a physical interface)",
++ 			    iface->name);
++ 			iface->type |= IFACE_PHYSICAL_T;
++ 			continue;
++@@ -411,7 +411,7 @@ interfaces_helper_chassis(struct lldpd *cfg,
++ 
++ /* Add management addresses for the given family. We only take one of each
++    address family, unless a pattern is provided and is not all negative. For
++-   example !*:*,!10.* will only blacklist addresses. We will pick the first IPv4
+++   example !*:*,!10.* will only deny addresses. We will pick the first IPv4
++    address not matching 10.*.
++ */
++ static int
++diff --git a/src/daemon/lldpd.8.in b/src/daemon/lldpd.8.in
++index 697514d..a0f188e 100644
++--- a/src/daemon/lldpd.8.in
+++++ b/src/daemon/lldpd.8.in
++@@ -196,7 +196,7 @@ Without this option, the first IPv4 and the first IPv6 are used. If an
++ exact IP address is provided, it is used as a management address
++ without any check. If only negative patterns are provided, only one
++ IPv4 and one IPv6 addresses are chosen. Otherwise, many of them can be
++-selected. If you want to blacklist IPv6 addresses, you can use
+++selected. If you want to remove IPv6 addresses, you can use
++ .Em !*:* .
++ If an interface name is matched, the first IPv4 address and the first
++ IPv6 address associated to this interface will be chosen.
++@@ -209,10 +209,10 @@ option,
++ .Nm
++ will use all available physical interfaces. This option can use
++ wildcards. Several interfaces can be specified separated by commas.
++-It is also possible to blacklist an interface by prefixing it with an
++-exclamation mark. It is possible to whitelist an interface by
++-prefixing it with two exclamation marks. A whitelisted interface beats
++-a blacklisted interface which beats a simple matched interface. For
+++It is also possible to remove an interface by prefixing it with an
+++exclamation mark. It is possible to allow an interface by
+++prefixing it with two exclamation marks. An allowed interface beats
+++a forbidden interface which beats a simple matched interface. For
++ example, with
++ .Em eth*,!eth1,!eth2
++ .Nm
++@@ -241,7 +241,7 @@ to compute the chassis ID. The logic of this option is the same as for
++ .Fl I
++ flag: you can exclude interfaces with an exclamation mark and use
++ globbing to specify several interfaces. If all interfaces are
++-blacklisted (with
+++removed (with
++ .Em !* ) ,
++ the system name is used as a chassis ID instead.
++ .It Fl M Ar class
++diff --git a/src/daemon/lldpd.h b/src/daemon/lldpd.h
++index 3dad7dc..98977ed 100644
++--- a/src/daemon/lldpd.h
+++++ b/src/daemon/lldpd.h
++@@ -314,7 +314,7 @@ struct interfaces_device {
++ 	char *name;		/* Name */
++ 	char *alias;		/* Alias */
++ 	char *address;		/* MAC address */
++-	char *driver;		/* Driver (for whitelisting purpose) */
+++	char *driver;		/* Driver */
++ 	int   flags;		/* Flags (IFF_*) */
++ 	int   mtu;		/* MTU */
++ 	int   type;		/* Type (see IFACE_*_T) */
++@@ -353,7 +353,7 @@ struct interfaces_device* interfaces_nametointerface(
++ 
++ void interfaces_helper_promisc(struct lldpd *,
++     struct lldpd_hardware *);
++-void interfaces_helper_whitelist(struct lldpd *,
+++void interfaces_helper_allowlist(struct lldpd *,
++     struct interfaces_device_list *);
++ void interfaces_helper_chassis(struct lldpd *,
++     struct interfaces_device_list *);
++diff --git a/src/daemon/pattern.c b/src/daemon/pattern.c
++index 11e69a8..a13817b 100644
++--- a/src/daemon/pattern.c
+++++ b/src/daemon/pattern.c
++@@ -26,18 +26,18 @@
++  * @param string   String to match against the list of patterns
++  * @param patterns List of comma separated patterns. A pattern may
++  *                 begin by `!` to negate it. In this case, it is
++- *                 blacklisted. A pattern may begin with `!!`. In this
++- *                 case, it is whitelisted. Each pattern will then be
+++ *                 denied. A pattern may begin with `!!`. In this
+++ *                 case, it is allowed back. Each pattern will then be
++  *                 matched against `fnmatch()` function.
++  * @param found    Value to return if the pattern isn't found. Should be either 0
++  *                 or 1.
++  *
++- * If a pattern is found matching and blacklisted at the same time, it
++- * will be blacklisted. If it is both whitelisted and blacklisted, it
++- * will be whitelisted.
+++ * If a pattern is found matching and denied at the same time, it
+++ * will be denied. If it is both allowed and denied, it
+++ * will be allowed.
++  *
++- * @return 0 if the string matches a blacklisted pattern which is not
++- *         whitelisted or if the pattern wasn't found and `found` was set to
+++ * @return 0 if the string matches a denied pattern which is not
+++ *         allowed or if the pattern wasn't found and `found` was set to
++  *         0. Otherwise, return 1 unless the interface match is exact, in this
++  *         case return 2.
++  */
++@@ -45,7 +45,7 @@ int
++ pattern_match(char *string, char *patterns, int found)
++ {
++ 	char *pattern;
++-	int blacklisted = 0;
+++	int denied = 0;
++ 	found = !!found;
++ 
++ 	if ((patterns = strdup(patterns)) == NULL) {
++@@ -58,15 +58,15 @@ pattern_match(char *string, char *patterns, int found)
++ 	     pattern = strtok(NULL, ",")) {
++ 		if ((pattern[0] == '!') && (pattern[1] == '!') &&
++ 		    (fnmatch(pattern + 2, string, 0) == 0)) {
++-			/* Whitelisted. No need to search further. */
+++			/* Allowed. No need to search further. */
++ 			found = (strcmp(pattern + 2, string))?1:2;
++ 			break;
++ 		}
++ 		if ((pattern[0] == '!') &&
++ 		    (fnmatch(pattern + 1, string, 0) == 0)) {
++-			blacklisted = 1;
+++			denied = 1;
++ 			found = 0;
++-		} else if (!blacklisted && fnmatch(pattern, string, 0) == 0) {
+++		} else if (!denied && fnmatch(pattern, string, 0) == 0) {
++ 			if (!strcmp(pattern, string)) {
++ 				found = 2;
++ 			} else if (found < 2) {
++diff --git a/tests/check_pattern.c b/tests/check_pattern.c
++index 197c228..8d332de 100644
++--- a/tests/check_pattern.c
+++++ b/tests/check_pattern.c
++@@ -59,7 +59,7 @@ START_TEST(test_match_list_with_wildcards) {
++ }
++ END_TEST
++ 
++-START_TEST(test_simple_blacklist) {
+++START_TEST(test_simple_denylist) {
++ 	ck_assert_int_eq(pattern_match("eth0", "!eth0", 0), 0);
++ 	ck_assert_int_eq(pattern_match("eth0", "!eth0", 1), 0);
++ 	ck_assert_int_eq(pattern_match("eth1", "!eth0", 0), 0);
++@@ -67,7 +67,7 @@ START_TEST(test_simple_blacklist) {
++ }
++ END_TEST
++ 
++-START_TEST(test_match_and_blacklist) {
+++START_TEST(test_match_and_denylist) {
++ 	ck_assert_int_eq(pattern_match("eth0", "eth0,!eth0", 0), 0);
++ 	ck_assert_int_eq(pattern_match("eth0", "eth0,!eth0", 1), 0);
++ 	ck_assert_int_eq(pattern_match("eth1", "eth0,!eth0", 0), 0);
++@@ -75,7 +75,7 @@ START_TEST(test_match_and_blacklist) {
++ }
++ END_TEST
++ 
++-START_TEST(test_blacklist_wildcard) {
+++START_TEST(test_denylist_wildcard) {
++ 	ck_assert_int_eq(pattern_match("eth0", "!eth*", 0), 0);
++ 	ck_assert_int_eq(pattern_match("eth0", "!eth*", 1), 0);
++ 	ck_assert_int_eq(pattern_match("eth1", "!eth*", 0), 0);
++@@ -87,7 +87,7 @@ START_TEST(test_blacklist_wildcard) {
++ }
++ END_TEST
++ 
++-START_TEST(test_whitelist) {
+++START_TEST(test_allowlist) {
++ 	ck_assert_int_eq(pattern_match("eth0", "!!eth0", 0), 2);
++ 	ck_assert_int_eq(pattern_match("eth0", "!!eth0", 1), 2);
++ 	ck_assert_int_eq(pattern_match("eth1", "!!eth0", 1), 1);
++@@ -117,10 +117,10 @@ pattern_suite(void)
++ 	tcase_add_test(tc_pattern, test_wildcard);
++ 	tcase_add_test(tc_pattern, test_match_list);
++ 	tcase_add_test(tc_pattern, test_match_list_with_wildcards);
++-	tcase_add_test(tc_pattern, test_simple_blacklist);
++-	tcase_add_test(tc_pattern, test_match_and_blacklist);
++-	tcase_add_test(tc_pattern, test_blacklist_wildcard);
++-	tcase_add_test(tc_pattern, test_whitelist);
+++	tcase_add_test(tc_pattern, test_simple_denylist);
+++	tcase_add_test(tc_pattern, test_match_and_denylist);
+++	tcase_add_test(tc_pattern, test_denylist_wildcard);
+++	tcase_add_test(tc_pattern, test_allowlist);
++ 	suite_add_tcase(s, tc_pattern);
++ 
++ 	return s;
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0034-lib-remove-limit-on-system-description-length.patch b/package/lldpd/0034-lib-remove-limit-on-system-description-length.patch
+new file mode 100644
+index 0000000..9e3e16e
+--- /dev/null
++++ b/package/lldpd/0034-lib-remove-limit-on-system-description-length.patch
+@@ -0,0 +1,41 @@
++From 78243478dcec865486b387cf361783dc137015b5 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Tue, 14 Jul 2020 07:16:47 +0200
++Subject: [PATCH 34/36] lib: remove limit on system description length
++
++The limit was introduced in 9c49cedf8e75 while fixing a memory leak.
++The state data is used to ensure we don't interleave operations. We
++need to handle the case where the value is truncated because it is
++larger than the allocated size.
++
++Fix #408.
++---
++ src/lib/atom.c                    | 4 ++--
++ tests/integration/test_lldpcli.py | 6 ++++++
++ 2 files changed, 8 insertions(+), 2 deletions(-)
++
++diff --git a/src/lib/atom.c b/src/lib/atom.c
++index 39ea5f8..55a1b67 100644
++--- a/src/lib/atom.c
+++++ b/src/lib/atom.c
++@@ -331,7 +331,7 @@ _lldpctl_do_something(lldpctl_conn_t *conn,
++ 			conn->state_data[0] = 0;
++ 	}
++ 	if (conn->state == state_send &&
++-	    (state_data == NULL || !strncmp(conn->state_data, state_data, sizeof(conn->state_data)))) {
+++	    (state_data == NULL || !strncmp(conn->state_data, state_data, sizeof(conn->state_data) - 1))) {
++ 		/* We need to send the currently built message */
++ 		rc = lldpctl_send(conn);
++ 		if (rc < 0)
++@@ -339,7 +339,7 @@ _lldpctl_do_something(lldpctl_conn_t *conn,
++ 		conn->state = state_recv;
++ 	}
++ 	if (conn->state == state_recv &&
++-	    (state_data == NULL || !strncmp(conn->state_data, state_data, sizeof(conn->state_data)))) {
+++	    (state_data == NULL || !strncmp(conn->state_data, state_data, sizeof(conn->state_data) - 1))) {
++ 		/* We need to receive the answer */
++ 		while ((rc = ctl_msg_recv_unserialized(&conn->input_buffer,
++ 			    &conn->input_buffer_len,
++-- 
++2.7.4
++
+diff --git a/package/lldpd/0035-doc-add-a-NEWS-entry-for-latest-commit.patch b/package/lldpd/0035-doc-add-a-NEWS-entry-for-latest-commit.patch
+new file mode 100644
+index 0000000..638409c
+--- /dev/null
++++ b/package/lldpd/0035-doc-add-a-NEWS-entry-for-latest-commit.patch
+@@ -0,0 +1,24 @@
++From dd657388f91ae14c52aefc9a45c71ca6f63e2533 Mon Sep 17 00:00:00 2001
++From: Vincent Bernat <vincent@bernat.ch>
++Date: Tue, 14 Jul 2020 11:01:57 +0200
++Subject: [PATCH 35/36] doc: add a NEWS entry for latest commit
++
++---
++ NEWS | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/NEWS b/NEWS
++index 933ff19..86794e1 100644
++--- a/NEWS
+++++ b/NEWS
++@@ -3,6 +3,7 @@ lldpd (1.0.6)
++     + Do not loose chassis local information when interface status changes.
++     + Fix SNMP walk on lldpRemTable when missing remote system
++       name or description.
+++    + Remove length limitation on system description and platform.
++   * Changes:
++     + Deprecate use of lldpctl_watch_callback(). Use
++       lldpctl_watch_callback2() instead.
++-- 
++2.7.4
++
+-- 
+2.7.4
+

@@ -1528,6 +1528,17 @@ appropriate way, before the respective service is started.
 
 	For details please refer to the @ref{VLANs Configuration}
 
+@item CONFIG_VLANS_PORT@i{xx}_LLDP_TX_VID
+@itemx CONFIG_VLANS_PORT@i{xx}_LLDP_TX_PRIO
+
+  Notify lldpd which VLAN shall it use for sending LLDP frames.
+  Incoming LLDP frames are accepted on all VLANs.
+  This parameter is available for @t{MODE_TRUNK}, @t{MODE_DISABLED} and
+  @t{MODE_UNQUALIFIED} modes. 
+  The range of a valid VID is from 0 to 4094.
+  @t{VLANS_PORTxx_LLDP_TX_PRIO} defines the priority to be inserted into
+  a VLAN tag of LLDP frames sent by lldpd.
+
 @item CONFIG_VLANS_RAW_PORT_CONFIG
 
   Expert mode. Allow to control all VLAN parameters (CONFIG_VLANS_PORT@i{xx}_PTP_VID,

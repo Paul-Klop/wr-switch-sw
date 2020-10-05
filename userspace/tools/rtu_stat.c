@@ -975,7 +975,7 @@ int main(int argc, char **argv)
 	{
 		if (!rtu_htab_local[i].valid)
 			continue;
-		printf("%-25s %-12s %2d          %-7s (hash %03x:%x)   ",
+		printf("%-25s %-12s %4d        %-7s (hash %03x:%x)   ",
 			mac_to_buffer(rtu_htab_local[i].mac, mac_buf),
 			decode_ports(rtu_htab_local[i].port_mask_dst, nports),
 			rtu_htab_local[i].fid,

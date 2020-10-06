@@ -1,14 +1,14 @@
-From f6ac6fde47cedd2b0a92412b39f9b9a014d637a7 Mon Sep 17 00:00:00 2001
-From: Adam Wujek <adam.wujek@cern.ch>
-Date: Tue, 4 Sep 2018 10:48:30 +0200
-Subject: [PATCH] add libkrb5
+From 7c6cef81955d9cefe9efb132af5f9d5f0c6ec9c1 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Oct 2020 06:33:39 +0200
+Subject: [PATCH 10/22] add libkrb5
 
-Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
 ---
  package/Config.in            |  1 +
- package/libkrb5/Config.in    | 18 ++++++++++++++++
- package/libkrb5/libkrb5.hash |  5 +++++
- package/libkrb5/libkrb5.mk   | 59 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ package/libkrb5/Config.in    | 18 ++++++++++++++
+ package/libkrb5/libkrb5.hash |  5 ++++
+ package/libkrb5/libkrb5.mk   | 59 ++++++++++++++++++++++++++++++++++++++++++++
  4 files changed, 83 insertions(+)
  create mode 100644 package/libkrb5/Config.in
  create mode 100644 package/libkrb5/libkrb5.hash
@@ -127,5 +127,5 @@ index 0000000..d9d7160
 +
 +$(eval $(autotools-package))
 -- 
-1.9.1
+2.1.4
 

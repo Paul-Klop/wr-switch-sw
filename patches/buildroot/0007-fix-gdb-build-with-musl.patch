@@ -1,5 +1,19 @@
---- ./package/gdb/7.9.1/0007-move-__SIGRTMIN.patch.orig	2017-01-13 12:28:21.690620042 +0100
-+++ ./package/gdb/7.9.1/0007-move-__SIGRTMIN.patch	2017-01-13 12:28:10.544619626 +0100
+From 216ff083f3d268847356233804cafc43441fc301 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Oct 2020 06:28:48 +0200
+Subject: [PATCH 07/22] fix gdb build with musl
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ package/gdb/7.9.1/0007-move-__SIGRTMIN.patch | 58 ++++++++++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
+ create mode 100644 package/gdb/7.9.1/0007-move-__SIGRTMIN.patch
+
+diff --git a/package/gdb/7.9.1/0007-move-__SIGRTMIN.patch b/package/gdb/7.9.1/0007-move-__SIGRTMIN.patch
+new file mode 100644
+index 0000000..38ba1f0
+--- /dev/null
++++ b/package/gdb/7.9.1/0007-move-__SIGRTMIN.patch
 @@ -0,0 +1,58 @@
 +From 682b25469e66ea45b214e95962671373983c118f Mon Sep 17 00:00:00 2001
 +From: Doug Evans <dje@google.com>
@@ -59,3 +73,6 @@
 +-- 
 +1.9.4
 +
+-- 
+2.1.4
+

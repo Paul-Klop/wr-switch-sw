@@ -133,8 +133,9 @@ char *decode_ports(int dpm, int nports)
 void show_help(char *prgname)
 {
 	fprintf(stderr, "usage: %s <command> <values>\n", prgname);
-	fprintf(stderr, "   help:             Show this message\n");
-	fprintf(stderr, "   list:             List the routing table (same as empty command)\n");
+	fprintf(stderr, "   help:              Show this message\n");
+	fprintf(stderr, "   list:              List the routing table (same as empty command)\n");
+	fprintf(stderr, "   list shmem <path>: List the routing table read from shmem at a given directory\n");
 	fprintf(stderr, "   remove all <port> [<type>]: Remove all RTU entries for the given port\n"
 			"                               with an optional type (default %d-dynamic)\n",
 			RTU_ENTRY_TYPE_DYNAMIC);
@@ -536,6 +537,17 @@ int main(int argc, char **argv)
 	int vid;
 	int enable;
 	uint32_t mask;
+
+	/* change of a path to shmem has to be done before openning shmem */
+	if (argc >= 4
+	    && !strcmp(argv[1], "list")
+	    && !strcmp(argv[2], "shmem")) {
+		printf("set shmem path to: %s\n", argv[3]);
+		wrs_shm_set_path(argv[3]);
+		/* ignore WRS_SHM_LOCKED flag (don't check if process
+		    * is alive) */
+		wrs_shm_ignore_flag_locked(1);
+	}
 
 	nports = get_nports_from_hal();
 

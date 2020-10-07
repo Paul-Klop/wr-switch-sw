@@ -1,5 +1,9 @@
 -include ../Makefile.specific
 
+# include Makefile for bridge mib
+BRIDGE_MIB_DIR:=bridge_mib
+include ${BRIDGE_MIB_DIR}/Makefile
+
 # if BRVER not defined use a wildcard
 BRVER?=2*
 SNMP_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-$(BRVER))
@@ -62,6 +66,7 @@ SOURCES = \
 	wrsPtpDataTable.c \
 	wrsPortStatusTable.c \
 	wrsPtpInstanceTable.c \
+	$(BRIDGE_MIB_SRCS) \
 	init.c \
 	$(PPSI_SOURCES)
 	

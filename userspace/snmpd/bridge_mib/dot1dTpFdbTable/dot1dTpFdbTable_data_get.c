@@ -10,6 +10,9 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
+
 /* include our parent header */
 #include "dot1dTpFdbTable.h"
 
@@ -243,35 +246,19 @@ dot1dTpFdbStatus_map(u_long *mib_dot1dTpFdbStatus_val_ptr, u_long raw_dot1dTpFdb
     netsnmp_assert(NULL != mib_dot1dTpFdbStatus_val_ptr);
     
     DEBUGMSGTL(("verbose:dot1dTpFdbTable:dot1dTpFdbStatus_map","called\n"));
-    
-    /*
-     * TODO:241:o: |-> Implement dot1dTpFdbStatus enum mapping.
-     * uses INTERNAL_* macros defined in the header files
-     */
+
     switch(raw_dot1dTpFdbStatus_val) {
-        case INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_OTHER:
-             *mib_dot1dTpFdbStatus_val_ptr = DOT1DTPFDBSTATUS_OTHER;
-             break;
-
-        case INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_INVALID:
-             *mib_dot1dTpFdbStatus_val_ptr = DOT1DTPFDBSTATUS_INVALID;
-             break;
-
-        case INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_LEARNED:
+        case RTU_ENTRY_TYPE_DYNAMIC:
              *mib_dot1dTpFdbStatus_val_ptr = DOT1DTPFDBSTATUS_LEARNED;
              break;
 
-        case INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_SELF:
-             *mib_dot1dTpFdbStatus_val_ptr = DOT1DTPFDBSTATUS_SELF;
-             break;
-
-        case INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_MGMT:
+        case RTU_ENTRY_TYPE_STATIC:
              *mib_dot1dTpFdbStatus_val_ptr = DOT1DTPFDBSTATUS_MGMT;
              break;
 
-             default:
-                 snmp_log(LOG_ERR, "couldn't map value %ld for dot1dTpFdbStatus\n", raw_dot1dTpFdbStatus_val );
-                 return MFD_ERROR;
+         default:
+             *mib_dot1dTpFdbStatus_val_ptr = DOT1DTPFDBSTATUS_OTHER;
+             break;
     }
 
     return MFD_SUCCESS;

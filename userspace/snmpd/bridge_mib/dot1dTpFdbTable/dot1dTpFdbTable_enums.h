@@ -49,18 +49,6 @@ extern "C" {
 
 #endif /* DOT1DTPFDBSTATUS_ENUMS */
 
-    /*
-     * TODO:140:o: Define your interal representation of dot1dTpFdbStatus enums.
-     * (used for value mapping; see notes at top of file)
-     */
-#define INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_OTHER  1 
-#define INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_INVALID  2 
-#define INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_LEARNED  3 
-#define INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_SELF  4 
-#define INTERNAL_DOT1DTPFDBTABLE_DOT1DTPFDBSTATUS_MGMT  5 
-
-
-
 
 #ifdef __cplusplus
 }

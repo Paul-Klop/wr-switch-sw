@@ -1006,7 +1006,7 @@ int main(int argc, char **argv)
 		     && (vlan_tab_local[i].port_mask == 0x0))
 			continue;
 
-		printf("%4d   %4d      0x%8x    ", i, vlan_tab_local[i].fid,
+		printf("%4d   %4d      0x%08x    ", i, vlan_tab_local[i].fid,
 		       vlan_tab_local[i].port_mask);
 		if (vlan_tab_local[i].drop == 0)
 			printf("NO ");

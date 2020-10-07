@@ -13,6 +13,8 @@
 /* include our parent header */
 #include "dot1qFdbTable.h"
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
 
 #include "dot1qFdbTable_data_access.h"
 
@@ -213,122 +215,66 @@ dot1qFdbTable_container_load(netsnmp_container *container)
         /*
          * dot1qFdbId(1)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/r/d/h
          */
-   u_long   dot1qFdbId;
+    u_long   dot1qFdbId = 0;
 
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
+    int vlans_in_fids_counters[NUM_VLANS];
+
+    u_long i;
 
     DEBUGMSGTL(("verbose:dot1qFdbTable:dot1qFdbTable_container_load","called\n"));
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    if (0 != shmem_rtu_read_vlans(vlan_tab_local)) {
+	return MFD_RESOURCE_UNAVAILABLE;
     }
 
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1qFdbTable container.
-     * loop over your dot1qFdbTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
+    memset(vlans_in_fids_counters, 0, NUM_VLANS*sizeof(int));
+    /* Count number of vlans per fid */
+    for (i = 0; i < NUM_VLANS; i++) {
+	/* skip empty entires */
+	if ((vlan_tab_local[i].drop != 0)
+	    && (vlan_tab_local[i].port_mask == 0x0))
+		continue;
 
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
-
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-
-        /*
-         * TODO:352:M: |   |-> set indexes in new dot1qFdbTable rowreq context.
-         * data context will be set from the param (unless NULL,
-         *      in which case a new data context will be allocated)
-         */
-        rowreq_ctx = dot1qFdbTable_allocate_rowreq_ctx(NULL);
-        if (NULL == rowreq_ctx) {
-            snmp_log(LOG_ERR, "memory allocation failed\n");
-            return MFD_RESOURCE_UNAVAILABLE;
-        }
-        if(MFD_SUCCESS != dot1qFdbTable_indexes_set(rowreq_ctx
-                               , dot1qFdbId
-               )) {
-            snmp_log(LOG_ERR,"error setting index while loading "
-                     "dot1qFdbTable data.\n");
-            dot1qFdbTable_release_rowreq_ctx(rowreq_ctx);
-            continue;
-        }
-
-        /*
-         * TODO:352:r: |   |-> populate dot1qFdbTable data context.
-         * Populate data context here. (optionally, delay until row prep)
-         */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for dot1qFdbDynamicCount
-     * dot1qFdbDynamicCount(2)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.dot1qFdbDynamicCount = dot1qFdbDynamicCount;
-    
-        
-        /*
-         * insert into table container
-         */
-        CONTAINER_INSERT(container, rowreq_ctx);
-        ++count;
+	vlans_in_fids_counters[vlan_tab_local[i].fid]++;
     }
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
+
+    for (dot1qFdbId = 0; dot1qFdbId < NUM_VLANS; dot1qFdbId++) {
+	if (vlans_in_fids_counters[dot1qFdbId] == 0) {
+	    /* Skip fids with no vlans */
+	    continue;
+	}
+
+	/*
+	* set indexes in new dot1qFdbTable rowreq context.
+	* data context will be set from the param (unless NULL,
+	*      in which case a new data context will be allocated)
+	*/
+	rowreq_ctx = dot1qFdbTable_allocate_rowreq_ctx(NULL);
+	if (NULL == rowreq_ctx) {
+	    snmp_log(LOG_ERR, "memory allocation failed\n");
+	    return MFD_RESOURCE_UNAVAILABLE;
+	}
+	if(MFD_SUCCESS != dot1qFdbTable_indexes_set(rowreq_ctx, dot1qFdbId)) {
+	    snmp_log(LOG_ERR,"error setting index while loading "
+		    "dot1qFdbTable data.\n");
+	    dot1qFdbTable_release_rowreq_ctx(rowreq_ctx);
+	    continue;
+	}
+
+	/*
+	* setup/save data for dot1qFdbDynamicCount
+	* dot1qFdbDynamicCount(2)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
+	*/
+	rowreq_ctx->data.dot1qFdbDynamicCount = vlans_in_fids_counters[dot1qFdbId];
+
+	/*
+	* insert into table container
+	*/
+	CONTAINER_INSERT(container, rowreq_ctx);
+	++count;
+    }
 
     DEBUGMSGT(("verbose:dot1qFdbTable:dot1qFdbTable_container_load",
                "inserted %d records\n", count));

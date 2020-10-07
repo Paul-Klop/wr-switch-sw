@@ -1,7 +1,7 @@
 -include ../Makefile.specific
 
 BRIDGE_DIRS= \
-	
+	dot1qFdbTable
 
 BRIDGE_INCLUDE_DIRS:=$(addsuffix /Makefile,$(BRIDGE_DIRS))
 BRIDGE_INCLUDE_DIRS:=$(addprefix $(BRIDGE_MIB_DIR)/,$(BRIDGE_INCLUDE_DIRS))

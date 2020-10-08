@@ -13,6 +13,7 @@ include $(BRIDGE_INCLUDE_DIRS)
 CFLAGS += -I$(BRIDGE_MIB_DIR)
 
 BRIDGE_MIB_SRCS += \
+	dot1dBase.c \
 	init_bridge_mib.c
 
 BRIDGE_MIB_SRCS:=$(addprefix $(BRIDGE_MIB_DIR)/,$(BRIDGE_MIB_SRCS))

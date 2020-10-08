@@ -11,6 +11,8 @@
 #define BASETYPE_SOURCEROUTE_ONLY   3
 #define BASETYPE_SRT                4
 
+#define FIRST_PORT_NAME "wri1"
+
 /* function declarations */
 void init_dot1dBase(void);
 Netsnmp_Node_Handler handle_dot1dBaseBridgeAddress;

@@ -8,11 +8,13 @@
 /* The sub-init functions */
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
+#include "dot1dBase.h"
 #include "dot1dTpFdbTable/dot1dTpFdbTable.h"
 #include "dot1qFdbTable/dot1qFdbTable.h"
 
 void init_bridge_mib(void)
 {
+    init_dot1dBase();
     init_dot1dTpFdbTable();
     init_dot1qFdbTable();
 }

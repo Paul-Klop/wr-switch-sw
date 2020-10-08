@@ -8,6 +8,8 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include "dot1dBase.h"
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
 
 /** Initializes the dot1dBase module */
 void
@@ -47,15 +49,25 @@ handle_dot1dBaseBridgeAddress(netsnmp_mib_handler *handler,
 
     /* a instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
-    
+
+    int i;
+
     switch(reqinfo->mode) {
 
         case MODE_GET:
-            snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                                     /* XXX: a pointer to the scalar's data */,
-                                     /* XXX: the length of the data in bytes */);
-            break;
-
+            /* look for a first port */
+            for (i = 0; i < hal_nports_local; i++) {
+                if (!strcmp(hal_ports[i].name, FIRST_PORT_NAME)) {
+                    /* First port found */
+                    snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
+                                     hal_ports[i].hw_addr,
+                                     ETH_ALEN);
+                    /* no need for more checks */
+                    return SNMP_ERR_NOERROR;
+                }
+            }
+            snmp_log(LOG_ERR, "Port name (%s) not found for handle_dot1dBaseBridgeAddress!\n", FIRST_PORT_NAME);
+            return SNMP_ERR_GENERR;
 
         default:
             /* we should never get here, so this is a really bad error */
@@ -76,13 +88,15 @@ handle_dot1dBaseNumPorts(netsnmp_mib_handler *handler,
 
     /* a instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
-    
+
+    /* Get the port number from HAL */
+    int port_num = hal_nports_local;
     switch(reqinfo->mode) {
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                     /* XXX: a pointer to the scalar's data */,
-                                     /* XXX: the length of the data in bytes */);
+                                     &port_num,
+                                     sizeof(port_num));
             break;
 
 
@@ -106,12 +120,13 @@ handle_dot1dBaseType(netsnmp_mib_handler *handler,
     /* a instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
     
+    int baseType = BASETYPE_TRANSPARENT_ONLY;
     switch(reqinfo->mode) {
 
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                     /* XXX: a pointer to the scalar's data */,
-                                     /* XXX: the length of the data in bytes */);
+                                     &baseType,
+                                     sizeof(baseType));
             break;
 
 

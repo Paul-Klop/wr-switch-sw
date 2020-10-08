@@ -605,20 +605,6 @@ rc = dot1dBasePortIfIndex_get(rowreq_ctx, (long *)var->val.string );
 rc = dot1dBasePortCircuit_get(rowreq_ctx, (oid **)&var->val.string, &var->val_len );
         break;
 
-    /* dot1dBasePortDelayExceededDiscards(4)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h */
-    case COLUMN_DOT1DBASEPORTDELAYEXCEEDEDDISCARDS:
-    var->val_len = sizeof(u_long);
-    var->type = ASN_COUNTER;
-rc = dot1dBasePortDelayExceededDiscards_get(rowreq_ctx, (u_long *)var->val.string );
-        break;
-
-    /* dot1dBasePortMtuExceededDiscards(5)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h */
-    case COLUMN_DOT1DBASEPORTMTUEXCEEDEDDISCARDS:
-    var->val_len = sizeof(u_long);
-    var->type = ASN_COUNTER;
-rc = dot1dBasePortMtuExceededDiscards_get(rowreq_ctx, (u_long *)var->val.string );
-        break;
-
      default:
         if (DOT1DBASEPORTTABLE_MIN_COL <= column && column <= DOT1DBASEPORTTABLE_MAX_COL) {
             DEBUGMSGTL(("internal:dot1dBasePortTable:_mfd_dot1dBasePortTable_get_column",

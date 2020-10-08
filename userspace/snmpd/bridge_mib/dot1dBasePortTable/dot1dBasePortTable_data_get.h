@@ -44,8 +44,6 @@ extern "C" {
 
     int dot1dBasePortIfIndex_get( dot1dBasePortTable_rowreq_ctx *rowreq_ctx, long * dot1dBasePortIfIndex_val_ptr );
     int dot1dBasePortCircuit_get( dot1dBasePortTable_rowreq_ctx *rowreq_ctx, oid **dot1dBasePortCircuit_val_ptr_ptr, size_t *dot1dBasePortCircuit_val_ptr_len_ptr );
-    int dot1dBasePortDelayExceededDiscards_get( dot1dBasePortTable_rowreq_ctx *rowreq_ctx, u_long * dot1dBasePortDelayExceededDiscards_val_ptr );
-    int dot1dBasePortMtuExceededDiscards_get( dot1dBasePortTable_rowreq_ctx *rowreq_ctx, u_long * dot1dBasePortMtuExceededDiscards_val_ptr );
 
 
 int dot1dBasePortTable_indexes_set_tbl_idx(dot1dBasePortTable_mib_index *tbl_idx, long dot1dBasePort_val);

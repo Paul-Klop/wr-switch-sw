@@ -87,17 +87,6 @@ typedef struct dot1dBasePortTable_data_s {
          */
    oid   dot1dBasePortCircuit[128];
 size_t      dot1dBasePortCircuit_len; /* # of oid elements, not bytes */
-    
-        /*
-         * dot1dBasePortDelayExceededDiscards(4)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
-         */
-   u_long   dot1dBasePortDelayExceededDiscards;
-    
-        /*
-         * dot1dBasePortMtuExceededDiscards(5)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
-         */
-   u_long   dot1dBasePortMtuExceededDiscards;
-    
 } dot1dBasePortTable_data;
 
 

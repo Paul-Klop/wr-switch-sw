@@ -135,13 +135,28 @@ _dot1qTpFdbTable_initialize_interface(dot1qTpFdbTable_registration * reg_ptr,  u
      *
      * save interface context for dot1qTpFdbTable
      */
-    /*
-     * Setting up the table's definition
+        /* Don't use netsnmp_table_helper_add_indexes as in the generated code because MacAddress is
+     * mapped into ASN_OCTET_STR, which has a length as a first byte, then the content of MAC/string.
+     * With this behaviour of ASN_OCTET_STR, the index was 1 byte longer. It is not needed to carry
+     * the length of MacAddress since it is defined with a fixed length in the MIB.
      */
-    netsnmp_table_helper_add_indexes(tbl_info,
-                                  ASN_UNSIGNED, /** index: dot1qFdbId */
-                                  ASN_OCTET_STR, /** index: dot1qTpFdbAddress */
-                             0);
+    /* netsnmp_table_helper_add_indexes(tbl_info,
+     *                            ASN_UNSIGNED,    // index: dot1qFdbId
+     *                            ASN_OCTET_STR,   // index: dot1qTpFdbAddress
+     *                           0);
+     */
+    snmp_varlist_add_variable(&tbl_info->indexes,
+                                  NULL,
+                                  0,
+                                  ASN_INTEGER,
+                                  NULL,
+                                  0);
+    snmp_varlist_add_variable(&tbl_info->indexes,
+                                  NULL,
+                                  0,
+                                  ASN_PRIV_IMPLIED_OCTET_STR,
+                                  "XXXXXX",
+                                  6);
 
     /*  Define the minimum and maximum accessible columns.  This
         optimizes retrieval. */
@@ -324,7 +339,7 @@ dot1qTpFdbTable_index_to_oid(netsnmp_index *oid_idx,
     memset( &var_dot1qFdbId, 0x00, sizeof(var_dot1qFdbId) );
     var_dot1qFdbId.type = ASN_UNSIGNED;
     memset( &var_dot1qTpFdbAddress, 0x00, sizeof(var_dot1qTpFdbAddress) );
-    var_dot1qTpFdbAddress.type = ASN_OCTET_STR;
+    var_dot1qTpFdbAddress.type = ASN_PRIV_IMPLIED_OCTET_STR;
 
     /*
      * chain temp index varbinds together

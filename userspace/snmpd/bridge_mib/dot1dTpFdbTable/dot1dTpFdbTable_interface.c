@@ -138,9 +138,22 @@ _dot1dTpFdbTable_initialize_interface(dot1dTpFdbTable_registration * reg_ptr,  u
     /*
      * Setting up the table's definition
      */
-    netsnmp_table_helper_add_indexes(tbl_info,
-                                  ASN_OCTET_STR, /** index: dot1dTpFdbAddress */
-                             0);
+    /* Don't use netsnmp_table_helper_add_indexes as in the generated code because MacAddress is
+     * mapped into ASN_OCTET_STR, which has a length as a first byte, then the content of MAC/string.
+     * With this behaviour of ASN_OCTET_STR, the index was 1 byte longer. It is not needed to carry
+     * the length of MacAddress since it is defined with a fixed length in the MIB.
+     */
+    /* netsnmp_table_helper_add_indexes(tbl_info,
+     *                            ASN_OCTET_STR,   // index: dot1dTpFdbAddress
+     *                           0);
+     */
+
+    snmp_varlist_add_variable(&tbl_info->indexes,
+                                  NULL,
+                                  0,
+                                  ASN_PRIV_IMPLIED_OCTET_STR,
+                                  "XXXXXX",
+                                  6);
 
     /*  Define the minimum and maximum accessible columns.  This
         optimizes retrieval. */
@@ -317,7 +330,7 @@ dot1dTpFdbTable_index_to_oid(netsnmp_index *oid_idx,
      * set up varbinds
      */
     memset( &var_dot1dTpFdbAddress, 0x00, sizeof(var_dot1dTpFdbAddress) );
-    var_dot1dTpFdbAddress.type = ASN_OCTET_STR;
+    var_dot1dTpFdbAddress.type = ASN_PRIV_IMPLIED_OCTET_STR;
 
     /*
      * chain temp index varbinds together

@@ -114,7 +114,7 @@ typedef struct dot1dTpFdbTable_mib_index_s {
      * POSSIBLE LENGHT FOR EVERY VARIABLE LENGTH INDEX!
      * Guessing 128 - col/entry(2)  - oid len(9)
 */
-#define MAX_dot1dTpFdbTable_IDX_LEN     7
+#define MAX_dot1dTpFdbTable_IDX_LEN     6
 
 
 /* *********************************************************************

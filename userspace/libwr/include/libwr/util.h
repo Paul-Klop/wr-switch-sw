@@ -27,4 +27,7 @@ void strncpy_e(char *d, char *s, int len);
 /* Create map */
 void *create_map(unsigned long address, unsigned long size);
 
+/* Count bits in a unsigned int */
+unsigned int bitCount (unsigned int value);
+
 #endif /* __LIBWR_HW_UTIL_H */

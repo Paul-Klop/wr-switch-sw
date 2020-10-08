@@ -1,6 +1,7 @@
 -include ../Makefile.specific
 
 BRIDGE_DIRS= \
+	dot1dBasePortTable \
 	dot1dTpFdbTable \
 	dot1qFdbTable
 

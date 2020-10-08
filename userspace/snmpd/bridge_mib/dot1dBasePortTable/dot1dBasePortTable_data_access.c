@@ -9,10 +9,13 @@
 #include <net-snmp/net-snmp-features.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-
 /* include our parent header */
 #include "dot1dBasePortTable.h"
 
+#include <net/if.h>
+
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
 
 #include "dot1dBasePortTable_data_access.h"
 
@@ -187,72 +190,40 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
         /*
          * dot1dBasePort(1)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/R/d/h
          */
-   long   dot1dBasePort;
+    long   dot1dBasePort;
 
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    char dot1dBasePortCircuit[2];
+    int dot1dBasePortCircuit_len = 2; 
+    int *ifIndex_lut; /* Keep ifIndex for all wri ports */
+    char *tmp_c;
+    int wri_i;
+    struct if_nameindex *if_nidxs, *intf;
 
     DEBUGMSGTL(("verbose:dot1dBasePortTable:dot1dBasePortTable_container_load","called\n"));
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    /* index a table with ifIndexes of interfaces in range 1..18 */
+    ifIndex_lut = calloc(sizeof(int), hal_nports_local + 1);
+
+    if_nidxs = if_nameindex();
+    if ( if_nidxs != NULL ) {
+        for (intf = if_nidxs; intf->if_index != 0 || intf->if_name != NULL; intf++) {
+            if (!strncmp(intf->if_name, "wri", strlen("wri"))) {
+                /* wri interface found */
+                tmp_c = intf->if_name + strlen("wri");
+                wri_i = atoi(tmp_c);
+                /* save ifIndex for the found interface,
+                 * +1 because ifIndex counts from 1 */
+                ifIndex_lut[wri_i] = (intf - if_nidxs) + 1;
+            }
+        }
+
+        if_freenameindex(if_nidxs);
     }
 
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1dBasePortTable container.
-     * loop over your dot1dBasePortTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
 
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
-
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-
+    for (dot1dBasePort = 1; dot1dBasePort <= hal_nports_local; dot1dBasePort++) {
         /*
-         * TODO:352:M: |   |-> set indexes in new dot1dBasePortTable rowreq context.
+         * |   |-> set indexes in new dot1dBasePortTable rowreq context.
          * data context will be set from the param (unless NULL,
          *      in which case a new data context will be allocated)
          */
@@ -271,11 +242,37 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
         }
 
         /*
-         * TODO:352:r: |   |-> populate dot1dBasePortTable data context.
+         * |   |-> populate dot1dBasePortTable data context.
          * Populate data context here. (optionally, delay until row prep)
          */
-    /* non-TRANSIENT data: no need to copy. set pointer to data */
-        
+
+        /*
+        * setup/save data for dot1dBasePortIfIndex
+        * dot1dBasePortIfIndex(2)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/w/e/R/d/H
+        */
+
+        rowreq_ctx->data.dot1dBasePortIfIndex = ifIndex_lut[dot1dBasePort];
+
+        /*
+        * setup/save data for dot1dBasePortCircuit
+        * dot1dBasePortCircuit(3)/OBJECTID/ASN_OBJECT_ID/oid(oid)//L/A/w/e/r/d/h
+        */
+        /** no mapping */
+        /*
+        * make sure there is enough space for dot1dBasePortCircuit data
+        */
+        /* set the value to ZeroDotZero ({0,0}) */
+        memset(dot1dBasePortCircuit, 0, dot1dBasePortCircuit_len);
+        if (NULL == rowreq_ctx->data.dot1dBasePortCircuit) {
+            snmp_log(LOG_ERR,"not enough space for value (dot1dBasePortCircuit)\n");
+            return MFD_ERROR;
+        }
+        rowreq_ctx->data.dot1dBasePortCircuit_len = dot1dBasePortCircuit_len* sizeof(dot1dBasePortCircuit[0]);
+        memcpy( rowreq_ctx->data.dot1dBasePortCircuit, dot1dBasePortCircuit, dot1dBasePortCircuit_len* sizeof(dot1dBasePortCircuit[0]) );
+
+        /* dot1dBasePortDelayExceededDiscards and dot1dBasePortMtuExceededDiscards
+         * are not supported */
+
         /*
          * insert into table container
          */
@@ -283,16 +280,7 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
         ++count;
     }
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
+    free(ifIndex_lut);
 
     DEBUGMSGT(("verbose:dot1dBasePortTable:dot1dBasePortTable_container_load",
                "inserted %d records\n", count));

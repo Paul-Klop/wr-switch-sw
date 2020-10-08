@@ -778,6 +778,8 @@ _dot1dBasePortTable_container_init(dot1dBasePortTable_interface_ctx *if_ctx)
                  "dot1dBasePortTable_container_init\n");
         return;
     }
+    /* load the containter somewhere, since it is not loaded by a cache */
+    dot1dBasePortTable_container_load(if_ctx->container);
 
 } /* _dot1dBasePortTable_container_init */
 

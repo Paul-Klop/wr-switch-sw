@@ -3,7 +3,8 @@
 BRIDGE_DIRS= \
 	dot1dBasePortTable \
 	dot1dTpFdbTable \
-	dot1qFdbTable
+	dot1qFdbTable \
+	dot1qTpFdbTable \
 
 BRIDGE_INCLUDE_DIRS:=$(addsuffix /Makefile,$(BRIDGE_DIRS))
 BRIDGE_INCLUDE_DIRS:=$(addprefix $(BRIDGE_MIB_DIR)/,$(BRIDGE_INCLUDE_DIRS))

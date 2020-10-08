@@ -52,19 +52,6 @@ void dot1qTpFdbTable_container_free(netsnmp_container *container);
 int dot1qTpFdbTable_cache_load(netsnmp_container *container);
 void dot1qTpFdbTable_cache_free(netsnmp_container *container);
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-/* *********************************************************************
- * Since we have no idea how you really access your data, we'll go with
- * a worst case example: a flat text file.
- */
-#define MAX_LINE_SIZE 256
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
     int dot1qTpFdbTable_row_prep( dot1qTpFdbTable_rowreq_ctx *rowreq_ctx);
 
 

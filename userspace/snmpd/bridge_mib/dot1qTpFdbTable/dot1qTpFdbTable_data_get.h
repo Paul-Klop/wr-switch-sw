@@ -41,8 +41,12 @@ extern "C" {
     /*
      * indexes
      */
+    int dot1qFdbId_map(u_long *mib_dot1qFdbId_val_ptr, u_long raw_dot1qFdbId_val);
+    int dot1qTpFdbAddress_map(char **mib_dot1qTpFdbAddress_val_ptr_ptr, size_t *mib_dot1qTpFdbAddress_val_ptr_len_ptr, char *raw_dot1qTpFdbAddress_val_ptr, size_t raw_dot1qTpFdbAddress_val_ptr_len, int allow_realloc);
 
+    int dot1qTpFdbPort_map(long *mib_dot1qTpFdbPort_val_ptr, long raw_dot1qTpFdbPort_val);
     int dot1qTpFdbPort_get( dot1qTpFdbTable_rowreq_ctx *rowreq_ctx, long * dot1qTpFdbPort_val_ptr );
+    int dot1qTpFdbStatus_map(u_long *mib_dot1qTpFdbStatus_val_ptr, u_long raw_dot1qTpFdbStatus_val);
     int dot1qTpFdbStatus_get( dot1qTpFdbTable_rowreq_ctx *rowreq_ctx, u_long * dot1qTpFdbStatus_val_ptr );
 
 

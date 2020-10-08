@@ -10,6 +10,9 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
+
 /* include our parent header */
 #include "dot1qTpFdbTable.h"
 
@@ -224,6 +227,52 @@ The status of this entry.  The meanings of the values
  * Its syntax is INTEGER (based on perltype INTEGER)
  * The net-snmp type is ASN_INTEGER. The C type decl is long (u_long)
  */
+/**
+ * map a value from its original native format to the MIB format.
+ *
+ * @retval MFD_SUCCESS         : success
+ * @retval MFD_ERROR           : Any other error
+ *
+ * @note parameters follow the memset convention (dest, src).
+ *
+ * @note generation and use of this function can be turned off by re-running
+ * mib2c after adding the following line to the file
+ * defaults/node-dot1qTpFdbStatus.m2d :
+ *   @eval $m2c_node_skip_mapping = 1@
+ *
+ * @remark
+ *  If the values for your data type don't exactly match the
+ *  possible values defined by the mib, you should map them here.
+ *  Otherwise, just do a direct copy.
+ */
+int
+dot1qTpFdbStatus_map(u_long *mib_dot1qTpFdbStatus_val_ptr, u_long raw_dot1qTpFdbStatus_val)
+{
+    netsnmp_assert(NULL != mib_dot1qTpFdbStatus_val_ptr);
+
+    DEBUGMSGTL(("verbose:dot1qTpFdbTable:dot1qTpFdbStatus_map","called\n"));
+
+    /*
+     * TODO:241:o: |-> Implement dot1qTpFdbStatus enum mapping.
+     * uses INTERNAL_* macros defined in the header files
+     */
+    switch(raw_dot1qTpFdbStatus_val) {
+        case RTU_ENTRY_TYPE_DYNAMIC:
+             *mib_dot1qTpFdbStatus_val_ptr = DOT1QTPFDBSTATUS_LEARNED;
+             break;
+
+        case RTU_ENTRY_TYPE_STATIC:
+             *mib_dot1qTpFdbStatus_val_ptr = DOT1QTPFDBSTATUS_MGMT;
+             break;
+
+        default:
+             *mib_dot1qTpFdbStatus_val_ptr = DOT1QTPFDBSTATUS_OTHER;
+             break;
+    }
+
+    return MFD_SUCCESS;
+} /* dot1qTpFdbStatus_map */
+
 /**
  * Extract the current value of the dot1qTpFdbStatus data.
  *

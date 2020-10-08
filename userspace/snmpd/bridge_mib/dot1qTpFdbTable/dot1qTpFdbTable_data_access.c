@@ -13,6 +13,8 @@
 /* include our parent header */
 #include "dot1qTpFdbTable.h"
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
 
 #include "dot1qTpFdbTable_data_access.h"
 
@@ -207,83 +209,43 @@ dot1qTpFdbTable_container_load(netsnmp_container *container)
     dot1qTpFdbTable_rowreq_ctx *rowreq_ctx;
     size_t                 count = 0;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * dot1qFdbId(1)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/r/d/h
-         */
-   u_long   dot1qFdbId;
-        /*
-         * dot1qTpFdbAddress(1)/MacAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/H
-         */
-   char   dot1qTpFdbAddress[6];
-   size_t      dot1qTpFdbAddress_len;
-
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    int i;
+    uint32_t port_mask;
+    int port;
+    int htab_read_entries;
+    struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
 
     DEBUGMSGTL(("verbose:dot1qTpFdbTable:dot1qTpFdbTable_container_load","called\n"));
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    /* read filter entires from shm to local memory for data consistency */
+    if (shmem_rtu_read_htab(rtu_htab_local, &htab_read_entries)) {
+	DEBUGMSGTL(("verbose:dot1qTpFdbTable:dot1qTpFdbTable_container_load",
+		    "Too many retries while reading htab entries from RTUd shmem\n"));
+	return MFD_RESOURCE_UNAVAILABLE;
     }
+	
+    qsort(rtu_htab_local, htab_read_entries,
+          sizeof(struct rtu_filtering_entry), cmp_rtu_entries_fid_mac);
 
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1qTpFdbTable container.
-     * loop over your dot1qTpFdbTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
+    for (i = 0; i < htab_read_entries; i++) {
+	/* skip invalid entires */
+	if (!rtu_htab_local[i].valid)
+	    continue;
 
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
+	/* count ports in mask */
+	if (bitCount(rtu_htab_local[i].port_mask_dst) != 1) {
+	    /* no ports assigned or multicast */
+	    continue;
+	}
 
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
+	/* skip if destination is CPU */
+	if (rtu_htab_local[i].port_mask_dst == 1 << hal_nports_local) {
+	    continue;
+	}
+
 
         /*
-         * TODO:352:M: |   |-> set indexes in new dot1qTpFdbTable rowreq context.
+         * |-> set indexes in new dot1qTpFdbTable rowreq context.
          * data context will be set from the param (unless NULL,
          *      in which case a new data context will be allocated)
          */
@@ -293,8 +255,8 @@ dot1qTpFdbTable_container_load(netsnmp_container *container)
             return MFD_RESOURCE_UNAVAILABLE;
         }
         if(MFD_SUCCESS != dot1qTpFdbTable_indexes_set(rowreq_ctx
-                               , dot1qFdbId
-                               , dot1qTpFdbAddress, dot1qTpFdbAddress_len
+                               , rtu_htab_local[i].fid
+                               , (char *)rtu_htab_local[i].mac, ETH_ALEN
                )) {
             snmp_log(LOG_ERR,"error setting index while loading "
                      "dot1qTpFdbTable data.\n");
@@ -303,45 +265,37 @@ dot1qTpFdbTable_container_load(netsnmp_container *container)
         }
 
         /*
-         * TODO:352:r: |   |-> populate dot1qTpFdbTable data context.
-         * Populate data context here. (optionally, delay until row prep)
+         * |-> populate dot1qTpFdbTable data context.
+         * Populate data context here.
          */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for dot1qTpFdbPort
-     * dot1qTpFdbPort(2)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/R/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.dot1qTpFdbPort = dot1qTpFdbPort;
-    
-    /*
-     * setup/save data for dot1qTpFdbStatus
-     * dot1qTpFdbStatus(3)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.dot1qTpFdbStatus = dot1qTpFdbStatus;
-    
-        
+	/*
+	* setup/save data for dot1qTpFdbPort
+	* dot1qTpFdbPort(2)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/r/d/h
+	*/
+	port_mask = rtu_htab_local[i].port_mask_dst;
+	for (port = 1; port_mask > 1; port++, port_mask >>= 1) {}
+
+	rowreq_ctx->data.dot1qTpFdbPort = port;
+	
+	/*
+	* setup/save data for dot1qTpFdbStatus
+	* dot1qTpFdbStatus(3)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
+	*/
+	/*
+	* |-> Define dot1qTpFdbStatus mapping.
+	* Map values between raw/native values and MIB values
+	*/
+	if(MFD_SUCCESS !=
+	dot1qTpFdbStatus_map(&rowreq_ctx->data.dot1qTpFdbStatus, rtu_htab_local[i].dynamic)) {
+	    return MFD_ERROR;
+	}
+
         /*
          * insert into table container
          */
         CONTAINER_INSERT(container, rowreq_ctx);
         ++count;
     }
-
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
 
     DEBUGMSGT(("verbose:dot1qTpFdbTable:dot1qTpFdbTable_container_load",
                "inserted %d records\n", count));

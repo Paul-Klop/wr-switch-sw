@@ -178,6 +178,10 @@ if [ "$CONFIG_MONIT_DISABLE" != "y" ]; then
 			  				monitor=0
 			  			fi 
 			  			;;
+			  radiusvlan) if [ "$CONFIG_RVLAN_DAEMON" != "y" ] ; then
+							monitor=0
+			  			fi 
+			  			;;
 			  *) ;; 
 			esac
 			if [[ $monitor = 1 ]] ; then 

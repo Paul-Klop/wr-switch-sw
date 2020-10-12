@@ -338,7 +338,6 @@ int rtudexp_vlan_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 
 int rtudexp_mirror(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-	int oper;
 	int enable;
 	uint32_t imask, emask, dmask;
 	int *p_ret = (int *)ret;

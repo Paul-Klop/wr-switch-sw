@@ -336,8 +336,9 @@ int rvlan_fsm(struct rvlan_dev *dev, fd_set *rdset)
 		/* Parent: write the query */
 		i = sprintf(dev->radbuffer,
 			    "User-Name = \"%s\"\n"
-			    "User-Password = \"%s\"\n",
-			    dev->peer_mac, dev->peer_mac);
+			    "User-Password = \"%s\"\n"
+			    "NAS-Port = %i\n",
+			    dev->peer_mac, dev->peer_mac, dev->portnr);
 		write(pipe0[1], dev->radbuffer, i);
 		close(pipe0[1]);
 

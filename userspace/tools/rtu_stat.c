@@ -40,7 +40,7 @@
 
 static struct minipc_ch *rtud_ch;
 
-struct wrs_shm_head *rtu_port_shmem;
+struct wrs_shm_head *rtu_shmem_p;
 static struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
 static struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
 static struct rtu_mirror_info mirror_local;
@@ -277,19 +277,19 @@ int read_vlans(void)
 	struct rtu_vlan_table_entry *vlan_tab_shm;
 	struct rtu_shmem_header *rtu_hdr;
 
-	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
-	vlan_tab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->vlans);
+	rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
+	vlan_tab_shm = wrs_shm_follow(rtu_shmem_p, rtu_hdr->vlans);
 	if (!vlan_tab_shm)
 		return -2;
 	/* read data, with the sequential lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(&vlan_tab_local, vlan_tab_shm,
 		       NUM_VLANS * sizeof(*vlan_tab_shm));
 		retries++;
 		if (retries > 100)
 			return -1;
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}
@@ -306,20 +306,20 @@ int read_htab(int *read_entries)
 	struct rtu_shmem_header *rtu_hdr;
 	struct rtu_filtering_entry *empty;
 
-	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
-	htab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->filters);
+	rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
+	htab_shm = wrs_shm_follow(rtu_shmem_p, rtu_hdr->filters);
 	if (!htab_shm)
 		return -2;
 
 	/* Read data, with the sequential lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(&rtu_htab_local, htab_shm,
 		       RTU_BUCKETS * HTAB_ENTRIES * sizeof(*htab_shm));
 		retries++;
 		if (retries > 100)
 			return -1;
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}
@@ -346,18 +346,18 @@ int read_mirror(void)
 	struct rtu_mirror_info *mirror_shm;
 	struct rtu_shmem_header *rtu_hdr;
 
-	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
-	mirror_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->mirror);
+	rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
+	mirror_shm = wrs_shm_follow(rtu_shmem_p, rtu_hdr->mirror);
 	if (!mirror_shm)
 		return -2;
 	/* read data, with the sequential lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(&mirror_local, mirror_shm, sizeof(*mirror_shm));
 		retries++;
 		if (retries > 100)
 			return -1;
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}
@@ -370,7 +370,7 @@ int open_rtu_shm(void)
 	int n_wait = 0;
 	int ret;
 	/* open rtu shm */
-	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
+	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_shmem_p)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
 			if (ret == WRS_SHM_OPEN_FAILED) {
@@ -392,9 +392,9 @@ int open_rtu_shm(void)
 	}
 
 	/* check rtu shm version */
-	if (rtu_port_shmem->version != RTU_SHMEM_VERSION) {
+	if (rtu_shmem_p->version != RTU_SHMEM_VERSION) {
 		fprintf(stderr, "rtu_stat: unknown rtud's version %i "
-			"(known is %i)\n", rtu_port_shmem->version,
+			"(known is %i)\n", rtu_shmem_p->version,
 			RTU_SHMEM_VERSION);
 		return -1;
 	}

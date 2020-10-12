@@ -108,7 +108,7 @@ static int read_dot_config(char *dot_config_file);
 static int read_dot_config_vlans(int vlan_min, int vlan_max);
 
 struct rtu_vlan_table_entry *vlan_tab_shm;
-struct wrs_shm_head *rtu_port_shmem;
+struct wrs_shm_head *rtu_shmem_p;
 
 static inline int nextport(int i, unsigned long pmask) /* helper for for_each_port() below */
 {
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 
 	n_wait = 0;
 	/* open rtu shm */
-	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
+	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_shmem_p)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
 			if (ret == WRS_SHM_OPEN_FAILED) {
@@ -216,17 +216,17 @@ int main(int argc, char *argv[])
 	}
 
 	/* check rtu shm version */
-	if (rtu_port_shmem->version != RTU_SHMEM_VERSION) {
+	if (rtu_shmem_p->version != RTU_SHMEM_VERSION) {
 		pr_error("unknown version %i (known is %i)\n",
-			 rtu_port_shmem->version, RTU_SHMEM_VERSION);
+			 rtu_shmem_p->version, RTU_SHMEM_VERSION);
 		exit(1);
 	}
 
 
 
 	/* get vlans array */
-	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
-	vlan_tab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->vlans);
+	rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
+	vlan_tab_shm = wrs_shm_follow(rtu_shmem_p, rtu_hdr->vlans);
 
 	if (!vlan_tab_shm) {
 		pr_error("cannot follow pointer to vlans in RTU's shmem\n");
@@ -785,7 +785,7 @@ static void list_rtu_vlans(void)
 
 	/* read data, with the sequential lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(&vlan_tab_local, vlan_tab_shm,
 		       NUM_VLANS * sizeof(*vlan_tab_shm));
 		retries++;
@@ -794,7 +794,7 @@ static void list_rtu_vlans(void)
 				 "shmem. Use inconsistent\n");
 			break; /* use inconsistent data */
 			}
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}
@@ -978,7 +978,7 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 	/* copy data no mater if it will be used later, with the sequential
 	 * lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(rtu_vlan_entry, &vlan_tab_shm[vid],
 			sizeof(*rtu_vlan_entry));
 		retries++;
@@ -987,7 +987,7 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 				 "shmem. Use inconsistent\n");
 			break; /* use inconsistent data */
 			}
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}

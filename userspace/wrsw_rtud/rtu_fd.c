@@ -109,7 +109,7 @@ static pthread_mutex_t fd_mutex;
 /**
  * \brief Pointer to shmem, user for write locking.
  */
-static struct wrs_shm_head *rtu_port_shmem;
+static struct wrs_shm_head *rtu_shmem_p;
 
 static struct hw_req *tail(struct hw_req *head);
 static void clean_list(struct hw_req *head);
@@ -137,21 +137,21 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	int err;
 	struct rtu_shmem_header *rtu_hdr;
 	pr_debug("Open rtu shmem.\n");
-	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "wrsw_rtud",
+	rtu_shmem_p = wrs_shm_get(wrs_shm_rtu, "wrsw_rtud",
 				WRS_SHM_WRITE | WRS_SHM_LOCKED);
-	if (!rtu_port_shmem) {
+	if (!rtu_shmem_p) {
 		pr_error("%s: Can't join shmem: %s\n", __func__,
 			 strerror(errno));
 		return -1;
 	}
 
-	if (rtu_port_shmem->pidsequence == 1) {
+	if (rtu_shmem_p->pidsequence == 1) {
 		/* for first RTUd run */
 		pr_debug("Alloc rtu_hdr\n");
-		rtu_hdr = wrs_shm_alloc(rtu_port_shmem, sizeof(*rtu_hdr));
+		rtu_hdr = wrs_shm_alloc(rtu_shmem_p, sizeof(*rtu_hdr));
 	} else {
 		/* rtu_hdr was created at header->offset */
-		rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
+		rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
 	}
 	if (!rtu_hdr) {
 		pr_error("%s: Cannot allocate mem in shmem rtu_hdr\n",
@@ -162,11 +162,11 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	if (!rtu_hdr->filters) {
 		/* for first RTUd run */
 		pr_info("Allocating a new, clean hash table\n");
-		rtu_htab = wrs_shm_alloc(rtu_port_shmem,
+		rtu_htab = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*rtu_htab) * HTAB_ENTRIES);
 		rtu_hdr->filters = (struct rtu_filtering_entry *) rtu_htab;
 		rtu_hdr->filters_offset =
-				(void *)rtu_htab - (void *)rtu_port_shmem;
+				(void *)rtu_htab - (void *)rtu_shmem_p;
 		pr_debug("Clean filtering database.\n");
 		clean_fd(SHM_NOT_LOCK); /* clean filtering database,
 						shem already locked */
@@ -179,11 +179,11 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	if (!rtu_hdr->vlans) {
 		/* for first RTUd run */
 		pr_info("Allocating a new, clean vlan table\n");
-		vlan_tab = wrs_shm_alloc(rtu_port_shmem,
+		vlan_tab = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*vlan_tab) * NUM_VLANS);
 		rtu_hdr->vlans = vlan_tab;
 		rtu_hdr->vlans_offset =
-				(void *)vlan_tab - (void *)rtu_port_shmem;
+				(void *)vlan_tab - (void *)rtu_shmem_p;
 		pr_debug("Clean vlan database.\n");
 		clean_vd(SHM_NOT_LOCK); /* clean VLAN database,
 						shem already locked */
@@ -196,11 +196,11 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	if (!rtu_hdr->mirror) {
 		/* for first RTUd run */
 		pr_info("Allocating a new, port mirroring config\n");
-		mirror_cfg = wrs_shm_alloc(rtu_port_shmem,
+		mirror_cfg = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*mirror_cfg) * NUM_MIRROR);
 		rtu_hdr->mirror = mirror_cfg;
 		rtu_hdr->mirror_offset =
-				(void *)mirror_cfg - (void *)rtu_port_shmem;
+				(void *)mirror_cfg - (void *)rtu_shmem_p;
 		pr_debug("Clean vlan database.\n");
 		clean_mc(SHM_NOT_LOCK); /* clean port mirroring config,
 						shem already locked */
@@ -215,7 +215,7 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		return -1;
 	}
 	/* add version info */
-	rtu_port_shmem->version = RTU_SHMEM_VERSION;
+	rtu_shmem_p->version = RTU_SHMEM_VERSION;
 
 	pr_debug("clean aging map.\n");
 	rtu_read_aging_bitmap(bitmap);	// clean aging registers
@@ -231,7 +231,7 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 
 	/* release process waiting on rtud's shm
 	 NOTE: all data may not be populated yet */
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 
 	return 0;
 }
@@ -287,7 +287,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 	struct rtu_addr eaddr;
 
 	pthread_mutex_lock(&fd_mutex);
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	// if VLAN is registered (otherwise just ignore request)
 	if (!vlan_tab[vid].drop) {
@@ -339,7 +339,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			if (n_buckets == RTU_BUCKETS) {
 				pr_error("Hash %03x has no buckets left.\n",
 				      eaddr.hash);
-				wrs_shm_write(rtu_port_shmem,
+				wrs_shm_write(rtu_shmem_p,
 					      WRS_SHM_WRITE_END);
 				pthread_mutex_unlock(&fd_mutex);
 				return -ENOMEM;
@@ -367,7 +367,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 
 	}
 	rtu_fd_commit();
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 	pthread_mutex_unlock(&fd_mutex);
 	return ret;
 }
@@ -489,13 +489,13 @@ static inline int to_mem_addr(struct rtu_addr addr)
 static void clean_fd(int lock)
 {
         if (lock & SHM_LOCK)
-		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	memset(rtu_htab, 0, sizeof(*rtu_htab) * HTAB_ENTRIES);
 
 	rtu_clean_htab();
         if (lock & SHM_LOCK)
-		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -506,7 +506,7 @@ static void clean_vd(int lock)
 	int i;
 
 	if (lock & SHM_LOCK)
-		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	rtu_clean_vlan();
 	for (i = 1; i < NUM_VLANS; i++) {
@@ -524,7 +524,7 @@ static void clean_vd(int lock)
 
 	rtu_write_vlan_entry(0, &vlan_tab[0]);
 	if (lock & SHM_LOCK)
-		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -533,7 +533,7 @@ static void clean_vd(int lock)
 static void clean_mc(int lock)
 {
 	if (lock & SHM_LOCK)
-		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	mirror_cfg[0].en = 0;
 	mirror_cfg[0].imask = 0x0;
@@ -543,7 +543,7 @@ static void clean_mc(int lock)
 	rtu_enable_mirroring(mirror_cfg[0].en);
 	rtu_cfg_mirroring(mirror_cfg);
 	if (lock & SHM_LOCK)
-		wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -566,7 +566,7 @@ static void rtu_fd_age_update(void)
 	// Update 'last access time' for accessed entries
 	t = get_monotonic_sec();
 	// HTAB
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 	for (i = 0; i < RTU_ENTRIES / 32; i++)
 		for (j = 0; j < 32; j++) {
 			agr_word = bitmap[i];
@@ -594,7 +594,7 @@ static void rtu_fd_age_update(void)
 				rtu_htab[hash][bucket].last_access_t = t;
 			}
 		}
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 
 }
 
@@ -613,7 +613,7 @@ int rtu_fd_remove_entry(uint8_t *mac, uint32_t port_mask, int type)
 	if (!port_mask)
 		pr_error("Empty port mask for MAC %s\n", mac_to_string(mac));
 
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 	pr_debug("Looking for an entry with mask=0x%x MAC: %s type %s\n",
 		 port_mask, mac_to_string(mac),
 		 rtu_type_to_str(type));
@@ -640,7 +640,7 @@ int rtu_fd_remove_entry(uint8_t *mac, uint32_t port_mask, int type)
 	}
 	/* commit changes */
 	rtu_fd_commit();
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 	return removed_entries;
 }
 
@@ -650,7 +650,7 @@ void rtu_fd_clear_entries_for_port(int dest_port, int type)
 	int j;			// bucket loop index
 	struct rtu_filtering_entry *ent; /* pointer to scan tables */
 
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	for (i = HTAB_ENTRIES; i-- > 0;) {
 		for (j = RTU_BUCKETS; j-- > 0;) {
@@ -676,7 +676,7 @@ void rtu_fd_clear_entries_for_port(int dest_port, int type)
 	}
 	// commit changes
 	rtu_fd_commit();
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -691,7 +691,7 @@ static void rtu_fd_age_out(void)
 	unsigned long t;	// (secs)
 
 	t = get_monotonic_sec() - aging_time;
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	// HTAB
 	for (i = HTAB_ENTRIES; i-- > 0;) {
@@ -710,7 +710,7 @@ static void rtu_fd_age_out(void)
 	}
 	// commit changes
 	rtu_fd_commit();
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -805,7 +805,7 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 #define rtu_rd(reg) \
 	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
 	int port_num = RTU_PSR_N_PORTS_R(rtu_rd(PSR));
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
     /****************************************************************************************/
 	if (port_mask == 0x0 && drop == 1)
 		vlan_tab[vid].port_mask = 0x0;
@@ -818,13 +818,13 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 	vlan_tab[vid].prio = prio;
 
 	rtu_write_vlan_entry(vid, &vlan_tab[vid]);
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }
 
 void rtu_fd_write_mirror_config(int en, uint32_t imask, uint32_t emask,
 		uint32_t dmask)
 {
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
 
 	mirror_cfg[0].en = en;
 	/* update masks in SHM only if non-zero, or if disabling mirroring */
@@ -838,5 +838,5 @@ void rtu_fd_write_mirror_config(int en, uint32_t imask, uint32_t emask,
 	rtu_enable_mirroring(0);
 	rtu_cfg_mirroring(mirror_cfg);
 	rtu_enable_mirroring(en);
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
 }

@@ -18,6 +18,42 @@
 #define ETH_ALEN 6
 #define ETH_ALEN_STR 18
 
+#define VALID_CONFIG 1<<31
+#define VALID_QMODE  1<<0
+#define VALID_PRIO   1<<1
+#define VALID_VID    1<<2
+#define VALID_FID    1<<3
+#define VALID_UNTAG  1<<4
+#define VALID_PMASK  1<<5
+#define VALID_DROP   1<<6
+
+#define QMODE_ACCESS   0
+#define QMODE_TRUNK    1
+#define QMODE_DISABLED 2
+#define QMODE_UNQ      3
+#define QMODE_INVALID  4
+
+
+#define RTU_VID_MIN 0
+#define RTU_VID_MAX 4094
+
+#define RTU_FID_MIN 0
+#define RTU_FID_MAX 4094
+
+#define RTU_PRIO_MIN 0
+#define RTU_PRIO_MAX 7
+#define RTU_PRIO_DISABLE -1
+
+#define PORT_PRIO_MIN		RTU_PRIO_MIN
+#define PORT_PRIO_MAX		RTU_PRIO_MAX
+#define PORT_PRIO_DISABLE	RTU_PRIO_DISABLE
+
+#define PORT_VID_MIN RTU_VID_MIN
+#define PORT_VID_MAX RTU_VID_MAX
+
+#define RTU_PMASK_MIN 0
+#define RTU_PMASK_MAX(n_ports) ((1 << n_ports) - 1)
+
 /* RTU entry address */
 struct rtu_addr {
 	int hash;
@@ -137,15 +173,30 @@ struct rtu_mirror_info {
 	uint32_t dmask;		/* Destination port mask */
 };
 
+/**
+ * \brief RTU port configuration
+ */
+struct rtu_port_entry {
+	uint8_t qmode;		/* q mode of a port */
+	uint8_t fix_prio;	/* is fix priority set */
+	uint8_t prio;		/* VLAN priority */
+	uint8_t untag;          /* untag */ 
+	uint16_t pvid;		/* PVID  */
+	uint8_t mac[ETH_ALEN];	/* MAC of a port */
+};
+
 /* This is the overall structure stored in shared memory */
-#define RTU_SHMEM_VERSION 4 /* Version 3, changed wrs_shm_head */
+#define RTU_SHMEM_VERSION 5 /* Version 5, added rtu_ports */
 struct rtu_shmem_header {
 	struct rtu_filtering_entry *filters;
 	struct rtu_vlan_table_entry *vlans;
 	struct rtu_mirror_info *mirror;
+	struct rtu_port_entry *rtu_ports;
+	uint32_t rtu_nports;
 	unsigned long filters_offset;
 	unsigned long vlans_offset;
 	unsigned long mirror_offset;
+	unsigned long rtu_ports_offset;
 };
 
 #endif /*  __LIBWR_RTU_SHMEM_H__ */

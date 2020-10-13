@@ -23,22 +23,7 @@
 
 #define NPORTS 18
 
-#define QMODE_ACCESS 0
-#define QMODE_TRUNK	 1
-#define QMODE_DISABLED 2
-#define QMODE_UNQ 3
-#define QMODE_INVALID 4
-
 #define MINIPC_TIMEOUT 200
-
-#define VALID_CONFIG 1<<31
-#define VALID_QMODE  1<<0
-#define VALID_PRIO	 1<<1
-#define VALID_VID	   1<<2
-#define VALID_FID    1<<3
-#define VALID_UNTAG  1<<4
-#define VALID_PMASK  1<<5
-#define VALID_DROP   1<<6
 
 #define PORT_MASK(x) (1<<(x))
 
@@ -59,26 +44,6 @@
 #define OPT_RTU_DEL   25
 #define OPT_RTU_HP_MASK 30
 #define OPT_FILE_READ 'f'
-
-#define PORT_PRIO_MIN 0
-#define PORT_PRIO_MAX 7
-#define PORT_PRIO_DISABLE -1
-
-#define PORT_VID_MIN 0
-#define PORT_VID_MAX 4094
-
-#define RTU_VID_MIN 0
-#define RTU_VID_MAX 4094
-
-#define RTU_FID_MIN 0
-#define RTU_FID_MAX 4094
-
-#define RTU_PRIO_MIN 0
-#define RTU_PRIO_MAX 7
-#define RTU_PRIO_DISABLE -1
-
-#define RTU_PMASK_MIN 0
-#define RTU_PMASK_MAX ((1 << NPORTS) - 1)
 
 /* struct for ranges of VLAN sets used in dot-config */
 struct vlan_sets {

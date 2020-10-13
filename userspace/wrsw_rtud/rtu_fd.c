@@ -41,6 +41,7 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
 #include <libwr/rtu_shmem.h>
+#include <libwr/hal_shmem.h>
 #include <libwr/util.h>
 
 #include "rtu_fd.h"
@@ -51,9 +52,6 @@
 #define HW_WRITE_REQ     0
 #define HW_REMOVE_REQ    1
 
-// Used for clean_*() functions
-#define SHM_NOT_LOCK 0
-#define SHM_LOCK     1
 /**
  * \brief Filtering Database entry handle.
  */
@@ -102,14 +100,19 @@ static struct rtu_vlan_table_entry *vlan_tab;
 static struct rtu_mirror_info *mirror_cfg;
 
 /**
+ * Mirror of port configuration
+ */
+struct rtu_port_entry *ports_cfg;
+
+/**
  * \brief Mutex used to synchronise concurrent access to the filtering database.
  */
 static pthread_mutex_t fd_mutex;
 
 /**
- * \brief Pointer to shmem, user for write locking.
+ * \brief Pointer to shmem, used for write locking.
  */
-static struct wrs_shm_head *rtu_shmem_p;
+struct wrs_shm_head *rtu_shmem_p;
 
 static struct hw_req *tail(struct hw_req *head);
 static void clean_list(struct hw_req *head);
@@ -210,7 +213,36 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		mirror_cfg = wrs_shm_follow(rtu_shmem_p, rtu_hdr->mirror);
 	}
 
-	if ((!rtu_htab) || (!vlan_tab) || (!mirror_cfg)) {
+	if (!rtu_hdr->rtu_ports) {
+		/* for first RTUd run */
+		pr_info("Allocating a new, port config\n");
+		ports_cfg = wrs_shm_alloc(rtu_shmem_p,
+					sizeof(*ports_cfg) * HAL_MAX_PORTS);
+		rtu_hdr->rtu_ports = ports_cfg;
+		rtu_hdr->rtu_ports_offset =
+				(void *)ports_cfg - (void *)rtu_shmem_p;
+		pr_debug("Clean ports database.\n");
+		rtu_hdr->rtu_nports = hal_nports_local;
+		rtu_clean_ports(SHM_NOT_LOCK); /* clean port ports config,
+						shem already locked */
+	} else {
+		pr_info("Using existing port config.\n");
+		/* next RTUd runs */
+		ports_cfg = wrs_shm_follow(rtu_shmem_p, rtu_hdr->rtu_ports);
+
+		if (rtu_hdr->rtu_nports != hal_nports_local) {
+			pr_warning("Number of ports reported by HAL (%d) and "
+				   "saved previously by RTUs (%d) does not "
+				   "match! Clean all ports information in RTU",
+				   hal_nports_local,
+				   rtu_hdr->rtu_nports);
+			rtu_hdr->rtu_nports = hal_nports_local;
+			/* clean port portsconfig, shem already locked */
+			rtu_clean_ports(SHM_NOT_LOCK);
+		}
+	}
+
+	if ((!rtu_htab) || (!vlan_tab) || (!mirror_cfg) || (!ports_cfg)) {
 		pr_error("%s: Cannot allocate mem in shmem\n", __func__);
 		return -1;
 	}

@@ -44,7 +44,7 @@
 #define RTU_SET_HP_MASK 1
 #define RTU_GET_HP_MASK 2
 
-/* Export of a function to set remove entry in rtu */
+/* Export of a function to remove entries from rtu for a given port */
 struct minipc_pd rtud_export_clear_entries = {
 	.name = "clear_entries",
 	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
@@ -144,6 +144,31 @@ struct minipc_pd rtud_export_mirror = {
 		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* destination mask */
 		MINIPC_ARG_END,
 	},
+};
+
+/* Export of a function to configure port in rtu */
+struct minipc_pd rtud_export_port_cfg = {
+	.name = "port_cfg",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* hw_index */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* valid_mask */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* qmode */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* fix_priority */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* priority */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* pvid */
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* untag */
+		MINIPC_ARG_END,
+	},
+};
+
+/* Export of a function to clear a port configuration in rtu */
+struct minipc_pd rtud_export_port_cfg_clear_all = {
+	.name = "clear_entries",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_END,
+		 },
 };
 
 #endif

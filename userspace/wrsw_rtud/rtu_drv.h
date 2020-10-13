@@ -101,4 +101,15 @@ int rtu_enable_mirroring(int ena);
 int rtu_cfg_mirroring(struct rtu_mirror_info *cfg);
 int rtu_get_mirroring(int *en, uint32_t *imask, uint32_t *emask, uint32_t *dmask);
 
+// PORT CONFIG
+void rtu_write_port_config(uint8_t hw_index,	/* indexed from 0 to 17 */
+	       uint8_t valid_mask,	/* mask of valid settings */
+	       uint8_t qmode,		/* q mode of a port */
+	       uint8_t fix_prio,	/* is fix priority set */
+	       uint8_t prio,		/* VLAN priority */
+	       uint16_t pvid,		/* PVID  */
+	       uint8_t untag		/* untag */
+	       );
+void rtu_clean_ports(int lock);
+
 #endif /*__WHITERABBIT_RTU_DRV_H*/

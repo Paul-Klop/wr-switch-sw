@@ -81,6 +81,7 @@ enum dump_type {
 	dump_type_spll_align_state,
 	/* rtu_filtering_entry enumerations */
 	dump_type_rtu_filtering_entry_dynamic,
+	dump_type_rtu_qmode,
 	dump_type_array_int,
 	/* scaledPicoseconds */
 	dump_type_scaledPicoseconds,

@@ -186,17 +186,13 @@ struct rtu_port_entry {
 };
 
 /* This is the overall structure stored in shared memory */
-#define RTU_SHMEM_VERSION 5 /* Version 5, added rtu_ports */
+#define RTU_SHMEM_VERSION 6 /* Version 6, remove *_offset */
 struct rtu_shmem_header {
 	struct rtu_filtering_entry *filters;
 	struct rtu_vlan_table_entry *vlans;
 	struct rtu_mirror_info *mirror;
 	struct rtu_port_entry *rtu_ports;
 	uint32_t rtu_nports;
-	unsigned long filters_offset;
-	unsigned long vlans_offset;
-	unsigned long mirror_offset;
-	unsigned long rtu_ports_offset;
 };
 
 #endif /*  __LIBWR_RTU_SHMEM_H__ */

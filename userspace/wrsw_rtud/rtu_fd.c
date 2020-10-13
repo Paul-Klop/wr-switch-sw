@@ -168,8 +168,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		rtu_htab = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*rtu_htab) * HTAB_ENTRIES);
 		rtu_hdr->filters = (struct rtu_filtering_entry *) rtu_htab;
-		rtu_hdr->filters_offset =
-				(void *)rtu_htab - (void *)rtu_shmem_p;
 		pr_debug("Clean filtering database.\n");
 		clean_fd(SHM_NOT_LOCK); /* clean filtering database,
 						shem already locked */
@@ -185,8 +183,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		vlan_tab = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*vlan_tab) * NUM_VLANS);
 		rtu_hdr->vlans = vlan_tab;
-		rtu_hdr->vlans_offset =
-				(void *)vlan_tab - (void *)rtu_shmem_p;
 		pr_debug("Clean vlan database.\n");
 		clean_vd(SHM_NOT_LOCK); /* clean VLAN database,
 						shem already locked */
@@ -202,8 +198,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		mirror_cfg = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*mirror_cfg) * NUM_MIRROR);
 		rtu_hdr->mirror = mirror_cfg;
-		rtu_hdr->mirror_offset =
-				(void *)mirror_cfg - (void *)rtu_shmem_p;
 		pr_debug("Clean vlan database.\n");
 		clean_mc(SHM_NOT_LOCK); /* clean port mirroring config,
 						shem already locked */
@@ -219,8 +213,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		ports_cfg = wrs_shm_alloc(rtu_shmem_p,
 					sizeof(*ports_cfg) * HAL_MAX_PORTS);
 		rtu_hdr->rtu_ports = ports_cfg;
-		rtu_hdr->rtu_ports_offset =
-				(void *)ports_cfg - (void *)rtu_shmem_p;
 		pr_debug("Clean ports database.\n");
 		rtu_hdr->rtu_nports = hal_nports_local;
 		rtu_clean_ports(SHM_NOT_LOCK); /* clean port ports config,

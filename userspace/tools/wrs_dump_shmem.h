@@ -45,6 +45,7 @@ enum dump_type {
 	dump_type_double,
 	dump_type_float,
 	dump_type_pointer,
+	dump_type_yes_no,
 	/* and strange ones, from IEEE */
 	dump_type_UInteger64,
 	dump_type_Integer64,

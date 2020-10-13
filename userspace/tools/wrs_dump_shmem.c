@@ -188,6 +188,19 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
+	case dump_type_yes_no:
+		i = *(uint8_t *)p;
+		switch (i) {
+		case 0:
+			printf("no(%d)\n", i);
+			break;
+		case 1:
+			printf("yes(%d)\n", i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
 
 	case dump_type_time:
 		printf("%s\n",timeToString(t,buf));
@@ -449,8 +462,8 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, t24p_from_config),
 	DUMP_FIELD(uint32_t, ep_base),
 	DUMP_FIELD(int, sfpPresent),
-	DUMP_FIELD(int, has_sfp_diag),
-	DUMP_FIELD(int, monitor),
+	DUMP_FIELD(yes_no, has_sfp_diag),
+	DUMP_FIELD(yes_no, monitor),
 
 	/* PPSi instance information */
 	DUMP_FIELD(int, portMode),
@@ -569,9 +582,9 @@ int dump_hal_mem(struct wrs_shm_head *head)
 struct dump_info htab_info[] = {
 	DUMP_FIELD(int, addr.hash),
 	DUMP_FIELD(int, addr.bucket),
-	DUMP_FIELD(int, valid),
+	DUMP_FIELD(yes_no, valid),
 	DUMP_FIELD(int, end_of_bucket),
-	DUMP_FIELD(int, is_bpdu),
+	DUMP_FIELD(yes_no, is_bpdu),
 	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
 	DUMP_FIELD(UInteger8, fid),
 	DUMP_FIELD(uint32_t, port_mask_src),
@@ -580,7 +593,7 @@ struct dump_info htab_info[] = {
 	DUMP_FIELD(int, drop_when_dest),
 	DUMP_FIELD(int, drop_unmatched_src_ports),
 	DUMP_FIELD(UInteger32, last_access_t),
-	DUMP_FIELD(int, force_remove),
+	DUMP_FIELD(yes_no, force_remove),
 	DUMP_FIELD(UInteger8, prio_src),
 	DUMP_FIELD(int, has_prio_src),
 	DUMP_FIELD(int, prio_override_src),
@@ -597,15 +610,15 @@ struct dump_info vlan_info[] = {
 	DUMP_FIELD(uint32_t, port_mask),
 	DUMP_FIELD(UInteger8, fid),
 	DUMP_FIELD(UInteger8, prio),
-	DUMP_FIELD(int, has_prio),
-	DUMP_FIELD(int, prio_override),
-	DUMP_FIELD(int, drop),
+	DUMP_FIELD(yes_no, has_prio),
+	DUMP_FIELD(yes_no, prio_override),
+	DUMP_FIELD(yes_no, drop),
 };
 
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct rtu_mirror_info
 struct dump_info mirror_info[] = {
-	DUMP_FIELD(int, en),
+	DUMP_FIELD(yes_no, en),
 	DUMP_FIELD(uint32_t, imask),
 	DUMP_FIELD(uint32_t, emask),
 	DUMP_FIELD(uint32_t, dmask),

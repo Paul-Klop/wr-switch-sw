@@ -217,31 +217,31 @@ dot1qFdbTable_container_load(netsnmp_container *container)
          */
     u_long   dot1qFdbId = 0;
 
-    struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
-    int vlans_in_fids_counters[NUM_VLANS];
+    struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
+    int entries_per_fid_table[NUM_VLANS];
 
     u_long i;
+    int read_entries;
 
     DEBUGMSGTL(("verbose:dot1qFdbTable:dot1qFdbTable_container_load","called\n"));
 
-    if (0 != shmem_rtu_read_vlans(vlan_tab_local)) {
+    memset(entries_per_fid_table, 0, sizeof(entries_per_fid_table) * sizeof(int));
+    if (0 != shmem_rtu_read_htab(rtu_htab_local, &read_entries)) {
 	return MFD_RESOURCE_UNAVAILABLE;
     }
 
-    memset(vlans_in_fids_counters, 0, NUM_VLANS*sizeof(int));
-    /* Count number of vlans per fid */
-    for (i = 0; i < NUM_VLANS; i++) {
-	/* skip empty entires */
-	if ((vlan_tab_local[i].drop != 0)
-	    && (vlan_tab_local[i].port_mask == 0x0))
-		continue;
-
-	vlans_in_fids_counters[vlan_tab_local[i].fid]++;
+    /* Count number of entries per fid */
+    for (i = 0; i < read_entries; i++) {
+	if (rtu_htab_local[i].dynamic != RTU_ENTRY_TYPE_DYNAMIC) {
+	    /* count only dynamic entries */
+	    continue;
+	}
+	entries_per_fid_table[rtu_htab_local[i].fid]++;
     }
 
 
     for (dot1qFdbId = 0; dot1qFdbId < NUM_VLANS; dot1qFdbId++) {
-	if (vlans_in_fids_counters[dot1qFdbId] == 0) {
+	if (entries_per_fid_table[dot1qFdbId] == 0) {
 	    /* Skip fids with no vlans */
 	    continue;
 	}
@@ -267,7 +267,7 @@ dot1qFdbTable_container_load(netsnmp_container *container)
 	* setup/save data for dot1qFdbDynamicCount
 	* dot1qFdbDynamicCount(2)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
 	*/
-	rowreq_ctx->data.dot1qFdbDynamicCount = vlans_in_fids_counters[dot1qFdbId];
+	rowreq_ctx->data.dot1qFdbDynamicCount = entries_per_fid_table[dot1qFdbId];
 
 	/*
 	* insert into table container

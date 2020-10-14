@@ -12,6 +12,7 @@
 #include "dot1dBasePortTable/dot1dBasePortTable.h"
 #include "dot1dStaticTable/dot1dStaticTable.h"
 #include "dot1dTpFdbTable/dot1dTpFdbTable.h"
+#include "dot1qBase.h"
 #include "dot1qFdbTable/dot1qFdbTable.h"
 #include "dot1qTpFdbTable/dot1qTpFdbTable.h"
 
@@ -21,6 +22,7 @@ void init_bridge_mib(void)
     init_dot1dBasePortTable();
     init_dot1dStaticTable();
     init_dot1dTpFdbTable();
+    init_dot1qBase();
     init_dot1qFdbTable();
     init_dot1qTpFdbTable();
 }

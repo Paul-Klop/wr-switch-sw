@@ -5,6 +5,11 @@
 #ifndef DOT1QBASE_H
 #define DOT1QBASE_H
 
+#define DOT1QVLANVERSIONNUMBER 1
+
+#define DOT1QGVRPSTATUS_ENABLED  1
+#define DOT1QGVRPSTATUS_DISABLED 2
+
 /* function declarations */
 void init_dot1qBase(void);
 Netsnmp_Node_Handler handle_dot1qVlanVersionNumber;

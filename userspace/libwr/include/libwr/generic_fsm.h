@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <libwr/wrs-msg.h>
 
 #define FSM_GEN_DEBUG 0
 

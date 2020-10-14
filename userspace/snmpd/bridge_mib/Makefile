@@ -2,6 +2,7 @@
 
 BRIDGE_DIRS= \
 	dot1dBasePortTable \
+	dot1dStaticTable \
 	dot1dTpFdbTable \
 	dot1qFdbTable \
 	dot1qTpFdbTable \

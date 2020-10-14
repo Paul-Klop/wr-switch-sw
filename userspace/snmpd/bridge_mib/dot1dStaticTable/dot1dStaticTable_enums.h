@@ -49,19 +49,6 @@ extern "C" {
 
 #endif /* DOT1DSTATICSTATUS_ENUMS */
 
-    /*
-     * TODO:140:o: Define your interal representation of dot1dStaticStatus enums.
-     * (used for value mapping; see notes at top of file)
-     */
-#define INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_OTHER  1 
-#define INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_INVALID  2 
-#define INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_PERMANENT  3 
-#define INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_DELETEONRESET  4 
-#define INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_DELETEONTIMEOUT  5 
-
-
-
-
 #ifdef __cplusplus
 }
 #endif

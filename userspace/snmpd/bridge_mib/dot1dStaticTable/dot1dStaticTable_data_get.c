@@ -10,6 +10,9 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
+
 /* include our parent header */
 #include "dot1dStaticTable.h"
 
@@ -290,29 +293,12 @@ dot1dStaticStatus_map(u_long *mib_dot1dStaticStatus_val_ptr, u_long raw_dot1dSta
      * uses INTERNAL_* macros defined in the header files
      */
     switch(raw_dot1dStaticStatus_val) {
-        case INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_OTHER:
-             *mib_dot1dStaticStatus_val_ptr = DOT1DSTATICSTATUS_OTHER;
-             break;
-
-        case INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_INVALID:
-             *mib_dot1dStaticStatus_val_ptr = DOT1DSTATICSTATUS_INVALID;
-             break;
-
-        case INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_PERMANENT:
+        case RTU_ENTRY_TYPE_STATIC:
              *mib_dot1dStaticStatus_val_ptr = DOT1DSTATICSTATUS_PERMANENT;
              break;
 
-        case INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_DELETEONRESET:
-             *mib_dot1dStaticStatus_val_ptr = DOT1DSTATICSTATUS_DELETEONRESET;
-             break;
-
-        case INTERNAL_DOT1DSTATICTABLE_DOT1DSTATICSTATUS_DELETEONTIMEOUT:
-             *mib_dot1dStaticStatus_val_ptr = DOT1DSTATICSTATUS_DELETEONTIMEOUT;
-             break;
-
-             default:
-                 snmp_log(LOG_ERR, "couldn't map value %ld for dot1dStaticStatus\n", raw_dot1dStaticStatus_val );
-                 return MFD_ERROR;
+         default:
+             *mib_dot1dStaticStatus_val_ptr = DOT1DSTATICSTATUS_OTHER;
     }
 
     return MFD_SUCCESS;

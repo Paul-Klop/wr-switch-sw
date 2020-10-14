@@ -13,6 +13,8 @@
 /* include our parent header */
 #include "dot1dStaticTable.h"
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
 
 #include "dot1dStaticTable_data_access.h"
 
@@ -207,168 +209,137 @@ dot1dStaticTable_container_load(netsnmp_container *container)
     dot1dStaticTable_rowreq_ctx *rowreq_ctx;
     size_t                 count = 0;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * dot1dStaticAddress(1)/MacAddress/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
-         */
-   char   dot1dStaticAddress[6];
-   size_t      dot1dStaticAddress_len;
-        /*
-         * dot1dStaticReceivePort(2)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/R/d/h
-         */
-   long   dot1dStaticReceivePort;
+    int i;
+    uint32_t port_mask;
+    int htab_read_entries;
+    struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
+    int dot1dStaticReceivePort;
 
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    DEBUGMSGTL(("verbose:dot1qTpFdbTable:dot1qTpFdbTable_container_load","called\n"));
 
-    DEBUGMSGTL(("verbose:dot1dStaticTable:dot1dStaticTable_container_load","called\n"));
-
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    /* read filter entires from shm to local memory for data consistency */
+    if (shmem_rtu_read_htab(rtu_htab_local, &htab_read_entries)) {
+	DEBUGMSGTL(("verbose:dot1qTpFdbTable:dot1qTpFdbTable_container_load",
+		    "Too many retries while reading htab entries from RTUd shmem\n"));
+	return MFD_RESOURCE_UNAVAILABLE;
     }
+	
+    qsort(rtu_htab_local, htab_read_entries,
+          sizeof(struct rtu_filtering_entry), cmp_rtu_entries_fid_mac);
 
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1dStaticTable container.
-     * loop over your dot1dStaticTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
+    for (i = 0; i < htab_read_entries; i++) {
+	dot1dStaticReceivePort = 1;
+	/* skip invalid entires */
+	if (!rtu_htab_local[i].valid)
+	    continue;
 
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
+	/* skip if destination is only a CPU */
+	if (rtu_htab_local[i].port_mask_dst == 1 << hal_nports_local) {
+	    continue;
+	}
 
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
+	/* skip non static entries */
+	if (rtu_htab_local[i].dynamic != RTU_ENTRY_TYPE_STATIC) {
+	    continue;
+	}
 
-        /*
-         * TODO:352:M: |   |-> set indexes in new dot1dStaticTable rowreq context.
-         * data context will be set from the param (unless NULL,
-         *      in which case a new data context will be allocated)
-         */
-        rowreq_ctx = dot1dStaticTable_allocate_rowreq_ctx(NULL);
-        if (NULL == rowreq_ctx) {
-            snmp_log(LOG_ERR, "memory allocation failed\n");
-            return MFD_RESOURCE_UNAVAILABLE;
-        }
-        if(MFD_SUCCESS != dot1dStaticTable_indexes_set(rowreq_ctx
-                               , dot1dStaticAddress, dot1dStaticAddress_len
-                               , dot1dStaticReceivePort
-               )) {
-            snmp_log(LOG_ERR,"error setting index while loading "
-                     "dot1dStaticTable data.\n");
-            dot1dStaticTable_release_rowreq_ctx(rowreq_ctx);
-            continue;
-        }
+	port_mask = RTU_PMASK_MAX(hal_nports_local);
 
-        /*
-         * TODO:352:r: |   |-> populate dot1dStaticTable data context.
-         * Populate data context here. (optionally, delay until row prep)
-         */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for dot1dStaticAllowedToGoTo
-     * dot1dStaticAllowedToGoTo(3)/OCTETSTR/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1dStaticAllowedToGoTo mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1dStaticAllowedToGoTo_map(&rowreq_ctx->data.dot1dStaticAllowedToGoTo, &rowreq_ctx->data.dot1dStaticAllowedToGoTo_len,
-     *                dot1dStaticAllowedToGoTo, dot1dStaticAllowedToGoTo_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1dStaticAllowedToGoTo data
-     */
-    if ((NULL == rowreq_ctx->data.dot1dStaticAllowedToGoTo) ||
-        (rowreq_ctx->data.dot1dStaticAllowedToGoTo_len <
-         (dot1dStaticAllowedToGoTo_len* sizeof(dot1dStaticAllowedToGoTo[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1dStaticAllowedToGoTo)\n");
-        return MFD_ERROR;
+	if ((rtu_htab_local[i].port_mask_src & port_mask) == port_mask) {
+	    /* all ports in the mask, use 0 as stated in the mib */
+	    dot1dStaticReceivePort = 0;
+	} else {
+	    /* ignore bits not representing ports */
+	    port_mask = rtu_htab_local[i].port_mask_src & port_mask;
+	}
+
+	while(1){
+	    if (dot1dStaticReceivePort != 0) {
+		while (!(port_mask & 1)&& port_mask){
+		    /* skip ports not in mask */
+		    dot1dStaticReceivePort++;
+		    port_mask >>= 1;
+		}
+		if (!port_mask) {
+		    /* no more ports */
+		    break;
+		}
+	    }
+
+	    /*
+	    * |-> set indexes in new dot1dStaticTable rowreq context.
+	    * data context will be set from the param (unless NULL,
+	    *      in which case a new data context will be allocated)
+	    */
+	    rowreq_ctx = dot1dStaticTable_allocate_rowreq_ctx(NULL);
+	    if (NULL == rowreq_ctx) {
+		snmp_log(LOG_ERR, "memory allocation failed\n");
+		return MFD_RESOURCE_UNAVAILABLE;
+	    }
+	    if(MFD_SUCCESS != dot1dStaticTable_indexes_set(rowreq_ctx
+				, (char *)rtu_htab_local[i].mac, ETH_ALEN
+				, dot1dStaticReceivePort
+		)) {
+		snmp_log(LOG_ERR,"error setting index while loading "
+			"dot1dStaticTable data.\n");
+		dot1dStaticTable_release_rowreq_ctx(rowreq_ctx);
+		continue;
+	    }
+
+	    /*
+	    * setup/save data for dot1dStaticAllowedToGoTo
+	    * dot1dStaticAllowedToGoTo(3)/OCTETSTR/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/h
+	    */
+	    /*
+	    * TODO:246:r: |-> Define dot1dStaticAllowedToGoTo mapping.
+	    * Map values between raw/native values and MIB values
+	    *
+	    * if(MFD_SUCCESS !=
+	    *    dot1dStaticAllowedToGoTo_map(&rowreq_ctx->data.dot1dStaticAllowedToGoTo, &rowreq_ctx->data.dot1dStaticAllowedToGoTo_len,
+	    *                dot1dStaticAllowedToGoTo, dot1dStaticAllowedToGoTo_len, 0)) {
+	    *    return MFD_ERROR;
+	    * }
+	    */
+	    /*
+	    * make sure there is enough space for dot1dStaticAllowedToGoTo data
+	    */
+	    if (NULL == rowreq_ctx->data.dot1dStaticAllowedToGoTo) {
+	        snmp_log(LOG_ERR,"not enough space for value (dot1dStaticAllowedToGoTo)\n");
+	        return MFD_ERROR;
+	    }
+	    convert_portmask_to_snmp_bitmask(hal_nports_local, rtu_htab_local[i].port_mask_dst & RTU_PMASK_MAX(hal_nports_local),
+					     rowreq_ctx->data.dot1dStaticAllowedToGoTo, &rowreq_ctx->data.dot1dStaticAllowedToGoTo_len);
+	    /*
+	    * setup/save data for dot1dStaticStatus
+	    * dot1dStaticStatus(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
+	    */
+	    /*
+	    * |-> Define dot1dStaticStatus mapping.
+	    * Map values between raw/native values and MIB values
+	    *
+	    * enums usually need mapping.
+	    */
+	    if(MFD_SUCCESS !=
+	    dot1dStaticStatus_map(&rowreq_ctx->data.dot1dStaticStatus, rtu_htab_local[i].dynamic )) {
+		return MFD_ERROR;
+	    }
+
+	    /*
+	    * insert into table container
+	    */
+	    CONTAINER_INSERT(container, rowreq_ctx);
+	    ++count;
+
+	    if (dot1dStaticReceivePort == 0) {
+		/* only one entry with dot1dStaticReceivePort == 0 (all ports) as stated in the mib */
+		break;
+	    }
+	    /* go to next port */
+	    dot1dStaticReceivePort++;
+	    port_mask >>= 1;
+
+	}
     }
-    rowreq_ctx->data.dot1dStaticAllowedToGoTo_len = dot1dStaticAllowedToGoTo_len* sizeof(dot1dStaticAllowedToGoTo[0]);
-    memcpy( rowreq_ctx->data.dot1dStaticAllowedToGoTo, dot1dStaticAllowedToGoTo, dot1dStaticAllowedToGoTo_len* sizeof(dot1dStaticAllowedToGoTo[0]) );
-    
-    /*
-     * setup/save data for dot1dStaticStatus
-     * dot1dStaticStatus(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1dStaticStatus mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1dStaticStatus_map(&rowreq_ctx->data.dot1dStaticStatus, dot1dStaticStatus )) {
-        return MFD_ERROR;
-    }
-    
-        
-        /*
-         * insert into table container
-         */
-        CONTAINER_INSERT(container, rowreq_ctx);
-        ++count;
-    }
-
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
 
     DEBUGMSGT(("verbose:dot1dStaticTable:dot1dStaticTable_container_load",
                "inserted %d records\n", count));

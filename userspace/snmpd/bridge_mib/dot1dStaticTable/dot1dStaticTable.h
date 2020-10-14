@@ -120,7 +120,7 @@ typedef struct dot1dStaticTable_mib_index_s {
      * POSSIBLE LENGHT FOR EVERY VARIABLE LENGTH INDEX!
      * Guessing 128 - col/entry(2)  - oid len(9)
 */
-#define MAX_dot1dStaticTable_IDX_LEN     8
+#define MAX_dot1dStaticTable_IDX_LEN     7
 
 
 /* *********************************************************************

@@ -138,10 +138,31 @@ _dot1dStaticTable_initialize_interface(dot1dStaticTable_registration * reg_ptr, 
     /*
      * Setting up the table's definition
      */
-    netsnmp_table_helper_add_indexes(tbl_info,
-                                  ASN_OCTET_STR, /** index: dot1dStaticAddress */
-                                  ASN_INTEGER, /** index: dot1dStaticReceivePort */
-                             0);
+    /* Don't use netsnmp_table_helper_add_indexes as in the generated code because MacAddress is
+     * mapped into ASN_OCTET_STR, which has a length as a first byte, then the content of MAC/string.
+     * With this behaviour of ASN_OCTET_STR, the index was 1 byte longer. It is not needed to carry
+     * the length of MacAddress since it is defined with a fixed length in the MIB.
+     */
+    /* netsnmp_table_helper_add_indexes(tbl_info,
+     *                            ASN_OCTET_STR,   // index: dot1dStaticAddress
+     *                            ASN_INTEGER,     // index: dot1dStaticReceivePort
+     *                           0);
+     */
+
+    snmp_varlist_add_variable(&tbl_info->indexes,
+                                  NULL,
+                                  0,
+                                  ASN_PRIV_IMPLIED_OCTET_STR,
+                                  "XXXXXX",
+                                  6);
+
+    snmp_varlist_add_variable(&tbl_info->indexes,
+                                  NULL,
+                                  0,
+                                  ASN_INTEGER,
+                                  NULL,
+                                  0);
+
 
     /*  Define the minimum and maximum accessible columns.  This
         optimizes retrieval. */
@@ -322,7 +343,7 @@ dot1dStaticTable_index_to_oid(netsnmp_index *oid_idx,
      * set up varbinds
      */
     memset( &var_dot1dStaticAddress, 0x00, sizeof(var_dot1dStaticAddress) );
-    var_dot1dStaticAddress.type = ASN_OCTET_STR;
+    var_dot1dStaticAddress.type = ASN_PRIV_IMPLIED_OCTET_STR;
     memset( &var_dot1dStaticReceivePort, 0x00, sizeof(var_dot1dStaticReceivePort) );
     var_dot1dStaticReceivePort.type = ASN_INTEGER;
 

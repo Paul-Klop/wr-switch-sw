@@ -46,13 +46,6 @@ extern "C" {
 
 #endif /* DOT1QPORTACCEPTABLEFRAMETYPES_ENUMS */
 
-    /*
-     * TODO:140:o: Define your interal representation of dot1qPortAcceptableFrameTypes enums.
-     * (used for value mapping; see notes at top of file)
-     */
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTACCEPTABLEFRAMETYPES_ADMITALL  1 
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTACCEPTABLEFRAMETYPES_ADMITONLYVLANTAGGED  2 
-
 
 /*************************************************************
  * constants for enums for the MIB node
@@ -68,13 +61,6 @@ extern "C" {
 #define TRUTHVALUE_FALSE  2 
 
 #endif /* TRUTHVALUE_ENUMS */
-
-    /*
-     * TODO:140:o: Define your interal representation of dot1qPortIngressFiltering enums.
-     * (used for value mapping; see notes at top of file)
-     */
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTINGRESSFILTERING_TRUE  1 
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTINGRESSFILTERING_FALSE  2 
 
 
 /*************************************************************
@@ -92,14 +78,6 @@ extern "C" {
 
 #endif /* ENABLEDSTATUS_ENUMS */
 
-    /*
-     * TODO:140:o: Define your interal representation of dot1qPortGvrpStatus enums.
-     * (used for value mapping; see notes at top of file)
-     */
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTGVRPSTATUS_ENABLED  1 
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTGVRPSTATUS_DISABLED  2 
-
-
 /*************************************************************
  * constants for enums for the MIB node
  * dot1qPortRestrictedVlanRegistration (TruthValue / ASN_INTEGER)
@@ -114,16 +92,6 @@ extern "C" {
 #define TRUTHVALUE_FALSE  2 
 
 #endif /* TRUTHVALUE_ENUMS */
-
-    /*
-     * TODO:140:o: Define your interal representation of dot1qPortRestrictedVlanRegistration enums.
-     * (used for value mapping; see notes at top of file)
-     */
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTRESTRICTEDVLANREGISTRATION_TRUE  1 
-#define INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTRESTRICTEDVLANREGISTRATION_FALSE  2 
-
-
-
 
 #ifdef __cplusplus
 }

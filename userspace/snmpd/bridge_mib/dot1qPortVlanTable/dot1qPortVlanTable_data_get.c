@@ -10,6 +10,9 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
+
 /* include our parent header */
 #include "dot1qPortVlanTable.h"
 
@@ -220,21 +223,23 @@ dot1qPortAcceptableFrameTypes_map(u_long *mib_dot1qPortAcceptableFrameTypes_val_
     DEBUGMSGTL(("verbose:dot1qPortVlanTable:dot1qPortAcceptableFrameTypes_map","called\n"));
     
     /*
-     * TODO:241:o: |-> Implement dot1qPortAcceptableFrameTypes enum mapping.
+     * |-> Implement dot1qPortAcceptableFrameTypes enum mapping.
      * uses INTERNAL_* macros defined in the header files
      */
     switch(raw_dot1qPortAcceptableFrameTypes_val) {
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTACCEPTABLEFRAMETYPES_ADMITALL:
+	case QMODE_ACCESS:
+	case QMODE_DISABLED:
+	case QMODE_UNQ:
              *mib_dot1qPortAcceptableFrameTypes_val_ptr = DOT1QPORTACCEPTABLEFRAMETYPES_ADMITALL;
              break;
 
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTACCEPTABLEFRAMETYPES_ADMITONLYVLANTAGGED:
+	case QMODE_TRUNK:
              *mib_dot1qPortAcceptableFrameTypes_val_ptr = DOT1QPORTACCEPTABLEFRAMETYPES_ADMITONLYVLANTAGGED;
              break;
 
-             default:
-                 snmp_log(LOG_ERR, "couldn't map value %ld for dot1qPortAcceptableFrameTypes\n", raw_dot1qPortAcceptableFrameTypes_val );
-                 return MFD_ERROR;
+	default:
+	    snmp_log(LOG_ERR, "couldn't map value %ld for dot1qPortAcceptableFrameTypes\n", raw_dot1qPortAcceptableFrameTypes_val );
+	    return MFD_ERROR;
     }
 
     return MFD_SUCCESS;
@@ -274,81 +279,6 @@ dot1qPortAcceptableFrameTypes_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_
     return MFD_SUCCESS;
 } /* dot1qPortAcceptableFrameTypes_get */
 
-/*---------------------------------------------------------------------
- * Q-BRIDGE-MIB::dot1qPortVlanEntry.dot1qPortIngressFiltering
- * dot1qPortIngressFiltering is subid 3 of dot1qPortVlanEntry.
- * Its status is Current, and its access level is ReadWrite.
- * OID: .1.3.6.1.2.1.17.7.1.4.5.1.3
- * Description:
-When this is true(1), the device will discard incoming
-        frames for VLANs that do not include this Port in its
-
-        Member set.  When false(2), the port will accept all
-        incoming frames.
-
-        This control does not affect VLAN-independent BPDU
-        frames, such as GVRP and STP.  It does affect VLAN-
-        dependent BPDU frames, such as GMRP.
-
-        The value of this object MUST be retained across
-        reinitializations of the management system.
- *
- * Attributes:
- *   accessible 1     isscalar 0     enums  1      hasdefval 1
- *   readable   1     iscolumn 1     ranges 0      hashint   0
- *   settable   1
- *   defval: false
- *
- * Enum range: 2/8. Values:  true(1), false(2)
- *
- * Its syntax is TruthValue (based on perltype INTEGER)
- * The net-snmp type is ASN_INTEGER. The C type decl is long (u_long)
- */
-/**
- * map a value from its original native format to the MIB format.
- *
- * @retval MFD_SUCCESS         : success
- * @retval MFD_ERROR           : Any other error
- *
- * @note parameters follow the memset convention (dest, src).
- *
- * @note generation and use of this function can be turned off by re-running
- * mib2c after adding the following line to the file
- * defaults/node-dot1qPortIngressFiltering.m2d :
- *   @eval $m2c_node_skip_mapping = 1@
- *
- * @remark
- *  If the values for your data type don't exactly match the
- *  possible values defined by the mib, you should map them here.
- *  Otherwise, just do a direct copy.
- */
-int
-dot1qPortIngressFiltering_map(u_long *mib_dot1qPortIngressFiltering_val_ptr, u_long raw_dot1qPortIngressFiltering_val)
-{
-    netsnmp_assert(NULL != mib_dot1qPortIngressFiltering_val_ptr);
-    
-    DEBUGMSGTL(("verbose:dot1qPortVlanTable:dot1qPortIngressFiltering_map","called\n"));
-    
-    /*
-     * TODO:241:o: |-> Implement dot1qPortIngressFiltering enum mapping.
-     * uses INTERNAL_* macros defined in the header files
-     */
-    switch(raw_dot1qPortIngressFiltering_val) {
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTINGRESSFILTERING_TRUE:
-             *mib_dot1qPortIngressFiltering_val_ptr = TRUTHVALUE_TRUE;
-             break;
-
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTINGRESSFILTERING_FALSE:
-             *mib_dot1qPortIngressFiltering_val_ptr = TRUTHVALUE_FALSE;
-             break;
-
-             default:
-                 snmp_log(LOG_ERR, "couldn't map value %ld for dot1qPortIngressFiltering\n", raw_dot1qPortIngressFiltering_val );
-                 return MFD_ERROR;
-    }
-
-    return MFD_SUCCESS;
-} /* dot1qPortIngressFiltering_map */
 
 /**
  * Extract the current value of the dot1qPortIngressFiltering data.
@@ -383,84 +313,6 @@ dot1qPortIngressFiltering_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_long
 
     return MFD_SUCCESS;
 } /* dot1qPortIngressFiltering_get */
-
-/*---------------------------------------------------------------------
- * Q-BRIDGE-MIB::dot1qPortVlanEntry.dot1qPortGvrpStatus
- * dot1qPortGvrpStatus is subid 4 of dot1qPortVlanEntry.
- * Its status is Current, and its access level is ReadWrite.
- * OID: .1.3.6.1.2.1.17.7.1.4.5.1.4
- * Description:
-The state of GVRP operation on this port.  The value
-        enabled(1) indicates that GVRP is enabled on this port,
-        as long as dot1qGvrpStatus is also enabled for this
-        device.  When disabled(2) but dot1qGvrpStatus is still
-        enabled for the device, GVRP is disabled on this port:
-        any GVRP packets received will be silently discarded, and
-        no GVRP registrations will be propagated from other
-        ports.  This object affects all GVRP Applicant and
-        Registrar state machines on this port.  A transition
-        from disabled(2) to enabled(1) will cause a reset of all
-        GVRP state machines on this port.
-
-        The value of this object MUST be retained across
-        reinitializations of the management system.
- *
- * Attributes:
- *   accessible 1     isscalar 0     enums  1      hasdefval 1
- *   readable   1     iscolumn 1     ranges 0      hashint   0
- *   settable   1
- *   defval: enabled
- *
- * Enum range: 1/8. Values:  enabled(1), disabled(2)
- *
- * Its syntax is EnabledStatus (based on perltype INTEGER)
- * The net-snmp type is ASN_INTEGER. The C type decl is long (u_long)
- */
-/**
- * map a value from its original native format to the MIB format.
- *
- * @retval MFD_SUCCESS         : success
- * @retval MFD_ERROR           : Any other error
- *
- * @note parameters follow the memset convention (dest, src).
- *
- * @note generation and use of this function can be turned off by re-running
- * mib2c after adding the following line to the file
- * defaults/node-dot1qPortGvrpStatus.m2d :
- *   @eval $m2c_node_skip_mapping = 1@
- *
- * @remark
- *  If the values for your data type don't exactly match the
- *  possible values defined by the mib, you should map them here.
- *  Otherwise, just do a direct copy.
- */
-int
-dot1qPortGvrpStatus_map(u_long *mib_dot1qPortGvrpStatus_val_ptr, u_long raw_dot1qPortGvrpStatus_val)
-{
-    netsnmp_assert(NULL != mib_dot1qPortGvrpStatus_val_ptr);
-    
-    DEBUGMSGTL(("verbose:dot1qPortVlanTable:dot1qPortGvrpStatus_map","called\n"));
-    
-    /*
-     * TODO:241:o: |-> Implement dot1qPortGvrpStatus enum mapping.
-     * uses INTERNAL_* macros defined in the header files
-     */
-    switch(raw_dot1qPortGvrpStatus_val) {
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTGVRPSTATUS_ENABLED:
-             *mib_dot1qPortGvrpStatus_val_ptr = ENABLEDSTATUS_ENABLED;
-             break;
-
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTGVRPSTATUS_DISABLED:
-             *mib_dot1qPortGvrpStatus_val_ptr = ENABLEDSTATUS_DISABLED;
-             break;
-
-             default:
-                 snmp_log(LOG_ERR, "couldn't map value %ld for dot1qPortGvrpStatus\n", raw_dot1qPortGvrpStatus_val );
-                 return MFD_ERROR;
-    }
-
-    return MFD_SUCCESS;
-} /* dot1qPortGvrpStatus_map */
 
 /**
  * Extract the current value of the dot1qPortGvrpStatus data.
@@ -634,78 +486,6 @@ dot1qPortGvrpLastPduOrigin_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, char 
     return MFD_SUCCESS;
 } /* dot1qPortGvrpLastPduOrigin_get */
 
-/*---------------------------------------------------------------------
- * Q-BRIDGE-MIB::dot1qPortVlanEntry.dot1qPortRestrictedVlanRegistration
- * dot1qPortRestrictedVlanRegistration is subid 7 of dot1qPortVlanEntry.
- * Its status is Current, and its access level is ReadWrite.
- * OID: .1.3.6.1.2.1.17.7.1.4.5.1.7
- * Description:
-The state of Restricted VLAN Registration on this port.
-         If the value of this control is true(1), then creation
-         of a new dynamic VLAN entry is permitted only if there
-         is a Static VLAN Registration Entry for the VLAN concerned,
-         in which the Registrar Administrative Control value for
-         this port is Normal Registration.
-
-        The value of this object MUST be retained across
-        reinitializations of the management system.
- *
- * Attributes:
- *   accessible 1     isscalar 0     enums  1      hasdefval 1
- *   readable   1     iscolumn 1     ranges 0      hashint   0
- *   settable   1
- *   defval: false
- *
- * Enum range: 2/8. Values:  true(1), false(2)
- *
- * Its syntax is TruthValue (based on perltype INTEGER)
- * The net-snmp type is ASN_INTEGER. The C type decl is long (u_long)
- */
-/**
- * map a value from its original native format to the MIB format.
- *
- * @retval MFD_SUCCESS         : success
- * @retval MFD_ERROR           : Any other error
- *
- * @note parameters follow the memset convention (dest, src).
- *
- * @note generation and use of this function can be turned off by re-running
- * mib2c after adding the following line to the file
- * defaults/node-dot1qPortRestrictedVlanRegistration.m2d :
- *   @eval $m2c_node_skip_mapping = 1@
- *
- * @remark
- *  If the values for your data type don't exactly match the
- *  possible values defined by the mib, you should map them here.
- *  Otherwise, just do a direct copy.
- */
-int
-dot1qPortRestrictedVlanRegistration_map(u_long *mib_dot1qPortRestrictedVlanRegistration_val_ptr, u_long raw_dot1qPortRestrictedVlanRegistration_val)
-{
-    netsnmp_assert(NULL != mib_dot1qPortRestrictedVlanRegistration_val_ptr);
-    
-    DEBUGMSGTL(("verbose:dot1qPortVlanTable:dot1qPortRestrictedVlanRegistration_map","called\n"));
-    
-    /*
-     * TODO:241:o: |-> Implement dot1qPortRestrictedVlanRegistration enum mapping.
-     * uses INTERNAL_* macros defined in the header files
-     */
-    switch(raw_dot1qPortRestrictedVlanRegistration_val) {
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTRESTRICTEDVLANREGISTRATION_TRUE:
-             *mib_dot1qPortRestrictedVlanRegistration_val_ptr = TRUTHVALUE_TRUE;
-             break;
-
-        case INTERNAL_DOT1QPORTVLANTABLE_DOT1QPORTRESTRICTEDVLANREGISTRATION_FALSE:
-             *mib_dot1qPortRestrictedVlanRegistration_val_ptr = TRUTHVALUE_FALSE;
-             break;
-
-             default:
-                 snmp_log(LOG_ERR, "couldn't map value %ld for dot1qPortRestrictedVlanRegistration\n", raw_dot1qPortRestrictedVlanRegistration_val );
-                 return MFD_ERROR;
-    }
-
-    return MFD_SUCCESS;
-} /* dot1qPortRestrictedVlanRegistration_map */
 
 /**
  * Extract the current value of the dot1qPortRestrictedVlanRegistration data.

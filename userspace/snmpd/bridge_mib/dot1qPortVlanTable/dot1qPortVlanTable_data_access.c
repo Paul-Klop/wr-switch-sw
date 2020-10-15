@@ -13,6 +13,8 @@
 /* include our parent header */
 #include "dot1qPortVlanTable.h"
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
 
 #include "dot1qPortVlanTable_data_access.h"
 
@@ -206,79 +208,27 @@ dot1qPortVlanTable_container_load(netsnmp_container *container)
 {
     dot1qPortVlanTable_rowreq_ctx *rowreq_ctx;
     size_t                 count = 0;
+    int port_i;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * dot1dBasePort(1)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/R/d/h
-         */
-   long   dot1dBasePort;
-
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    struct rtu_port_entry ports_tab_local[HAL_MAX_PORTS];
+    int rtu_nports_local;
 
     DEBUGMSGTL(("verbose:dot1qPortVlanTable:dot1qPortVlanTable_container_load","called\n"));
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    if (shmem_rtu_read_ports(ports_tab_local, &rtu_nports_local)) {
+	snmp_log(LOG_ERR, "unable to get ports info from RTU\n");
+	return MFD_RESOURCE_UNAVAILABLE;
     }
 
     /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1qPortVlanTable container.
+     * Load/update data in the dot1qPortVlanTable container.
      * loop over your dot1qPortVlanTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
+     * set the index(es) and data then insert into the container.
      */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
-
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
-
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
+    for (port_i = 0; port_i < rtu_nports_local; port_i++){
 
         /*
-         * TODO:352:M: |   |-> set indexes in new dot1qPortVlanTable rowreq context.
+         * |-> set indexes in new dot1qPortVlanTable rowreq context.
          * data context will be set from the param (unless NULL,
          *      in which case a new data context will be allocated)
          */
@@ -287,9 +237,7 @@ dot1qPortVlanTable_container_load(netsnmp_container *container)
             snmp_log(LOG_ERR, "memory allocation failed\n");
             return MFD_RESOURCE_UNAVAILABLE;
         }
-        if(MFD_SUCCESS != dot1qPortVlanTable_indexes_set(rowreq_ctx
-                               , dot1dBasePort
-               )) {
+        if(MFD_SUCCESS != dot1qPortVlanTable_indexes_set(rowreq_ctx, port_i + 1)) {
             snmp_log(LOG_ERR,"error setting index while loading "
                      "dot1qPortVlanTable data.\n");
             dot1qPortVlanTable_release_rowreq_ctx(rowreq_ctx);
@@ -300,138 +248,79 @@ dot1qPortVlanTable_container_load(netsnmp_container *container)
          * TODO:352:r: |   |-> populate dot1qPortVlanTable data context.
          * Populate data context here. (optionally, delay until row prep)
          */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for dot1qPvid
-     * dot1qPvid(1)/VlanIndex/ASN_UNSIGNED/u_long(u_long)//l/A/W/e/r/D/H
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPvid mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * Integer based value can usually just do a direct copy.
-     */
-    rowreq_ctx->data.dot1qPvid = dot1qPvid;
-    
-    /*
-     * setup/save data for dot1qPortAcceptableFrameTypes
-     * dot1qPortAcceptableFrameTypes(2)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPortAcceptableFrameTypes mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1qPortAcceptableFrameTypes_map(&rowreq_ctx->data.dot1qPortAcceptableFrameTypes, dot1qPortAcceptableFrameTypes )) {
-        return MFD_ERROR;
-    }
-    
-    /*
-     * setup/save data for dot1qPortIngressFiltering
-     * dot1qPortIngressFiltering(3)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPortIngressFiltering mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1qPortIngressFiltering_map(&rowreq_ctx->data.dot1qPortIngressFiltering, dot1qPortIngressFiltering )) {
-        return MFD_ERROR;
-    }
-    
-    /*
-     * setup/save data for dot1qPortGvrpStatus
-     * dot1qPortGvrpStatus(4)/EnabledStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPortGvrpStatus mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1qPortGvrpStatus_map(&rowreq_ctx->data.dot1qPortGvrpStatus, dot1qPortGvrpStatus )) {
-        return MFD_ERROR;
-    }
-    
-    /*
-     * setup/save data for dot1qPortGvrpFailedRegistrations
-     * dot1qPortGvrpFailedRegistrations(5)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPortGvrpFailedRegistrations mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * Integer based value can usually just do a direct copy.
-     */
-    rowreq_ctx->data.dot1qPortGvrpFailedRegistrations = dot1qPortGvrpFailedRegistrations;
-    
-    /*
-     * setup/save data for dot1qPortGvrpLastPduOrigin
-     * dot1qPortGvrpLastPduOrigin(6)/MacAddress/ASN_OCTET_STR/char(char)//L/A/w/e/R/d/H
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPortGvrpLastPduOrigin mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qPortGvrpLastPduOrigin_map(&rowreq_ctx->data.dot1qPortGvrpLastPduOrigin, &rowreq_ctx->data.dot1qPortGvrpLastPduOrigin_len,
-     *                dot1qPortGvrpLastPduOrigin, dot1qPortGvrpLastPduOrigin_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qPortGvrpLastPduOrigin data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qPortGvrpLastPduOrigin) ||
-        (rowreq_ctx->data.dot1qPortGvrpLastPduOrigin_len <
-         (dot1qPortGvrpLastPduOrigin_len* sizeof(dot1qPortGvrpLastPduOrigin[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qPortGvrpLastPduOrigin)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qPortGvrpLastPduOrigin_len = dot1qPortGvrpLastPduOrigin_len* sizeof(dot1qPortGvrpLastPduOrigin[0]);
-    memcpy( rowreq_ctx->data.dot1qPortGvrpLastPduOrigin, dot1qPortGvrpLastPduOrigin, dot1qPortGvrpLastPduOrigin_len* sizeof(dot1qPortGvrpLastPduOrigin[0]) );
-    
-    /*
-     * setup/save data for dot1qPortRestrictedVlanRegistration
-     * dot1qPortRestrictedVlanRegistration(7)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qPortRestrictedVlanRegistration mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1qPortRestrictedVlanRegistration_map(&rowreq_ctx->data.dot1qPortRestrictedVlanRegistration, dot1qPortRestrictedVlanRegistration )) {
-        return MFD_ERROR;
-    }
-    
-        
+	/*
+	* setup/save data for dot1qPvid
+	* dot1qPvid(1)/VlanIndex/ASN_UNSIGNED/u_long(u_long)//l/A/W/e/r/D/H
+	*/
+	rowreq_ctx->data.dot1qPvid = ports_tab_local[port_i].pvid;
+	
+	/*
+	* setup/save data for dot1qPortAcceptableFrameTypes
+	* dot1qPortAcceptableFrameTypes(2)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
+	*/
+	/*
+	* |-> Define dot1qPortAcceptableFrameTypes mapping.
+	* Map values between raw/native values and MIB values
+	*/
+	if(MFD_SUCCESS !=
+	dot1qPortAcceptableFrameTypes_map(&rowreq_ctx->data.dot1qPortAcceptableFrameTypes, ports_tab_local[port_i].qmode )) {
+	    return MFD_ERROR;
+	}
+	
+	/*
+	* setup/save data for dot1qPortIngressFiltering
+	* dot1qPortIngressFiltering(3)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
+	*/
+	/*
+	* |-> Define dot1qPortIngressFiltering mapping.
+	*/
+	rowreq_ctx->data.dot1qPortIngressFiltering = TRUTHVALUE_FALSE;
+	
+	/*
+	* setup/save data for dot1qPortGvrpStatus
+	* dot1qPortGvrpStatus(4)/EnabledStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
+	*/
+	/*
+	* hardcode dot1qPortGvrpStatus as disabled(2)
+	*/
+	rowreq_ctx->data.dot1qPortGvrpStatus = ENABLEDSTATUS_DISABLED;
+	
+	/*
+	* setup/save data for dot1qPortGvrpFailedRegistrations
+	* dot1qPortGvrpFailedRegistrations(5)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h
+	*/
+	/*
+	* Hardcode to 0.
+	*/
+	rowreq_ctx->data.dot1qPortGvrpFailedRegistrations = 0;
+	
+	/*
+	* setup/save data for dot1qPortGvrpLastPduOrigin
+	* dot1qPortGvrpLastPduOrigin(6)/MacAddress/ASN_OCTET_STR/char(char)//L/A/w/e/R/d/H
+	*/
+
+	if (NULL == rowreq_ctx->data.dot1qPortGvrpLastPduOrigin) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qPortGvrpLastPduOrigin)\n");
+	    return MFD_ERROR;
+	}
+	rowreq_ctx->data.dot1qPortGvrpLastPduOrigin_len = ETH_ALEN;
+	memset(rowreq_ctx->data.dot1qPortGvrpLastPduOrigin, 0, ETH_ALEN);
+
+	/*
+	* setup/save data for dot1qPortRestrictedVlanRegistration
+	* dot1qPortRestrictedVlanRegistration(7)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
+	*/
+	/*
+	* hardcode dot1qPortRestrictedVlanRegistration as false(2)
+	*/
+	rowreq_ctx->data.dot1qPortRestrictedVlanRegistration = TRUTHVALUE_FALSE;
+
         /*
          * insert into table container
          */
         CONTAINER_INSERT(container, rowreq_ctx);
         ++count;
     }
-
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
 
     DEBUGMSGT(("verbose:dot1qPortVlanTable:dot1qPortVlanTable_container_load",
                "inserted %d records\n", count));

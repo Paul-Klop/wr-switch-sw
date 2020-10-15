@@ -49,13 +49,9 @@ extern "C" {
     int dot1qPortAcceptableFrameTypes_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_long * dot1qPortAcceptableFrameTypes_val_ptr );
     int dot1qPortIngressFiltering_map(u_long *mib_dot1qPortIngressFiltering_val_ptr, u_long raw_dot1qPortIngressFiltering_val);
     int dot1qPortIngressFiltering_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_long * dot1qPortIngressFiltering_val_ptr );
-    int dot1qPortGvrpStatus_map(u_long *mib_dot1qPortGvrpStatus_val_ptr, u_long raw_dot1qPortGvrpStatus_val);
     int dot1qPortGvrpStatus_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_long * dot1qPortGvrpStatus_val_ptr );
-    int dot1qPortGvrpFailedRegistrations_map(u_long *mib_dot1qPortGvrpFailedRegistrations_val_ptr, u_long raw_dot1qPortGvrpFailedRegistrations_val);
     int dot1qPortGvrpFailedRegistrations_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_long * dot1qPortGvrpFailedRegistrations_val_ptr );
-    int dot1qPortGvrpLastPduOrigin_map(char **mib_dot1qPortGvrpLastPduOrigin_val_ptr_ptr, size_t *mib_dot1qPortGvrpLastPduOrigin_val_ptr_len_ptr, char *raw_dot1qPortGvrpLastPduOrigin_val_ptr, size_t raw_dot1qPortGvrpLastPduOrigin_val_ptr_len, int allow_realloc);
     int dot1qPortGvrpLastPduOrigin_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, char **dot1qPortGvrpLastPduOrigin_val_ptr_ptr, size_t *dot1qPortGvrpLastPduOrigin_val_ptr_len_ptr );
-    int dot1qPortRestrictedVlanRegistration_map(u_long *mib_dot1qPortRestrictedVlanRegistration_val_ptr, u_long raw_dot1qPortRestrictedVlanRegistration_val);
     int dot1qPortRestrictedVlanRegistration_get( dot1qPortVlanTable_rowreq_ctx *rowreq_ctx, u_long * dot1qPortRestrictedVlanRegistration_val_ptr );
 
 

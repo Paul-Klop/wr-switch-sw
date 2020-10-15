@@ -314,6 +314,37 @@ int shmem_rtu_read_htab(struct rtu_filtering_entry *rtu_htab_local, int *read_en
 	return 0;
 }
 
+int shmem_rtu_read_ports(struct rtu_port_entry *ports_tab_local, int *nports)
+{
+	unsigned ii;
+	unsigned retries = 0;
+	struct rtu_port_entry *rtu_ports_shm;
+	struct rtu_shmem_header *rtu_hdr;
+
+	rtu_hdr = (void *)rtud_head + rtud_head->data_off;
+	rtu_ports_shm = wrs_shm_follow(rtud_head, rtu_hdr->rtu_ports);
+	if (!rtu_ports_shm)
+		return -2;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(rtud_head);
+		memcpy(ports_tab_local, rtu_ports_shm,
+		       HAL_MAX_PORTS * sizeof(*rtu_ports_shm));
+		*nports = rtu_hdr->rtu_nports;
+		retries++;
+		if (retries > 100) {
+			pr_error("couldn't read consistent data from RTU's "
+				 "shmem. Use inconsistent\n");
+			break; /* use inconsistent data */
+			}
+		if (!wrs_shm_seqretry(rtud_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+	return 0;
+}
+
 /* Compare entries by by MAC */
 int cmp_rtu_entries_mac(const void *p1, const void *p2)
 {

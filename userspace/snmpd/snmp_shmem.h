@@ -29,6 +29,8 @@ int shmem_ready_ppsi(void);
 int shmem_ready_rtud(void);
 int shmem_rtu_read_htab(struct rtu_filtering_entry *rtu_htab_local, int *read_entries);
 int shmem_rtu_read_vlans(struct rtu_vlan_table_entry *vlan_tab_local);
+int shmem_rtu_read_ports(struct rtu_port_entry *ports_tab_local, int *nports);
+
 /* Compare entries by by MAC */
 int cmp_rtu_entries_mac(const void *p1, const void *p2);
 /* Compare rtu entries by FID then by MAC */

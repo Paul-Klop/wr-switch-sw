@@ -16,6 +16,7 @@
 #include "dot1qFdbTable/dot1qFdbTable.h"
 #include "dot1qPortVlanTable/dot1qPortVlanTable.h"
 #include "dot1qTpFdbTable/dot1qTpFdbTable.h"
+#include "dot1qVlanStaticTable/dot1qVlanStaticTable.h"
 
 void init_bridge_mib(void)
 {
@@ -27,4 +28,5 @@ void init_bridge_mib(void)
     init_dot1qFdbTable();
     init_dot1qPortVlanTable();
     init_dot1qTpFdbTable();
+    init_dot1qVlanStaticTable();
 }

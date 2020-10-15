@@ -10,6 +10,9 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
+
 /* include our parent header */
 #include "dot1qVlanStaticTable.h"
 
@@ -206,79 +209,46 @@ dot1qVlanStaticTable_container_load(netsnmp_container *container)
 {
     dot1qVlanStaticTable_rowreq_ctx *rowreq_ctx;
     size_t                 count = 0;
+    struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
+    struct rtu_port_entry ports_tab_local[HAL_MAX_PORTS];
+    int rtu_nports_local;
+    uint32_t untag_mask = 0;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * dot1qVlanIndex(2)/VlanIndex/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/r/d/H
-         */
-   u_long   dot1qVlanIndex;
-
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    int vlan_i;
+    int port_i;
 
     DEBUGMSGTL(("verbose:dot1qVlanStaticTable:dot1qVlanStaticTable_container_load","called\n"));
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    if (0 != shmem_rtu_read_vlans(vlan_tab_local)) {
+	snmp_log(LOG_ERR, "unable to get vlans info from RTU\n");
+	return MFD_RESOURCE_UNAVAILABLE;
     }
 
+    if (shmem_rtu_read_ports(ports_tab_local, &rtu_nports_local)) {
+	snmp_log(LOG_ERR, "unable to get ports info from RTU\n");
+	return MFD_RESOURCE_UNAVAILABLE;
+    }
+
+    /* build a mask of untagged ports (needed for dot1qVlanStaticUntaggedPorts) */
+    for (port_i = rtu_nports_local - 1; port_i >= 0; port_i--){
+	untag_mask <<= 1;
+	untag_mask |= ports_tab_local[port_i].untag & 1;
+    }
     /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1qVlanStaticTable container.
+     * |-> Load/update data in the dot1qVlanStaticTable container.
      * loop over your dot1qVlanStaticTable data, allocate a rowreq context,
      * set the index(es) [and data, optionally] and insert into
      * the container.
      */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
+    for (vlan_i = 0; vlan_i < NUM_VLANS; vlan_i++) {
+	/* skip empty entires */
+	if ((vlan_tab_local[vlan_i].drop != 0)
+	    && (vlan_tab_local[vlan_i].port_mask == 0x0))
+		continue;
 
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
-
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
 
         /*
-         * TODO:352:M: |   |-> set indexes in new dot1qVlanStaticTable rowreq context.
+         * |-> set indexes in new dot1qVlanStaticTable rowreq context.
          * data context will be set from the param (unless NULL,
          *      in which case a new data context will be allocated)
          */
@@ -287,9 +257,7 @@ dot1qVlanStaticTable_container_load(netsnmp_container *container)
             snmp_log(LOG_ERR, "memory allocation failed\n");
             return MFD_RESOURCE_UNAVAILABLE;
         }
-        if(MFD_SUCCESS != dot1qVlanStaticTable_indexes_set(rowreq_ctx
-                               , dot1qVlanIndex
-               )) {
+        if(MFD_SUCCESS != dot1qVlanStaticTable_indexes_set(rowreq_ctx, vlan_i)) {
             snmp_log(LOG_ERR,"error setting index while loading "
                      "dot1qVlanStaticTable data.\n");
             dot1qVlanStaticTable_release_rowreq_ctx(rowreq_ctx);
@@ -297,150 +265,97 @@ dot1qVlanStaticTable_container_load(netsnmp_container *container)
         }
 
         /*
-         * TODO:352:r: |   |-> populate dot1qVlanStaticTable data context.
+         * |-> populate dot1qVlanStaticTable data context.
          * Populate data context here. (optionally, delay until row prep)
          */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for dot1qVlanStaticName
-     * dot1qVlanStaticName(1)/SnmpAdminString/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanStaticName mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qVlanStaticName_map(&rowreq_ctx->data.dot1qVlanStaticName, &rowreq_ctx->data.dot1qVlanStaticName_len,
-     *                dot1qVlanStaticName, dot1qVlanStaticName_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qVlanStaticName data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qVlanStaticName) ||
-        (rowreq_ctx->data.dot1qVlanStaticName_len <
-         (dot1qVlanStaticName_len* sizeof(dot1qVlanStaticName[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qVlanStaticName)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qVlanStaticName_len = dot1qVlanStaticName_len* sizeof(dot1qVlanStaticName[0]);
-    memcpy( rowreq_ctx->data.dot1qVlanStaticName, dot1qVlanStaticName, dot1qVlanStaticName_len* sizeof(dot1qVlanStaticName[0]) );
-    
-    /*
-     * setup/save data for dot1qVlanStaticEgressPorts
-     * dot1qVlanStaticEgressPorts(2)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanStaticEgressPorts mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qVlanStaticEgressPorts_map(&rowreq_ctx->data.dot1qVlanStaticEgressPorts, &rowreq_ctx->data.dot1qVlanStaticEgressPorts_len,
-     *                dot1qVlanStaticEgressPorts, dot1qVlanStaticEgressPorts_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qVlanStaticEgressPorts data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qVlanStaticEgressPorts) ||
-        (rowreq_ctx->data.dot1qVlanStaticEgressPorts_len <
-         (dot1qVlanStaticEgressPorts_len* sizeof(dot1qVlanStaticEgressPorts[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qVlanStaticEgressPorts)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qVlanStaticEgressPorts_len = dot1qVlanStaticEgressPorts_len* sizeof(dot1qVlanStaticEgressPorts[0]);
-    memcpy( rowreq_ctx->data.dot1qVlanStaticEgressPorts, dot1qVlanStaticEgressPorts, dot1qVlanStaticEgressPorts_len* sizeof(dot1qVlanStaticEgressPorts[0]) );
-    
-    /*
-     * setup/save data for dot1qVlanForbiddenEgressPorts
-     * dot1qVlanForbiddenEgressPorts(3)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanForbiddenEgressPorts mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qVlanForbiddenEgressPorts_map(&rowreq_ctx->data.dot1qVlanForbiddenEgressPorts, &rowreq_ctx->data.dot1qVlanForbiddenEgressPorts_len,
-     *                dot1qVlanForbiddenEgressPorts, dot1qVlanForbiddenEgressPorts_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qVlanForbiddenEgressPorts data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qVlanForbiddenEgressPorts) ||
-        (rowreq_ctx->data.dot1qVlanForbiddenEgressPorts_len <
-         (dot1qVlanForbiddenEgressPorts_len* sizeof(dot1qVlanForbiddenEgressPorts[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qVlanForbiddenEgressPorts)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qVlanForbiddenEgressPorts_len = dot1qVlanForbiddenEgressPorts_len* sizeof(dot1qVlanForbiddenEgressPorts[0]);
-    memcpy( rowreq_ctx->data.dot1qVlanForbiddenEgressPorts, dot1qVlanForbiddenEgressPorts, dot1qVlanForbiddenEgressPorts_len* sizeof(dot1qVlanForbiddenEgressPorts[0]) );
-    
-    /*
-     * setup/save data for dot1qVlanStaticUntaggedPorts
-     * dot1qVlanStaticUntaggedPorts(4)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanStaticUntaggedPorts mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qVlanStaticUntaggedPorts_map(&rowreq_ctx->data.dot1qVlanStaticUntaggedPorts, &rowreq_ctx->data.dot1qVlanStaticUntaggedPorts_len,
-     *                dot1qVlanStaticUntaggedPorts, dot1qVlanStaticUntaggedPorts_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qVlanStaticUntaggedPorts data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qVlanStaticUntaggedPorts) ||
-        (rowreq_ctx->data.dot1qVlanStaticUntaggedPorts_len <
-         (dot1qVlanStaticUntaggedPorts_len* sizeof(dot1qVlanStaticUntaggedPorts[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qVlanStaticUntaggedPorts)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qVlanStaticUntaggedPorts_len = dot1qVlanStaticUntaggedPorts_len* sizeof(dot1qVlanStaticUntaggedPorts[0]);
-    memcpy( rowreq_ctx->data.dot1qVlanStaticUntaggedPorts, dot1qVlanStaticUntaggedPorts, dot1qVlanStaticUntaggedPorts_len* sizeof(dot1qVlanStaticUntaggedPorts[0]) );
-    
-    /*
-     * setup/save data for dot1qVlanStaticRowStatus
-     * dot1qVlanStaticRowStatus(5)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanStaticRowStatus mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1qVlanStaticRowStatus_map(&rowreq_ctx->data.dot1qVlanStaticRowStatus, dot1qVlanStaticRowStatus )) {
-        return MFD_ERROR;
-    }
-    
-        
-        /*
+	/*
+	* setup/save data for dot1qVlanStaticName
+	* dot1qVlanStaticName(1)/SnmpAdminString/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
+	*/
+	if (NULL == rowreq_ctx->data.dot1qVlanStaticName) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qVlanStaticName)\n");
+	    return MFD_ERROR;
+	}
+
+	rowreq_ctx->data.dot1qVlanStaticName_len = snprintf(rowreq_ctx->data.dot1qVlanStaticName, 32, "VLAN%d", vlan_i);
+	
+	/*
+	* setup/save data for dot1qVlanStaticEgressPorts
+	* dot1qVlanStaticEgressPorts(2)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
+	*/
+	/*
+	* |-> Define dot1qVlanStaticEgressPorts mapping.
+	*/
+	/*
+	* make sure there is enough space for dot1qVlanStaticEgressPorts data
+	*/
+	if (NULL == rowreq_ctx->data.dot1qVlanStaticEgressPorts) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qVlanStaticEgressPorts)\n");
+	    return MFD_ERROR;
+	}
+	convert_portmask_to_snmp_bitmask(hal_nports_local,
+					 vlan_tab_local[vlan_i].port_mask & RTU_PMASK_MAX(hal_nports_local),
+					 rowreq_ctx->data.dot1qVlanStaticEgressPorts,
+					 &rowreq_ctx->data.dot1qVlanStaticEgressPorts_len);
+	
+	/*
+	* setup/save data for dot1qVlanForbiddenEgressPorts
+	* dot1qVlanForbiddenEgressPorts(3)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
+	*/
+	/*
+	* |-> Define dot1qVlanForbiddenEgressPorts mapping.
+	*/
+	/*
+	* make sure there is enough space for dot1qVlanForbiddenEgressPorts data
+	*/
+	if (NULL == rowreq_ctx->data.dot1qVlanForbiddenEgressPorts) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qVlanForbiddenEgressPorts)\n");
+	    return MFD_ERROR;
+	}
+	/* use the same lenght of a mast as above (rowreq_ctx->data.dot1qVlanForbiddenEgressPorts_len) */
+	rowreq_ctx->data.dot1qVlanForbiddenEgressPorts_len = rowreq_ctx->data.dot1qVlanStaticEgressPorts_len;
+	/* clear mask */
+	memset( rowreq_ctx->data.dot1qVlanForbiddenEgressPorts, 0, rowreq_ctx->data.dot1qVlanForbiddenEgressPorts_len);
+	
+	/*
+	* setup/save data for dot1qVlanStaticUntaggedPorts
+	* dot1qVlanStaticUntaggedPorts(4)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
+	*/
+	/*
+	* |-> Define dot1qVlanStaticUntaggedPorts mapping.
+	* Map values between raw/native values and MIB values
+	*/
+	/*
+	* make sure there is enough space for dot1qVlanStaticUntaggedPorts data
+	*/
+	if (NULL == rowreq_ctx->data.dot1qVlanStaticUntaggedPorts) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qVlanStaticUntaggedPorts)\n");
+	    return MFD_ERROR;
+	}
+
+	convert_portmask_to_snmp_bitmask(hal_nports_local,
+					 vlan_tab_local[vlan_i].port_mask & untag_mask,
+					 rowreq_ctx->data.dot1qVlanStaticUntaggedPorts,
+					 &rowreq_ctx->data.dot1qVlanStaticUntaggedPorts_len);
+	
+	/*
+	* setup/save data for dot1qVlanStaticRowStatus
+	* dot1qVlanStaticRowStatus(5)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
+	*/
+	/*
+	* |-> Define dot1qVlanStaticRowStatus mapping.
+	* Map values between raw/native values and MIB values
+	*
+	* hardcode to active(1)
+	*/
+	rowreq_ctx->data.dot1qVlanStaticRowStatus = ROWSTATUS_ACTIVE;
+
+	/*
          * insert into table container
          */
         CONTAINER_INSERT(container, rowreq_ctx);
         ++count;
     }
-
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
 
     DEBUGMSGT(("verbose:dot1qVlanStaticTable:dot1qVlanStaticTable_container_load",
                "inserted %d records\n", count));

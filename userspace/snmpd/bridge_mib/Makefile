@@ -7,6 +7,7 @@ BRIDGE_DIRS= \
 	dot1qFdbTable \
 	dot1qPortVlanTable \
 	dot1qTpFdbTable \
+	dot1qVlanStaticTable \
 
 BRIDGE_INCLUDE_DIRS:=$(addsuffix /Makefile,$(BRIDGE_DIRS))
 BRIDGE_INCLUDE_DIRS:=$(addprefix $(BRIDGE_MIB_DIR)/,$(BRIDGE_INCLUDE_DIRS))

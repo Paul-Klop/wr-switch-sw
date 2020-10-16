@@ -23,13 +23,13 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 
 export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
 
-CFLAGS += $(CFLAGS_OPTIMIZATION)
 CFLAGS = -Wall  \
 	-Wstrict-prototypes \
 	-I../mini-rpc \
 	-I../include \
 	-I../libwr/include \
 	-I$(LINUX)/arch/arm/mach-at91/include
+CFLAGS += $(CFLAGS_OPTIMIZATION) -O0
 
 GIT_VER = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
 CFLAGS += -D__GIT_VER__="\"${GIT_VER}\""

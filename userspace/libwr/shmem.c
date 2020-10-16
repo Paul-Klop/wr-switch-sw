@@ -112,7 +112,14 @@ struct wrs_shm_head *wrs_shm_get(enum wrs_shm_name name_id, char *name,
 	}
 	head->fd = fd;
 	head->sequence = 1; /* a sort of lock */
-	head->mapbase = head;
+
+	/* Set mapbase only for the first call of wrs_shm_get.
+	 * At further calls (probably due to a restart of a writter/writer),
+	 * this is used by wrs_shm_follow to calculate the offset of a given
+	 * pointer from the beginning of shmem. */
+	if (!head->mapbase)
+	    head->mapbase = head;
+
 	strncpy(head->name, name, sizeof(head->name));
 	head->name[sizeof(head->name) - 1] = '\0';
 	head->stamp = 0;

@@ -152,10 +152,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	} else {
 		/* rtu_hdr was created at header->offset */
 		rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
-		/* move data_size to have have similar behavior like
-		 * wrs_shm_alloc, needed for future allocations */
-		/* force 8-alignment */
-		rtu_port_shmem->data_size += (sizeof(*rtu_hdr) + 7) & ~7;
 	}
 	if (!rtu_hdr) {
 		pr_error("%s: Cannot allocate mem in shmem rtu_hdr\n",
@@ -175,16 +171,9 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		clean_fd(SHM_NOT_LOCK); /* clean filtering database,
 						shem already locked */
 	} else {
-		pr_info("Use existing filtering table.\n");
+		pr_info("Using existing filtering table.\n");
 		/* next RTUd runs */
-		rtu_hdr->filters =
-			      (void *)rtu_port_shmem + rtu_hdr->filters_offset;
-		rtu_htab = (void *)rtu_hdr->filters;
-		/* move data_size to have have similar behavior like
-		 * wrs_shm_alloc, needed for future allocations */
-		/* force 8-alignment */
-		rtu_port_shmem->data_size +=
-				(sizeof(*rtu_htab) * HTAB_ENTRIES + 7) & ~7;
+		rtu_htab = wrs_shm_follow(rtu_shmem_p, rtu_hdr->filters);
 	}
 
 	if (!rtu_hdr->vlans) {
@@ -201,14 +190,7 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	} else {
 		pr_info("Using existing vlan table.\n");
 		/* next RTUd runs */
-		rtu_hdr->vlans =
-				(void *)rtu_port_shmem + rtu_hdr->vlans_offset;
-		vlan_tab = (void *)rtu_hdr->vlans;
-		/* move data_size to have have similar behavior like
-		 * wrs_shm_alloc, needed for future allocations */
-		/* force 8-alignment */
-		rtu_port_shmem->data_size +=
-				(sizeof(*vlan_tab) * NUM_VLANS + 7) & ~7;
+		vlan_tab = wrs_shm_follow(rtu_shmem_p, rtu_hdr->vlans);
 	}
 
 	if (!rtu_hdr->mirror) {
@@ -225,15 +207,7 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	} else {
 		pr_info("Using existing port mirroring config.\n");
 		/* next RTUd runs */
-		rtu_hdr->mirror =
-				(void *)rtu_port_shmem + rtu_hdr->mirror_offset;
-		mirror_cfg = (void *)rtu_hdr->mirror;
-		/* move data_size to have have similar behavior like
-		 * wrs_shm_alloc, needed for future allocations
-		 * force 8-alignment
-		 */
-		rtu_port_shmem->data_size +=
-				(sizeof(*mirror_cfg) * NUM_MIRROR + 7) & ~7;
+		mirror_cfg = wrs_shm_follow(rtu_shmem_p, rtu_hdr->mirror);
 	}
 
 	if ((!rtu_htab) || (!vlan_tab) || (!mirror_cfg)) {

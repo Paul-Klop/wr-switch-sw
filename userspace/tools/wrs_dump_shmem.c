@@ -212,6 +212,13 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		}
 		break;
 
+	case dump_type_timeval:
+		{
+		    struct timeval *tv = (struct timeval*) p;
+		    printf("%ld.%06ld\n", tv->tv_sec, tv->tv_usec);
+		    break;
+		}
+
 	case dump_type_time:
 		printf("%s\n",timeToString(t,buf));
 		break;

@@ -1,5 +1,8 @@
 -include ../Makefile.specific
 
+# We are now Kconfig-based
+-include ../../.config
+
 # include Makefile for bridge mib
 BRIDGE_MIB_DIR:=bridge_mib
 include ${BRIDGE_MIB_DIR}/Makefile
@@ -27,6 +30,9 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 # There is a static variable in pp-printf.c to accumulate stuff
 CONFIG_PRINT_BUFSIZE ?= 256
 
+export CFLAGS_OPTIMIZATION:= ${shell echo $(CONFIG_OPTIMIZATION)}
+
+CFLAGS += $(CFLAGS_OPTIMIZATION)
 # defer running "net-snmp-config --cflags" so it is visible in make output
 CFLAGS  += -fPIC -Wall  $$($(NET_SNMP_CONFIG) --cflags | sed s,-I/usr/include,,)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)

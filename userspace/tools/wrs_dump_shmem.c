@@ -644,6 +644,7 @@ struct dump_info vlan_info[] = {
 	DUMP_FIELD(yes_no, has_prio),
 	DUMP_FIELD(yes_no, prio_override),
 	DUMP_FIELD(yes_no, drop),
+	DUMP_FIELD(timeval, creation_time),
 };
 
 #undef DUMP_STRUCT

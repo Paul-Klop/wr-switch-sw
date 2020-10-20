@@ -2,6 +2,7 @@
 #define __LIBWR_RTU_SHMEM_H__
 
 #include <stdint.h>
+#include <sys/time.h>
 
 #define RTU_ENTRIES	2048
 #define RTU_BUCKETS	4
@@ -161,6 +162,7 @@ struct rtu_vlan_table_entry {
 	int prio_override;	/* priority override
 				 * (force per-VLAN priority) */
 	int drop;		/* 1: drop the packet (VLAN not registered) */
+	struct timeval creation_time; /* timestamp of creation, used by SNMP */
 };
 
 /**
@@ -186,7 +188,7 @@ struct rtu_port_entry {
 };
 
 /* This is the overall structure stored in shared memory */
-#define RTU_SHMEM_VERSION 6 /* Version 6, remove *_offset */
+#define RTU_SHMEM_VERSION 7 /* Version 7, add vlan creation_time */
 struct rtu_shmem_header {
 	struct rtu_filtering_entry *filters;
 	struct rtu_vlan_table_entry *vlans;

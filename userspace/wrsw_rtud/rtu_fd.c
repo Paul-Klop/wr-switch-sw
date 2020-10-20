@@ -835,6 +835,9 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 #define rtu_rd(reg) \
 	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
 	int port_num = RTU_PSR_N_PORTS_R(rtu_rd(PSR));
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+
 	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
     /****************************************************************************************/
 	if (port_mask == 0x0 && drop == 1)
@@ -846,6 +849,8 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 	vlan_tab[vid].has_prio = has_prio;
 	vlan_tab[vid].prio_override = prio_override;
 	vlan_tab[vid].prio = prio;
+	vlan_tab[vid].creation_time.tv_sec = tv.tv_sec;
+	vlan_tab[vid].creation_time.tv_usec = tv.tv_nsec / 1000;
 
 	rtu_write_vlan_entry(vid, &vlan_tab[vid]);
 	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);

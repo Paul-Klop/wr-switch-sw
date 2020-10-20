@@ -10,6 +10,9 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include "wrsSnmp.h"
+#include "snmp_shmem.h"
+
 /* include our parent header */
 #include "dot1qVlanCurrentTable.h"
 
@@ -207,82 +210,71 @@ dot1qVlanCurrentTable_container_load(netsnmp_container *container)
     dot1qVlanCurrentTable_rowreq_ctx *rowreq_ctx;
     size_t                 count = 0;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * dot1qVlanTimeMark(1)/TimeFilter/ASN_TIMETICKS/u_long(u_long)//l/a/w/e/r/d/h
-         */
-   u_long   dot1qVlanTimeMark;
-        /*
-         * dot1qVlanIndex(2)/VlanIndex/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/r/d/H
-         */
-   u_long   dot1qVlanIndex;
+    struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
+    struct rtu_port_entry ports_tab_local[HAL_MAX_PORTS];
+    int rtu_nports_local;
+    uint32_t untag_mask = 0;
 
-    
-    /*
-     * this example code is based on a data source that is a
-     * text file to be read and parsed.
-     */
-    FILE *filep;
-    char line[MAX_LINE_SIZE];
+    int vlan_i;
+    int port_i;
+    u_long dot1qVlanTimeMark;
+    uint64_t agent_uptime_hs; /* in 100th of second */
+    uint64_t monotonic_now_hs; /* in 100th of second */
+    uint64_t creation_time_hs; /* in 100th of second */
+    uint64_t netsnmp_start_ts_monotonic_hs; /* in 100th of second */
+    struct timeval monotonic_now;
 
     DEBUGMSGTL(("verbose:dot1qVlanCurrentTable:dot1qVlanCurrentTable_container_load","called\n"));
 
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * open our data file.
-     */
-    filep = fopen("/etc/dummy.conf", "r");
-    if(NULL ==  filep) {
-        return MFD_RESOURCE_UNAVAILABLE;
+    if (0 != shmem_rtu_read_vlans(vlan_tab_local)) {
+	snmp_log(LOG_ERR, "unable to get vlans info from RTU\n");
+	return MFD_RESOURCE_UNAVAILABLE;
     }
 
+    if (shmem_rtu_read_ports(ports_tab_local, &rtu_nports_local)) {
+	snmp_log(LOG_ERR, "unable to get ports info from RTU\n");
+	return MFD_RESOURCE_UNAVAILABLE;
+    }
+
+    /* build a mask of untagged ports (needed for dot1qVlanCurrentUntaggedPorts) */
+    for (port_i = rtu_nports_local - 1; port_i >= 0; port_i--){
+	untag_mask <<= 1;
+	untag_mask |= ports_tab_local[port_i].untag & 1;
+    }
+
+    netsnmp_get_monotonic_clock(&monotonic_now);
+    /* Unfortunately netsnmp_get_agent_uptime also calls netsnmp_get_monotonic_clock,
+     * but there is no function to get the timestamp of a monotonic clock when
+     * the agest was started */
+    agent_uptime_hs = netsnmp_get_agent_uptime();
+    monotonic_now_hs = monotonic_now.tv_sec * (uint64_t)100 + monotonic_now.tv_usec / 10000;
+    netsnmp_start_ts_monotonic_hs = monotonic_now_hs - agent_uptime_hs;
+
     /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
-    /*
-     * TODO:351:M: |-> Load/update data in the dot1qVlanCurrentTable container.
+     * |-> Load/update data in the dot1qVlanCurrentTable container.
      * loop over your dot1qVlanCurrentTable data, allocate a rowreq context,
      * set the index(es) [and data, optionally] and insert into
      * the container.
      */
-    while( 1 ) {
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    /*
-     * get a line (skip blank lines)
-     */
-    do {
-        if (!fgets(line, sizeof(line), filep)) {
-            /* we're done */
-            fclose(filep);
-            filep = NULL;
-        }
-    } while (filep && (line[0] == '\n'));
+    for (vlan_i = 0; vlan_i < NUM_VLANS; vlan_i++) {
+	/* skip empty entires */
+	if ((vlan_tab_local[vlan_i].drop != 0) && (vlan_tab_local[vlan_i].port_mask == 0x0)) {
+	    continue;
+	}
+	
 
-    /*
-     * check for end of data
-     */
-    if(NULL == filep)
-        break;
+	creation_time_hs = vlan_tab_local[vlan_i].creation_time.tv_sec * (uint64_t)100
+			   + vlan_tab_local[vlan_i].creation_time.tv_usec / 10000;
 
-    /*
-     * parse line into variables
-     */
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
+	if (netsnmp_start_ts_monotonic_hs > creation_time_hs) {
+	    /* entry has alredy existed when SNMP agent started */
+	    dot1qVlanTimeMark = 0;
+	} else {
+	    dot1qVlanTimeMark = creation_time_hs - netsnmp_start_ts_monotonic_hs; 
+	}
 
-        /*
-         * TODO:352:M: |   |-> set indexes in new dot1qVlanCurrentTable rowreq context.
+	/*
+         * |-> set indexes in new dot1qVlanCurrentTable rowreq context.
          * data context will be set from the param (unless NULL,
          *      in which case a new data context will be allocated)
          */
@@ -293,7 +285,7 @@ dot1qVlanCurrentTable_container_load(netsnmp_container *container)
         }
         if(MFD_SUCCESS != dot1qVlanCurrentTable_indexes_set(rowreq_ctx
                                , dot1qVlanTimeMark
-                               , dot1qVlanIndex
+                               , vlan_i
                )) {
             snmp_log(LOG_ERR,"error setting index while loading "
                      "dot1qVlanCurrentTable data.\n");
@@ -302,122 +294,66 @@ dot1qVlanCurrentTable_container_load(netsnmp_container *container)
         }
 
         /*
-         * TODO:352:r: |   |-> populate dot1qVlanCurrentTable data context.
+         * |-> populate dot1qVlanCurrentTable data context.
          * Populate data context here. (optionally, delay until row prep)
          */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for dot1qVlanFdbId
-     * dot1qVlanFdbId(3)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanFdbId mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * Integer based value can usually just do a direct copy.
-     */
-    rowreq_ctx->data.dot1qVlanFdbId = dot1qVlanFdbId;
-    
-    /*
-     * setup/save data for dot1qVlanCurrentEgressPorts
-     * dot1qVlanCurrentEgressPorts(4)/PortList/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanCurrentEgressPorts mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qVlanCurrentEgressPorts_map(&rowreq_ctx->data.dot1qVlanCurrentEgressPorts, &rowreq_ctx->data.dot1qVlanCurrentEgressPorts_len,
-     *                dot1qVlanCurrentEgressPorts, dot1qVlanCurrentEgressPorts_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qVlanCurrentEgressPorts data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qVlanCurrentEgressPorts) ||
-        (rowreq_ctx->data.dot1qVlanCurrentEgressPorts_len <
-         (dot1qVlanCurrentEgressPorts_len* sizeof(dot1qVlanCurrentEgressPorts[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qVlanCurrentEgressPorts)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qVlanCurrentEgressPorts_len = dot1qVlanCurrentEgressPorts_len* sizeof(dot1qVlanCurrentEgressPorts[0]);
-    memcpy( rowreq_ctx->data.dot1qVlanCurrentEgressPorts, dot1qVlanCurrentEgressPorts, dot1qVlanCurrentEgressPorts_len* sizeof(dot1qVlanCurrentEgressPorts[0]) );
-    
-    /*
-     * setup/save data for dot1qVlanCurrentUntaggedPorts
-     * dot1qVlanCurrentUntaggedPorts(5)/PortList/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanCurrentUntaggedPorts mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * if(MFD_SUCCESS !=
-     *    dot1qVlanCurrentUntaggedPorts_map(&rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts, &rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts_len,
-     *                dot1qVlanCurrentUntaggedPorts, dot1qVlanCurrentUntaggedPorts_len, 0)) {
-     *    return MFD_ERROR;
-     * }
-     */
-    /*
-     * make sure there is enough space for dot1qVlanCurrentUntaggedPorts data
-     */
-    if ((NULL == rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts) ||
-        (rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts_len <
-         (dot1qVlanCurrentUntaggedPorts_len* sizeof(dot1qVlanCurrentUntaggedPorts[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value (dot1qVlanCurrentUntaggedPorts)\n");
-        return MFD_ERROR;
-    }
-    rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts_len = dot1qVlanCurrentUntaggedPorts_len* sizeof(dot1qVlanCurrentUntaggedPorts[0]);
-    memcpy( rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts, dot1qVlanCurrentUntaggedPorts, dot1qVlanCurrentUntaggedPorts_len* sizeof(dot1qVlanCurrentUntaggedPorts[0]) );
-    
-    /*
-     * setup/save data for dot1qVlanStatus
-     * dot1qVlanStatus(6)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanStatus mapping.
-     * Map values between raw/native values and MIB values
-     *
-    * enums usually need mapping.
-    */
-    if(MFD_SUCCESS !=
-       dot1qVlanStatus_map(&rowreq_ctx->data.dot1qVlanStatus, dot1qVlanStatus )) {
-        return MFD_ERROR;
-    }
-    
-    /*
-     * setup/save data for dot1qVlanCreationTime
-     * dot1qVlanCreationTime(7)/TICKS/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h
-     */
-    /*
-     * TODO:246:r: |-> Define dot1qVlanCreationTime mapping.
-     * Map values between raw/native values and MIB values
-     *
-     * Integer based value can usually just do a direct copy.
-     */
-    rowreq_ctx->data.dot1qVlanCreationTime = dot1qVlanCreationTime;
-    
-        
+	/*
+	* setup/save data for dot1qVlanFdbId
+	* dot1qVlanFdbId(3)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h
+	*/
+	rowreq_ctx->data.dot1qVlanFdbId = vlan_tab_local[vlan_i].fid;
+	
+	/*
+	* setup/save data for dot1qVlanCurrentEgressPorts
+	* dot1qVlanCurrentEgressPorts(4)/PortList/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/h
+	*/
+	if (NULL == rowreq_ctx->data.dot1qVlanCurrentEgressPorts) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qVlanCurrentEgressPorts)\n");
+	    dot1qVlanCurrentTable_release_rowreq_ctx(rowreq_ctx);
+	    return MFD_ERROR;
+	}
+	convert_portmask_to_snmp_bitmask(hal_nports_local,
+					 vlan_tab_local[vlan_i].port_mask & RTU_PMASK_MAX(rtu_nports_local),
+					 rowreq_ctx->data.dot1qVlanCurrentEgressPorts,
+					 &rowreq_ctx->data.dot1qVlanCurrentEgressPorts_len);
+	
+	/*
+	* setup/save data for dot1qVlanCurrentUntaggedPorts
+	* dot1qVlanCurrentUntaggedPorts(5)/PortList/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/h
+	*/
+	if (NULL == rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts) {
+	    snmp_log(LOG_ERR,"not enough space for value (dot1qVlanCurrentUntaggedPorts)\n");
+	    dot1qVlanCurrentTable_release_rowreq_ctx(rowreq_ctx);
+	    return MFD_ERROR;
+	}
+	convert_portmask_to_snmp_bitmask(hal_nports_local,
+					 vlan_tab_local[vlan_i].port_mask & untag_mask,
+					 rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts,
+					 &rowreq_ctx->data.dot1qVlanCurrentUntaggedPorts_len);
+	
+	/*
+	* setup/save data for dot1qVlanStatus
+	* dot1qVlanStatus(6)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
+	*/
+	/*
+	* Hardcode to Permanent(2)
+	*/
+	rowreq_ctx->data.dot1qVlanStatus = DOT1QVLANSTATUS_PERMANENT;
+	
+	/*
+	* setup/save data for dot1qVlanCreationTime
+	* dot1qVlanCreationTime(7)/TICKS/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h
+	*/
+
+	rowreq_ctx->data.dot1qVlanCreationTime = dot1qVlanTimeMark;
+
+
         /*
          * insert into table container
          */
         CONTAINER_INSERT(container, rowreq_ctx);
         ++count;
     }
-
-    /*
-    ***************************************************
-    ***             START EXAMPLE CODE              ***
-    ***---------------------------------------------***/
-    if(NULL != filep)
-        fclose(filep);
-    /*
-    ***---------------------------------------------***
-    ***              END  EXAMPLE CODE              ***
-    ***************************************************/
 
     DEBUGMSGT(("verbose:dot1qVlanCurrentTable:dot1qVlanCurrentTable_container_load",
                "inserted %d records\n", count));

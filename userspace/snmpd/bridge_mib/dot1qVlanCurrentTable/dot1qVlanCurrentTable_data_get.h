@@ -41,18 +41,10 @@ extern "C" {
     /*
      * indexes
      */
-    int dot1qVlanTimeMark_map(u_long *mib_dot1qVlanTimeMark_val_ptr, u_long raw_dot1qVlanTimeMark_val);
-    int dot1qVlanIndex_map(u_long *mib_dot1qVlanIndex_val_ptr, u_long raw_dot1qVlanIndex_val);
-
-    int dot1qVlanFdbId_map(u_long *mib_dot1qVlanFdbId_val_ptr, u_long raw_dot1qVlanFdbId_val);
     int dot1qVlanFdbId_get( dot1qVlanCurrentTable_rowreq_ctx *rowreq_ctx, u_long * dot1qVlanFdbId_val_ptr );
-    int dot1qVlanCurrentEgressPorts_map(char **mib_dot1qVlanCurrentEgressPorts_val_ptr_ptr, size_t *mib_dot1qVlanCurrentEgressPorts_val_ptr_len_ptr, char *raw_dot1qVlanCurrentEgressPorts_val_ptr, size_t raw_dot1qVlanCurrentEgressPorts_val_ptr_len, int allow_realloc);
     int dot1qVlanCurrentEgressPorts_get( dot1qVlanCurrentTable_rowreq_ctx *rowreq_ctx, char **dot1qVlanCurrentEgressPorts_val_ptr_ptr, size_t *dot1qVlanCurrentEgressPorts_val_ptr_len_ptr );
-    int dot1qVlanCurrentUntaggedPorts_map(char **mib_dot1qVlanCurrentUntaggedPorts_val_ptr_ptr, size_t *mib_dot1qVlanCurrentUntaggedPorts_val_ptr_len_ptr, char *raw_dot1qVlanCurrentUntaggedPorts_val_ptr, size_t raw_dot1qVlanCurrentUntaggedPorts_val_ptr_len, int allow_realloc);
     int dot1qVlanCurrentUntaggedPorts_get( dot1qVlanCurrentTable_rowreq_ctx *rowreq_ctx, char **dot1qVlanCurrentUntaggedPorts_val_ptr_ptr, size_t *dot1qVlanCurrentUntaggedPorts_val_ptr_len_ptr );
-    int dot1qVlanStatus_map(u_long *mib_dot1qVlanStatus_val_ptr, u_long raw_dot1qVlanStatus_val);
     int dot1qVlanStatus_get( dot1qVlanCurrentTable_rowreq_ctx *rowreq_ctx, u_long * dot1qVlanStatus_val_ptr );
-    int dot1qVlanCreationTime_map(u_long *mib_dot1qVlanCreationTime_val_ptr, u_long raw_dot1qVlanCreationTime_val);
     int dot1qVlanCreationTime_get( dot1qVlanCurrentTable_rowreq_ctx *rowreq_ctx, u_long * dot1qVlanCreationTime_val_ptr );
 
 

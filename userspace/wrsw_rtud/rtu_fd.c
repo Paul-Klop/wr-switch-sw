@@ -152,7 +152,15 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		/* for first RTUd run */
 		pr_debug("Alloc rtu_hdr\n");
 		rtu_hdr = wrs_shm_alloc(rtu_shmem_p, sizeof(*rtu_hdr));
+		/* add version info */
+		rtu_shmem_p->version = RTU_SHMEM_VERSION;
 	} else {
+		if (rtu_shmem_p->version != RTU_SHMEM_VERSION) {
+			pr_error("%s: Wrong shmem version %d, expected %d\n",
+				__func__, rtu_shmem_p->version, RTU_SHMEM_VERSION);
+			return -1;
+		}
+
 		/* rtu_hdr was created at header->offset */
 		rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
 	}
@@ -238,8 +246,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 		pr_error("%s: Cannot allocate mem in shmem\n", __func__);
 		return -1;
 	}
-	/* add version info */
-	rtu_shmem_p->version = RTU_SHMEM_VERSION;
 
 	pr_debug("clean aging map.\n");
 	rtu_read_aging_bitmap(bitmap);	// clean aging registers

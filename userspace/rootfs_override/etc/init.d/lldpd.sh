@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Controls lldpd.
 #
@@ -70,7 +70,7 @@ start() {
 	echo "configure system interface pattern '!eth*'" >> $LLDPD_CONFIG
     fi
     for i_port in $(seq 1 18); do # scan all the physical ports
-	printf -v i_port_zero "%02d" $i_port
+	i_port_zero=$(printf "%02d" $i_port)
 	vlan=$(eval "echo \$CONFIG_VLANS_PORT"$i_port_zero"_LLDP_TX_VID")
 	if [ ! -z "$vlan" ]; then
 	    prio=$(eval "echo \$CONFIG_VLANS_PORT"$i_port_zero"_LLDP_TX_PRIO")

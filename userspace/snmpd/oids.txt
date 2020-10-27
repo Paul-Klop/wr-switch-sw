@@ -128,6 +128,7 @@
 "wrsStartCntWrsWatchdog"			"1.3.6.1.4.1.96.100.7.2.8"
 "wrsStartCntLldpd"			"1.3.6.1.4.1.96.100.7.2.9"
 "wrsStartCntLdap"			"1.3.6.1.4.1.96.100.7.2.10"
+"wrsStartCntRvlan"			"1.3.6.1.4.1.96.100.7.2.11"
 "wrsSpllState"			"1.3.6.1.4.1.96.100.7.3"
 "wrsSpllVersionGroup"			"1.3.6.1.4.1.96.100.7.3.1"
 "wrsSpllVersion"			"1.3.6.1.4.1.96.100.7.3.1.1"

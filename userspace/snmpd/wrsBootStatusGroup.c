@@ -106,6 +106,8 @@ struct wrs_usd_item userspace_daemons[] = {
 						dot-config */
 	[UDI_NSLCD] = {"/usr/sbin/nslcd", 1}, /* nslcd/LDAP can be disabled in
 						dot-config */
+	[UDI_RVLAN] = {"/usr/sbin/radiusvlan", 1}, /* radius/802.1X can be disabled in
+						dot-config */
 };
 
 struct wrs_bc_item {
@@ -496,7 +498,17 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 		daemon_array[UDI_NSLCD].exp = 1;
 		snmp_log(LOG_INFO, "SNMP: " SL_INFO
 			 " wrsBootUserspaceDaemonsMissing:"
-			 "no CONFIG_LDAP_ENABLE in dot-config\n");
+			 " no CONFIG_LDAP_ENABLE in dot-config\n");
+	}
+
+	daemon_array[UDI_RVLAN].exp = 0;
+	tmp = libwr_cfg_get("RVLAN_DAEMON");
+	if (tmp && !strcmp(tmp, "y")) {
+		/* SNMP should not expect radiusvlan to be running */
+		daemon_array[UDI_RVLAN].exp = 1;
+		snmp_log(LOG_INFO, "SNMP: " SL_INFO
+			 " wrsBootUserspaceDaemonsMissing:"
+			 " no CONFIG_RVLAN_DAEMON in dot-config\n");
 	}
 }
 

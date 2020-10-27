@@ -2,6 +2,17 @@
 
 dotconfig=/wr/etc/dot-config
 
+start_counter() {
+    # increase start counter
+    COUNTER_FILE="/tmp/start_cnt_rvlan"
+    START_COUNTER=1
+    if [ -f "$COUNTER_FILE" ] ; then
+	read -r START_COUNTER < $COUNTER_FILE
+	START_COUNTER=$((START_COUNTER+1))
+    fi
+    echo "$START_COUNTER" > $COUNTER_FILE
+}
+
 start() {
     if [ -f $dotconfig ]; then
 	. $dotconfig
@@ -37,6 +48,7 @@ start() {
 	echo "Failed (already running?)"
     else
 	eval /wr/bin/radiusvlan $LOGPIPE \&
+	start_counter
 	echo "OK"
     fi
 }

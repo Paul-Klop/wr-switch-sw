@@ -15,6 +15,7 @@ TOOLS += mkpasswd
 TOOLS += wrs_sfp_dump
 TOOLS += wrs_throttling
 TOOLS += utc_leap_test
+TOOLS += radiusvlan
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit

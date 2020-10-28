@@ -1,0 +1,71 @@
+From 58ea0c8d42c1f446f554a822876d040bf6bf9468 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 8 Oct 2020 01:24:19 +0200
+Subject: [PATCH 24/24] package/freeradius-utils: actually only install the
+ utilities
+
+We really only need radclient (and possibly radtest, which is
+a script running radclient), and its own library.  Everything else
+here is a few megabytes, and we'd better avoid those.
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ package/freeradius-utils/Config.in           |    5 +++--
+ package/freeradius-utils/freeradius-utils.mk |   24 ++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/package/freeradius-utils/Config.in b/package/freeradius-utils/Config.in
+index 58fec22..827aac1 100644
+--- a/package/freeradius-utils/Config.in
++++ b/package/freeradius-utils/Config.in
+@@ -1,8 +1,9 @@
+ config BR2_PACKAGE_FREERADIUS_UTILS
+ 	bool "freeradius-utils"
+ 	help
+-	  A selection of client tools from freeradius-server, the
+-	  most important being radclient (and the radtest script)
++	  radtest and radclient from freeradius-server. You'll
++	  need to provide dictionaries by yourself (the dictionary
++	  dir is too big to be installed by default.
+ 
+ 	  https://wiki.freeradius.org/config/Radclient
+ 
+diff --git a/package/freeradius-utils/freeradius-utils.mk b/package/freeradius-utils/freeradius-utils.mk
+index e36e2f7..06cb111 100644
+--- a/package/freeradius-utils/freeradius-utils.mk
++++ b/package/freeradius-utils/freeradius-utils.mk
+@@ -10,7 +10,31 @@ FREERADIUS_UTILS_SITE = ftp://ftp.freeradius.org/pub/freeradius
+ FREERADIUS_UTILS_LICENSE = GPLv2+
+ FREERADIUS_UTILS_LICENSE_FILES = COPYRIGHT
+ FREERADIUS_UTILS_INSTALL_STAGING = YES
++FREERADIUS_UTILS_INSTALL_TARGET = YES
+ 
+ FREERADIUS_UTILS_DEPENDENCIES = openssl host-pkgconf
+ 
++# Remove a lot of cruft after installation
++define FREERADIUS_REMOVE_EXTRAS
++	for b in rad_counter radconf2xml carcrypt radeapclient \
++		radlast radsqlrelay radwho radzap; do \
++			rm -f $(TARGET_DIR)/usr/bin/$$b; \
++	done; \
++	rm -f $(TARGET_DIR)/usr/lib/rlm* $(TARGET_DIR)/lib32/rlm*; \
++	rm -f $(TARGET_DIR)/usr/sbin/radiusd
++	rm -f $(TARGET_DIR)/etc/raddb
++
++
++endef
++#FREERADIUS_UTILS_POST_INSTALL_TARGET_HOOKS += FREERADIUS_REMOVE_EXTRAS
++
++# Only install radtest and radclient; dictionaries are added by each user
++define FREERADIUS_UTILS_INSTALL_TARGET_CMDS
++	/bin/pwd > /tmp/pwd; \
++	cp -a $(@D)/src/main/radtest $(@D)/src/main/radclient \
++		$(TARGET_DIR)/usr/bin; \
++	install $(@D)/src/lib/.libs/libfreeradius-radius-020210.so \
++		$(TARGET_DIR)/usr/lib; \
++	install -d $(TARGET_DIR)/etc/raddb
++endef
+ $(eval $(autotools-package))
+-- 
+1.7.10.4
+

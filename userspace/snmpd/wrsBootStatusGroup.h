@@ -119,6 +119,7 @@ struct wrs_usd_item {
 #define UDI_MONIT 5 /* index of MONIT in userspace_daemons array */
 #define UDI_LLDP 8 /* index of LLDP in userspace_daemons array */
 #define UDI_NSLCD 9 /* index of NSLCD (LDAP) in userspace_daemons array */
+#define UDI_RVLAN 10 /* index of radiusvlan (802.1X) in userspace_daemons array */
 /* user space daemon list */
 /* - key contain process name reported by ps command
  * - positive exp describe exact number of expected processes

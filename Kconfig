@@ -1124,6 +1124,62 @@ config LLDPD_MINIMUM_FRAME_SIZE
 	  which require low latency.
 endmenu
 
+menu "Radius-vlan options"
+config RVLAN_DAEMON
+	bool "Run the 'radius-vlan' authorization daemon"
+	help
+	  If the program runs, it implements a subset of 802.1X
+
+config RVLAN_PMASK
+	string "A port mask, as hex number, to be monitored by radiusvlan"
+	depends on RVLAN_DAEMON
+	default "ffffffff"
+	help
+	  The string must be a number, with or without leading 0x.
+	  Port "wri1" is selected by bit 0 and so on until bit 17.
+	  The mask is used to disable monitoring on some ports.
+	  All ports not configured as 'access' are never monitored,
+	  irrespective of this mask.
+
+config RVLAN_AUTH_VLAN
+	int "Default vlan to be used for ports during radius authorization"
+	depends on RVLAN_DAEMON
+	range 1 4094
+	default 4094
+
+config RVLAN_NOAUTH_VLAN
+	int "Vlan to be used for ports whose authorization is denied"
+	depends on RVLAN_DAEMON
+	range 1 4094
+	default 4094
+
+config RVLAN_OBEY_DOTCONFIG
+	bool "When auth is ok, ignore radius' vlan and obey dot-cofig instead"
+	depends on RVLAN_DAEMON
+	default N
+	help
+	  In some installations the radius server os only used to allow/deny
+	  a port to be configured in the WR network.  When this happens,
+	  the vlan number it returns must be ignored, and we obey what
+	  is configured in dot-config instead (e.g. CONFIG_VLANS_PORT03_VID)
+
+config RVLAN_RADIUS_SERVERS
+	string "IP Address(es) of the radius server(s)"
+	depends on RVLAN_DAEMON
+	default "192.168.16.181,192.168.16.182"
+	help
+	  This is an IPV4 address or a list of them.
+	  e.g. "192.168.16.181,192.168.16.182"
+
+config RVLAN_RADIUS_SECRET
+	string "The shared secret to encrypt radius queries"
+	depends on RVLAN_DAEMON
+	default "our-secret"
+	help
+	  The secret string used by radclient as called by radiusvlan
+
+endmenu
+
 config HTTPD_DISABLE
 	bool "Disable web interface"
 	default n
@@ -1239,5 +1295,3 @@ config RTU_HP_MASK_VAL
 endmenu
 
 source Kconfig_vlans.in
-
-

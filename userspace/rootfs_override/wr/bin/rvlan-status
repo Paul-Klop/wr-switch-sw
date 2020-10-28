@@ -1,0 +1,7 @@
+#!/bin/sh
+
+killall -USR1 radiusvlan
+if [ $? -ne 0 ]; then exit 1; fi
+
+# sort the lines: all of them start with "wri"
+sed 's/^wri//' /tmp/rvlan-status | sort -n | sed 's/^/wri/'

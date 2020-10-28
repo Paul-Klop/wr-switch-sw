@@ -1359,6 +1359,14 @@ wrsStartCntLdap OBJECT-TYPE
             "Number of LDAP daemon starts"
     ::= { wrsStartCntGroup 10 }
 
+wrsStartCntRvlan   OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of radiusvlan daemon starts"
+    ::= { wrsStartCntGroup 11 }
+
 -- wrsSpllState (.7.3)
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 

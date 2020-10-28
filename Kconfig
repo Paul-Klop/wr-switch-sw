@@ -1125,14 +1125,14 @@ config LLDPD_MINIMUM_FRAME_SIZE
 endmenu
 
 menu "Radius-vlan options"
-config RVLAN_DAEMON
+config RVLAN_ENABLE
 	bool "Run the 'radius-vlan' authorization daemon"
 	help
 	  If the program runs, it implements a subset of 802.1X
 
 config RVLAN_PMASK
 	string "A port mask, as hex number, to be monitored by radiusvlan"
-	depends on RVLAN_DAEMON
+	depends on RVLAN_ENABLE
 	default "ffffffff"
 	help
 	  The string must be a number, with or without leading 0x.
@@ -1143,19 +1143,19 @@ config RVLAN_PMASK
 
 config RVLAN_AUTH_VLAN
 	int "Default vlan to be used for ports during radius authorization"
-	depends on RVLAN_DAEMON
+	depends on RVLAN_ENABLE
 	range 1 4094
 	default 4094
 
 config RVLAN_NOAUTH_VLAN
 	int "Vlan to be used for ports whose authorization is denied"
-	depends on RVLAN_DAEMON
+	depends on RVLAN_ENABLE
 	range 1 4094
 	default 4094
 
 config RVLAN_OBEY_DOTCONFIG
 	bool "When auth is ok, ignore radius' vlan and obey dot-cofig instead"
-	depends on RVLAN_DAEMON
+	depends on RVLAN_ENABLE
 	default N
 	help
 	  In some installations the radius server os only used to allow/deny
@@ -1165,7 +1165,7 @@ config RVLAN_OBEY_DOTCONFIG
 
 config RVLAN_RADIUS_SERVERS
 	string "IP Address(es) of the radius server(s)"
-	depends on RVLAN_DAEMON
+	depends on RVLAN_ENABLE
 	default "192.168.16.181,192.168.16.182"
 	help
 	  This is an IPV4 address or a list of them.
@@ -1173,7 +1173,7 @@ config RVLAN_RADIUS_SERVERS
 
 config RVLAN_RADIUS_SECRET
 	string "The shared secret to encrypt radius queries"
-	depends on RVLAN_DAEMON
+	depends on RVLAN_ENABLE
 	default "our-secret"
 	help
 	  The secret string used by radclient as called by radiusvlan

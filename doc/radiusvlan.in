@@ -87,7 +87,7 @@ This is the list of configuration items related to @i{radiusvlan}. None
 of them has effects on the firmware build, they are only used at runtime.
 
 @table @code
-@item RVLAN_DAEMON
+@item RVLAN_ENABLE
 
 	The boolean option selects whether the tool is to be run or not.
         If disabled, the tool will not run and the related @i{monit} rule
@@ -154,7 +154,7 @@ can be confirmed by running
 
 which will properly trigger a @i{monit-triggered} reboot.
 
-Both invocation and monitoring depend on @i{dot-config}: if @t{RVLAN_DAEMON}
+Both invocation and monitoring depend on @i{dot-config}: if @t{RVLAN_ENABLE}
 is false, neither of them is activated.
 
 @c ##########################################################################

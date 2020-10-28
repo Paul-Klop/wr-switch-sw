@@ -20,7 +20,7 @@ start() {
 	echo "$0 unable to source dot-config ($dotconfig)!"
     fi
 
-    if [ "$CONFIG_RVLAN_DAEMON" != "y" ]; then
+    if [ "$CONFIG_RVLAN_ENABLE" != "y" ]; then
 	echo "Radius-VLAN: disabled\n"
 	exit 0
     fi

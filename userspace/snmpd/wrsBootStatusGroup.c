@@ -502,13 +502,13 @@ static void update_daemon_expectancy(struct wrs_usd_item *daemon_array)
 	}
 
 	daemon_array[UDI_RVLAN].exp = 0;
-	tmp = libwr_cfg_get("RVLAN_DAEMON");
+	tmp = libwr_cfg_get("RVLAN_ENABLE");
 	if (tmp && !strcmp(tmp, "y")) {
 		/* SNMP should not expect radiusvlan to be running */
 		daemon_array[UDI_RVLAN].exp = 1;
 		snmp_log(LOG_INFO, "SNMP: " SL_INFO
 			 " wrsBootUserspaceDaemonsMissing:"
-			 " no CONFIG_RVLAN_DAEMON in dot-config\n");
+			 " no CONFIG_RVLAN_ENABLE in dot-config\n");
 	}
 }
 

@@ -5,11 +5,13 @@ job_wrs_compile:
   stage: wrs_sw_compile
   script:
     - cd ..
-    - wr-switch-sw/build/wrs_build-all
+    - echo "Using `grep -c ^processor /proc/cpuinfo` parallel jobs" 
+    - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt
+    - cp *.tar ${CI_PROJECT_DIR}
   artifacts:
-    name: WRS_SW_CI_$CI_JOB_ID
+    name: "wrs_sw_ci_${CI_JOB_ID}"
     paths:
-    - ../*.tar
-
+    - log_${CI_JOB_ID}.txt
+    - ./*.tar
   tags:
     - wrs_sw

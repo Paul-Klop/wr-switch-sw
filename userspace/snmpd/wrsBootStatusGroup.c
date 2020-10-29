@@ -106,7 +106,7 @@ struct wrs_usd_item userspace_daemons[] = {
 						dot-config */
 	[UDI_NSLCD] = {"/usr/sbin/nslcd", 1}, /* nslcd/LDAP can be disabled in
 						dot-config */
-	[UDI_RVLAN] = {"/usr/sbin/radiusvlan", 1}, /* radius/802.1X can be disabled in
+	[UDI_RVLAN] = {"/wr/bin/radiusvlan", 1}, /* radius/802.1X can be disabled in
 						dot-config */
 };
 

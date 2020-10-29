@@ -27,4 +27,10 @@ void strncpy_e(char *d, char *s, int len);
 /* Create map */
 void *create_map(unsigned long address, unsigned long size);
 
+/* Count bits in a unsigned int */
+unsigned int bitCount (unsigned int value);
+
+/* Convert bitmask of ports from notation used by RTU (lowest port on lowest bit)
+ * to notation used by SNMP (lowrst port, most significant bit) */
+void convert_portmask_to_snmp_bitmask(int nports, uint32_t port_mask, char *bitmask, size_t *snmp_bitmask_len);
 #endif /* __LIBWR_HW_UTIL_H */

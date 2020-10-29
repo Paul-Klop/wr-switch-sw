@@ -133,3 +133,35 @@ void *create_map(unsigned long address, unsigned long size)
 		return NULL;
 	return mapaddr + fragment;
 }
+
+unsigned int bitCount (unsigned int value) {
+	unsigned int count = 0;
+	while (value > 0) {
+		if ((value & 1) == 1)
+			count++;
+		value >>= 1;
+	}
+	return count;
+}
+
+/* Convert bitmask of ports from notation used by RTU (lowest port on lowest bit)
+ * to notation used by SNMP (lowrst port, most significant bit) */
+void convert_portmask_to_snmp_bitmask(int nports, uint32_t port_mask, char *bitmask, size_t *snmp_bitmask_len)
+{
+    int i;
+
+    /* round up number of ports to a number dividable by 8 */
+    nports = 8 * ((nports + 7) / 8);
+    for (i = 0; i < nports;i++){
+	*bitmask |= port_mask & 1;
+	port_mask >>= 1;
+	/* jump to next char */
+	if (i % 8 == 7) {
+	    bitmask++;
+	    *bitmask = 0;
+	}
+	*bitmask <<= 1;
+    }
+    /* count the number of bytes used */
+    *snmp_bitmask_len = nports / 8;
+}

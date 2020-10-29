@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <minipc.h>
 #include <rtud_exports.h>
+#include <rtu_drv.h>
 #include "regs/endpoint-regs.h"
 
 #include <libwr/switch_hw.h>
@@ -39,6 +40,7 @@
 #include <libwr/rtu_shmem.h>
 #include <libwr/config.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/mac.h>
 
 static struct minipc_ch *rtud_ch;
 static struct rtu_vlans_t *rtu_vlans = NULL;
@@ -108,7 +110,10 @@ static int read_dot_config(char *dot_config_file);
 static int read_dot_config_vlans(int vlan_min, int vlan_max);
 
 struct rtu_vlan_table_entry *vlan_tab_shm;
-struct wrs_shm_head *rtu_port_shmem;
+struct rtu_port_entry *rtu_ports_shm;
+struct wrs_shm_head *rtu_shmem_p;
+struct rtu_shmem_header *rtu_hdr;
+
 
 static inline int nextport(int i, unsigned long pmask) /* helper for for_each_port() below */
 {
@@ -164,7 +169,6 @@ int main(int argc, char *argv[])
 {
 	int c, i, arg;
 	unsigned long conf_pmask = 0; /* current '--port' port mask */
-	struct rtu_shmem_header *rtu_hdr;
 	int n_wait = 0;
 	int ret, display_updates = 1; /* by default, display updates */
 	char *prgname;
@@ -197,7 +201,7 @@ int main(int argc, char *argv[])
 
 	n_wait = 0;
 	/* open rtu shm */
-	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
+	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_shmem_p)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
 			if (ret == WRS_SHM_OPEN_FAILED) {
@@ -216,20 +220,28 @@ int main(int argc, char *argv[])
 	}
 
 	/* check rtu shm version */
-	if (rtu_port_shmem->version != RTU_SHMEM_VERSION) {
+	if (rtu_shmem_p->version != RTU_SHMEM_VERSION) {
 		pr_error("unknown version %i (known is %i)\n",
-			 rtu_port_shmem->version, RTU_SHMEM_VERSION);
+			 rtu_shmem_p->version, RTU_SHMEM_VERSION);
 		exit(1);
 	}
 
 
 
 	/* get vlans array */
-	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
-	vlan_tab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->vlans);
+	rtu_hdr = (void *)rtu_shmem_p + rtu_shmem_p->data_off;
+	vlan_tab_shm = wrs_shm_follow(rtu_shmem_p, rtu_hdr->vlans);
 
 	if (!vlan_tab_shm) {
 		pr_error("cannot follow pointer to vlans in RTU's shmem\n");
+		exit(1);
+	}
+
+	/* get rtu ports array */
+	rtu_ports_shm = wrs_shm_follow(rtu_shmem_p, rtu_hdr->rtu_ports);
+
+	if (!rtu_ports_shm) {
+		pr_error("cannot follow pointer to ports configuration in RTU's shmem\n");
 		exit(1);
 	}
 
@@ -314,7 +326,7 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_RTU_PMASK:
 			ret = check_rtu("pmask", optarg, RTU_PMASK_MIN,
-					RTU_PMASK_MAX);
+					RTU_PMASK_MAX(NPORTS));
 			if (ret < 0)
 				exit(1);
 			set_rtu_vlan(-1, -1, ret, 0, -1, 0, VALID_PMASK);
@@ -582,7 +594,7 @@ static int print_help(char *prgname)
 	fprintf(stderr, "\t --rfid <%d..%d>       assign fid to configured VLAN\n",
 			RTU_FID_MIN, RTU_FID_MAX);
 	fprintf(stderr, "\t --rmask <0x%x..0x%x> ports belonging to configured VLAN\n",
-			RTU_PMASK_MIN, RTU_PMASK_MAX);
+			RTU_PMASK_MIN, RTU_PMASK_MAX(NPORTS));
 	fprintf(stderr, "\t --rdrop <0|1>          don't drop or drop frames on VLAN (note that frame can belong\n"
 			"\t                        to a VID as a consequence of per-port Endpoint configuration)\n");
 	fprintf(stderr, "\t --rprio <%d|%d..%d>      force priority for VLAN; -1 cancels priority override\n",
@@ -693,49 +705,21 @@ static void print_config_vlan(void)
 	printf("\n");
 }
 
-static uint32_t ep_read(int ep, int offset)
-{
-	return _fpga_readl(0x30000 + ep * 0x400 + offset);
-}
-
-static void ep_write(int ep, int offset, uint32_t value)
-{
-	_fpga_writel(0x30000 + ep * 0x400 + offset, value);
-}
-
-static int apply_settings(struct s_port_vlans *vlans)
+static int apply_settings(struct s_port_vlans *ports)
 {
 	int ep;
-	uint32_t v, r;
+	int ret_val;
 
 	for_each_port(ep) {
-		/* VCR0 */
-		r = offsetof(struct EP_WB, VCR0);
-		v = ep_read(ep, r);
-		if (vlans[ep].valid_mask & VALID_QMODE)
-			v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(vlans[ep].pmode);
-		if (vlans[ep].valid_mask & VALID_PRIO) {
-			if (vlans[ep].fix_prio)
-				v |= EP_VCR0_FIX_PRIO;
-			else
-				v &= ~EP_VCR0_FIX_PRIO;
-			v = (v & ~EP_VCR0_PRIO_VAL_MASK) | EP_VCR0_PRIO_VAL_W(vlans[ep].prio_val);
-		}
-		if (vlans[ep].valid_mask & VALID_VID)
-			v = (v & ~EP_VCR0_PVID_MASK) | EP_VCR0_PVID_W(vlans[ep].vid);
-		ep_write(ep, r, v);
-		/* VCR1: loop over the whole bitmask */
-		if (vlans[ep].valid_mask & VALID_UNTAG) {
-			int i;
-
-			r = offsetof(struct EP_WB, VCR1);
-			for (i = 0;i < 4096/16; i++) {
-				if (vlans[ep].untag_mask)
-					ep_write(ep, r, (0xffff << 10) | i);
-				else
-					ep_write(ep, r, (0x0000 << 10) | i);
-			}
-		}
+		minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_port_cfg, &ret_val,
+			    ep,
+			    ports[ep].valid_mask,
+			    ports[ep].pmode,
+			    ports[ep].fix_prio,
+			    ports[ep].prio_val,
+			    ports[ep].vid,
+			    ports[ep].untag_mask
+			    );
 	}
 	config_rtud();
 
@@ -785,7 +769,7 @@ static void list_rtu_vlans(void)
 
 	/* read data, with the sequential lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(&vlan_tab_local, vlan_tab_shm,
 		       NUM_VLANS * sizeof(*vlan_tab_shm));
 		retries++;
@@ -794,7 +778,7 @@ static void list_rtu_vlans(void)
 				 "shmem. Use inconsistent\n");
 			break; /* use inconsistent data */
 			}
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}
@@ -833,21 +817,43 @@ static void list_rtu_vlans(void)
 
 static void list_p_vlans(void)
 {
-	uint32_t v, r;
+	unsigned ii;
+	unsigned retries = 0;
+	struct rtu_port_entry ports_tab_local[HAL_MAX_PORTS];
+	int rtu_nports_local;
+	char mac_buffer[ETH_ALEN_STR];
 	int ep;
 
-	printf("#        QMODE    FIX_PRIO  PRIO    PVID     MAC\n");
-	printf("#-----------------------------------------------\n");
-	for (ep = 0; ep < NPORTS; ep++) {
-		r = offsetof(struct EP_WB, VCR0);
-		v = ep_read(ep, r);
-		printf("wri%-2i    %i %6.6s     %i      %i     %4i    %04x%08x\n",
-		       ep + 1, v & 3, qmode_names[v & 3],
-		       v & EP_VCR0_FIX_PRIO ? 1 : 0,
-		       EP_VCR0_PRIO_VAL_R(v),
-		       EP_VCR0_PVID_R(v),
-		       (int)ep_read(ep, offsetof(struct EP_WB, MACH)),
-		       (int)ep_read(ep, offsetof(struct EP_WB, MACL)));
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
+		memcpy(&ports_tab_local, rtu_ports_shm,
+		       HAL_MAX_PORTS * sizeof(*rtu_ports_shm));
+		rtu_nports_local = rtu_hdr->rtu_nports;
+		retries++;
+		if (retries > 100) {
+			pr_error("couldn't read consistent data from RTU's "
+				 "shmem. Use inconsistent\n");
+			break; /* use inconsistent data */
+			}
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	printf("#        QMODE    FIX_PRIO  PRIO    PVID     MAC        UNTAG\n");
+	printf("#------------------------------------------------------------\n");
+	for (ep = 0; ep < rtu_nports_local; ep++) {
+		printf("wri%-2i    %i %6.6s     %i      %i     %4i    %s  %i\n",
+		       ep + 1,
+		       ports_tab_local[ep].qmode,
+		       qmode_names[ports_tab_local[ep].qmode],
+		       ports_tab_local[ep].fix_prio,
+		       ports_tab_local[ep].prio,
+		       ports_tab_local[ep].pvid,
+		       mac_to_buffer_no_colons(ports_tab_local[ep].mac, mac_buffer),
+		       ports_tab_local[ep].untag
+		      );
 	}
 	return;
 }
@@ -862,9 +868,9 @@ static void print_hp_mask(void)
 		pr_error("failed to read HP mask, ret %d\n", ret);
 		exit(1);
 	}
-	printf("#-----------------------------------------------\n");
+	printf("#------------------------------------------------------------\n");
 	printf("# HP mask: 0x%02x\n", hp_mask);
-	printf("#-----------------------------------------------\n");
+	printf("#------------------------------------------------------------\n");
 }
 
 static void default_vlan_config(void)
@@ -877,29 +883,20 @@ static void default_vlan_config(void)
 
 static int clear_all(void)
 {
-	uint32_t r;
-	int val, i;
-	int ep;
+	int ret_val, i;
 
 	for (i = 0; i < NUM_VLANS; i++) {
 		if ((vlan_tab_shm[i].drop != 0)
 		    && (vlan_tab_shm[i].port_mask == 0x0))
 			continue;
 		minipc_call(rtud_ch, MINIPC_TIMEOUT,
-				    &rtud_export_vlan_entry, &val, i,
+				    &rtud_export_vlan_entry, &ret_val, i,
 				    vlan_tab_shm[i].fid, 0, 1, 0, 0, 0);
 		}
 
 	/* cancel tagging/untagging in all endpoints*/
-	for (ep = 0; ep < NPORTS; ep++) {
-		r = offsetof(struct EP_WB, VCR0);
-		ep_write(ep, r, 0x3 /* QMODE */);
+	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_port_cfg_clear_all, &ret_val);
 
-		r = offsetof(struct EP_WB, VCR1);
-		for (i = 0;i < 4096/16; i++) {
-			ep_write(ep, r, (0x0000 << 10) | i); /* no untag */
-		}
-	}
 	return 0;
 }
 
@@ -978,7 +975,7 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 	/* copy data no mater if it will be used later, with the sequential
 	 * lock to have all data consistent */
 	while (1) {
-		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		ii = wrs_shm_seqbegin(rtu_shmem_p);
 		memcpy(rtu_vlan_entry, &vlan_tab_shm[vid],
 			sizeof(*rtu_vlan_entry));
 		retries++;
@@ -987,7 +984,7 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 				 "shmem. Use inconsistent\n");
 			break; /* use inconsistent data */
 			}
-		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+		if (!wrs_shm_seqretry(rtu_shmem_p, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}
@@ -1279,7 +1276,8 @@ static int read_dot_config_vlans(int vlan_min, int vlan_max)
 		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "ports",
 					LIBWR_STRING, buff, vlan)) {
 			parse_mask(buff, &pmask);
-			if (pmask < RTU_PMASK_MIN || pmask > RTU_PMASK_MAX) {
+			if (pmask < RTU_PMASK_MIN
+                            || pmask > RTU_PMASK_MAX(NPORTS)) {
 				pr_error("invalid port mask 0x%lx (\"%s\") for"
 					 " vlan %4d\n", pmask, buff, vlan);
 				return -1;

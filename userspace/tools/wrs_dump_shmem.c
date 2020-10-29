@@ -76,6 +76,16 @@ char *spll_align_state_to_name[SPLL_ALIGN_STATE_MAX_N] = {
 	[ALIGN_STATE_WAIT_PLOCK] = "wait plock",
 };
 
+/* index of a the greatest number describing the qmode +1 */
+#define RTU_QMODE_MAX 5
+char *rtu_qmode_to_name[RTU_QMODE_MAX] = {
+	[QMODE_ACCESS] =   "access",
+	[QMODE_TRUNK] =    "trunk",
+	[QMODE_DISABLED] = "disabled",
+	[QMODE_UNQ] =      "unqualified",
+	[QMODE_INVALID] =  "invalid",
+};
+
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
 				 entries */
 
@@ -188,6 +198,26 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
+	case dump_type_yes_no:
+		i = *(uint8_t *)p;
+		switch (i) {
+		case 0:
+			printf("no(%d)\n", i);
+			break;
+		case 1:
+			printf("yes(%d)\n", i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
+
+	case dump_type_timeval:
+		{
+		    struct timeval *tv = (struct timeval*) p;
+		    printf("%ld.%06ld\n", tv->tv_sec, tv->tv_usec);
+		    break;
+		}
 
 	case dump_type_time:
 		printf("%s\n",timeToString(t,buf));
@@ -342,6 +372,20 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 			printf("Unknown(%d)\n", i);
 		}
 		break;
+        case dump_type_rtu_qmode:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case QMODE_ACCESS:
+		case QMODE_TRUNK:
+		case QMODE_DISABLED:
+		case QMODE_UNQ:
+		case QMODE_INVALID:
+			printf("%s(%d)\n", rtu_qmode_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
 	case dump_type_array_int:
 		{
 		int *size = addr + info->size;
@@ -449,8 +493,8 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, t24p_from_config),
 	DUMP_FIELD(uint32_t, ep_base),
 	DUMP_FIELD(int, sfpPresent),
-	DUMP_FIELD(int, has_sfp_diag),
-	DUMP_FIELD(int, monitor),
+	DUMP_FIELD(yes_no, has_sfp_diag),
+	DUMP_FIELD(yes_no, monitor),
 
 	/* PPSi instance information */
 	DUMP_FIELD(int, portMode),
@@ -569,9 +613,9 @@ int dump_hal_mem(struct wrs_shm_head *head)
 struct dump_info htab_info[] = {
 	DUMP_FIELD(int, addr.hash),
 	DUMP_FIELD(int, addr.bucket),
-	DUMP_FIELD(int, valid),
+	DUMP_FIELD(yes_no, valid),
 	DUMP_FIELD(int, end_of_bucket),
-	DUMP_FIELD(int, is_bpdu),
+	DUMP_FIELD(yes_no, is_bpdu),
 	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
 	DUMP_FIELD(UInteger8, fid),
 	DUMP_FIELD(uint32_t, port_mask_src),
@@ -580,7 +624,7 @@ struct dump_info htab_info[] = {
 	DUMP_FIELD(int, drop_when_dest),
 	DUMP_FIELD(int, drop_unmatched_src_ports),
 	DUMP_FIELD(UInteger32, last_access_t),
-	DUMP_FIELD(int, force_remove),
+	DUMP_FIELD(yes_no, force_remove),
 	DUMP_FIELD(UInteger8, prio_src),
 	DUMP_FIELD(int, has_prio_src),
 	DUMP_FIELD(int, prio_override_src),
@@ -597,18 +641,30 @@ struct dump_info vlan_info[] = {
 	DUMP_FIELD(uint32_t, port_mask),
 	DUMP_FIELD(UInteger8, fid),
 	DUMP_FIELD(UInteger8, prio),
-	DUMP_FIELD(int, has_prio),
-	DUMP_FIELD(int, prio_override),
-	DUMP_FIELD(int, drop),
+	DUMP_FIELD(yes_no, has_prio),
+	DUMP_FIELD(yes_no, prio_override),
+	DUMP_FIELD(yes_no, drop),
+	DUMP_FIELD(timeval, creation_time),
 };
 
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct rtu_mirror_info
 struct dump_info mirror_info[] = {
-	DUMP_FIELD(int, en),
+	DUMP_FIELD(yes_no, en),
 	DUMP_FIELD(uint32_t, imask),
 	DUMP_FIELD(uint32_t, emask),
 	DUMP_FIELD(uint32_t, dmask),
+};
+
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct rtu_port_entry
+struct dump_info rtu_port_info[] = {
+	DUMP_FIELD(rtu_qmode, qmode),
+	DUMP_FIELD(yes_no, fix_prio),
+	DUMP_FIELD(UInteger8, prio),
+	DUMP_FIELD(uint16_t, pvid),
+	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
+	DUMP_FIELD(yes_no, untag),
 };
 
 int dump_rtu_mem(struct wrs_shm_head *head)
@@ -618,7 +674,9 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	struct rtu_filtering_entry *rtu_filters_cur;
 	struct rtu_vlan_table_entry *rtu_vlans;
 	struct rtu_mirror_info *rtu_mirror;
+	struct rtu_port_entry *rtu_ports;
 	int i, j;
+	int nports;
 	char prefix[64];
 
 	if (head->version != RTU_SHMEM_VERSION) {
@@ -630,9 +688,17 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	rtu_filters = wrs_shm_follow(head, rtu_h->filters);
 	rtu_vlans = wrs_shm_follow(head, rtu_h->vlans);
 	rtu_mirror = wrs_shm_follow(head, rtu_h->mirror);
+	rtu_ports = wrs_shm_follow(head, rtu_h->rtu_ports);
 
 	if ((!rtu_filters) || (!rtu_vlans) || (!rtu_mirror)) {
 		fprintf(stderr, "dump rtu: cannot follow pointer in shm\n");
+		return -1;
+	}
+
+	/* get number of ports from rtu */
+	nports = rtu_h->rtu_nports;
+	if (nports <= 0) {
+		fprintf(stderr, "dump rtu: unable to get number of ports\n");
 		return -1;
 	}
 
@@ -664,6 +730,12 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	sprintf(prefix, "rtu.mirror");
 	dump_many_fields(rtu_mirror, mirror_info, ARRAY_SIZE(mirror_info),
 			prefix);
+
+	for (i = 0; i < nports; i++, rtu_ports++) {
+		sprintf(prefix,"rtu.ports.%d", i + 1);
+		dump_many_fields(rtu_ports, rtu_port_info,
+				 ARRAY_SIZE(rtu_port_info), prefix);
+	}
 
 	return 0;
 }

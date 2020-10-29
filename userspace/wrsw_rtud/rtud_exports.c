@@ -56,8 +56,8 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 	int type = (int)args[1];
 	int *p_ret = (int *)ret; /* force pointed to int type */
 
-	if (0 > port || port > 18) { /* 18 ports + CPU */
-		pr_error("Wrong port mask 0x%x\n", port);
+	if (0 > port || port > hal_nports_local) { /* 18 ports + CPU */
+		pr_error("Wrong port wri%d\n", port + 1);
 		*p_ret = -1;
 		return *p_ret;
 	}
@@ -338,7 +338,6 @@ int rtudexp_vlan_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 
 int rtudexp_mirror(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-	int oper;
 	int enable;
 	uint32_t imask, emask, dmask;
 	int *p_ret = (int *)ret;
@@ -371,6 +370,103 @@ int rtudexp_mirror(const struct minipc_pd *pd, uint32_t *args, void *ret)
 	return *p_ret;
 }
 
+int rtudexp_port_cfg(const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+	int *p_ret = (int *)ret;
+
+	uint8_t hw_index;	/* indexed from 0 to 17 */
+	uint8_t valid_mask;	/* mask of valid settings */
+	uint8_t qmode;		/* q mode of a port */
+	uint8_t fix_prio;	/* is fix priority set */
+	uint8_t prio;		/* VLAN priority */
+	uint16_t pvid;		/* PVID  */
+	uint8_t untag;		/* untag */
+
+	hw_index =   (uint8_t)args[0];
+	valid_mask = (uint8_t)args[1];
+	qmode =      (uint8_t)args[2];
+	fix_prio =   (uint8_t)args[3];
+	prio =       (uint8_t)args[4];
+	pvid =       (uint16_t)args[5];
+	untag =      (uint8_t)args[6];
+
+	*p_ret = 0;
+	pr_debug("Request for port configuration\n");
+	if (hw_index < 0 || hw_index > hal_nports_local) {
+		pr_error("Wrong port wri%d\n", hw_index + 1); /* 1.. */
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	/* check qmode range */
+	switch (qmode) {
+	case QMODE_ACCESS:
+	case QMODE_TRUNK:
+	case QMODE_DISABLED:
+	case QMODE_UNQ:
+		break;
+	default:
+		pr_error("Wrong qmode %d\n", qmode);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	/* check fix_prio range */
+	switch (fix_prio) {
+	case 0:
+	case 1:
+		break;
+	default:
+		pr_error("Wrong fix_prio %d\n", fix_prio);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	/* check prio range */
+	if (prio < PORT_VID_MIN || prio > PORT_PRIO_MAX) {
+		pr_error("Wrong prio %d\n", prio);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	/* check pvid range */
+	if (pvid < PORT_VID_MIN || pvid > PORT_VID_MAX) {
+		pr_error("Wrong pvid %d\n", pvid);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	/* check untag range */
+	switch (untag) {
+	case 0:
+	case 1:
+		break;
+	default:
+		pr_error("Wrong untag %d\n", untag);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	rtu_write_port_config(hw_index,
+			      valid_mask,
+			      qmode,
+			      fix_prio,
+			      prio,
+			      pvid,
+			      untag);
+
+	return *p_ret;
+}
+
+int rtudexp_port_cfg_clear_all(const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+	int *p_ret = (int *)ret;
+
+	rtu_clean_ports(SHM_LOCK);
+
+	return *p_ret;
+}
+
 int rtud_init_exports()
 {
 	rtud_ch = minipc_server_create("rtud", 0);
@@ -391,6 +487,8 @@ int rtud_init_exports()
 	MINIPC_EXP_FUNC(rtud_export_vlan_entry, rtudexp_vlan_entry);
 	MINIPC_EXP_FUNC(rtud_export_hp_mask, rtudexp_hp_mask);
 	MINIPC_EXP_FUNC(rtud_export_mirror, rtudexp_mirror);
+	MINIPC_EXP_FUNC(rtud_export_port_cfg, rtudexp_port_cfg);
+	MINIPC_EXP_FUNC(rtud_export_port_cfg_clear_all, rtudexp_port_cfg_clear_all);
 
 	return 0;
 }

@@ -66,4 +66,7 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 			      uint8_t prio, int has_prio, int prio_override,
 			      int drop);
 
+void rtu_fd_write_mirror_config(int en, uint32_t imask, uint32_t emask,
+			        uint32_t dmask);
+
 #endif /*__WHITERABBIT_RTU_FD_H*/

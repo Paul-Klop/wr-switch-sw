@@ -538,8 +538,8 @@ static void get_daemons_status(void)
 	f = popen(PROCESS_COMMAND, "r");
 	if (!f) {
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
-			 " wrsBootUserspaceDaemonsMissing: failed to execute "
-			 PROCESS_COMMAND "\n");
+			 " wrsBootUserspaceDaemonsMissing: failed to execute \""
+			 PROCESS_COMMAND "\"\n");
 		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing = 0;
 		/* Notify snmp about error in processes list */
 		/* Count number of expected processes */
@@ -615,7 +615,7 @@ static void get_n_watchdog_timouts(void)
 	f = popen(WDOG_COMMAND, "r");
 	if (!f) {
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsGwWatchdogTimeouts: "
-			 "failed to execute " WDOG_COMMAND "\n");
+			 "failed to execute \"" WDOG_COMMAND "\"\n");
 		return;
 	}
 

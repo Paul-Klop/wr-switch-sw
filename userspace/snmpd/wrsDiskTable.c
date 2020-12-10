@@ -56,8 +56,8 @@ time_t wrsDiskTable_data_fill(unsigned int *ret_n_rows)
 
 	f = popen(DISKUSAGE_COMMAND, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsDiskTable filed to execute "
-			 DISKUSAGE_COMMAND"\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsDiskTable failed to execute \""
+			 DISKUSAGE_COMMAND"\"\n");
 		return time_cur;
 	}
 	/* skip first line with columns' descriptions */

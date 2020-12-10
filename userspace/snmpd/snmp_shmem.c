@@ -218,6 +218,17 @@ int shmem_ready_rtud(void)
 
 void init_shm(void){
 	int i;
+	char *shmem_path;
+
+	/* If SHMEM_PATH is set in env variable, snmpd will use this path
+	 * for shmem files */
+	shmem_path = getenv("SHMEM_PATH");
+	if (shmem_path) {
+		wrs_shm_set_path(shmem_path);
+		wrs_shm_ignore_flag_locked(1);
+		snmp_log(LOG_WARNING, "SNMP: " SL_W
+			"Using path %s for shmem!\n", shmem_path);
+	}
 
 	for (i = 0; i < 10; i++) {
 		if (shmem_ready_hald()) {

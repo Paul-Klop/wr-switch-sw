@@ -971,7 +971,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			term_cprintf(C_WHITE,"%s",optimized_pp_time_toString(&wr_servo_ext->delta_txs,buf));
 			term_cprintf(C_BLUE, "  RX: ");
 			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&wr_servo_ext->delta_rxs,buf));
-			printf("\n");
+			term_cprintf(C_WHITE,"\n");
 		}
 	} else {
 		/* TJP: commented out fields are present on the SPEC,

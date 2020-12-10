@@ -6,7 +6,7 @@ config PTP_OPT_EXT_PORT_CONFIG_ENABLED
 	help
 	  This option is used by the high accuracy profile to force the port state.
 	  When set, BMCA is disabled.
-	  For more details please refer to the IEEE 1588-20019 (clause 17.6.2)
+	  For more details please refer to the IEEE 1588-2019 (clause 17.6.2)
 
 config PTP_SLAVE_ONLY
 	depends on PTP_OPT_EXT_PORT_CONFIG_ENABLED="n" 
@@ -15,7 +15,7 @@ config PTP_SLAVE_ONLY
 	help
 	  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
 	  which does not enable transition to MASTER state.
-	  For more details please refer to the IEEE 1588-20019 (clause 9.2.2.1)
+	  For more details please refer to the IEEE 1588-2019 (clause 9.2.2.1)
 
 menu "PORT 1"
 

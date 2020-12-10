@@ -115,7 +115,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 		f = fopen(fname, "r");
 		if (!f) {
 			snmp_log(LOG_ERR,
-				 "SNMP: wrsPstatsHCTable filed to open file "
+				 "SNMP: wrsPstatsHCTable failed to open file "
 				 "%s\n", fname);
 			continue;
 		}

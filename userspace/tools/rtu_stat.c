@@ -38,6 +38,10 @@
 
 #define MINIPC_TIMEOUT 200
 
+#define SHMEM_LIVE		0
+#define SHMEM_STATIC		1
+#define SHMEM_STATIC_NO_IPC	2
+
 static struct minipc_ch *rtud_ch;
 
 struct wrs_shm_head *rtu_shmem_p;
@@ -537,6 +541,7 @@ int main(int argc, char **argv)
 	int vid;
 	int enable;
 	uint32_t mask;
+	int use_static_shmem = SHMEM_LIVE;
 
 	/* change of a path to shmem has to be done before openning shmem */
 	if (argc >= 4
@@ -547,6 +552,7 @@ int main(int argc, char **argv)
 		/* ignore WRS_SHM_LOCKED flag (don't check if process
 		    * is alive) */
 		wrs_shm_ignore_flag_locked(1);
+		use_static_shmem = SHMEM_STATIC;
 	}
 
 	nports = get_nports_from_hal();
@@ -558,11 +564,17 @@ int main(int argc, char **argv)
 			 * for rtud to start */
 			fprintf(stderr, "rtu_stat: Can't connect to RTUd "
 				"mini-rpc server\n");
+			if (use_static_shmem) {
+				printf("Using static shmem. Don't try to communicate with RTUd.\n");
+				use_static_shmem = SHMEM_STATIC_NO_IPC;
+				break;
+			}
 		}
 		n_wait++;
 		sleep(1);
 	}
-	minipc_set_logfile(rtud_ch,stderr);
+	if (use_static_shmem != SHMEM_STATIC_NO_IPC)
+		minipc_set_logfile(rtud_ch,stderr);
 
 	/* Open rtud's shmem, it should be available after connecting rtud's
 	 * minipc */

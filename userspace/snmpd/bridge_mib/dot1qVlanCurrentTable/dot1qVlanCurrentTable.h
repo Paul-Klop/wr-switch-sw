@@ -85,13 +85,13 @@ typedef struct dot1qVlanCurrentTable_data_s {
         /*
          * dot1qVlanCurrentEgressPorts(4)/PortList/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/h
          */
-   char   dot1qVlanCurrentEgressPorts[65535];
+   char   dot1qVlanCurrentEgressPorts[16];
 size_t      dot1qVlanCurrentEgressPorts_len; /* # of char elements, not bytes */
     
         /*
          * dot1qVlanCurrentUntaggedPorts(5)/PortList/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/h
          */
-   char   dot1qVlanCurrentUntaggedPorts[65535];
+   char   dot1qVlanCurrentUntaggedPorts[16];
 size_t      dot1qVlanCurrentUntaggedPorts_len; /* # of char elements, not bytes */
     
         /*

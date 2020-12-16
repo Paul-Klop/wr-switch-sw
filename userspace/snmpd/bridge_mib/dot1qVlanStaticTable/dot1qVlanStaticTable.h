@@ -86,19 +86,19 @@ size_t      dot1qVlanStaticName_len; /* # of char elements, not bytes */
         /*
          * dot1qVlanStaticEgressPorts(2)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
          */
-   char   dot1qVlanStaticEgressPorts[65535];
+   char   dot1qVlanStaticEgressPorts[16];
 size_t      dot1qVlanStaticEgressPorts_len; /* # of char elements, not bytes */
     
         /*
          * dot1qVlanForbiddenEgressPorts(3)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
          */
-   char   dot1qVlanForbiddenEgressPorts[65535];
+   char   dot1qVlanForbiddenEgressPorts[16];
 size_t      dot1qVlanForbiddenEgressPorts_len; /* # of char elements, not bytes */
     
         /*
          * dot1qVlanStaticUntaggedPorts(4)/PortList/ASN_OCTET_STR/char(char)//L/A/W/e/r/d/h
          */
-   char   dot1qVlanStaticUntaggedPorts[65535];
+   char   dot1qVlanStaticUntaggedPorts[16];
 size_t      dot1qVlanStaticUntaggedPorts_len; /* # of char elements, not bytes */
     
         /*

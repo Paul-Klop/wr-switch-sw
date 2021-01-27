@@ -9,6 +9,7 @@
 
 #define WRS_SHM_DEFAULT_PATH  "/dev/shm"
 #define WRS_SHM_FILE  "wrs-shmem-%i"
+#define WRS_SHM_MAPADDR   0x10000000
 #define WRS_SHM_MIN_SIZE    (4*1024)
 #define WRS_SHM_MAX_SIZE  (512*1024)
 

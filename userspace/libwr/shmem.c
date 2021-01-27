@@ -49,6 +49,7 @@ struct wrs_shm_head *wrs_shm_get(enum wrs_shm_name name_id, char *name,
 	char fname[64];
 	int write_access = flags & WRS_SHM_WRITE;
 	int fd;
+	void *prev_mapbase;
 
 	if (name_id >= WRS_SHM_N_NAMES) {
 		errno = EINVAL;
@@ -70,7 +71,8 @@ struct wrs_shm_head *wrs_shm_get(enum wrs_shm_name name_id, char *name,
 		write(fd, "", 1);
 	}
 
-	map = mmap(0, WRS_SHM_MAX_SIZE,
+	map = mmap((void *)(WRS_SHM_MAPADDR + WRS_SHM_MAX_SIZE * name_id),
+		   WRS_SHM_MAX_SIZE,
 		   PROT_READ | (write_access ? PROT_WRITE : 0),
 		   MAP_SHARED, fd, 0);
 	if (map == MAP_FAILED) {
@@ -110,21 +112,45 @@ struct wrs_shm_head *wrs_shm_get(enum wrs_shm_name name_id, char *name,
 		close(fd);
 		return NULL;
 	}
-	head->fd = fd;
-	head->sequence = 1; /* a sort of lock */
-
 	/* Set mapbase only for the first call of wrs_shm_get.
-	 * At further calls (probably due to a restart of a writter/writer),
+	 * At further calls (probably due to a restart of a writer),
 	 * this is used by wrs_shm_follow to calculate the offset of a given
 	 * pointer from the beginning of shmem. */
-	if (!head->mapbase)
-	    head->mapbase = head;
+	if (!head->mapbase || head->mapbase == head) {
+		head->mapbase = head;
+		head->data_off = sizeof(*head);
+		head->data_size = 0;
+	} else {
+		/* try to remap at the previous mapbase */
+		prev_mapbase = head->mapbase;
+		munmap(map, WRS_SHM_MAX_SIZE);
+
+		/* Do not use MAP_FIXED because it unmaps previous mappings
+		 * that overlap with the current one */
+		map = mmap(prev_mapbase, WRS_SHM_MAX_SIZE,
+			   PROT_READ | (write_access ? PROT_WRITE : 0),
+			   MAP_SHARED, fd, 0);
+
+		if (map == MAP_FAILED) {
+			close(fd);
+			return NULL; /* keep errno */
+		}
+		if (map != prev_mapbase) {
+			/* mapped at the different address than expected,
+			 * clean the mapped memory (pointers may be unusable)*/
+			memset(map, 0, stbuf.st_size);
+		}
+
+		head = map;
+		/* Keep data_off and data_size as it was to allow further
+		 * memory allocations */
+	}
+
+	head->fd = fd;
 
 	strncpy(head->name, name, sizeof(head->name));
 	head->name[sizeof(head->name) - 1] = '\0';
 	head->stamp = 0;
-	head->data_off = sizeof(*head);
-	head->data_size = 0;
 	if (flags & wrs_shm_locked)
 		head->sequence = 1; /* a sort of lock */
 	else

@@ -892,6 +892,7 @@ int main(int argc, char **argv)
 			printf("shm.%d.status:     %s\n",i,kill(head->pid, 0) < 0 ? "dead" : "alive");
 		}
 		printf("shm.%d.iterations: %d\n",i,head->pidsequence);
+		printf("shm.%d.mapbase:    %p\n", i, head->mapbase);
 		f = name_id_to_f[i];
 
 		/* if the area-specific function fails, fall back to generic */

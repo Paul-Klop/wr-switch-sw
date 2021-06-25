@@ -616,7 +616,7 @@ config PTP_OPT_DOMAIN_NUMBER
 	  other as defined by the PTP protocol. A domain defines the scope of
 	  PTP message communication, state, operations, data sets, and
 	  timescale. PTP devices may participate in multiple domains.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
 
 config PTP_OPT_PRIORITY1
 	int "priority1"
@@ -625,7 +625,7 @@ config PTP_OPT_PRIORITY1
 	help
 	  A user configurable designation that a clock belongs to an ordered
 	  set of PTP devices from which a PTP Master is selected.
-	  For more details please refer to the IEEE 1588-2008 standard
+	  For more details please refer to the IEEE 1588-2019 standard
 
 config PTP_OPT_PRIORITY2
 	int "priority2"
@@ -634,7 +634,7 @@ config PTP_OPT_PRIORITY2
 	help
 	  A user configurable designation that provides finer grained ordering
 	  among otherwise equivalent PTP devices.
-	  For more details please refer to the IEEE 1588-2008 standard
+	  For more details please refer to the IEEE 1588-2019 standard
 
 config PTP_OPT_CLOCK_CLASS
 	int "clock-class"
@@ -652,7 +652,7 @@ config PTP_OPT_CLOCK_CLASS
 	  An attribute defining the TAI traceability, synchronization state and
 	  expected performance of the time or frequency distributed by a
 	  Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
 
 config PTP_OPT_OVERWRITE_ATTRIBUTES
 	boolean "Overwrite default PTP device attributes"
@@ -673,7 +673,7 @@ config PTP_OPT_CLOCK_ACCURACY
 	help
 	  An attribute defining the accuracy of the Local Clock (e.g. local
 	  oscillator) of a Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
 
 config PTP_OPT_CLOCK_ALLAN_VARIANCE
 	int "clock-allan-variance/offsetScaledLogVariance"
@@ -684,7 +684,7 @@ config PTP_OPT_CLOCK_ALLAN_VARIANCE
 	help
 	  An attribute defining the stability of the Local Clock of a
 	  Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
   
 config PTP_OPT_TIME_SOURCE
 	int "time-source"

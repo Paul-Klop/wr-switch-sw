@@ -159,7 +159,7 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%u\n", *(uint32_t *)p);
 		break;
 	case dump_type_unsigned_long:
-		printf("%li\n", *(unsigned long *)p);
+		printf("%lu\n", *(unsigned long *)p);
 		break;
 	case dump_type_unsigned_char:
 	case dump_type_UInteger8:

@@ -483,7 +483,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecSource}{
     Source of the leap seconds file. When it is set to \texttt{tryDhcp}, 
     then a failure of  getting the URL via DHCP does not rise an error in \\
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceStatus}} and \\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecStatusDetails}} and \\
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceStatusDetails}}. }
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecStatusDetails}{
   Result of the management of the leap second (inserted, deleted, \ldots) }
@@ -579,6 +579,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntWrsWatchdog}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntLldpd}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntLdap}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntRvlan}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntSPLL}{Not implemented}
 
   \snmpentrye{WR-SWITCH-MIB}{}{wrsSpllState}{}
@@ -754,4 +755,224 @@
 \snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageSize.<n>}{}
 \snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageUsed.<n>}{}
 \snmpentryo{IF-MIB}{}{ifOperStatus.<n>}{}
+\snmpentryo{IF-MIB}{}{ifIndex.<n>}{}
 
+% description of the following OIDs is based on corresponding descriptions in BRIDGE-MIB and Q-BRIDGE-MIB
+\snmpentryo{BRIDGE-MIB}{}{dot1dBase}{Basic information about a bridge.}
+\snmpentryo{BRIDGE-MIB}  {dot1dBase}{dot1dBaseBridgeAddress}{
+	    The MAC address used by this bridge when it must be
+	    referred to in a unique fashion.  It is the numerically smallest 
+	    MAC address of all ports that belong to this bridge.}
+\snmpentryo{BRIDGE-MIB}  {dot1dBase}{dot1dBaseNumPorts}{
+	    The number of ports controlled by this bridging
+	    entity.}
+\snmpentryo{BRIDGE-MIB}  {dot1dBase}{dot1dBaseType}{
+	    Indicates what type of bridging this bridge can
+	    perform. \\Hardcoded to \texttt{transparent-only(2)}.}
+\snmpentryo{BRIDGE-MIB}{}{dot1dBasePortTable}{
+	    A table that contains generic information about every
+	    port that is associated with this bridge.  Transparent,
+	    source-route, and srt ports are included.}
+\snmpentryo{BRIDGE-MIB}  {dot1dBasePortTable}{dot1dBasePortIfIndex.<port>}{
+	    The value of the instance of
+	    the \texttt{\glshyperlink{IF-MIB::ifIndex.<n>}} object,
+	    defined in IF-MIB, for the interface corresponding
+	    to this port.}
+\snmpentryo{BRIDGE-MIB}  {dot1dBasePortTable}{dot1dBasePortCircuit.<port>}{
+	    Hardcoded to \texttt{\{0, 0\}} (\texttt{ZeroDotZero}) }
+\snmpentryo{BRIDGE-MIB}{}{dot1dTpFdbTable}{
+	    A table that contains information about unicast
+	    entries for which the bridge has forwarding and/or
+	    filtering information.  This information is used
+	    by the transparent bridging function in
+	    determining how to propagate a received frame.}
+\snmpentryo{BRIDGE-MIB}  {dot1dTpFdbTable}{dot1dTpFdbAddress.<mac>}{
+	    A unicast MAC address for which the bridge has
+	    forwarding and/or filtering information.}
+\snmpentryo{BRIDGE-MIB}  {dot1dTpFdbTable}{dot1dTpFdbPort.<mac>}{
+	    Either the value '\texttt{0}', or the port number of the port on
+	    which a frame having a source address equal to the value
+	    of the corresponding instance of
+	    \texttt{\glshyperlink{BRIDGE-MIB::dot1dTpFdbAddress.<mac>}} has
+	    been seen.  A value of '\texttt{0}' indicates that the port
+	    number has not been learned, but that the bridge does
+	    have some forwarding/filtering information about this
+	    address (e.g., in
+the \texttt{\glshyperlink{BRIDGE-MIB::dot1dStaticTable}}).}
+\snmpentryo{BRIDGE-MIB}  {dot1dTpFdbTable}{dot1dTpFdbStatus.<mac>}{
+	    The status of this entry.  The meanings of the
+	    values are:\\
+		-- \texttt{learned(3)} - the value of the corresponding instance
+		of \texttt{\glshyperlink{BRIDGE-MIB::dot1dTpFdbPort.<mac>}}
+		was learned, and is being used.\\
+		-- \texttt{mgmt(5)} - the value of the corresponding instance of
+		\texttt{\glshyperlink{BRIDGE-MIB::dot1dTpFdbAddress.<mac>}}
+		is also the value of an existing instance of
+		\texttt{\glshyperlink{BRIDGE-MIB::dot1dStaticAddress.<mac>.<receivePort>}}.}
+\snmpentryo{BRIDGE-MIB}{}{dot1dStaticTable}{
+	    A table containing filtering information configured
+	    into the bridge by (local or network) management
+	    specifying the set of ports to which frames received
+	    from specific ports and containing specific destination
+	    addresses are allowed to be forwarded.  The value of
+	    zero in this table, as the port number from which frames
+	    with a specific destination address are received, is
+	    used to specify all ports for which there is no specific
+	    entry in this table for that particular destination
+	    address.  Entries are valid for unicast and for
+	    group/broadcast addresses.}
+\snmpentryo{BRIDGE-MIB}  {dot1dStaticTable}{dot1dStaticAddress.<mac>.<receivePort>}{
+	    The destination MAC address in a frame to which this
+	    entry's filtering information applies.  This object can
+	    take the value of a unicast address, a group address, or
+	    the broadcast address.}
+\snmpentryo{BRIDGE-MIB}  {dot1dStaticTable}{dot1dStaticReceivePort.<mac>.<receivePort>}{
+	    Either the value '\texttt{0}', or the port number of the port
+	    from which a frame must be received in order for this
+	    entry's filtering information to apply.  A value of zero
+	    indicates that this entry applies on all ports of the
+	    bridge for which there is no other applicable entry.}
+\snmpentryo{BRIDGE-MIB}  {dot1dStaticTable}{dot1dStaticAllowedToGoTo.<mac>.<receivePort>}{
+	    The set of ports to which frames received from a
+	    specific port and destined for a specific MAC address,
+	    are allowed to be forwarded.  Each octet within the
+	    value of this object specifies a set of eight ports,
+	    with the first octet specifying ports \textit{1} through \textit{8}, the
+	    second octet specifying ports \textit{9} through \textit{16}, etc.  Within
+	    each octet, the most significant bit represents the
+	    lowest numbered port, and the least significant bit
+	    represents the highest numbered port.  Thus, each port
+	    of the bridge is represented by a single bit within the
+	    value of this object.  If that bit has a value of '\texttt{1}',
+	    then that port is included in the set of ports; the port
+	    is not included if its bit has a value of '\texttt{0}'.  (Note
+	    that the setting of the bit corresponding to the port
+	    from which a frame is received is irrelevant.)  The
+	    default value of this object is a string of ones of
+	    appropriate length.}
+\snmpentryo{BRIDGE-MIB}  {dot1dStaticTable}{dot1dStaticStatus.<mac>.<receivePort>}{
+	    This object indicates the status of this entry.\\
+		-- \texttt{permanent(3)} - this entry is currently in use and
+		    will remain so after the next reset of the
+		    bridge (as long as configured in \textit{dot-config}).}
+\snmpentryo{Q-BRIDGE-MIB}{}{dot1qBase}{
+	    Group with information specific for IEEE 802.1Q. }
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qBase}{dot1qVlanVersionNumber}{
+	    The version number of IEEE 802.1Q that this device
+	    supports. Hardcoded to \texttt{version(1)}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qBase}{dot1qMaxVlanId}{
+	    The maximum IEEE 802.1Q VLAN-ID that this device
+	    supports.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qBase}{dot1qMaxSupportedVlans}{
+	    The maximum number of IEEE 802.1Q VLANs that this
+	    device supports.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qBase}{dot1qNumVlans}{
+	    The current number of IEEE 802.1Q VLANs that are
+	    configured in this device.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qBase}{dot1qGvrpStatus}{
+	    The administrative status requested by management for
+	    GVRP.  The value is set to \texttt{disabled(2)}}
+\snmpentryo{Q-BRIDGE-MIB}{}{dot1qFdbTable}{
+	    A table that contains configuration and control
+	    information for each Filtering Database currently
+	    operating on this device.  Entries in this table appear
+	    automatically when VLANs are assigned FDB IDs in the
+	    \texttt{\glshyperlink{Q-BRIDGE-MIB::dot1qVlanCurrentTable}}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qFdbTable}{dot1qFdbDynamicCount.fdbId}{
+	    The current number of dynamic entries in this
+	    Filtering Database.}
+\snmpentryo{Q-BRIDGE-MIB}{}{dot1qTpFdbTable}{
+	    A table that contains information about unicast entries
+	    for which the device has forwarding and/or filtering
+	    information.  This information is used by the
+	    transparent bridging function in determining how to
+	    propagate a received frame.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qTpFdbTable}{dot1qTpFdbPort.<fdbId>.<mac>}{
+	    Either the value '\texttt{0}', or the port number of the port on
+	    which a frame having a source address equal to the value
+	    of the corresponding instance of \texttt{dot1qTpFdbAddress} has
+	    been seen.  A value of '\texttt{0}' indicates that the port
+	    number has not been learned but that the device does
+	    have some forwarding/filtering information about this
+	    address.\\
+	    The port value is assigned to
+	    this object whenever it is learned, even for addresses
+	    for which the corresponding value of
+	    \texttt{\glshyperlink{Q-BRIDGE-MIB::dot1qTpFdbStatus.<fdbId>.<mac>}}
+	    is not \texttt{learned(3)}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qTpFdbTable}{dot1qTpFdbStatus.<fdbId>.<mac>}{
+	    The status of this entry.  The meanings of the values
+	    are:\\
+		-- \texttt{learned(3)} - the value of the corresponding instance
+		    of dot1qTpFdbPort was learned and is being used.\\
+		-- \texttt{mgmt(5)} - the value of the corresponding instance of
+		    \texttt{dot1qTpFdbAddress} is configured by management.}
+\snmpentryo{Q-BRIDGE-MIB}{}{dot1qVlanCurrentTable}{
+	    A table containing current configuration information
+	    for each VLAN currently configured into the device by
+	    (local or network) management.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanCurrentTable}{dot1qVlanFdbId.<creationTime>.<vlan>}{
+	    The Filtering Database used by this VLAN.  This is one
+	    of the \texttt{dot1qFdbId} values in the \texttt{\glshyperlink{Q-BRIDGE-MIB::dot1qFdbTable}}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanCurrentTable}{dot1qVlanCurrentEgressPorts.<creationTime>.<vlan>}{
+	    The set of ports that are transmitting traffic for
+	    this VLAN as either tagged or untagged frames.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanCurrentTable}{dot1qVlanCurrentUntaggedPorts.<creationTime>.<vlan>}{
+	    The set of ports that are transmitting traffic for
+	    this VLAN as untagged frames.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanCurrentTable}{dot1qVlanStatus.<creationTime>.<vlan>}{
+	    This object indicates the status of this entry.\\
+	    -- \texttt{permanent(2)} - this entry, corresponding to an entry
+		in \texttt{\glshyperlink{Q-BRIDGE-MIB::dot1qVlanStaticTable}}, is currently in use and
+		will remain so after the next reset of the
+		device.  The port lists for this entry include
+		ports from the equivalent \texttt{\glshyperlink{Q-BRIDGE-MIB::dot1qVlanStaticTable}}
+		entry and ports learned dynamically.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanCurrentTable}{dot1qVlanCreationTime.<creationTime>.<vlan>}{
+	    The value of \texttt{sysUpTime} when this VLAN was created.
+	    \texttt{0} if VLAN was created before start of SNMP agent.}
+\snmpentryo{Q-BRIDGE-MIB}{}{dot1qVlanStaticTable}{
+	    A table containing static configuration information for
+	    each VLAN configured into the device by (local or
+	    network) management.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanStaticTable}{dot1qVlanStaticName.<vlan>}{
+	    An administratively assigned string, which may be used
+	    to identify the VLAN. In WRS used as \texttt{VLAN<vlanNumber>}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanStaticTable}{dot1qVlanStaticEgressPorts.<vlan>}{
+	    The set of ports that are permanently assigned to the
+	    egress list for this VLAN by management.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanStaticTable}{dot1qVlanForbiddenEgressPorts.<vlan>}{
+	    The set of ports that are prohibited by management
+	    from being included in the egress list for this VLAN.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanStaticTable}{dot1qVlanStaticUntaggedPorts.<vlan>}{
+	    The set of ports that should transmit egress packets
+	    for this VLAN as untagged.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qVlanStaticTable}{dot1qVlanStaticRowStatus.<vlan>}{
+	    This object indicates the status of this entry.
+	    All entries are Hardcoded to \texttt{active(1)}.}
+\snmpentryo{Q-BRIDGE-MIB}{}{dot1qPortVlanTable}{
+	    A table containing per-port control and status
+	    information for VLAN configuration in the device.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPvid.<portId>}{
+	    The PVID, the VLAN-ID assigned to untagged frames or
+	    Priority-Tagged frames received on this port.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPortAcceptableFrameTypes.<portId>}{
+	    When this is \texttt{admitOnlyVlanTagged(2)}, the device will
+	    discard untagged frames or Priority-Tagged frames
+	    received on this port.  When \texttt{admitAll(1)}, untagged
+	    frames or Priority-Tagged frames received on this port
+	    will be accepted and assigned to a VID based on the
+	    PVID and VID Set for this port.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPortIngressFiltering.<portId>}{
+	    When this is \texttt{true(1)}, the device will discard incoming
+	    frames for VLANs that do not include this Port in its
+	    Member set.  When \texttt{false(2)}, the port will accept all
+	    incoming frames.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPortGvrpStatus.<portId>}{
+	    WRS does not support GVRP. Hardcoded to \texttt{disabled(2)}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPortGvrpFailedRegistrations.<portId>}{
+	    WRS does not support GVRP. Hardcoded to \texttt{0}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPortGvrpLastPduOrigin.<portId>}{
+	    WRS does not support GVRP. Hardcoded to \texttt{00:00:00:00:00:00}.}
+\snmpentryo{Q-BRIDGE-MIB}  {dot1qPortVlanTable}{dot1qPortRestrictedVlanRegistration.<portId>}{
+	    WRS does not support Vlan registration via SNMP. Hardcoded to \texttt{false(2)}.}

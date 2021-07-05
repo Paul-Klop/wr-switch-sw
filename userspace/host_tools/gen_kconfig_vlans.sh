@@ -138,7 +138,24 @@ function print_port_config() {
 	echo -e "\tdefault \"\""
 	echo -e "\thelp"
 	echo -e "\t VID used for the PTP messages"
-	
+
+	echo -e "\nconfig VLANS_PORT${portStr}_LLDP_TX_VID"
+	echo -e "\tint \"LLDP TX VID\""
+	echo -e "\tdepends on !LLDPD_DISABLE && (VLANS_RAW_PORT_CONFIG || VLANS_PORT${portStr}_MODE_TRUNK || VLANS_PORT${portStr}_MODE_DISABLED || VLANS_PORT${portStr}_MODE_UNQUALIFIED)"
+	echo -e "\tdefault 4094 if VLANS_PORT${portStr}_MODE_TRUNK"
+	echo -e "\tdefault 1"
+	echo -e "\thelp"
+	echo -e "\t VID used for the transmission of LLDP frames. Incoming LLDP frames"
+	echo -e "\t are accepted on all VLANs."
+	echo -e "\t If unsure, put the same value as in VLANS_PORT${portStr}_PTP_VID."
+
+	echo -e "\nconfig VLANS_PORT${portStr}_LLDP_TX_PRIO"
+	echo -e "\tint \"LLDP TX VLAN priority\""
+	echo -e "\tdepends on !LLDPD_DISABLE && (VLANS_RAW_PORT_CONFIG || VLANS_PORT${portStr}_MODE_TRUNK || VLANS_PORT${portStr}_MODE_DISABLED || VLANS_PORT${portStr}_MODE_UNQUALIFIED)"
+	echo -e "\tdefault 0"
+	echo -e "\trange 0 7"
+	echo -e "\thelp"
+	echo -e "\t VLAN Priority used for the transmission of LLDP frames."
 }
 
 function help_vlan_port_mode() {

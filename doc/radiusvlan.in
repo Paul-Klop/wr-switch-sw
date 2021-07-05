@@ -1,0 +1,555 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% radiusvlan.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make radiusvlan.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I cannot live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename radiusvlan.info
+@settitle radiusvlan
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month October 2020
+@c the release name below is substituted at build time
+@set release __RELEASE_GIT_ID__
+
+@finalout
+
+@titlepage
+@title Radius Vlan
+@subtitle Description of the mechanism used in WR switch
+@subtitle @value{update-month} (@value{release})
+@author A. Rubini
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@c ##########################################################################
+@c in texinfo we are mandated to have a Top node
+@node Top
+@top Introduction
+
+This document describes a new feature of the White Rabbit Switch,
+to be used in GSI, which is a subset of IEEE 802.1X.
+
+When a devices is detected on a port which is
+configured as ``access'', a Radius server is queried for authorization.
+
+The features is called @i{radiusvlan} or @i{rvlan} when a shorter name
+is to be preferred.  It relies on @i{radclient}, which was added
+to @i{buildroot} in a new @i{freeradius-utils} package. The package
+installs @i{radtest}, @i{radclient} and a minimal dictionary (the full
+dictionary is more than 1MB worth of data).
+
+I chose to install an older version of radclient because the current
+version requires a special allocator (libtalloc), that had to be added
+to buildroot too.
+
+@c ##########################################################################
+@node Related Kconfig Items
+@chapter Related Kconfig Items
+
+Like most features in White Rabbit Switch, @i{radiusvlan} is configured
+through @i{Kconfig}. The @i{dot-config} file is used both at build time
+and at run time (where it lives in @i{/wr/etc}).
+
+This is the list of configuration items related to @i{radiusvlan}. None
+of them has effects on the firmware build, they are only used at runtime.
+
+@table @code
+@item RVLAN_ENABLE
+
+	The boolean option selects whether the tool is to be run or not.
+        If disabled, the tool will not run and the related @i{monit} rule
+        won't be activated.  No further config option has any effect if
+        this flag is false.
+
+@item RVLAN_PMASK
+
+	A port mask. If any bit in the mask is 0, the associated port will
+        not be monitored by the tool. Port @i{wri1} is associated to bit 0,
+        and so on until @i{wri18} associated to bit 17.  Bits 18-31 are
+        ignored. The default value is all-1.
+
+@item RVLAN_AUTH_VLAN
+
+	A temporary @sc{vid} to be used during port authorization.
+        Defaults to 4094.
+
+@item RVLAN_NOAUTH_VLAN
+
+	The @sc{vid} to be used for ports that are not authorized.
+        Defaults to 4094.
+
+@item RVLAN_OBEY_DOTCONFIG
+
+	A boolean option. If set, @i{radiusvlan} will obey the @sc{vid}
+        value set forth in @i{dot-config} rather than what the Radius
+        server returned. Thus, the Radius server's reply is only used
+        to authorize or not the port (if not, @t{NOAUTH_VLAN} is applied).
+
+@item RVLAN_RADIUS_SERVERS
+
+	A comma-separated list of the names or IP addresses of a set
+        of Radius servers. See @ref{Multiple Servers}.
+
+@item CONFIG_RVLAN_RADIUS_SECRET
+
+	The string used to encrypt radius frames, called ``secret''
+        in radius documentation.
+
+@end table
+
+
+@c ##########################################################################
+@node Service Activation and Monitoring
+@chapter Service Activation and Monitoring
+
+The tool is a standalone program that ignores its own command line;
+all configuration information comes from dot-config, as described
+above.
+
+The service is executed at boot from @i{/etc/init.d/radiusvlan}, which
+has the same structure of all other similar scripts.
+
+In @i{/etc/rcS}, the symbolic link must be after @i{vlan} configuration.
+
+The service, like most other @i{wrs} services, is monitored by @i{monit},
+with the same parameters as all other services.  Working @i{monit} setup
+can be confirmed by running
+
+@example
+   while true; do killall radiusvlan; sleep 3; done; done
+@end example
+
+which will properly trigger a @i{monit-triggered} reboot.
+
+Both invocation and monitoring depend on @i{dot-config}: if @t{RVLAN_ENABLE}
+is false, neither of them is activated.
+
+@c ##########################################################################
+@node Internal Design
+@chapter Internal Design
+
+The tools enumerates all @i{wri*} interfaces in @i{/sys/net/class}.
+It opens a @i{netlink} socket to get notification of any change in
+interface up/down status, and then checks whether each of them
+is up or down (thus, no change can get undetected).
+
+Only ports configured as @t{VLAN_PORTxx_MODE_ACCESS} are monitored,
+and only if the corresponding bit in @t{RVLAN_PMASK} is set.
+
+For each monitored port, the tool runs a state machine, where the initial state
+is @i{DOWN} or @i{JUSTUP}.  Whenever a state change is reported by
+@i{netlink}, the port is moved to either @i{JUSTUP} or @i{GODOWN}.
+
+This is the list of states. No state is blocking, so operation on one
+port does not stop operation on other ports (the engine is based
+on @i{select()}).
+
+@table @code
+
+@item RVLAN_GODOWN
+
+	This state is the default state for enumerated ports, and it
+        is entered whenever @i{netlink} reports that the
+        interface went down. This state turns the port to @i{vlan_auth}
+        and forgets the peer's mac address it.
+        It also closes any open file descriptor and
+        kills the child process, if it exists.  Thus, no remaining
+        garbage remains in the system even if the fiber is unplugged
+        and re-plugged quickly several times.
+
+@item RVLAN_DOWN
+
+	The port is quietly down.
+
+@item RVLAN_JUSTUP
+
+	The port was just reported as ``up'' and we must start
+        authentication. The first step is identifying the MAC address
+        of the peer. Thus, the tool starts sniffing the port, but opening
+        a raw socket listening to this port.
+
+@item RVLAN_SNIFF
+
+	Get a frame from the port. If the frame is sent from the switch
+        itlsef, it is ignored.  Any address configured in the switch is
+        considered as @i{self} (i.e., also the @i{eth0} mac address, used
+        by @i{ppsi} as sender address, is ignored).   When a foreign
+        frame is received, the tool saves the MAC address of the peer,
+        it closes the sniffing socket and it moves to the next state.
+
+@item RVLAN_RADCLIENT
+
+	The tool selects a radius server (see @ref{Multiple Servers},
+        and runs @i{radclient}, feeding data
+        to its @i{stdin} and collecting its @i{stdout+stderr}. The @i{pid}
+        of the child process is retained for later cleanup.
+
+@item RVLAN_AUTH
+
+	@i{radclient} returned some data. This state collects it until EOF.
+        If @i{radclient} reports an error in communication, the server
+        is marked as ``recently faulty'' and @i{radiusvlan} moves back
+        to @t{RVLAN_RACLIENT}, where a different server will be selected.
+        If the server replied, the tool looks for ``@t{Framed-User}''
+        and ``@t{Tunnel-Private-Group-Id}''. If both exist authentication
+        succeeded. The @i{chosen_vlan} is either the one returned by the
+        Radius Server or the one set forth in dot-config, according to
+        the @t{OBEY_DOTCONFIG} parameter.
+
+@item RVLAN_CONFIG
+
+	This state calls ``@t{wrs_vlans --port <port> --pvid <pvid>''}'',
+        where @i{pvid} is @i{noauth_vlan} if authorization failed.
+        We then move to @t{CONFIGURED} state.  The external @i{wrs_vlans}
+        tool is lazily executed with @i{system(3)}, and thus this state
+        is blocking. However, @i{wrs_vlans} completes in no time, so this
+        is acceptable in my opinion.
+
+@item RVLAN_CONFIGURED
+
+	The port is quietly running, no action is performed.
+
+@item RVLAN_WAIT
+
+	Wait for the child process to terminate (if we killed it
+        in @t{GODOWN}). This is a transient state that leads to @t{DOWN}.
+
+@end table
+
+@c ##########################################################################
+@node Multiple Servers
+@chapter Multiple Servers
+
+To support multiple Radius servers, @i{radiusvlan} creates an internal
+list of possible servers (by splitting the comma-separated list it gets from
+dot-config).
+
+When a port needs to call @i{radclient}, it asks for the ``best'' server.
+At the beginning, this is the first server listed in the dot-config line.
+
+Then, Whenever @i{radclient} returns, if it exited in error @b{and}
+the reply begins with ``@t{radclient:}'', then this is considered a
+communication error (which is different from an authorization denial).
+Please note that @i{radiusvlan} merges @i{stdout} and @i{stderr} to
+the same file descriptor, due to developer laziness.
+
+Communication errors can happen because the server name cannot
+be resolved by @sc{dns}; because the shared secret is wrong, or because
+the radius server is not running at the selected address.
+
+When such an error happens, the server name is marked as ``recently
+faulty'', and another (or the same) server is selected, to resend the
+same query. The selection process returns the radius server whose
+failure is oldest, among the list of known servers; this ensures that
+if two servers are out of order at different times, @i{radiusvlan} sticks
+to the one that is currently working, but can get back to the other server
+when needed.
+
+Thus, in a dynamic environment where ports feature ``link up'' and
+``link down'' over time, we always query the right server, if any
+in the list is off-service.  However, when several port go up
+at the same time (e.g. at power on time), we may query the wrong server
+for all ports, because no failure is yet known to the system when we
+see the ``link up'' events.
+
+What follows is an example, in verbose mode, using the string
+@t{tornado,gsi.de,192.168.16.201,192.168.16.200} as
+@t{CONFIG_RVLAN_RADIUS_SERVERS}.  Here, ``@t{tornado}'' is a host name
+but it can't be resolved by @sc{dns} (fast error reporting);
+``@t{gsi.de}'' is not responding (slow error); host 201 does not
+respond either (slow error); host 200 replies with an authorization error
+-- i.e. it does ``@i{exit 1}'', but for a different reason.
+The log is augmented with timestamps (minutes:seconds), so we see
+that the timeout of @i{radtest} is 16 seconds.
+
+@smallexample
+   13:49: Pmask = 0xffffffff
+   13:49: Radius server: "tornado"
+   13:49: Radius server: "gsi.de"
+   13:49: Radius server: "192.168.16.201"
+   13:49: Radius server: "192.168.16.200"
+   13:49: Interface "wri1": not access mode
+   13:49: Check wri2: down
+   [...]
+   13:50: FSM: wri3: justup -> sniff
+   13:51: recvfrom(wri3): 0800-90e2ba456c6b
+   13:51: dev wri3 queries server tornado
+   13:51: FSM: wri3: sniff -> auth
+   13:52: dev wri3, got 63 bytes so far
+   13:52: wri3: reaped radclient: 0x00000100
+   13:52: wri3: server failed
+   13:52: FSM: wri3: auth -> radclient
+   13:52: dev wri3 queries server gsi.de
+   13:52: FSM: wri3: radclient -> auth
+   14:08: dev wri3, got 55 bytes so far
+   14:08: wri3: reaped radclient: 0x00000100
+   14:08: wri3: server failed
+   14:08: FSM: wri3: auth -> radclient
+   14:09: dev wri3 queries server 192.168.16.201
+   14:09: FSM: wri3: radclient -> auth
+   14:25: dev wri3, got 55 bytes so far
+   14:25: wri3: reaped radclient: 0x00000100
+   14:25: wri3: server failed
+   14:25: FSM: wri3: auth -> radclient
+   14:25: dev wri3 queries server 192.168.16.200
+   14:25: FSM: wri3: radclient -> auth
+   14:27: dev wri3, got 46 bytes so far
+   14:27: wri3: reaped radclient: 0x00000100
+   14:27: dev wri3: vlan 4094
+   14:27: FSM: wri3: auth -> config
+   14:28: FSM: wri3: config -> configured
+@end smallexample
+
+After the above events, if we plug @i{wri2}, only the right server is
+queried:
+
+@smallexample
+   14:34: FSM: wri2: down -> sniff
+   14:34: recvfrom(wri2): 0026-0008546f9863
+   14:34: dev wri2 queries server 192.168.16.200
+   14:34: FSM: wri2: sniff -> auth
+   14:36: dev wri2, got 46 bytes so far
+   14:36: wri2: reaped radclient: 0x00000100
+   14:36: dev wri2: vlan 4094
+   14:36: FSM: wri2: auth -> config
+   14:36: FSM: wri2: config -> configured
+@end smallexample
+
+@c ##########################################################################
+@node Robustness
+@chapter Robustness
+
+The tool is designed to be robust. All possible errors are reported back to
+the caller (and to @i{stderr}) and no blocking operation is performed.
+The only exception is the call to @i{wrs_vlans}, which is blocking.
+
+Any errors in the state machine leaves the port in the same state,
+so @i{wrs_vlans} is re-run if it fails, and so on.  Failure in
+reading replies from @i{radclient} turn the FSM to @i{GODOWN}, so
+the procedure is started again -- because the port is up.
+
+If the Radius server is not reachable @i{radclient} will time out,
+as shown, so the state machine is not stuck.
+
+The startup script uses @t{CONFIG_WRS_LOG_OTHER} as a destination for
+its own output, and it is verified to work with my local @i{rsyslog}
+server.
+
+The only weak point is in understanding @i{radclient}'s replies.
+A sane tool would @i{exit(1)} or @i{exit(2)} to mean different things,
+but @i{radclient} always does @i{exit(1)}, so we ar forced to rely
+on the output strings, which might change from one version to he next.
+
+@c ##########################################################################
+@node Diagnostic Tools
+@chapter Diagnostic Tools
+
+@c ==========================================================================
+@node Checking the Current Status
+@section Checking the Current Status
+
+You can always see the current configuration by running @t{rvlan-status}.
+This example is taken in a running switch,where port @i{wri1} is in
+trunk mode (and thus not monitored), and only port @i{wri17} is connected to
+a slave, which was authorized:
+
+@smallexample
+   nwt0075m66# /wr/bin/rvlan-status
+   wri2 (70b3d591e346 <-> ): state down, vlan 0, pid 0, fd -1
+   wri3 (70b3d591e347 <-> ): state down, vlan 0, pid 0, fd -1
+   wri4 (70b3d591e348 <-> ): state down, vlan 0, pid 0, fd -1
+   wri5 (70b3d591e349 <-> ): state down, vlan 0, pid 0, fd -1
+   wri6 (70b3d591e34a <-> ): state down, vlan 0, pid 0, fd -1
+   wri7 (70b3d591e34b <-> ): state down, vlan 0, pid 0, fd -1
+   wri8 (70b3d591e34c <-> ): state down, vlan 0, pid 0, fd -1
+   wri9 (70b3d591e34d <-> ): state down, vlan 0, pid 0, fd -1
+   wri10 (70b3d591e34e <-> ): state down, vlan 0, pid 0, fd -1
+   wri11 (70b3d591e34f <-> ): state down, vlan 0, pid 0, fd -1
+   wri12 (70b3d591e350 <-> ): state down, vlan 0, pid 0, fd -1
+   wri13 (70b3d591e351 <-> ): state down, vlan 0, pid 0, fd -1
+   wri14 (70b3d591e352 <-> ): state down, vlan 0, pid 0, fd -1
+   wri15 (70b3d591e353 <-> ): state down, vlan 0, pid 0, fd -1
+   wri16 (70b3d591e354 <-> ): state down, vlan 0, pid 0, fd -1
+   wri17 (70b3d591e355 <-> 00267b0003d4): state configured, vlan 31, pid 0, fd -1
+   wri18 (70b3d591e356 <-> ): state down, vlan 0, pid 0, fd -1
+@end smallexample
+
+This works by sending @i{SIGUSR1} to the running @i{radiusvlan}, which
+creates @i{/tmp/rvlan-status} with the above information.  If
+@i{radiusvlan} is not running, @i{rvlan-status} will report
+``@t{radiusvlan: no process found}''.
+
+@c ==========================================================================
+@node Looking at Authorization Strings
+@section Looking at Authorization Strings
+
+Communication with @i{radclient} happens using @i{stdin} and @i{stdout}.
+Currently @i{radiusvlan} saves in @i{/tmp} both files, to help tracing
+any errors.  The file names are port-specific, so only the last iteration
+will be visible.
+
+There are two example: a successful @i{wri17} authentication and a failed
+@i{wri3}authentication:
+
+@smallexample
+   nwt0075m66# grep . /tmp/radclient-wri17-*
+   /tmp/radclient-wri17-in:User-Name = "00267b0003d4"
+   /tmp/radclient-wri17-in:User-Password = "00267b0003d4"
+   /tmp/radclient-wri17-out:Received response ID 93, code 2, length = 50
+   /tmp/radclient-wri17-out:       Tunnel-Type:0 = 13
+   /tmp/radclient-wri17-out:       Tunnel-Medium-Type:0 = IEEE-802
+   /tmp/radclient-wri17-out:       Framed-Protocol = PPP
+   /tmp/radclient-wri17-out:       Service-Type = Framed-User
+   /tmp/radclient-wri17-out:       Tunnel-Private-Group-Id:0 = "2984"
+
+   wrs# grep . /tmp/radclient-wri17-*
+   /tmp/radclient-wri3-in:User-Name = "90e2ba456c6b"
+   /tmp/radclient-wri3-in:User-Password = "90e2ba456c6b"
+   /tmp/radclient-wri3-out:radclient: no response from server for ID 98 socket 4
+@end smallexample
+
+@c ==========================================================================
+@node Verbose Operation
+@section Verbose Operation
+
+If you set @t{RVLAN_VERBOSE} to a non-empty value in the
+tool's environment, initial enumeration and state machine changes are
+reported to @i{stdout}.
+
+This ``verbose'' mode can also be entered (or left) by seding @t{SIGUSR2},
+see below.  This is an example on a running switch where
+@i{radiusvlan} was already automatically run:
+
+@smallexample
+   wrs# export RVLAN_VERBOSE=y; killall radiusvlan; /wr/bin/radiusvlan
+   device wri3 left promiscuous mode
+   Pmask = 0xffffffff
+   Interface "wri1": not access mode
+   Check wri2: up
+   Check wri5: down
+   Check wri6: down
+   Check wri7: down
+   Check wri3: up
+   Check wri4: down
+   Check wri8: down
+   [...]
+   FSM: device wri3 entered promiscuous mode
+   wri2: justup -> sniff
+   FSM: wri3: justup -> sniff
+   vfrom(wri2): 0026-0008546f9863
+   FSM: wri2: sniff -> auth
+   recvfrom(wri3): 0800-90e2ba456c6b
+   FSM: wri3: sniff -> auth
+   dev wri2, got 55 bytes so far
+   wri2: reaped radclient: 0x00000100
+   dev wri2: vlan 4094
+   FSM: wri2: auth -> config
+   FSM: wri2: config -> configured
+   dev wri3, got 54 bytes so far
+   wri3: reaped radclient: 0x00000100
+   dev wri3: vlan 4094
+   FSM: wri3: auth -> config
+   FSM: wri3: config -> configured
+@end smallexample
+
+In the above example, two interface were up and authorization failed for
+both (as seen, @i{radclient} did @t{exit(1)}).  Both interfaces
+are configured in vlan 4094.
+
+@c ==========================================================================
+@node Forcing Re-Authorizazion
+@section Forcing Re-Authorizazion
+
+By sending @i{SIGUSR2} to a running @i{radiusvlan} all state machines
+are turned to @t{JUSTUP} so all authorization is retried, and verbose
+mode is toggled.  Please note
+that this is pretty raw, and should only be run in a quiet system
+where all interfaces are @i{configured} or @i{down} (the cleanup of
+state @t{GODOWN} is not performed).
+
+The simple script @t{rvlan-debug} can be used to send @t{SIGUR2}
+and check the new value of verbosity. This example is in a system
+where @i{radiusvlan} was automatically started at boot:
+
+@smallexample
+   wrs#rvlan-debug
+   radiusvlan verbose level is now 1
+@end smallexample
+
+Diagnostic messages are then sent to syslog, using my
+@t{CONFIG_WRS_LOG_OTHER} and related configuration choices.
+To turn off verbosity, run the command again:
+
+@smallexample
+   wrs#rvlan-debug
+   radiusvlan verbose level is now 0
+@end smallexample
+
+Let me repeat this trivial diagnostic feature is not meant for
+production use because it may leave some garbage in the system (e.g. a
+zombie @i{radclient} process).
+
+@c ##########################################################################
+@node Bugs and Missing Features
+@chapter Bugs and Missing Features
+
+A few, unfortunately
+
+@itemize @bullet
+
+@item It is not expected that MAC addresses change. Both identification
+of self frames and blessing of peers (for authorization) has an
+ever-lasting effect. Clearly, if you change client in a port, the
+link-down and link-up events will force authentication on the new mac
+address, but if you change the mac address of a PTP slave while
+it runs, authorization is not re-run.
+
+@item Vlan configuration only happens with @t{--pvid} configuration,
+and no action is performed on the routing table.
+
+@end itemize
+
+The last item is tricky. The White Rabbit Switch must be informed
+about vlan-sets, in order to correctly route frames, but those sets
+sometimes cannot just be derived by the individual @i{vid} settings.
+
+I was told that for the current application (an ``obey-dotconfig''
+one) I should not touch the routing table, but I'm sure this is not
+correct for a real multi-vlan setup (especially a dynamic
+radius-driven environment).  This should be investigated when new use
+cases get real.
+
+@bye

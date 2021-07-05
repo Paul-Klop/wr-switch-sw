@@ -277,9 +277,10 @@ int hal_check_running()
 
 	/* check if pid is 0 (shm not filled) or process with provided
 	 * pid does not exist (probably crashed) */
-	if ((hal_head->pid == 0) || (kill(hal_head->pid, 0) != 0))
+	if ((hal_head->pid == 0) || (kill(hal_head->pid, 0) != 0)) {
+		wrs_shm_put(hal_head);
 		return 0;
+	}
 
-	wrs_shm_put(hal_head);
 	return 1;
 }

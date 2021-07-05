@@ -184,7 +184,7 @@ static char * l1e_instance_extension_state[]={
 
 #endif
 
-static char * timind_mode_state[] = {
+static char * timing_mode_state[] = {
 		[WRH_TM_GRAND_MASTER]=     "GM",
 		[WRH_TM_FREE_MASTER]=      "FR",
 		[WRH_TM_BOUNDARY_CLOCK]=   "BC",
@@ -407,13 +407,13 @@ int read_servo(void){
 
 				/* Copy extra interesting data */
 				{
-					currentDS_t *currenDS;
+					currentDS_t *currentDS;
 
-					if ( !(currenDS = wrs_shm_follow(ppsi_head, ppg->currentDS) ) )
+					if ( !(currentDS = wrs_shm_follow(ppsi_head, ppg->currentDS) ) )
 							break;
 
-					servo->offsetFromMaster=currenDS->offsetFromMaster; /* currentDS.offsetFromMaster */
-					servo->meanDelay=currenDS->meanDelay;    /* currentDS.meanDelay */
+					servo->offsetFromMaster=currentDS->offsetFromMaster; /* currentDS.offsetFromMaster */
+					servo->meanDelay=currentDS->meanDelay;    /* currentDS.meanDelay */
 				}
 				{
 					portDS_t *portDS;
@@ -638,7 +638,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 		if ( ppsi_alive && ppg_arch!=NULL) {
 			term_cprintf(C_BLUE, "TimingMode: ");
-			term_cprintf(C_WHITE, "%s",getStateAsString(timind_mode_state,((wrs_arch_data_t *)ppg_arch)->timingMode));
+			term_cprintf(C_WHITE, "%s",getStateAsString(timing_mode_state,((wrs_arch_data_t *)ppg_arch)->timingMode));
 			term_cprintf(C_BLUE, "    PLL locking state: ");
 			term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
 		}
@@ -971,7 +971,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			term_cprintf(C_WHITE,"%s",optimized_pp_time_toString(&wr_servo_ext->delta_txs,buf));
 			term_cprintf(C_BLUE, "  RX: ");
 			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&wr_servo_ext->delta_rxs,buf));
-			printf("\n");
+			term_cprintf(C_WHITE,"\n");
 		}
 	} else {
 		/* TJP: commented out fields are present on the SPEC,

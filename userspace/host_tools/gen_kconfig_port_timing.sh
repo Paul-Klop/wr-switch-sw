@@ -36,7 +36,7 @@ function print_header() {
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  This option is used by the high accuracy profile to force the port state." >>$OUTPUT_FILE  
 	echo -e "\t  When set, BMCA is disabled." >>$OUTPUT_FILE  
-	echo -e "\t  For more details please refer to the IEEE 1588-20019 (clause 17.6.2)" >>$OUTPUT_FILE
+	echo -e "\t  For more details please refer to the IEEE 1588-2019 (clause 17.6.2)" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PTP_SLAVE_ONLY" >>$OUTPUT_FILE
 	echo -e "\tdepends on PTP_OPT_EXT_PORT_CONFIG_ENABLED=\"n\" " >>$OUTPUT_FILE
@@ -45,7 +45,7 @@ function print_header() {
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine" >>$OUTPUT_FILE
 	echo -e "\t  which does not enable transition to MASTER state." >>$OUTPUT_FILE
-	echo -e "\t  For more details please refer to the IEEE 1588-20019 (clause 9.2.2.1)" >>$OUTPUT_FILE
+	echo -e "\t  For more details please refer to the IEEE 1588-2019 (clause 9.2.2.1)" >>$OUTPUT_FILE
 }
 
 function print_footer() {

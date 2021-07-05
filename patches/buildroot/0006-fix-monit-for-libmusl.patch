@@ -1,5 +1,19 @@
---- ./package/monit/0002-sysdep_LINUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch.orig	2017-01-13 10:56:04.777413556 +0100
-+++ ./package/monit/0002-sysdep_LINUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch	2017-01-13 10:55:21.384411938 +0100
+From 4e8487e7fcd521648ee2541cf091364fac4ab5fe Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Oct 2020 06:27:45 +0200
+Subject: [PATCH 06/22] fix monit for libmusl
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ ...INUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch | 29 ++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+ create mode 100644 package/monit/0002-sysdep_LINUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch
+
+diff --git a/package/monit/0002-sysdep_LINUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch b/package/monit/0002-sysdep_LINUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch
+new file mode 100644
+index 0000000..442f7eb
+--- /dev/null
++++ b/package/monit/0002-sysdep_LINUX-avoid-GLOB_ONLYDIR-missin-in-libmusl.patch
 @@ -0,0 +1,29 @@
 +From de586dd21587d52001635dd6be7c70b85a24800f Mon Sep 17 00:00:00 2001
 +From: Alessandro Rubini <rubini@gnudd.com>
@@ -30,3 +44,6 @@
 +-- 
 +2.1.4
 +
+-- 
+2.1.4
+

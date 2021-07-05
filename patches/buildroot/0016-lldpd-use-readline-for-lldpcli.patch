@@ -1,0 +1,26 @@
+From c988207d3ffff7521d590cab58a0dc412c4bb5d7 Mon Sep 17 00:00:00 2001
+From: Kinga W <dev_public@wujek.eu>
+Date: Tue, 7 Jul 2020 00:22:45 +0200
+Subject: [PATCH] lldpd: use readline for lldpcli
+
+Signed-off-by: Kinga Wujek <dev_public@wujek.eu>
+---
+ package/lldpd/lldpd.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
+index 5ee5122..af941cd 100644
+--- a/package/lldpd/lldpd.mk
++++ b/package/lldpd/lldpd.mk
+@@ -29,7 +29,7 @@ LLDPD_CONF_ENV = ac_cv_prog_cc_c99=-std=gnu99
+ LLDPD_CONF_ENV += NETSNMP_CONFIG=$(STAGING_DIR)/usr/bin/net-snmp-config
+ 
+ LLDPD_CONF_OPTS = \
+-	--without-readline \
++	--with-readline \
+ 	--without-embedded-libevent \
+ 	--with-snmp \
+ 	--without-xml \
+-- 
+2.7.4
+

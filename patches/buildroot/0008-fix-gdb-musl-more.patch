@@ -1,5 +1,19 @@
---- ./package/gdb/7.9.1/0006-musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch.orig	2017-01-16 09:24:23.097874596 +0100
-+++ ./package/gdb/7.9.1/0006-musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch	2016-10-18 02:43:07.221913059 +0200
+From 2297fe5126561d3966642f5d4ae3015b6420577e Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Oct 2020 06:30:58 +0200
+Subject: [PATCH 08/22] fix gdb musl more
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ ...musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch | 63 ++++++++++++++++++++++
+ 1 file changed, 63 insertions(+)
+ create mode 100644 package/gdb/7.9.1/0006-musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch
+
+diff --git a/package/gdb/7.9.1/0006-musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch b/package/gdb/7.9.1/0006-musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch
+new file mode 100644
+index 0000000..60c357c
+--- /dev/null
++++ b/package/gdb/7.9.1/0006-musl-Move-W_STOPCODE-to-common-gdb_wait-h.patch
 @@ -0,0 +1,63 @@
 +From 963843d4d07aef6caa296dacf191f8adc9518596 Mon Sep 17 00:00:00 2001
 +From: Doug Evans <dje@google.com>
@@ -64,3 +78,6 @@
 +-- 
 +1.9.4
 +
+-- 
+2.1.4
+

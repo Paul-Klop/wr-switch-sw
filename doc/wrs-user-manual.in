@@ -170,7 +170,7 @@ Additionally, the @t{wrs-firmware.tar} containing corrupted file is renamed to
 the next successful update.
 
 When checksums in the @t{wrs-firmware.tar} are not available
-(for example during downgrading to version pre-@value{release_version}) appropriate warning
+(for example during downgrading to version pre-v5.0) appropriate warning
 message is printed to the console.
 
 If this method of upgrading firmware works for you, you can ignore the rest of
@@ -315,6 +315,8 @@ the behavior of the WR Switch. Here are highlights:
      frame, translates into additional 0.8us latency introduced by protocol 
      frames.}.} If you
     do not use LLDP and latency is of concern, you should disable LLDP option.
+    Alternatively consider use of the option to limit LLDP frame size to about 
+    60-70 bytes.
   @item @b{Disable web interface} - web interface is now disabled by default
     and considered deprecated (no effort was put in making sure it works
     properly). @b{Users are strongly discouraged from using the web interface}.
@@ -1525,6 +1527,17 @@ appropriate way, before the respective service is started.
   The range of a valid VID is from 0 to 4094.
 
 	For details please refer to the @ref{VLANs Configuration}
+
+@item CONFIG_VLANS_PORT@i{xx}_LLDP_TX_VID
+@itemx CONFIG_VLANS_PORT@i{xx}_LLDP_TX_PRIO
+
+  Notify lldpd which VLAN shall it use for sending LLDP frames.
+  Incoming LLDP frames are accepted on all VLANs.
+  This parameter is available for @t{MODE_TRUNK}, @t{MODE_DISABLED} and
+  @t{MODE_UNQUALIFIED} modes. 
+  The range of a valid VID is from 0 to 4094.
+  @t{VLANS_PORTxx_LLDP_TX_PRIO} defines the priority to be inserted into
+  a VLAN tag of LLDP frames sent by lldpd.
 
 @item CONFIG_VLANS_RAW_PORT_CONFIG
 

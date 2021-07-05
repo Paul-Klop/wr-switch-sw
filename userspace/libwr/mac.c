@@ -54,6 +54,17 @@ char *mac_to_buffer(uint8_t mac[ETH_ALEN], char buffer[ETH_ALEN_STR])
 }
 
 /**
+ * \brief Write mac address into a buffer to avoid concurrent access on static variable.
+ */
+char *mac_to_buffer_no_colons(uint8_t mac[ETH_ALEN], char buffer[2*ETH_ALEN+1])
+{
+	if (mac && buffer)
+		snprintf(buffer, ETH_ALEN_STR, "%02x%02x%02x%02x%02x%02x",
+			 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return buffer;
+}
+
+/**
  * \brief Function to retrieve mac address from text input (argument in terminal)
  */
 int mac_from_str(uint8_t *tomac, const char *fromstr)

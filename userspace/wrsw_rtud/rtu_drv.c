@@ -45,13 +45,16 @@
 #include <libwr/switch_hw.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/rtu_shmem.h>
 #include <libwr/wrs-msg.h>
 
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>
+#include <regs/endpoint-regs.h>
 
 #include "rtu_drv.h"
 #include "wr_rtu.h"
+
 
 static void write_mfifo_addr(uint32_t zbt_addr);
 static void write_mfifo_data(uint32_t word);
@@ -62,14 +65,17 @@ static uint32_t mac_entry_word2_w(struct rtu_filtering_entry *ent);
 static uint32_t mac_entry_word3_w(struct rtu_filtering_entry *ent);
 static uint32_t mac_entry_word4_w(struct rtu_filtering_entry *ent);
 
+static char *qmode_names[] =   {"ACCESS     ",
+				"TRUNK      ",
+				"disabled   ",
+				"unqualified"};
+static char *yes_no[] ={"no  ",
+			"yes "};
+
 /*
  * Used to communicate to RTU UFIFO IRQ handler device at kernel space
  */
 static int fd;
-
-extern struct wrs_shm_head *hal_head;
-extern struct hal_port_state *hal_ports;
-extern int hal_nports_local;
 
 #define HAL_SHMEM_TOTAL_US (20000000) // 20sec
 #define HAL_SHMEM_SLEEP_US (250000) // 250ms
@@ -696,6 +702,152 @@ int rtu_get_mirroring(int *en, uint32_t *imask, uint32_t *emask, uint32_t *dmask
 	return 0;
 }
 
+static void print_config_rtu(int port, uint8_t valid_mask, struct rtu_port_entry *rtu_ports)
+{
+	int i;
+
+        i=port;
+		pr_debug("Updates applied for port: %4d   ", i+1);
+		pr_debug("pmode: ");
+		if (valid_mask & VALID_QMODE)
+			pr_debug("%s ", qmode_names[rtu_ports[i].qmode & 0x3]);
+		else
+			pr_debug("[No update] ");
+
+		pr_debug("fix_prio: ");
+		if (valid_mask & VALID_PRIO)
+			pr_debug("%s        ", yes_no[rtu_ports[i].fix_prio & 0x1]);
+		else
+			pr_debug("[No update] ");
+
+		pr_debug("prio_val: ");
+		if (valid_mask & VALID_PRIO)
+			pr_debug("%2d          ", rtu_ports[i].prio);
+		else
+			pr_debug("[No update] ");
+
+		pr_debug("vid: ");
+		if (valid_mask & VALID_VID)
+			pr_debug("%4d        ", rtu_ports[i].pvid);
+		else
+			pr_debug("[No update] ");
+
+		pr_debug("untag: ");
+		if (valid_mask & VALID_UNTAG)
+			pr_debug("%s        ", yes_no[rtu_ports[i].untag]);
+		else
+			pr_debug("[No update] ");
+
+		pr_debug("\n");
+}
+
+static uint32_t ep_read(int ep, int offset)
+{
+	return _fpga_readl(0x30000 + ep * 0x400 + offset);
+}
+
+static void ep_write(int ep, int offset, uint32_t value)
+{
+	_fpga_writel(0x30000 + ep * 0x400 + offset, value);
+}
+
+static void rtu_write_port_cfg_hw(uint8_t hw_index)
+{
+	uint32_t v, r;
+	int i;
+
+	r = offsetof(struct EP_WB, VCR0);
+	v = ep_read(hw_index, r);
+	v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(ports_cfg[hw_index].qmode);
+	if (ports_cfg[hw_index].fix_prio)
+		v |= EP_VCR0_FIX_PRIO;
+	else
+		v &= ~EP_VCR0_FIX_PRIO;
+	v = (v & ~EP_VCR0_PRIO_VAL_MASK) | EP_VCR0_PRIO_VAL_W(ports_cfg[hw_index].prio);
+	v = (v & ~EP_VCR0_PVID_MASK) | EP_VCR0_PVID_W(ports_cfg[hw_index].pvid);
+	ep_write(hw_index, r, v);
+
+	/* VCR1: loop over the whole bitmask */
+	r = offsetof(struct EP_WB, VCR1);
+	for (i = 0;i < 4096/16; i++) {
+		if (ports_cfg[hw_index].untag)
+			ep_write(hw_index, r, (0xffff << 10) | i);
+		else
+			ep_write(hw_index, r, (0x0000 << 10) | i);
+	}
+}
+
+void rtu_write_port_config(uint8_t hw_index,	/* indexed from 0 to 17 */
+			   uint8_t valid_mask, /* mask of valid settings */
+			   uint8_t qmode,	/* q mode of a port */
+			   uint8_t fix_prio,	/* is fix priority set */
+			   uint8_t prio,	/* VLAN priority */
+			   uint16_t pvid,	/* PVID  */
+			   uint8_t untag	/* untag */
+			   )
+{
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
+
+	/* update masks in SHM only for fields included in the valid_mask */
+
+	if (valid_mask & VALID_QMODE)
+		ports_cfg[hw_index].qmode = qmode;
+
+	if (valid_mask & VALID_PRIO) {
+		ports_cfg[hw_index].fix_prio = fix_prio;
+		ports_cfg[hw_index].prio = prio;
+	}
+
+	if (valid_mask & VALID_VID)
+		ports_cfg[hw_index].pvid = pvid;
+
+	if (valid_mask & VALID_UNTAG)
+		ports_cfg[hw_index].untag = untag;
+
+        print_config_rtu(hw_index, valid_mask, ports_cfg);
+	rtu_write_port_cfg_hw(hw_index);
+
+	wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
+}
+
+static void rtu_read_mac_from_ep(int hw_index, uint8_t mac[ETH_ALEN])
+{
+	uint32_t tmp;
+	tmp = ep_read(hw_index, offsetof(struct EP_WB, MACH)),
+	mac[0] = ((tmp >> 8) & 0xff);
+	mac[1] = (tmp & 0xff);
+	tmp = ep_read(hw_index, offsetof(struct EP_WB, MACL));
+	mac[2] = ((tmp >> 24) & 0xff);
+	mac[3] = ((tmp >> 16) & 0xff);
+	mac[4] = ((tmp >> 8) & 0xff);
+	mac[5] = (tmp & 0xff);
+}
+
+/**
+ * Port config initialization.
+ */
+void rtu_clean_ports(int lock)
+{
+	uint8_t hw_index;
+	if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_BEGIN);
+
+	memset(ports_cfg, 0, sizeof(*ports_cfg) * HAL_MAX_PORTS);
+
+	for (hw_index = 0; hw_index < hal_nports_local; hw_index++) {
+	    ports_cfg[hw_index].qmode = QMODE_UNQ;
+	    ports_cfg[hw_index].fix_prio = 0;
+	    ports_cfg[hw_index].prio = 0;
+	    ports_cfg[hw_index].pvid = 0;
+	    ports_cfg[hw_index].untag = 0;
+	    rtu_write_port_cfg_hw(hw_index);
+	    /* read MAC from ep */
+	    rtu_read_mac_from_ep(hw_index, ports_cfg[hw_index].mac);
+	}
+
+        if (lock & SHM_LOCK)
+		wrs_shm_write(rtu_shmem_p, WRS_SHM_WRITE_END);
+}
 //---------------------------------------------
 // Private Methods
 //---------------------------------------------

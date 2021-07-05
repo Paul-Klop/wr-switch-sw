@@ -63,6 +63,7 @@ static inline uint8_t *mac_clean(uint8_t mac[ETH_ALEN])
 
 char *mac_to_string(uint8_t mac[ETH_ALEN]);
 char *mac_to_buffer(uint8_t mac[ETH_ALEN], char buffer[ETH_ALEN_STR]);
+char *mac_to_buffer_no_colons(uint8_t mac[ETH_ALEN], char buffer[2*ETH_ALEN+1]);
 int mac_from_str(uint8_t *tomac, const char *fromstr);
 int mac_verify(char *mac_str);
 int mac_to_lower(char *mac_str);

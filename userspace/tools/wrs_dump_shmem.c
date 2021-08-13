@@ -386,19 +386,6 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo, char *prefi
 	}
 }
 
-/* the macro below relies on an externally-defined structure type */
-#define DUMP_FIELD(_type, _fname) { \
-	.name = #_fname ":",  \
-	.type = dump_type_ ## _type, \
-	.offset = offsetof(DUMP_STRUCT, _fname), \
-}
-#define DUMP_FIELD_SIZE(_type, _fname, _size) { \
-	.name = #_fname ":",		\
-	.type = dump_type_ ## _type, \
-	.offset = offsetof(DUMP_STRUCT, _fname), \
-	.size = _size, \
-}
-
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct hal_shmem_header
 struct dump_info hal_shmem_info [] = {

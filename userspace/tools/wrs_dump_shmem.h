@@ -14,6 +14,7 @@
 #define DUMP_FIELD(_type, _fname) { \
 	.name = #_fname ":",  \
 	.type = dump_type_ ## _type, \
+	.size = sizeof(_type), \
 	.offset = offsetof(DUMP_STRUCT, _fname), \
 }
 #define DUMP_FIELD_SIZE(_type, _fname, _size) { \
@@ -69,6 +70,35 @@ enum dump_type {
 	dump_type_array_int,
 
 };
+
+
+/* because of the sizeof later on, we need these typedefs */
+typedef void *         pointer;
+typedef struct pp_time pp_time;
+typedef long long      long_long;
+typedef unsigned long  unsigned_long;
+typedef unsigned char  unsigned_char;
+typedef unsigned short unsigned_short;
+typedef uint8_t        dummy; /* use the smallest */
+typedef struct {unsigned char addr[4];} ip_address;
+typedef uint8_t        yes_no;
+typedef int            link_up_status;
+typedef int            ip_addr_status;
+typedef int            sensor_temp;
+typedef uint32_t       sfp_flags;
+typedef uint8_t        sfp_dom_temp;
+typedef uint8_t        sfp_dom_voltage;
+typedef uint8_t        sfp_dom_bias_curr;
+typedef uint8_t        sfp_dom_tx_power;
+typedef uint8_t        sfp_dom_rx_power;
+typedef int            port_mode;
+typedef int            rtu_filtering_entry_dynamic;
+typedef uint8_t        rtu_qmode;
+typedef uint8_t        array_int;
+typedef struct timeval timeval;
+typedef int            spll_mode;
+typedef int            spll_seq_state;
+typedef int            spll_align_state;
 /*
  * A structure to dump fields. This is meant to simplify things, see use here
  */

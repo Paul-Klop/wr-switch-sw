@@ -462,6 +462,8 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, calib.delta_rx_board),
 	DUMP_FIELD(int, calib.rx_calibrated),
 	DUMP_FIELD(int, calib.tx_calibrated),
+	DUMP_FIELD(int, calib.bitslide_ps),
+
 
 	/* Another internal structure, with a final pointer */
 	DUMP_FIELD(sfp_flags, calib.sfp.flags),

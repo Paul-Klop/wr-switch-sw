@@ -47,24 +47,7 @@ enum dump_type {
 	dump_type_pointer,
 	dump_type_yes_no,
 	dump_type_timeval,
-	/* and strange ones, from IEEE */
-	dump_type_UInteger64,
-	dump_type_Integer64,
-	dump_type_UInteger32,
-	dump_type_Integer32,
-	dump_type_UInteger16,
-	dump_type_Integer16,
-	dump_type_UInteger8,
-	dump_type_Integer8,
-	dump_type_UInteger4,
-	dump_type_Enumeration8,
-	dump_type_Boolean,
-	dump_type_ClockIdentity,
-	dump_type_PortIdentity,
-	dump_type_ClockQuality,
-	dump_type_TimeInterval,
-	dump_type_RelativeDifference,
-	dump_type_Timestamp,
+
 	/* and this is ours */
 	dump_type_time,
 	dump_type_ip_address,
@@ -84,8 +67,7 @@ enum dump_type {
 	dump_type_rtu_filtering_entry_dynamic,
 	dump_type_rtu_qmode,
 	dump_type_array_int,
-	/* scaledPicoseconds */
-	dump_type_scaledPicoseconds,
+
 };
 /*
  * A structure to dump fields. This is meant to simplify things, see use here

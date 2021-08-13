@@ -29,6 +29,9 @@
 #define FPGA_SPLL_STAT 0x10006800
 #define SPLL_MAGIC 0x5b1157a7
 
+void dump_one_field_ppsi_wrs(int type, int size, void *p, int i);
+int dump_one_field_type_ppsi_wrs(int type, int size, void *p);
+
 char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_ptp] = "ptpd/ppsi",
 	[wrs_shm_rtu] = "wrsw_rtud",
@@ -113,19 +116,32 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 	void *p = addr + info->offset;
 	char buf[128];
 	struct pp_time *t = p;
-	RelativeDifference *rd=p;
-	Timestamp *ts=p;
-	TimeInterval *ti=p;
-	struct PortIdentity *pi = p;
-	struct ClockQuality *cq = p;
 	char format[16];
 	int i;
+	int value;
 	char pname[128];
 
 	if (info_prefix!=NULL )
 		sprintf(pname,"%s.%s",info_prefix,info->name);
 	else
 		strcpy(pname,info->name);
+
+	/* For some (mostly enum-like types) the size may vary.
+	 * Check the size and assign a proper value to
+	 * variable i */
+	switch(info->type) {
+	case dump_type_yes_no:
+		if (info->size == 1)
+			value = *(uint8_t *)p;
+		else if (info->size == 2)
+			value = *(uint16_t *)(p);
+		else
+			value = *(uint32_t *)(p);
+		break;
+	default:
+		/* check if this is ppsi type */
+		value = dump_one_field_type_ppsi_wrs(info->type, info->size, p);
+	}
 
 	printf("%-40s ", pname); /* name includes trailing ':' */
 	switch(info->type) {
@@ -149,22 +165,18 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 			printf("%02x%c", ((unsigned char *)p)[i],
 			       i == info->size - 1 ? '\n' : ':');
 		break;
-	case dump_type_UInteger64:
 	case dump_type_uint64_t:
 		printf("%lld\n", *(unsigned long long *)p);
 		break;
 	case dump_type_long_long:
-	case dump_type_Integer64:
 		printf("%lld\n", *(long long *)p);
 		break;
 	case dump_type_uint32_t:
 		printf("0x%08lx\n", (long)*(uint32_t *)p);
 		break;
-	case dump_type_Integer32:
 	case dump_type_int:
 		printf("%i\n", *(int *)p);
 		break;
-	case dump_type_UInteger32:
 	case dump_type_unsigned:
 		printf("%u\n", *(uint32_t *)p);
 		break;
@@ -172,16 +184,8 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%lu\n", *(unsigned long *)p);
 		break;
 	case dump_type_unsigned_char:
-	case dump_type_UInteger8:
-	case dump_type_Integer8:
-	case dump_type_Enumeration8:
-	case dump_type_Boolean:
 		printf("%i\n", *(unsigned char *)p);
 		break;
-	case dump_type_UInteger4:
-		printf("%i\n", *(unsigned char *)p & 0xF);
-		break;
-	case dump_type_UInteger16:
 	case dump_type_uint16_t:
 	case dump_type_unsigned_short:
 		printf("%i\n", *(unsigned short *)p);
@@ -194,9 +198,6 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		break;
 	case dump_type_pointer:
 		printf("%p\n", *(void **)p);
-		break;
-	case dump_type_Integer16:
-		printf("%i\n", *(short *)p);
 		break;
 	case dump_type_yes_no:
 		i = *(uint8_t *)p;
@@ -223,41 +224,12 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%s\n",timeToString(t,buf));
 		break;
 
-	case dump_type_Timestamp:
-		printf("%s\n",timestampToString(ts,buf));
-		break;
-
-	case dump_type_TimeInterval:
-		printf("%s\n",timeIntervalToString(*ti,buf));
-		break;
-
-	case dump_type_RelativeDifference:
-		printf("%s\n",relativeDifferenceToString(*rd,buf));
-		break;
 	case dump_type_ip_address:
 		for (i = 0; i < 4; i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
 			       i == 3 ? '\n' : ':');
 		break;
 
-	case dump_type_ClockIdentity: /* Same as binary */
-		for (i = 0; i < sizeof(ClockIdentity); i++)
-			printf("%02x%c", ((unsigned char *)p)[i],
-			       i == sizeof(ClockIdentity) - 1 ? '\n' : ':');
-		break;
-
-	case dump_type_PortIdentity: /* Same as above plus port */
-		for (i = 0; i < sizeof(ClockIdentity); i++)
-			printf("%02x%c", ((unsigned char *)p)[i],
-			       i == sizeof(ClockIdentity) - 1 ? '.' : ':');
-		printf("%04x (%i)\n", pi->portNumber, pi->portNumber);
-		break;
-
-	case dump_type_ClockQuality:
-		printf("class=%i, accuracy=0x%02x (%i), logvariance=%i\n",
-		       cq->clockClass, cq->clockAccuracy, cq->clockAccuracy,
-		       cq->offsetScaledLogVariance);
-		break;
 	case dump_type_sfp_flags:
 		if (*(uint32_t *)p & SFP_FLAG_CLASS_DATA)
 			printf("SFP class data, ");
@@ -394,8 +366,9 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("\n");
 		break;
 		}
-	case dump_type_scaledPicoseconds:
-		printf("%lld\n", (*(unsigned long long *)p)>>16);
+
+	default:
+		dump_one_field_ppsi_wrs(info->type, info->size, p, value);
 		break;
 	}
 }
@@ -619,18 +592,18 @@ struct dump_info htab_info[] = {
 	DUMP_FIELD(int, end_of_bucket),
 	DUMP_FIELD(yes_no, is_bpdu),
 	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
-	DUMP_FIELD(UInteger8, fid),
+	DUMP_FIELD(unsigned_char, fid),
 	DUMP_FIELD(uint32_t, port_mask_src),
 	DUMP_FIELD(uint32_t, port_mask_dst),
 	DUMP_FIELD(int, drop_when_source),
 	DUMP_FIELD(int, drop_when_dest),
 	DUMP_FIELD(int, drop_unmatched_src_ports),
-	DUMP_FIELD(UInteger32, last_access_t),
+	DUMP_FIELD(unsigned, last_access_t),
 	DUMP_FIELD(yes_no, force_remove),
-	DUMP_FIELD(UInteger8, prio_src),
+	DUMP_FIELD(unsigned_char, prio_src),
 	DUMP_FIELD(int, has_prio_src),
 	DUMP_FIELD(int, prio_override_src),
-	DUMP_FIELD(UInteger8, prio_dst),
+	DUMP_FIELD(unsigned_char, prio_dst),
 	DUMP_FIELD(int, has_prio_dst),
 	DUMP_FIELD(int, prio_override_dst),
 	DUMP_FIELD(rtu_filtering_entry_dynamic, dynamic),
@@ -641,8 +614,8 @@ struct dump_info htab_info[] = {
 #define DUMP_STRUCT struct rtu_vlan_table_entry
 struct dump_info vlan_info[] = {
 	DUMP_FIELD(uint32_t, port_mask),
-	DUMP_FIELD(UInteger8, fid),
-	DUMP_FIELD(UInteger8, prio),
+	DUMP_FIELD(unsigned_char, fid),
+	DUMP_FIELD(unsigned_char, prio),
 	DUMP_FIELD(yes_no, has_prio),
 	DUMP_FIELD(yes_no, prio_override),
 	DUMP_FIELD(yes_no, drop),
@@ -663,7 +636,7 @@ struct dump_info mirror_info[] = {
 struct dump_info rtu_port_info[] = {
 	DUMP_FIELD(rtu_qmode, qmode),
 	DUMP_FIELD(yes_no, fix_prio),
-	DUMP_FIELD(UInteger8, prio),
+	DUMP_FIELD(unsigned_char, prio),
 	DUMP_FIELD(uint16_t, pvid),
 	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
 	DUMP_FIELD(yes_no, untag),

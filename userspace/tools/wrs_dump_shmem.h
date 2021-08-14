@@ -68,7 +68,10 @@ enum dump_type {
 	dump_type_rtu_filtering_entry_dynamic,
 	dump_type_rtu_qmode,
 	dump_type_array_int,
-
+	dump_type_shmemState,
+	dump_type_hal_mode,
+	dump_type_hal_fsm,
+	dump_type_hal_pllfsm,
 };
 
 
@@ -99,6 +102,10 @@ typedef struct timeval timeval;
 typedef int            spll_mode;
 typedef int            spll_seq_state;
 typedef int            spll_align_state;
+typedef int            shmemState;
+typedef int            hal_mode;
+typedef int            hal_fsm;
+typedef int            hal_pllfsm;
 /*
  * A structure to dump fields. This is meant to simplify things, see use here
  */

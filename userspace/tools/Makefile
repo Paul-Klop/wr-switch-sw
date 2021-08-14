@@ -43,6 +43,7 @@ CFLAGS += -Wall \
 		-Wstrict-prototypes \
 		-I$(LINUX)/arch/arm/mach-at91/include \
 		-I../wrsw_rtud \
+		-I../wrsw_hal \
 		-I../mini-rpc \
 		-I../libsdb \
 		-I../include \

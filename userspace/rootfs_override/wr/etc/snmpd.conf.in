@@ -21,3 +21,6 @@ master agentx
 # This is picked from /usr/lib, and the first argument is said to be the
 # "init function", but it is not, because the daemon adds a leading "init_"
 dlmod wrsSnmp /wr/lib/wrsSnmp.so
+
+#sysContact CONFIG_SNMP_SYSCONTACT
+#sysLocation CONFIG_SNMP_SYSLOCATION

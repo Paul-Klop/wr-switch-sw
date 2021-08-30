@@ -794,6 +794,18 @@ config PTP_CONF_URL
 
 
 menu "Management configuration"
+config SNMP_SYSCONTACT
+	string "System contact reported by SNMP"
+	help
+	  If not empty, this value will be reported as System contact
+	  (SNMPv2-MIB::sysContact.0)
+
+config SNMP_SYSLOCATION
+	string "System location reported by SNMP"
+	help
+	  If not empty, this value will be reported as System Location
+	  (SNMPv2-MIB::sysLocation.0)
+
 config SNMP_TRAPSINK_ADDRESS
 	string "Static IP address or name where to send SNMPv1 traps"
 	help

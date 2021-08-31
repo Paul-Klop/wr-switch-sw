@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stddef.h>
 
 #include <libwr/pio.h>
 #include <libwr/wrs-msg.h>
@@ -659,12 +660,53 @@ int shw_sfp_read_dom(int num, struct shw_sfp_dom *dom)
 	return 0;
 }
 
+/* read only values that are updated in real-time */
+int shw_sfp_read_dom_rt(int num, struct shw_sfp_dom *dom)
+{
+	int ret;
+	int rt_size;
+	size_t offset_temp;
+
+	if (shw_sfp_id(num) < 0) {
+		pr_error("shw_sfp_read_header: wrong SFP num %d\n", num + 1);
+		return -1;
+	}
+
+	ret = shw_sfp_module_scan();
+	if (!(ret & (1 << num))) {
+		pr_error("shw_sfp_read_header: SFP not present %d\n", num + 1);
+		return -2;
+	}
+
+	offset_temp = offsetof(struct shw_sfp_dom, temp);
+	rt_size = offsetof(struct shw_sfp_dom, alw) - offset_temp;
+
+	ret = shw_sfp_read(num, I2C_SFP_DOM_ADDRESS, offset_temp, rt_size,
+			   (uint8_t *) dom + offset_temp);
+	if (ret == I2C_DEV_NOT_FOUND) {
+		pr_error("shw_sfp_read_header: I2C_DEV_NOT_FOUND\n");
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
+
 /* Function to update SFP's Diagnostic Monitoring data from SFP's eeprom */
 int shw_sfp_update_dom(int num, struct shw_sfp_dom *dom)
 {
 	/* For now copy entire eeprom */
 	return shw_sfp_read_dom(num, dom);
 }
+
+/* Update the SFP diagnostics page, only real-time values */
+int shw_sfp_update_dom_rt(int num, struct shw_sfp_dom *dom)
+{
+	/* Copy only fields updated in real-time */
+	return shw_sfp_read_dom_rt(num, dom);
+}
+
+
 
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head)
 {

@@ -189,6 +189,9 @@ int shw_sfp_read_dom(int num, struct shw_sfp_dom *dom);
 /* Update the SFP diagnostics page */
 int shw_sfp_update_dom(int num, struct shw_sfp_dom *dom);
 
+/* Update the SFP diagnostics page, only real-time values */
+int shw_sfp_update_dom_rt(int num, struct shw_sfp_dom *dom);
+
 /* Decode and print the SFP real time diagnostics */
 void shw_sfp_print_dom(struct shw_sfp_dom * dom);
 

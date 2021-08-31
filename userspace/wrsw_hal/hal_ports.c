@@ -592,8 +592,8 @@ static void _cb_port_poll_sfp_dom(int timerId){
 			if (ps->in_use
 			    && ps->sfpPresent
 			    && ps->has_sfp_diag) {
-				shw_sfp_update_dom(ps->hw_index,
-						   &sfp_dom_raw[i]);
+				shw_sfp_update_dom_rt(ps->hw_index,
+						      &sfp_dom_raw[i]);
 			}
 			ps++;
 		}

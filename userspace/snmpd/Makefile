@@ -88,7 +88,7 @@ $(SHLIB): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 $(OID_FILE): $(MIBS)
-	snmptranslate -Pu -Tz -M /usr/share/snmp/mibs -m ./$(MIBS) >$(OID_FILE)
+	snmptranslate -Pu -Tz -M +./ -m ./$(MIBS) >$(OID_FILE)
 
 clean:
 	rm -f $(SHLIB) $(OBJECTS)

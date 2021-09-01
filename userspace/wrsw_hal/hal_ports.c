@@ -80,7 +80,7 @@ static timer_parameter_t _timerParameters[] = {
 		},
 		{
 				.id=TMO_PORT_SFP_DOM,
-				.tmoMs=1000, // 1s
+				.tmoMs=300, // 300ms
 				.repeat=1,
 				.cb=_cb_port_poll_sfp_dom
 		},
@@ -578,47 +578,49 @@ static void _cb_port_poll_sfp(int timerId){
 	hal_port_poll_sfp();
 }
 
-static void _cb_port_poll_sfp_dom(int timerId){
-	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE) {
-		struct shw_sfp_dom sfp_dom_raw[HAL_MAX_PORTS];
-		struct hal_port_state *ps;
-		int i;
+/* Read content of one SFP's real-time values at every call of this function */
+static void _cb_port_poll_sfp_dom(int timerId)
+{
+	int rt_size;
+	size_t offset_temp;
+	struct shw_sfp_dom sfp_dom_raw;
+	struct hal_port_state *ps;
+	static int curr_port_num = 0;
 
-		/* get the DOM data to local memory */
-		ps=halPorts.ports;
-		for (i = 0; i < HAL_MAX_PORTS; i++) {
-			/* read DOM only for plugged ports with DOM
-			 * capabilities */
-			if (ps->in_use
-			    && ps->sfpPresent
-			    && ps->has_sfp_diag) {
-				shw_sfp_update_dom_rt(ps->hw_index,
-						      &sfp_dom_raw[i]);
-			}
-			ps++;
-		}
+	if (hal_shmem->read_sfp_diag != READ_SFP_DIAG_ENABLE) {
+		return;
+	}
+
+	ps = halPorts.ports + curr_port_num;
+	/* read DOM only for plugged ports with DOM
+	    * capabilities */
+	if (ps->in_use
+	    && ps->sfpPresent
+	    && ps->has_sfp_diag) {
+		/* get the real-time DOM data to local memory */
+		shw_sfp_update_dom_rt(ps->hw_index,
+			&sfp_dom_raw);
 
 		/* lock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 
-		/* copy the DOM from local memory to shmem */
-		ps=halPorts.ports;
-		for (i = 0; i < HAL_MAX_PORTS; i++) {
-			/* update DOM only for plugged ports with DOM
-			 * capabilities */
-			if (ps->in_use
-			    && ps->sfpPresent
-			    &&  ps->has_sfp_diag) {
-				memcpy(&halPorts.ports[i].calib.sfp_dom_raw,
-				       &sfp_dom_raw[i],
-				       sizeof(struct shw_sfp_dom));
-			}
-			ps++;
-		}
+		offset_temp = offsetof(struct shw_sfp_dom, temp);
+		rt_size = offsetof(struct shw_sfp_dom, alw) - offset_temp;
+
+		/* copy only real-time DOM data from local memory to shmem */
+		memcpy((void *)(&halPorts.ports[curr_port_num].calib.sfp_dom_raw)
+		       + offset_temp,
+		       (void *)(&sfp_dom_raw) + offset_temp,
+		       rt_size);
 
 		/* unlock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 	}
+
+	curr_port_num++;
+
+	if (curr_port_num >= HAL_MAX_PORTS)
+		curr_port_num = 0;
 }
 
 static void _cb_port_update_sync_leds(int timerId){

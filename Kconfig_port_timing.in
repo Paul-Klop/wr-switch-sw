@@ -1,7 +1,6 @@
 menu "Port Timing Configuration"
 config PTP_OPT_EXT_PORT_CONFIG_ENABLED
 	bool "externalPortConfigurationEnabled" 
-	depends on TIME_BC
 	default false
 	help
 	  This option is used by the high accuracy profile to force the port state.

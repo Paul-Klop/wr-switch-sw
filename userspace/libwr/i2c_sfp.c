@@ -107,19 +107,23 @@ i2c_fpga_reg_t fpga_bus1_reg = {
 	.prescaler = 500,
 };
 
+/* I2C pins are set to input to avoid wrong transfers (which can lead to
+ * e.g. overwrite of SFP's eeprom) on i2c buses if HAL was killed in
+ * the middle of a transfer (by e.g. system reset). */
+
 /* The Bit-Banged I2C bus connected to the PCA9548A Multiplexers. WORKS */
 pio_pin_t wr_mux_scl = {
 	.port = PIOB,
 	.pin = 25,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 pio_pin_t wr_mux_sda = {
 	.port = PIOB,
 	.pin = 27,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 struct i2c_bitbang wr_mux_bus_reg = {
@@ -132,14 +136,14 @@ pio_pin_t wr_link0_sda = {
 	.port = PIOB,
 	.pin = 23,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 pio_pin_t wr_link0_scl = {
 	.port = PIOB,
 	.pin = 26,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 struct i2c_bitbang wr_link0_reg = {
@@ -152,14 +156,14 @@ pio_pin_t wr_link1_sda = {
 	.port = PIOB,
 	.pin = 22,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 pio_pin_t wr_link1_scl = {
 	.port = PIOB,
 	.pin = 21,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 struct i2c_bitbang wr_link1_reg = {

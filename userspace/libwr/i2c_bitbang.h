@@ -17,5 +17,6 @@ struct i2c_bitbang {
 };
 
 int i2c_bitbang_init_bus(struct i2c_bus *bus);
+void i2c_slave_soft_reset(struct i2c_bus *i2c_bus, int port);
 
 #endif //I2C_CPU_BB_H

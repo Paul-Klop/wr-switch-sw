@@ -198,6 +198,8 @@ struct i2c_bus i2c_buses[] = {
 int shw_sfp_buses_init(void)
 {
 	int i;
+	uint8_t byte1, byte2;
+	struct i2c_bus* mux_bus;
 
 	pr_info("Initializing SFP I2C busses...\n");
 	for (i = 0; i < ARRAY_SIZE(i2c_buses); i++) {
@@ -207,6 +209,15 @@ int shw_sfp_buses_init(void)
 			return -1;
 		}
 //              printf("init: success: %s\n", i2c_buses[i].name);
+	}
+	mux_bus = &i2c_buses[WR_MUX_BUS];
+	for (i = WR_SFP2_BUS; i <= WR_SFP17_BUS; i++) {
+		/* Set the mask in the PCA9548 */
+		byte1 = (1 << bus_masks[i]) & 0xff;
+		byte2 = ((1 << bus_masks[i]) >> 8) & 0xff;
+		i2c_transfer(mux_bus, 0x70, 1, 0, &byte1);
+		i2c_transfer(mux_bus, 0x71, 1, 0, &byte2);
+		i2c_slave_soft_reset(mux_bus, i + 1);
 	}
 	return 0;
 }

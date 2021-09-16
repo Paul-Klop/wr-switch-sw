@@ -2,6 +2,7 @@
  * i2c_bitbang.c
  */
 
+
 #include <stdlib.h>
 #include <string.h>
 #include <libwr/util.h>
@@ -14,6 +15,7 @@ static int32_t i2c_bitbang_transfer(struct i2c_bus *bus, uint32_t address,
 				    uint32_t to_write, uint32_t to_read,
 				    uint8_t * data);
 static int32_t i2c_bitbang_scan(struct i2c_bus *bus, uint32_t address);
+void i2c_slave_soft_reset(struct i2c_bus *i2c_bus, int i);
 
 int i2c_bitbang_init_bus(struct i2c_bus *bus)
 {
@@ -35,6 +37,9 @@ int i2c_bitbang_init_bus(struct i2c_bus *bus)
 	//assign functions
 	bus->transfer = i2c_bitbang_transfer;
 	bus->scan = i2c_bitbang_scan;
+
+	/* Perform a soft reset of a bus */
+	i2c_slave_soft_reset(bus, -1);
 
 	return 0;
 }
@@ -68,6 +73,35 @@ static void mi2c_stop(struct i2c_bitbang *bus)
 	mi2c_pin_out(bus->sda, 0);
 	mi2c_pin_out(bus->scl, 1);
 	mi2c_pin_out(bus->sda, 1);
+}
+
+void i2c_slave_soft_reset(struct i2c_bus *i2c_bus, int port)
+{
+	int i = 0;
+	struct i2c_bitbang *bb_bus;
+
+	bb_bus = (struct i2c_bitbang *)i2c_bus->type_specific;
+	shw_pio_setdir(bb_bus->sda, PIO_IN); //let SDA float so we can read it
+	shw_udelay(I2C_DELAY);              // wait for the SDA to become stable
+
+	if (shw_pio_get(bb_bus->sda)) {
+		uint8_t tmp;
+		/* read from address 0 on this bus, just in case the bus before
+		 * reset was in the middle of transfer of an address */
+		i2c_bitbang_transfer(i2c_bus, 0x0, 0, 1, &tmp);
+		/* bus in correct state, nothing to do */
+		return;
+	}
+
+	while(!shw_pio_get(bb_bus->sda) && i < 30) {
+		mi2c_pin_out(bb_bus->scl, 1);
+		mi2c_pin_out(bb_bus->scl, 0);
+		mi2c_pin_out(bb_bus->scl, 1);
+
+		i++;
+	}
+
+	mi2c_stop(bb_bus);
 }
 
 static int mi2c_write_byte(struct i2c_bitbang *bus, uint8_t data)

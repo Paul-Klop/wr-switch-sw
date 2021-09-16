@@ -169,26 +169,30 @@ struct i2c_bitbang wr_link1_reg = {
 
 struct i2c_bus i2c_buses[] = {
 	{
-	 .name = "fpga_bus0",
-	 .type = I2C_BUS_TYPE_FPGA_REG,
-	 .type_specific = &fpga_bus0_reg,
-	 }, {
-	     .name = "fpga_bus1",
-	     .type = I2C_BUS_TYPE_FPGA_REG,
-	     .type_specific = &fpga_bus1_reg,
-	     }, {
-		 .name = "wr_mux_bus",
-		 .type = I2C_TYPE_BITBANG,
-		 .type_specific = &wr_mux_bus_reg,
-		 }, {
-		     .name = "wr_sfp0_link0",
-		     .type = I2C_TYPE_BITBANG,
-		     .type_specific = &wr_link0_reg,
-		     }, {
-			 .name = "wr_sfp0_link1",
-			 .type = I2C_TYPE_BITBANG,
-			 .type_specific = &wr_link1_reg,
-			 },
+		.name = "fpga_bus0",
+		.type = I2C_BUS_TYPE_FPGA_REG,
+		.type_specific = &fpga_bus0_reg,
+	},
+	{
+		.name = "fpga_bus1",
+		.type = I2C_BUS_TYPE_FPGA_REG,
+		.type_specific = &fpga_bus1_reg,
+	},
+	{
+		.name = "wr_mux_bus",
+		.type = I2C_TYPE_BITBANG,
+		.type_specific = &wr_mux_bus_reg,
+	},
+	{
+		.name = "wr_sfp0_link0",
+		.type = I2C_TYPE_BITBANG,
+		.type_specific = &wr_link0_reg,
+	},
+	{
+		.name = "wr_sfp0_link1",
+		.type = I2C_TYPE_BITBANG,
+		.type_specific = &wr_link1_reg,
+	},
 };
 
 int shw_sfp_buses_init(void)

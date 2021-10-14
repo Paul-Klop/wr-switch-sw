@@ -353,11 +353,11 @@ int main(int argc, char **argv)
 			sfp_data_source = READ_HAL;
 			break;
 		case 'I':
-			/* HAL mode */
+			/* I2C mode */
 			sfp_data_source = READ_I2C;
 			break;
 		case 'H':
-			/* HAL mode */
+			/* Set path for shmem files */
 			wrs_shm_set_path(optarg);
 			break;
 		case 'h':

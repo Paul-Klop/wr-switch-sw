@@ -49,6 +49,10 @@
 #define HEXP_FREQ 0
 #define HEXP_PHASE 1
 
+#define HEXP_SFP_TX_CMD_ENABLE_TX 1
+#define HEXP_SFP_TX_CMD_DISABLE_TX 2
+#define HEXP_SFP_TX_CMD_STATUS 3
+
 /////////////////added by ML//////////
 #define HEXP_EXTSRC_CMD_CHECK 0
 
@@ -116,9 +120,11 @@ typedef struct {
 extern struct minipc_pd __rpcdef_lock_cmd;
 extern struct minipc_pd __rpcdef_pps_cmd;
 extern struct minipc_pd __rpcdef_port_info_cmd;
+extern struct minipc_pd __rpcdef_sfp_tx_cmd;
 
 /* Prototypes of functions that call on rpc */
 extern int halexp_lock_cmd(const char *port_name, int command, int priority);
 extern int halexp_pps_cmd(int cmd, hexp_pps_params_t *params);
+extern int halexp_sfp_tx_cmd(int cmd, int port);
 
 #endif

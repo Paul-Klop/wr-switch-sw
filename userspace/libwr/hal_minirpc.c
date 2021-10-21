@@ -36,3 +36,14 @@ struct minipc_pd __rpcdef_port_info_cmd = {
 		 MINIPC_ARG_END,
 		 },
 };
+
+//int halexp_sfp_tx_cmd(int cmd, int port);
+struct minipc_pd __rpcdef_sfp_tx_cmd = {
+	.name = "sfp_tx_cmd",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		 MINIPC_ARG_END,
+		 },
+};

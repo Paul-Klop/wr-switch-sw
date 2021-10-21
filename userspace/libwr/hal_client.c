@@ -31,6 +31,17 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 	return rval;
 }
 
+int halexp_sfp_tx_cmd(int cmd, int port)
+{
+	int ret, rval;
+	ret = minipc_call(hal_ch, DEFAULT_TO, &__rpcdef_sfp_tx_cmd,
+			  &rval, cmd, port);
+	if (ret < 0)
+		return ret;
+	return rval;
+}
+
+
 /* Some clients call this, some call the client_init() defined later */
 int halexp_client_try_connect(int retries, int timeout)
 {

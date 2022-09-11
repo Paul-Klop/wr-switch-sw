@@ -31,7 +31,6 @@ function print_header() {
 	echo -e "menu \"Port Timing Configuration\"" >$OUTPUT_FILE
 	echo -e "config PTP_OPT_EXT_PORT_CONFIG_ENABLED" >>$OUTPUT_FILE
 	echo -e "\tbool \"externalPortConfigurationEnabled\" " >>$OUTPUT_FILE
-	echo -e "\tdepends on TIME_BC" >>$OUTPUT_FILE
 	echo -e "\tdefault false" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  This option is used by the high accuracy profile to force the port state." >>$OUTPUT_FILE  

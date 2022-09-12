@@ -364,7 +364,7 @@ declare -A port_t24p=(
 
 # Profile configuration
 defaultProfile="WR"
-profileList="PTP WR"
+profileList="PTP HA WR"
 declare -A profileNames=(
 	[PTP]="PTP" [HA]="High Accuracy" [WR]="White Rabbit" [CUSTOM]="Custom"
 )

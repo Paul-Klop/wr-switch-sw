@@ -30,7 +30,7 @@ function print_header() {
 
 	echo -e "menu \"Port Timing Configuration\"" >$OUTPUT_FILE
 	echo -e "config PTP_OPT_EXT_PORT_CONFIG_ENABLED" >>$OUTPUT_FILE
-	echo -e "\tbool \"externalPortConfigurationEnabled\" " >>$OUTPUT_FILE
+	echo -e "\tbool \"externalPortConfigurationEnabled\"" >>$OUTPUT_FILE
 	echo -e "\tdefault false" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  This option is used by the high accuracy profile to force the port state." >>$OUTPUT_FILE  
@@ -38,8 +38,8 @@ function print_header() {
 	echo -e "\t  For more details please refer to the IEEE 1588-2019 (clause 17.6.2)" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PTP_SLAVE_ONLY" >>$OUTPUT_FILE
-	echo -e "\tdepends on PTP_OPT_EXT_PORT_CONFIG_ENABLED=\"n\" " >>$OUTPUT_FILE
-	echo -e "\tbool \"slaveOnly\" " >>$OUTPUT_FILE
+	echo -e "\tdepends on PTP_OPT_EXT_PORT_CONFIG_ENABLED=\"n\"" >>$OUTPUT_FILE
+	echo -e "\tbool \"slaveOnly\"" >>$OUTPUT_FILE
 	echo -e "\tdefault n" >>$OUTPUT_FILE
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine" >>$OUTPUT_FILE
@@ -198,7 +198,7 @@ function print_instance_header() {
 	echo -e "	 Defines the phase transition point for reception timestamps t2/t4 (ps)" >>$OUTPUT_FILE
 		
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"logAnnounceInterval\" " >>$OUTPUT_FILE
+	echo -e "	int \"logAnnounceInterval\"" >>$OUTPUT_FILE
 	echo -e "	default 1" >>$OUTPUT_FILE
 	echo -e "	range 0 4" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -260,7 +260,7 @@ function print_instance_header() {
 		echo -e "	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled" >>$OUTPUT_FILE
 	
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM &&  PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\") " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\")" >>$OUTPUT_FILE
 		echo -e "	int \"L1SyncBasicPortDS.logL1SyncInterval\"" >>$OUTPUT_FILE
 		echo -e "	default 0" >>$OUTPUT_FILE
 		echo -e "	range -4 4" >>$OUTPUT_FILE
@@ -271,7 +271,7 @@ function print_instance_header() {
 		echo -e "	  The configurable range shall be -4 to 4" >>$OUTPUT_FILE
 			
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM &&  PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\") " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\") " >>$OUTPUT_FILE
 		echo -e "	int \"L1SyncBasicPortDS.L1SyncReceiptTimeout\"" >>$OUTPUT_FILE
 		echo -e "	default 3" >>$OUTPUT_FILE
 		echo -e "	range 2 10" >>$OUTPUT_FILE
@@ -283,7 +283,7 @@ function print_instance_header() {
 		echo -e "	  The configurable range shall be 2 to 10" >>$OUTPUT_FILE
 		
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENCY_IS_REQUIRED" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM &&  PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
 		echo -e "	bool \"L1SyncBasicPortDS.txCoherencyIsRequired\"" >>$OUTPUT_FILE
 		echo -e "	default y" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
@@ -292,7 +292,7 @@ function print_instance_header() {
 		echo -e "	   required to be a transmit coherent port." >>$OUTPUT_FILE
 	
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENCY_IS_REQUIRED" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM &&  PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
 		echo -e "	bool \"L1SyncBasicPortDS.rxCoherencyIsRequired\"" >>$OUTPUT_FILE
 		echo -e "	default y" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
@@ -301,7 +301,7 @@ function print_instance_header() {
 		echo -e "	  required to be a receive coherent port." >>$OUTPUT_FILE
 	
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENCY_IS_REQUIRED" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM &&  PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
 		echo -e "	bool \"L1SyncBasicPortDS.congruencyIsRequired\"" >>$OUTPUT_FILE
 		echo -e "	default y" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
@@ -310,7 +310,7 @@ function print_instance_header() {
 		echo -e "	  be a congruent port" >>$OUTPUT_FILE
 	
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM &&  PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\" " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
 		echo -e "	bool \"L1SyncBasicPortDS.optParamsEnabled\"" >>$OUTPUT_FILE
 		echo -e "	default n" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
@@ -318,7 +318,7 @@ function print_instance_header() {
 		echo -e "	  TLV extends this TLV with the information about the optional parameters." >>$OUTPUT_FILE
 	
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED=\"y\" " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED=\"y\"" >>$OUTPUT_FILE
 		echo -e "	bool \"L1SyncBasicPortDS.timestampsCorrectedTx\"" >>$OUTPUT_FILE
 		echo -e "	default n" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE

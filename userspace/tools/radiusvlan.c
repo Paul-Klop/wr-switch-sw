@@ -174,6 +174,9 @@ int rvlan_change_vlan(struct rvlan_dev *dev)
 		" > /tmp/rvlan-cmd-stdout 2> /tmp/rvlan-cmd-stderr",
 		dev->portnr, dev->chosen_vlan);
 
+	if (verbose)
+		printf("%srun %s\n", dryrun ? "would " : "", cmdstr);
+
 	if (!dryrun && system(cmdstr)) {
 		fprintf(stderr, "%s: can't set vlan %i for %i (%s)\n",
 			prgname, dev->chosen_vlan, dev->portnr,
@@ -812,6 +815,8 @@ int main(int argc, char **argv)
 
 	prgname = argv[0];
 	verbose = getenv("RVLAN_VERBOSE") != NULL;
+	if (verbose)
+		printf("Enable verbose\n");
 	dryrun = getenv("RVLAN_DRYRUN") != NULL;
 	if (dryrun)
 		printf("Enable dryrun\n");

@@ -34,6 +34,7 @@
 /* This is a set of global variables, that convey program status */
 char *prgname; /* argv[0], for my laziness */
 int verbose;
+int dryrun;
 int rvlan_pmask = ~0;
 int rvlan_change_pending; /* wrsw_vlans must be called globally */
 char *rvlan_radius_secret;
@@ -172,7 +173,8 @@ int rvlan_change_vlan(struct rvlan_dev *dev)
 	sprintf(cmdstr, "/wr/bin/wrs_vlans --port %i --pvid %i "
 		" > /tmp/rvlan-cmd-stdout 2> /tmp/rvlan-cmd-stderr",
 		dev->portnr, dev->chosen_vlan);
-	if (system(cmdstr)) {
+
+	if (!dryrun && system(cmdstr)) {
 		fprintf(stderr, "%s: can't set vlan %i for %i (%s)\n",
 			prgname, dev->chosen_vlan, dev->portnr,
 			dev->name);
@@ -810,6 +812,9 @@ int main(int argc, char **argv)
 
 	prgname = argv[0];
 	verbose = getenv("RVLAN_VERBOSE") != NULL;
+	dryrun = getenv("RVLAN_DRYRUN") != NULL;
+	if (dryrun)
+		printf("Enable dryrun\n");
 
 	setlinebuf(stdout);
 

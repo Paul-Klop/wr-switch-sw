@@ -490,6 +490,13 @@ both (as seen, @i{radclient} did @t{exit(1)}).  Both interfaces
 are configured in vlan 4094.
 
 @c ==========================================================================
+@node Dry-run Operation
+@section Dry-run Operation
+
+If @t{RVLAN_DRYRUN} is set to a non-empty value in the
+tool's environment, no changes to the vlan configuration will be done.
+
+@c ==========================================================================
 @node Forcing Re-Authorizazion
 @section Forcing Re-Authorizazion
 

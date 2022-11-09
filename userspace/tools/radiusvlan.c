@@ -225,7 +225,7 @@ int rvlan_fsm(struct rvlan_dev *dev, fd_set *rdset)
 		req.mr_type = PACKET_MR_PROMISC;
 		if (setsockopt(sock, SOL_PACKET, PACKET_ADD_MEMBERSHIP,
 			       &req, sizeof(req)) < 0) {
-			fprintf(stderr, "%s: can't make %s promoscuous: %s\n",
+			fprintf(stderr, "%s: can't make %s promiscuous: %s\n",
 				prgname, dev->name, strerror(errno));
 			close(sock);
 			return -1;
@@ -252,6 +252,10 @@ int rvlan_fsm(struct rvlan_dev *dev, fd_set *rdset)
 			return -1;
 		}
 		memcpy(dev->mac, &ifr.ifr_ifru.ifru_hwaddr.sa_data, ETH_ALEN);
+
+		/* Flush all already received frames */
+		while (recvfrom(sock, frame, sizeof(frame), MSG_TRUNC | MSG_DONTWAIT, (struct sockaddr *)&from, &fromlen) > 0) {
+		}
 
 		dev->poll_fd = sock;
 		dev->fsm_state = RVLAN_SNIFF;

@@ -14,6 +14,7 @@
 #include <linux/if_ether.h>
 #include <linux/if_arp.h>
 #include <linux/if.h>
+#include <linux/rtnetlink.h>
 
 /* LOTs of hardware includes */
 #include <rt_ipc.h>
@@ -102,6 +103,7 @@ static timer_parameter_t _timerParameters[] = {
 
 /* prototypes */
 static int hal_port_check_lpdc_support(struct hal_port_state * ps);
+static void link_status_prepare_fd(int *fd);
 
 /* checks if the port is supported by the FPGA firmware */
 static int hal_port_check_presence(const char *if_name, unsigned char *mac)
@@ -233,6 +235,9 @@ int hal_port_shmem_init(char *logfilename)
 		pr_error("Can't create socket: %s\n", strerror(errno));
 		return -1;
 	}
+
+	link_status_prepare_fd(&halPorts.hal_link_state_fd);
+
 	/* Allocate the ports in shared memory, so wr_mon etc can see them
 	   Use lock since some (like rtud) wait for hal to be available */
 	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
@@ -802,3 +807,26 @@ void hal_port_update_info(char *iface_name, int mode, int synchronized){
 	}
 }
 
+/* This prepares polling using netlink, so we get notification on change */
+static void link_status_prepare_fd(int *fd)
+{
+	struct sockaddr_nl addr = {};
+
+	*fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	if (*fd < 0) {
+		pr_error("%s: socket(netlink): %s\n", __func__, strerror(errno));
+		*fd = -1;
+		return;
+	}
+
+	addr.nl_family = AF_NETLINK;
+	addr.nl_pid = getpid ();
+	addr.nl_groups = RTMGRP_LINK;
+
+	if (bind (*fd, (struct sockaddr *)&addr, sizeof (addr)) < 0) {
+		pr_error("%s: bind(netlink): %s\n", __func__, strerror(errno));
+		*fd = -1;
+		return;
+	}
+	return;
+}

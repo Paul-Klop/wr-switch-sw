@@ -17,6 +17,7 @@ typedef struct {
 	struct hal_port_state *ports;
 	int numberOfPorts;
 	int hal_port_fd; /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
+	int hal_link_state_fd;
 
 	/* RT subsystem PLL state, polled regularly via mini-ipc */
 	struct rts_pll_state rts_state;

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # This script downloads the leap_seconds.list file.
-# At startup, this scrip must be started after the dot-config startup script
-# to be sur to use the correct version of dot-config
+# At startup, this script must be started after the dot-config startup script
+# to be sure to use the correct version of dot-config
 # This script must be launched one time per day to search for a new leap seconds file
 
 #

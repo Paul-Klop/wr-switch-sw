@@ -935,6 +935,9 @@ choice SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT
 	default SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
 	help
 	  Defines the unit used for the check interval value.
+	  Please note that values more than a half of possible range
+	  (e.g. 40 minutes are not possible to set).
+	  Check cron manual for more details.
 
 config SNMP_SYSTEM_CLOCK_UNIT_MINUTES
 	bool "Minutes"
@@ -943,36 +946,45 @@ config SNMP_SYSTEM_CLOCK_UNIT_HOURS
 	bool "Hours"
 
 config SNMP_SYSTEM_CLOCK_UNIT_DAYS
-	bool "Days	"	
+	bool "Days"
 	
 endchoice
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_MINUTES
 	int "Interval to verify system clock (Minutes)"
-	range 1 59
+	range 1 30
 	default 10
 	help
 	  Sets the time interval between checks of the system clock. 
 	  This interval is expressed in minutes.
+	  Written to cron config file as:
+	  */val * * * *
+	  Check cron manual for more details.
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_HOURS
 	int "Interval to verify system clock (Hours)"
-	range 1 23
+	range 1 12
 	default 1
 	help
 	  Sets the time interval between checks of the system clock.
 	  This interval is expressed in hours.
+	  Written to cron config file  as:
+	  0 */val * * *
+	  Check cron manual for more details.
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_DAYS
 	int "Interval to verify system clock (Days)"
-	range 1 31 
+	range 1 16
 	default 1
 	help
 	  Sets the time interval between checks of the system clock.
 	  This interval is expressed in days
+	  Written to cron config file  as:
+	  0 0 */val * *
+	  Check cron manual for more details.
 
 endmenu
 

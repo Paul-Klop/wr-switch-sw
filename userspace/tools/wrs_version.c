@@ -27,6 +27,7 @@
 #include <libwr/hwiu.h>
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
+#include <fpga_io.h>
 #include "libsdbfs.h"
 
 #define SDBFS_NAME "/dev/mtd5ro"
@@ -38,6 +39,11 @@
 #ifndef __GIT_USR__
 #define __GIT_USR__ "?"
 #endif
+
+/* TODO: Should be taken from generated files, but there are not present in
+ * WRS repo */
+#define GPIO_LJD_BOARD_DETECT	4
+#define GPIO_REG_PSR 		12
 
 
 void help(const char* pgrname)
@@ -177,6 +183,8 @@ static void print_gw_info(void)
 /* Print everything in tagged format, for snmp parsing etc */
 static void wrsw_tagged_versions(void)
 {
+	int feature_ljd;
+
 	printf("software-version: %s\n", __GIT_VER__); /* see Makefile */
 	printf("bult-by: %s\n", __GIT_USR__); /* see Makefile */
 	printf("build-date: %s %s\n", __DATE__, __TIME__);
@@ -186,6 +194,9 @@ static void wrsw_tagged_versions(void)
 	printf("serial-number: %s\n", sdb_get("hw_info", "scb_serial"));
 	printf("scb-version: %s\n", sdb_get("scb_version", NULL));
 	print_gw_info(); /* This is already tagged */
+	feature_ljd =_fpga_readl(FPGA_BASE_RT_GPIO + GPIO_REG_PSR)
+		     & 1 << GPIO_LJD_BOARD_DETECT;
+	printf("features: %s\n", feature_ljd ? "LJD" : "");
 }
 
 /* remove dots from strings */

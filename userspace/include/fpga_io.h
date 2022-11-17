@@ -5,6 +5,9 @@
 
 /* Base addresses of all FPGA peripherals used in libwr */
 
+/* FPGA GPIO */
+#define FPGA_BASE_RT_GPIO      0x10300
+
 /* PPS Generator */
 #define FPGA_BASE_PPS_GEN      0x10500
 

@@ -407,8 +407,6 @@ void hal_port_state_fsm_init_all( struct hal_port_state * ports, halGlobalLPDC_t
 			 * It will be considered as invalid */
 			ps->evt_linkUp = -1;
 		}
-
-		fsm_generic_run(&ps->fsm);
 	}
 }
 

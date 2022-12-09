@@ -33,13 +33,13 @@
 @paragraphindent none
 @comment %**end of header
 @copying
-Copyright CERN 2020.
+Copyright CERN 2023.
 This document is licensed under the Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) license.
 @end copying
 
 @setchapternewpage off
 
-@set update-month June 2020
+@set update-month January 2023
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -317,7 +317,13 @@ the behavior of the WR Switch. Here are highlights:
     do not use LLDP and latency is of concern, you should disable LLDP option.
   @item @b{Disable web interface} - web interface is now disabled by default
     and considered deprecated (no effort was put in making sure it works
-    properly). @b{Users are strongly discouraged from using the web interface}.
+    properly).
+    A number of serious security vulnerabilities were found in the web interface
+    (including CVE-2023-22577).
+    Please note that it is still possible to enable web interface in run-time.
+    @b{Users are strongly discouraged from using the web interface}.
+    In exceptional cases the use of web-interface can be limited to well
+    controlled networks.
   @end itemize
 
 @item @b{DHCP forever configuration in menuconfig} - this behavior can be set 
@@ -1425,6 +1431,14 @@ appropriate way, before the respective service is started.
 @item CONFIG_HTTPD_DISABLE
 
 	Disable web interface on a switch.
+	Web interface is now disabled by default and considered deprecated.
+	A number of security vulnerabilities were found in the web interface
+	(including CVE-2023-22577).
+	Please note that it is still possible to enable web interface in
+	run-time.
+	@b{Users are strongly discouraged from using the web interface}.
+	In exceptional cases the use of web-interface can be limited to well
+	controlled networks.
 
 @item CONFIG_MONIT_DISABLE
 

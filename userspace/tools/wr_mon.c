@@ -22,8 +22,8 @@
 #include "term.h"
 #include <time_lib.h>
 
-#define PTP_EXPORT_STRUCTURES
-#include "ptpd_exports.h"
+#define PPSI_EXPORT_STRUCTURES
+#include "ppsi_exports.h"
 
 #define SHOW_GUI		0
 #define SHOW_SLAVE_PORTS	1
@@ -88,7 +88,7 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.ext_name="White-Rabbit",
 				.short_ext_name='W',
 				.servo_ext_size=sizeof(struct wr_data),
-				.ipc_cmd_tacking=PTPDEXP_COMMAND_WR_TRACKING,
+				.ipc_cmd_tacking=PPSIEXP_COMMAND_WR_TRACKING,
 				.track_onoff = 1,
 		},
 #endif
@@ -98,7 +98,7 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.ext_name="L1Sync",
 				.short_ext_name='L',
 				.servo_ext_size=sizeof(struct l1e_data),
-				.ipc_cmd_tacking=PTPDEXP_COMMAND_L1SYNC_TRACKING,
+				.ipc_cmd_tacking=PPSIEXP_COMMAND_L1SYNC_TRACKING,
 				.track_onoff = 1,
 		},
 #endif
@@ -108,7 +108,7 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.ext_name="Custom",
 				.short_ext_name='C',
 				.servo_ext_size=sizeof(struct l1e_data),
-				.ipc_cmd_tacking=PTPDEXP_COMMAND_L1SYNC_TRACKING,
+				.ipc_cmd_tacking=PPSIEXP_COMMAND_L1SYNC_TRACKING,
 				.track_onoff = 1,
 		},
 #endif

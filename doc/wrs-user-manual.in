@@ -2889,6 +2889,8 @@ The following tools and scripts are provided:
 	be used to fix SFPs reporting i.e. wrong checksum. Use this option with
 	care.
 	
+	This tool can be used to disable TX of SFP.
+
 	For more details please refer to the tool's help.
 
 @item wrs_status_led

@@ -39,32 +39,6 @@ fi
 script_name="$0"
 
 #
-# This function retreive the fiber delay coefficient from 
-# the CONFIG_FIBER${1}_PARAMS parameter
-# Parameter :
-#   $1 = fiber index 
-# Return the fiber delay coefficient 
-function get_fiber_delay_coeff() { 
-	    local dc=0
-	    local fb=$1 	
-	    if [ -n "$fb" ]; then # check if fiber parameter exists
-	    	if [[ "$fb" =~ ^-?[0-9]+$ ]]; then # check if fiber parameter is an integer 
-				printf -v fb "%02d" $fb
-				local fiber_param=$(eval "echo \$CONFIG_FIBER${fb}_PARAMS")
-			     if [ -n "$fiber_param" ]; then # check if the fiber exists
-					IFS='=' read -a fpa <<< "$fiber_param"
-					dc=${fpa[1]}
-				 else
-					echo "$script_name: Unknown fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER" | tee $log_output
-				 fi
-	      	else
-				echo "$script_name: Invalid parameter fiber=\"$fb\" in CONFIG_PORT"$i_port"_FIBER" | tee $log_output
-		  	fi
-	    fi
-	    echo "$dc" 
-} 
-
-#
 # Decode ppsi.conf 'pre' file. It is used to define or override global keys. 
 # Expected file format :
 #   - must define key/value pairs separated with a space character : 'key value'
@@ -478,9 +452,8 @@ for i_port in {01..18}; do # scan all the physical ports
 			if [ -n "${!k}" ] && [ "$plc" != "" ]; then
 				v="$port_vn[${plc}]";
 				if [  "$p" == "FIBER" ] ; then 
-				    # Special treatment for FIBER : Retreive the delay coefficient from the DB
-					fiber_num="${!k}"
-		 			eval ${v}=$(get_fiber_delay_coeff $fiber_num)
+					# Special treatment for FIBER: Retreive the delay coefficient from HAL
+					true
 				else
 				  eval ${v}="${!k}"
 				fi

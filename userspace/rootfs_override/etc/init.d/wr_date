@@ -1,7 +1,36 @@
 #!/bin/sh
+#
+# Configure time at WRS startup
+#
+
+dotConfig="/wr/etc/dot-config"
+if [ -f $dotConfig ]; then
+	# source dot-config
+	. $dotConfig
+else
+	echo "$0 unable to source dot-config ($dotConfig)!"
+fi
+
+WRS_LOG=$CONFIG_WRS_LOG_OTHER
+
+# If empty turn it to /dev/null
+if [ -z $WRS_LOG ]; then
+	WRS_LOG="/dev/null";
+fi
+
+# If a pathname, use it
+if echo "$WRS_LOG" | grep / > /dev/null; then
+	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
+elif [ "$WRS_LOG" == "default_syslog" ]; then
+	# Not a pathname: use verbatim
+	eval LOGPIPE=\" 2\>\&1 \| logger -s -t wr_date --prio-prefix -p daemon.info\"
+else
+	# Not a pathname: use verbatim
+	eval LOGPIPE=\" 2\>\&1 \| logger -s -t wr_date -p $WRS_LOG\"
+fi
 
 # First of all, run 'wr_date set host tai', so to fix TAI offset in the kernel. Does not set the time
-/wr/bin/wr_date set host tai > /dev/null
+eval /wr/bin/wr_date set host tai $LOGPIPE
 
 F=/etc/wr_date.conf
 #CCS=/sys/bus/clocksource/devices/clocksource0/current_clocksource
@@ -13,15 +42,16 @@ ntp_retries()
 	N=$2
 
 	for i in `seq $N` ; do # Manual retries
-		if ntpd -n -q -p $S -d; then
+		eval ntpd -n -q -p $S -d $LOGPIPE
+		if [ $? -eq 0 ]; then
 			success=1
-			echo "NTP success"
+			eval echo "NTP success" $LOGPIPE
 			return 0
 		else
-			echo "Retry $i/$N : NTP query failed, unable to contact server ($S)."
+			eval echo "Retry $i/$N : NTP query failed, unable to contact server ($S)." $LOGPIPE
 		fi
 	done
-	echo "ERROR: could not reach NTP server '$S' after $N retries"
+	eval echo "ERROR: could not reach NTP server '$S' after $N retries" $LOGPIPE
 	return 1
 }
 
@@ -39,7 +69,7 @@ ntp_to_hwclk()
 		
 	#Request NTP server and set time to FPGA is okay
 	if ntp_retries $S ${ntp_ntries}; then
-		/wr/bin/wr_date -v set host
+		eval /wr/bin/wr_date -v set host $LOGPIPE
 		date_set=1
 	fi
 }
@@ -57,8 +87,8 @@ fi
 # if ntp failed, try to restore date saved before last reboot
 if [ $date_set = 0 ] && [ -f /update/saved_date ]; then
 	#date is not accurate but no better idea.
-	echo "Restore saved time"
+	eval echo "Restore saved time" $LOGPIPE
 	date -s `cat /update/saved_date`
-	echo "Setting WR time from host time"
-	/wr/bin/wr_date set host
+	eval echo "Setting WR time from host time" $LOGPIPE
+	eval /wr/bin/wr_date set host $LOGPIPE
 fi

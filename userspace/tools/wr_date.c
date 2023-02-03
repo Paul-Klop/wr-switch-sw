@@ -360,6 +360,13 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 			pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
 			if ( wait_wr_adjustment(pps) && !adjSecOnly )
 					__wrdate_internal_set(pps,0,tai_offset,deep+1); /* adjust the usecs */
+			/* Make sure registers are empty, probably there is a
+			 * bug in HDL causing a jump of a fractional part of
+			 * a second (see bug #213 in wr-switch-sw repo) */
+			pps->ADJ_UTCLO = 0;
+			pps->ADJ_UTCHI = 0;
+			pps->ADJ_NSEC = 0;
+			asm("" : : : "memory"); /* barrier... */
 		} else if ( !adjSecOnly ) {
 			if (opt_verbose)
 				printf("adjusting by %li usecs\n", diff);
@@ -369,6 +376,11 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 			asm("" : : : "memory"); /* barrier... */
 			pps->CR = pps->CR | PPSG_CR_CNT_ADJ;
 			wait_wr_adjustment(pps);
+			/* Make sure registers are empty, probably there is a
+			 * bug in HDL causing a jump of a fractional part of
+			 * a second (see bug #213 in wr-switch-sw repo) */
+			pps->ADJ_NSEC = 0;
+			asm("" : : : "memory"); /* barrier... */
 		}
 
 		if ( deep==0 && modRemoved ) {
@@ -391,7 +403,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 
 /* This sets WR time from host time */
 int wrdate_internal_set(volatile struct PPSG_WB *pps, int taiOnly, int adjSecOnly) {
-	int tai_offset;
+	int tai_offset = 0;
 
 	if (opt_not) {
 		// Do not change the TAI but display only information if verbose is enabled

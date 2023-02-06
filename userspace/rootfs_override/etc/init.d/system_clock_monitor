@@ -144,7 +144,9 @@ killNTPD ()
 	fi
 	( 
 		sleep $delay
-		p=$(pidof $ntpTool)
+		ppid=$$
+		# Search for a ntpd only within this script's childs
+		p=$(pgrep -g $ppid $ntpTool)
 		if [[ -n "$p" ]] ; then
 			kill -9 $p &>/dev/null
 		fi

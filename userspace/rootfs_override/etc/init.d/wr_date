@@ -2,6 +2,11 @@
 #
 # Configure time at WRS startup
 #
+# If called with a parameter "ppsi" and unable to get time from ntp,
+# then the time is not set to the value stored at the last restart in
+# /update/saved_date
+# The set of time from the /update/saved_date file can happen only at the call
+# of this script from rcS during the bootup.
 
 dotConfig="/wr/etc/dot-config"
 if [ -f $dotConfig ]; then
@@ -18,8 +23,12 @@ if [ -z $WRS_LOG ]; then
 	WRS_LOG="/dev/null";
 fi
 
-# If a pathname, use it
-if echo "$WRS_LOG" | grep / > /dev/null; then
+if [ "$1" = "ppsi" ]; then
+	# This script is called from the ppsi, all messagess will be passed to
+	# the log output via PPSi.
+	LOGPIPE=
+elif echo "$WRS_LOG" | grep / > /dev/null; then
+	# If a pathname, use it
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
 elif [ "$WRS_LOG" == "default_syslog" ]; then
 	# Not a pathname: use verbatim
@@ -75,7 +84,7 @@ ntp_to_hwclk()
 }
 
 date_set=0
-# check whether there is config file
+# Check whether there is the config file
 if [ -f $F ]; then
 	# pick the first server, if any
 	S=$(grep 'ntpserver' $F | sed 's/ntpserver//' | head -n 1)
@@ -84,8 +93,10 @@ if [ -f $F ]; then
 		ntp_to_hwclk "$S"
 	fi
 fi
-# if ntp failed, try to restore date saved before last reboot
-if [ $date_set = 0 ] && [ -f /update/saved_date ]; then
+
+# If ntp failed and not called from PPSi try to restore the date information
+# saved before the last reboot
+if [ "$1" != "ppsi" ] && [ $date_set = 0 ] && [ -f /update/saved_date ]; then
 	#date is not accurate but no better idea.
 	eval echo "Restore saved time" $LOGPIPE
 	date -s `cat /update/saved_date`

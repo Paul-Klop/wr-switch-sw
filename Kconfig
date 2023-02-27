@@ -100,7 +100,7 @@ endchoice
 
 config LEAPSEC_URL
 	string "URL for a run-time replacement of leap seconds file"
-	default "ftp://ftp.nist.gov/pub/time/leap-seconds.list"
+	default "ftp://ftp.boulder.nist.gov/pub/time/leap-seconds.list"
 	depends on LEAPSEC_SOURCE_REMOTE_TRY || LEAPSEC_SOURCE_REMOTE_FORCE
 	help
 	  tftp://, ftp:// or http:// URLs are allowed. Names are allowed if

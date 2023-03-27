@@ -14,6 +14,7 @@
 #include <linux/if_ether.h>
 #include <linux/if_arp.h>
 #include <linux/if.h>
+#include <linux/rtnetlink.h>
 
 /* LOTs of hardware includes */
 #include <rt_ipc.h>
@@ -80,7 +81,7 @@ static timer_parameter_t _timerParameters[] = {
 		},
 		{
 				.id=TMO_PORT_SFP_DOM,
-				.tmoMs=1000, // 1s
+				.tmoMs=300, // 300ms
 				.repeat=1,
 				.cb=_cb_port_poll_sfp_dom
 		},
@@ -102,6 +103,7 @@ static timer_parameter_t _timerParameters[] = {
 
 /* prototypes */
 static int hal_port_check_lpdc_support(struct hal_port_state * ps);
+static void link_status_prepare_fd(int *fd);
 
 /* checks if the port is supported by the FPGA firmware */
 static int hal_port_check_presence(const char *if_name, unsigned char *mac)
@@ -233,6 +235,9 @@ int hal_port_shmem_init(char *logfilename)
 		pr_error("Can't create socket: %s\n", strerror(errno));
 		return -1;
 	}
+
+	link_status_prepare_fd(&halPorts.hal_link_state_fd);
+
 	/* Allocate the ports in shared memory, so wr_mon etc can see them
 	   Use lock since some (like rtud) wait for hal to be available */
 	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
@@ -578,47 +583,49 @@ static void _cb_port_poll_sfp(int timerId){
 	hal_port_poll_sfp();
 }
 
-static void _cb_port_poll_sfp_dom(int timerId){
-	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE) {
-		struct shw_sfp_dom sfp_dom_raw[HAL_MAX_PORTS];
-		struct hal_port_state *ps;
-		int i;
+/* Read content of one SFP's real-time values at every call of this function */
+static void _cb_port_poll_sfp_dom(int timerId)
+{
+	int rt_size;
+	size_t offset_temp;
+	struct shw_sfp_dom sfp_dom_raw;
+	struct hal_port_state *ps;
+	static int curr_port_num = 0;
 
-		/* get the DOM data to local memory */
-		ps=halPorts.ports;
-		for (i = 0; i < HAL_MAX_PORTS; i++) {
-			/* read DOM only for plugged ports with DOM
-			 * capabilities */
-			if (ps->in_use
-			    && ps->sfpPresent
-			    && ps->has_sfp_diag) {
-				shw_sfp_update_dom(ps->hw_index,
-						   &sfp_dom_raw[i]);
-			}
-			ps++;
-		}
+	if (hal_shmem->read_sfp_diag != READ_SFP_DIAG_ENABLE) {
+		return;
+	}
+
+	ps = halPorts.ports + curr_port_num;
+	/* read DOM only for plugged ports with DOM
+	    * capabilities */
+	if (ps->in_use
+	    && ps->sfpPresent
+	    && ps->has_sfp_diag) {
+		/* get the real-time DOM data to local memory */
+		shw_sfp_update_dom_rt(ps->hw_index,
+			&sfp_dom_raw);
 
 		/* lock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 
-		/* copy the DOM from local memory to shmem */
-		ps=halPorts.ports;
-		for (i = 0; i < HAL_MAX_PORTS; i++) {
-			/* update DOM only for plugged ports with DOM
-			 * capabilities */
-			if (ps->in_use
-			    && ps->sfpPresent
-			    &&  ps->has_sfp_diag) {
-				memcpy(&halPorts.ports[i].calib.sfp_dom_raw,
-				       &sfp_dom_raw[i],
-				       sizeof(struct shw_sfp_dom));
-			}
-			ps++;
-		}
+		offset_temp = offsetof(struct shw_sfp_dom, temp);
+		rt_size = offsetof(struct shw_sfp_dom, alw) - offset_temp;
+
+		/* copy only real-time DOM data from local memory to shmem */
+		memcpy((void *)(&halPorts.ports[curr_port_num].calib.sfp_dom_raw)
+		       + offset_temp,
+		       (void *)(&sfp_dom_raw) + offset_temp,
+		       rt_size);
 
 		/* unlock shmem */
 		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 	}
+
+	curr_port_num++;
+
+	if (curr_port_num >= HAL_MAX_PORTS)
+		curr_port_num = 0;
 }
 
 static void _cb_port_update_sync_leds(int timerId){
@@ -800,3 +807,26 @@ void hal_port_update_info(char *iface_name, int mode, int synchronized){
 	}
 }
 
+/* This prepares polling using netlink, so we get notification on change */
+static void link_status_prepare_fd(int *fd)
+{
+	struct sockaddr_nl addr = {};
+
+	*fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	if (*fd < 0) {
+		pr_error("%s: socket(netlink): %s\n", __func__, strerror(errno));
+		*fd = -1;
+		return;
+	}
+
+	addr.nl_family = AF_NETLINK;
+	addr.nl_pid = getpid ();
+	addr.nl_groups = RTMGRP_LINK;
+
+	if (bind (*fd, (struct sockaddr *)&addr, sizeof (addr)) < 0) {
+		pr_error("%s: bind(netlink): %s\n", __func__, strerror(errno));
+		*fd = -1;
+		return;
+	}
+	return;
+}

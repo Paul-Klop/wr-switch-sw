@@ -17,7 +17,7 @@ tmpdir=/tmp
 T=$(mktemp "$tmpdir"/config-XXXXXX)
 
 # check if config is local, used by webinterface
-if [ "$1" == "local_config" ]; then
+if [ "$1" = "local_config" ]; then
     # remove source information in case previous config was received from
     # network
     rm "$tmpdir"/dot-config_*
@@ -104,6 +104,8 @@ set | tr -d \' | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
     sed -i "/$varname/ s/^#//" $T
     sed -i "/$varname/ s/$varname/$value/" $T
 done
+# call assembly_snmpd_conf.sh to fill more advanced SNMP parameters
+/wr/bin/assembly_snmpd_conf.sh $T
 mv $T /etc/snmpd.conf
 
 # Select a ppsi configuration file
@@ -166,7 +168,7 @@ if [ "$CONFIG_MONIT_DISABLE" != "y" ]; then
 			process=`basename $config .conf`
 			monitor=1
 			case $process in
-			  lldpd)    if [ "$CONFIG_LLDPD_DISABLE" == "y" ] ; then 
+			  lldpd)    if [ "$CONFIG_LLDPD_DISABLE" = "y" ] ; then
 			  				monitor=0
 			 			fi 
 			 			;;
@@ -174,8 +176,12 @@ if [ "$CONFIG_MONIT_DISABLE" != "y" ]; then
 			  				monitor=0;	
 			  			fi 
 			  			;;
-			  lighttpd) if [ "$CONFIG_HTTPD_DISABLE" == "y" ] ; then 
+			  lighttpd) if [ "$CONFIG_HTTPD_DISABLE" = "y" ] ; then
 			  				monitor=0
+			  			fi 
+			  			;;
+			  radiusvlan) if [ "$CONFIG_RVLAN_ENABLE" != "y" ] ; then
+							monitor=0
 			  			fi 
 			  			;;
 			  *) ;; 

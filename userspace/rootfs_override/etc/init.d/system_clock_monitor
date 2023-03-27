@@ -242,14 +242,14 @@ if [ "$#" -eq 1 ] && [ "$1" == "-s" ] ; then
 			    intervalValue=$CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
 				debug "Time interval: ${intervalValue} hours"
 			    entry="# System clock monitor: Execute the script \"${script}\" every ${intervalValue} hour(s)${NEWLINE}"
-			    entry+="* */${intervalValue} * * *  ${script}"
+			    entry+="0 */${intervalValue} * * *  ${script}"
 				setCronConfig "$entry" 
 			else
 				if [ "$CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS" = "y" ]; then
 					intervalValue=$CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
 					debug "Time interval: ${intervalValue} days"
 				    entry="# System clock monitor: Execute the script \"${script}\" every ${intervalValue} day(s)${NEWLINE}"
-					entry+="* * */${intervalValue} * *  ${script}" 
+					entry+="0 0 */${intervalValue} * *  ${script}" 
 					setCronConfig "$entry" 
 				else
  					eval echo "Invalid unit for system clock check interval." $LOGPIPE

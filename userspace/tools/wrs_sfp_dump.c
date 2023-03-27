@@ -7,6 +7,7 @@
 #include "../libwr/i2c_sfp.h"
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/hal_client.h>
 
 
 #define SFP_EEPROM_READ 1
@@ -19,6 +20,10 @@
 #define READ_HAL 1
 #define READ_I2C 2
 
+#define HAL_CONNECT_RETRIES 5
+#define HAL_CONNECT_TIMEOUT 2000000 /* us */
+
+
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
 static int hal_nports_local;
@@ -28,21 +33,23 @@ void print_info(char *prgname)
 	printf("usage: %s <-I|-L> [parameters]\n", prgname);
 	printf(""
 		"Select the source of SFP eeprom data:\n"
-		"   -L              Use eeprom data read by HAL at SFP insertion time\n"
-		"   -I              Use read eeprom data directly from SFP via I2C\n"
+		"   -L                 Use eeprom data read by HAL at SFP insertion time\n"
+		"   -I                 Use read eeprom data directly from SFP via I2C\n"
+		"                      (Use with caution! May corrupt SFPs EEPROM if HAL is running!)\n"
 		"Optional parameters:\n"
-		"   -p <num>        Dump sfp header for specific port (1-18); dump sfp header info for all\n"
-		"                   ports if no <-p> specified\n"
-		"   -a <READ|WRITE> Read/write SFP's eeprom; works only with <-I>;\n"
-		"                   before READs/WRITEs disable HAL and monit!\n"
-		"   -f <file>       File to READ/WRITE SFP's eeprom\n"
-		"   -H <dir>        Open shmem dumps from the given directory; works only with <-L>\n"
-		"   -d              Dump sfp DOM data page\n"
-		"   -x              Dump sfp/DOM header also in hex\n"
-		"   -q              Decrease verbosity\n"
-		"   -v              Increase verbosity\n"
-		"   -V              Print version\n"
-		"   -h              Show this message\n"
+		"   -p <num>           Dump sfp header for specific port (1-18); dump sfp header info for all\n"
+		"                      ports if no <-p> specified\n"
+		"   -a <READ|WRITE>    Read/write SFP's eeprom; works only with <-I>;\n"
+		"                      before READs/WRITEs disable HAL and monit!\n"
+		"   -f <file>          File to READ/WRITE SFP's eeprom\n"
+		"   -H <dir>           Open shmem dumps from the given directory; works only with <-L>\n"
+		"   -d                 Dump sfp DOM data page\n"
+		"   -x                 Dump sfp/DOM header also in hex\n"
+		"   -t <on|off|0|1|s>  Enable(1), disable(1) or check status of SFP's TX pin; Use with -L or -I\n"
+		"   -q                 Decrease verbosity\n"
+		"   -v                 Increase verbosity\n"
+		"   -V                 Print version\n"
+		"   -h                 Show this message\n"
 		"\n"
 		"NOTE: Be carefull! All reads (i2c transfers) are in race with HAL!\n"
 	);
@@ -298,6 +305,8 @@ int main(int argc, char **argv)
 	int operation = 0;
 	char *eeprom_file = NULL;
 	int sfp_data_source = 0;
+	int sfp_tx_update = 0;
+	int sfp_tx_enable = 0;
 	/* local copy of sfp eeprom */
 	struct shw_sfp_header hal_sfp_raw_header_lc[HAL_MAX_PORTS];
 	struct shw_sfp_dom hal_sfp_raw_dom_lc[HAL_MAX_PORTS];
@@ -307,7 +316,7 @@ int main(int argc, char **argv)
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -353,12 +362,27 @@ int main(int argc, char **argv)
 			sfp_data_source = READ_HAL;
 			break;
 		case 'I':
-			/* HAL mode */
+			/* I2C mode */
 			sfp_data_source = READ_I2C;
 			break;
 		case 'H':
-			/* HAL mode */
+			/* Set path for shmem files */
 			wrs_shm_set_path(optarg);
+			break;
+		case 't':
+			/* Handle enable/disable/status of SFP's TX */
+			if (!strcmp(optarg, "on") || !strcmp(optarg, "1")) {
+			    sfp_tx_update = 1;
+			    sfp_tx_enable = HEXP_SFP_TX_CMD_ENABLE_TX;
+			}
+			if (!strcmp(optarg, "off") || !strcmp(optarg, "0")) {
+			    sfp_tx_update = 1;
+			    sfp_tx_enable = HEXP_SFP_TX_CMD_DISABLE_TX;
+			}
+			if (!strcmp(optarg, "status") || !strcmp(optarg, "s")) {
+			    sfp_tx_update = 1;
+			    sfp_tx_enable = HEXP_SFP_TX_CMD_STATUS;
+			}
 			break;
 		case 'h':
 		default:
@@ -369,16 +393,69 @@ int main(int argc, char **argv)
 	}
 
 	if (sfp_data_source != READ_HAL && sfp_data_source != READ_I2C) {
-		pr_error("Please specify the source of SFP eeprom data.\n"
-			 "  -L for saved data in HAL at SFP plugin\n"
+		pr_error("Please specify the communication way with SFP:\n"
+			 "  -L for saved data in HAL at SFP insertion\n"
+			 "     or TX pin enable/disable\n"
 			 "  -I for direct access to SFPs via i2c\n");
 		exit(1);
 	}
+	
+	if (sfp_tx_update && sfp_data_source == READ_HAL) {
+		char *msg;
+		int ret;
 
-	if (sfp_data_source == READ_HAL) {
+		switch(sfp_tx_enable) {
+		case HEXP_SFP_TX_CMD_ENABLE_TX:
+			msg = "Enable";
+			break;
+		case HEXP_SFP_TX_CMD_DISABLE_TX:
+			msg = "Disable";
+			break;
+		case HEXP_SFP_TX_CMD_STATUS:
+			msg = "Check status of";
+			break;
+		default:
+			printf("%s BUG: line %d, wrong value %d of "
+			       "sfp_tx_enable\n",
+			       __func__, __LINE__, sfp_tx_enable);
+		}
+
+		printf("%s TX via HAL for port %d\n", msg, dump_port);
+		ret = halexp_client_try_connect(HAL_CONNECT_RETRIES,
+						HAL_CONNECT_TIMEOUT);
+		if (ret < 0) {
+			pr_error("Can't establish WRIPC connection to the HAL "
+				"daemon!\n");
+			exit(1);
+		}
+		ret = halexp_sfp_tx_cmd(sfp_tx_enable, dump_port);
+		if (sfp_tx_enable == HEXP_SFP_TX_CMD_STATUS) {
+			switch(ret) {
+			case HEXP_SFP_TX_CMD_ENABLE_TX:
+				msg = "enabled";
+				break;
+			case HEXP_SFP_TX_CMD_DISABLE_TX:
+				msg = "disabled";
+				break;
+			default:
+				msg = "Error (unable to read)";
+				break;
+			}
+			printf("SFP's TX for port %d %s\n",
+			       dump_port, msg);
+		}
+		exit(0);
+	}
+	else if (sfp_data_source == READ_HAL) {
 		hal_init_shm();
 		hal_read(hal_sfp_raw_header_lc, hal_sfp_raw_dom_lc);
 		printf("Reading SFP eeprom from HAL\n");
+	}
+
+	if (sfp_tx_update && sfp_data_source == READ_I2C) {
+		printf("Setting TX pin of SFP via I2C is not supported!\n"
+		       "Use -L parameter to set it via HAL\n");
+		exit(1);
 	}
 
 	if (sfp_data_source == READ_I2C) {

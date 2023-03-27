@@ -52,8 +52,25 @@
 // Default aging time resolution [secs]
 #define DEFAULT_AGING_RES       20
 
+// Used for clean_*() functions
+#define SHM_NOT_LOCK 0
+#define SHM_LOCK     1
+
 // Keeping in mind year 2038
 #define time_after(a,b) ((long)(b) - (long)(a) < 0)
+
+extern struct wrs_shm_head *hal_head;
+extern struct hal_port_state *hal_ports;
+extern int hal_nports_local;
+
+/**
+ * \brief Pointer to shmem, used for write locking.
+ */
+extern struct wrs_shm_head *rtu_shmem_p;
+/**
+ * Mirror of port configuration
+ */
+extern struct rtu_port_entry *ports_cfg;
 
 /**
  * \brief RTU request: input for the RTU

@@ -18,6 +18,7 @@
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
 #include "time_lib.h"
+#include "hal_port_fsm_pllP.h"
 
 /*  be safe, in case some other header had them slightly differently */
 #undef container_of
@@ -28,6 +29,9 @@
 
 #define FPGA_SPLL_STAT 0x10006800
 #define SPLL_MAGIC 0x5b1157a7
+
+void dump_one_field_ppsi_wrs(int type, int size, void *p, int i);
+int dump_one_field_type_ppsi_wrs(int type, int size, void *p);
 
 char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_ptp] = "ptpd/ppsi",
@@ -76,6 +80,16 @@ char *spll_align_state_to_name[SPLL_ALIGN_STATE_MAX_N] = {
 	[ALIGN_STATE_WAIT_PLOCK] = "wait plock",
 };
 
+/* index of a the greatest number describing the qmode +1 */
+#define RTU_QMODE_MAX 5
+char *rtu_qmode_to_name[RTU_QMODE_MAX] = {
+	[QMODE_ACCESS] =   "access",
+	[QMODE_TRUNK] =    "trunk",
+	[QMODE_DISABLED] = "disabled",
+	[QMODE_UNQ] =      "unqualified",
+	[QMODE_INVALID] =  "invalid",
+};
+
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
 				 entries */
 
@@ -83,39 +97,53 @@ static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
 #define REL_DIFF_FRACBITS 62
 #define REL_DIFF_FRACMASK 0x3fffffffffffffff
 
-void decode_relative_difference(RelativeDifference rd, int32_t *nsecs, uint64_t *sub_yocto) {
-    int64_t fraction;
-	uint64_t bitWeight=500000000000000000;
-	uint64_t mask;
-
-	*sub_yocto=0;
-	*nsecs = (int32_t)(rd >> REL_DIFF_FRACBITS);
-    fraction=(int64_t)rd & REL_DIFF_FRACMASK;
-	for (mask=(uint64_t) 1<< (REL_DIFF_FRACBITS-1);mask!=0; mask>>=1 ) {
-		if ( mask & fraction )
-			*sub_yocto+=bitWeight;
-		bitWeight/=2;
-	}
+int print_labels = 1;
+void print_str(char *s)
+{
+    if (print_labels == 0)
+	return;
+    printf(" (%s)", s);
 }
+
+/* create fancy macro to shorten the switch statements, assign val as a string to p */
+#define ENUM_TO_P_IN_CASE(val, p) \
+				case val: \
+				    p = #val;\
+				    break;
+
 
 void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 {
 	void *p = addr + info->offset;
 	char buf[128];
 	struct pp_time *t = p;
-	RelativeDifference *rd=p;
-	Timestamp *ts=p;
-	TimeInterval *ti=p;
-	struct PortIdentity *pi = p;
-	struct ClockQuality *cq = p;
 	char format[16];
 	int i;
+	int value;
 	char pname[128];
+	char *char_p;
 
 	if (info_prefix!=NULL )
 		sprintf(pname,"%s.%s",info_prefix,info->name);
 	else
 		strcpy(pname,info->name);
+
+	/* For some (mostly enum-like types) the size may vary.
+	 * Check the size and assign a proper value to
+	 * variable i */
+	switch(info->type) {
+	case dump_type_yes_no:
+		if (info->size == 1)
+			value = *(uint8_t *)p;
+		else if (info->size == 2)
+			value = *(uint16_t *)(p);
+		else
+			value = *(uint32_t *)(p);
+		break;
+	default:
+		/* check if this is ppsi type */
+		value = dump_one_field_type_ppsi_wrs(info->type, info->size, p);
+	}
 
 	printf("%-40s ", pname); /* name includes trailing ':' */
 	switch(info->type) {
@@ -139,22 +167,18 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 			printf("%02x%c", ((unsigned char *)p)[i],
 			       i == info->size - 1 ? '\n' : ':');
 		break;
-	case dump_type_UInteger64:
 	case dump_type_uint64_t:
 		printf("%lld\n", *(unsigned long long *)p);
 		break;
 	case dump_type_long_long:
-	case dump_type_Integer64:
 		printf("%lld\n", *(long long *)p);
 		break;
 	case dump_type_uint32_t:
 		printf("0x%08lx\n", (long)*(uint32_t *)p);
 		break;
-	case dump_type_Integer32:
 	case dump_type_int:
 		printf("%i\n", *(int *)p);
 		break;
-	case dump_type_UInteger32:
 	case dump_type_unsigned:
 		printf("%u\n", *(uint32_t *)p);
 		break;
@@ -162,16 +186,8 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%lu\n", *(unsigned long *)p);
 		break;
 	case dump_type_unsigned_char:
-	case dump_type_UInteger8:
-	case dump_type_Integer8:
-	case dump_type_Enumeration8:
-	case dump_type_Boolean:
 		printf("%i\n", *(unsigned char *)p);
 		break;
-	case dump_type_UInteger4:
-		printf("%i\n", *(unsigned char *)p & 0xF);
-		break;
-	case dump_type_UInteger16:
 	case dump_type_uint16_t:
 	case dump_type_unsigned_short:
 		printf("%i\n", *(unsigned short *)p);
@@ -185,49 +201,37 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 	case dump_type_pointer:
 		printf("%p\n", *(void **)p);
 		break;
-	case dump_type_Integer16:
-		printf("%i\n", *(short *)p);
+	case dump_type_yes_no:
+		i = *(uint8_t *)p;
+		switch (i) {
+		case 0:
+			printf("%d (no)\n", i);
+			break;
+		case 1:
+			printf("%d (yes)\n", i);
+			break;
+		default:
+			printf("%d (Unknown)\n", i);
+		}
 		break;
+
+	case dump_type_timeval:
+		{
+		    struct timeval *tv = (struct timeval*) p;
+		    printf("%ld.%06ld\n", tv->tv_sec, tv->tv_usec);
+		    break;
+		}
 
 	case dump_type_time:
 		printf("%s\n",timeToString(t,buf));
 		break;
 
-	case dump_type_Timestamp:
-		printf("%s\n",timestampToString(ts,buf));
-		break;
-
-	case dump_type_TimeInterval:
-		printf("%s\n",timeIntervalToString(*ti,buf));
-		break;
-
-	case dump_type_RelativeDifference:
-		printf("%s\n",relativeDifferenceToString(*rd,buf));
-		break;
 	case dump_type_ip_address:
 		for (i = 0; i < 4; i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
 			       i == 3 ? '\n' : ':');
 		break;
 
-	case dump_type_ClockIdentity: /* Same as binary */
-		for (i = 0; i < sizeof(ClockIdentity); i++)
-			printf("%02x%c", ((unsigned char *)p)[i],
-			       i == sizeof(ClockIdentity) - 1 ? '\n' : ':');
-		break;
-
-	case dump_type_PortIdentity: /* Same as above plus port */
-		for (i = 0; i < sizeof(ClockIdentity); i++)
-			printf("%02x%c", ((unsigned char *)p)[i],
-			       i == sizeof(ClockIdentity) - 1 ? '.' : ':');
-		printf("%04x (%i)\n", pi->portNumber, pi->portNumber);
-		break;
-
-	case dump_type_ClockQuality:
-		printf("class=%i, accuracy=0x%02x (%i), logvariance=%i\n",
-		       cq->clockClass, cq->clockAccuracy, cq->clockAccuracy,
-		       cq->offsetScaledLogVariance);
-		break;
 	case dump_type_sfp_flags:
 		if (*(uint32_t *)p & SFP_FLAG_CLASS_DATA)
 			printf("SFP class data, ");
@@ -253,24 +257,25 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("%.3f mW\n", ntohs(*(short *)p)/(float)10000);
 		break;
 	case dump_type_port_mode:
-		switch (*(uint32_t *)p) {
+		i = *(uint32_t *)p;
+		switch (i) {
 		case HEXP_PORT_MODE_WR_MASTER:
-			printf("WR Master\n");
+			printf("%d (WR Master)\n", i);
 			break;
 		case HEXP_PORT_MODE_WR_SLAVE:
-			printf("WR Slave\n");
+			printf("%d (WR Slave)\n", i);
 			break;
 		case HEXP_PORT_MODE_NON_WR:
-			printf("Non-WR\n");
+			printf("%d (Non-WR)\n", i);
 			break;
 		case HEXP_PORT_MODE_NONE:
-			printf("None\n");
+			printf("%d (None)\n", i);
 			break;
 		case HEXP_PORT_MODE_WR_M_AND_S:
-			printf("Auto\n");
+			printf("%d (Auto)\n", i);
 			break;
 		default:
-			printf("Undefined\n");
+			printf("%d (Undefined)\n", i);
 			break;
 		}
 		break;
@@ -342,6 +347,20 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 			printf("Unknown(%d)\n", i);
 		}
 		break;
+        case dump_type_rtu_qmode:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case QMODE_ACCESS:
+		case QMODE_TRUNK:
+		case QMODE_DISABLED:
+		case QMODE_UNQ:
+		case QMODE_INVALID:
+			printf("%s(%d)\n", rtu_qmode_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
 	case dump_type_array_int:
 		{
 		int *size = addr + info->size;
@@ -350,8 +369,66 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("\n");
 		break;
 		}
-	case dump_type_scaledPicoseconds:
-		printf("%lld\n", (*(unsigned long long *)p)>>16);
+
+	case dump_type_shmemState:
+		i = *(uint32_t *)p;
+		switch(i) {
+		ENUM_TO_P_IN_CASE(HAL_SHMEM_STATE_NOT_INITITALIZED, char_p);
+		ENUM_TO_P_IN_CASE(HAL_SHMEM_STATE_INITITALIZING, char_p);
+		ENUM_TO_P_IN_CASE(HAL_SHMEM_STATE_INITITALIZED, char_p);
+		default:
+			char_p = "Unknown";
+		}
+		printf("%d", i);
+		print_str(char_p);
+		printf("\n");
+		break;
+
+	case dump_type_hal_mode:
+		i = *(uint32_t *)p;
+		switch(i) {
+		ENUM_TO_P_IN_CASE(HAL_TIMING_MODE_GRAND_MASTER, char_p);
+		ENUM_TO_P_IN_CASE(HAL_TIMING_MODE_FREE_MASTER, char_p);
+		ENUM_TO_P_IN_CASE(HAL_TIMING_MODE_BC, char_p);
+		default:
+			char_p = "Unknown";
+		}
+		printf("%d", i);
+		print_str(char_p);
+		printf("\n");
+		break;
+
+	case dump_type_hal_fsm:
+		i = *(uint32_t *)p;
+		switch(i) {
+		ENUM_TO_P_IN_CASE(HAL_PORT_STATE_INIT, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_STATE_DISABLED, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_STATE_LINK_DOWN, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_STATE_LINK_UP, char_p);
+		default:
+			char_p = "Unknown";
+		}
+		printf("%d", i);
+		print_str(char_p);
+		printf("\n");
+		break;
+
+	case dump_type_hal_pllfsm:
+		i = *(uint32_t *)p;
+		switch(i) {
+		ENUM_TO_P_IN_CASE(HAL_PORT_PLL_STATE_UNLOCKED, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_PLL_STATE_LOCKING, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_PLL_STATE_LOCKED, char_p);
+		default:
+			char_p = "Unknown";
+		}
+		printf("%d", i);
+		print_str(char_p);
+		printf("\n");
+		break;
+
+	default:
+		dump_one_field_ppsi_wrs(info->type, info->size, p, value);
 		break;
 	}
 }
@@ -369,26 +446,13 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo, char *prefi
 	}
 }
 
-/* the macro below relies on an externally-defined structure type */
-#define DUMP_FIELD(_type, _fname) { \
-	.name = #_fname ":",  \
-	.type = dump_type_ ## _type, \
-	.offset = offsetof(DUMP_STRUCT, _fname), \
-}
-#define DUMP_FIELD_SIZE(_type, _fname, _size) { \
-	.name = #_fname ":",		\
-	.type = dump_type_ ## _type, \
-	.offset = offsetof(DUMP_STRUCT, _fname), \
-	.size = _size, \
-}
-
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct hal_shmem_header
 struct dump_info hal_shmem_info [] = {
 	DUMP_FIELD(int, nports),
-	DUMP_FIELD(int, shmemState),
-	DUMP_FIELD(int, hal_mode),
-	DUMP_FIELD(int, read_sfp_diag),
+	DUMP_FIELD(shmemState, shmemState),
+	DUMP_FIELD(hal_mode, hal_mode),
+	DUMP_FIELD(yes_no, read_sfp_diag),
 	DUMP_FIELD(sensor_temp, temp.fpga),
 	DUMP_FIELD(sensor_temp, temp.pll),
 	DUMP_FIELD(sensor_temp, temp.psl),
@@ -399,16 +463,16 @@ struct dump_info hal_shmem_info [] = {
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct hal_port_state
 struct dump_info hal_port_info [] = {
-	DUMP_FIELD(int, in_use),
+	DUMP_FIELD(yes_no, in_use),
 	DUMP_FIELD_SIZE(char, name, 16),
 	DUMP_FIELD_SIZE(bina, hw_addr, 6),
 	DUMP_FIELD(int, hw_index),
 	DUMP_FIELD(int, fd),
 	DUMP_FIELD(int, hw_addr_auto),
-	DUMP_FIELD(int, fsm.st.state),
-	DUMP_FIELD(int, pllFsm.st.state),
+	DUMP_FIELD(hal_fsm, fsm.st.state),
+	DUMP_FIELD(hal_pllfsm, pllFsm.st.state),
 	DUMP_FIELD(int, fiber_index),
-	DUMP_FIELD(int, locked),
+	DUMP_FIELD(yes_no, locked),
 	/* these fields are defined as uint32_t but we prefer %i to %x */
 	DUMP_FIELD(int, calib.phy_rx_min),
 	DUMP_FIELD(int, calib.phy_tx_min),
@@ -416,8 +480,10 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, calib.delta_rx_phy),
 	DUMP_FIELD(int, calib.delta_tx_board),
 	DUMP_FIELD(int, calib.delta_rx_board),
-	DUMP_FIELD(int, calib.rx_calibrated),
-	DUMP_FIELD(int, calib.tx_calibrated),
+	DUMP_FIELD(yes_no, calib.rx_calibrated),
+	DUMP_FIELD(yes_no, calib.tx_calibrated),
+	DUMP_FIELD(int, calib.bitslide_ps),
+
 
 	/* Another internal structure, with a final pointer */
 	DUMP_FIELD(sfp_flags, calib.sfp.flags),
@@ -439,28 +505,28 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(sfp_dom_rx_power,  calib.sfp_dom_raw.rx_pow),
 
 	DUMP_FIELD(uint32_t, phase_val),
-	DUMP_FIELD(int, phase_val_valid),
-	DUMP_FIELD(int, tx_cal_pending),
-	DUMP_FIELD(int, rx_cal_pending),
+	DUMP_FIELD(yes_no, phase_val_valid),
+	DUMP_FIELD(yes_no, tx_cal_pending),
+	DUMP_FIELD(yes_no, rx_cal_pending),
 	DUMP_FIELD(int, lock_state),
 	DUMP_FIELD(uint32_t, clock_period),
 	DUMP_FIELD(uint32_t, t2_phase_transition),
 	DUMP_FIELD(uint32_t, t4_phase_transition),
 	DUMP_FIELD(int, t24p_from_config),
 	DUMP_FIELD(uint32_t, ep_base),
-	DUMP_FIELD(int, sfpPresent),
-	DUMP_FIELD(int, has_sfp_diag),
-	DUMP_FIELD(int, monitor),
+	DUMP_FIELD(yes_no, sfpPresent),
+	DUMP_FIELD(yes_no, has_sfp_diag),
+	DUMP_FIELD(yes_no, monitor),
 
 	/* PPSi instance information */
 	DUMP_FIELD(int, portMode),
-	DUMP_FIELD(int, synchronized),
+	DUMP_FIELD(yes_no, synchronized),
 	DUMP_FIELD(int, portInfoUpdated),
 
 	/* Events to process */
-	DUMP_FIELD(int,  evt_reset),
-	DUMP_FIELD(int,  evt_lock),
-	DUMP_FIELD(int,  evt_linkUp),
+	DUMP_FIELD(yes_no,  evt_reset),
+	DUMP_FIELD(yes_no,  evt_lock),
+	DUMP_FIELD(yes_no,  evt_linkUp),
 
 };
 
@@ -569,23 +635,23 @@ int dump_hal_mem(struct wrs_shm_head *head)
 struct dump_info htab_info[] = {
 	DUMP_FIELD(int, addr.hash),
 	DUMP_FIELD(int, addr.bucket),
-	DUMP_FIELD(int, valid),
+	DUMP_FIELD(yes_no, valid),
 	DUMP_FIELD(int, end_of_bucket),
-	DUMP_FIELD(int, is_bpdu),
+	DUMP_FIELD(yes_no, is_bpdu),
 	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
-	DUMP_FIELD(UInteger8, fid),
+	DUMP_FIELD(unsigned_char, fid),
 	DUMP_FIELD(uint32_t, port_mask_src),
 	DUMP_FIELD(uint32_t, port_mask_dst),
-	DUMP_FIELD(int, drop_when_source),
-	DUMP_FIELD(int, drop_when_dest),
-	DUMP_FIELD(int, drop_unmatched_src_ports),
-	DUMP_FIELD(UInteger32, last_access_t),
-	DUMP_FIELD(int, force_remove),
-	DUMP_FIELD(UInteger8, prio_src),
-	DUMP_FIELD(int, has_prio_src),
+	DUMP_FIELD(yes_no, drop_when_source),
+	DUMP_FIELD(yes_no, drop_when_dest),
+	DUMP_FIELD(yes_no, drop_unmatched_src_ports),
+	DUMP_FIELD(unsigned, last_access_t),
+	DUMP_FIELD(yes_no, force_remove),
+	DUMP_FIELD(unsigned_char, prio_src),
+	DUMP_FIELD(yes_no, has_prio_src),
 	DUMP_FIELD(int, prio_override_src),
-	DUMP_FIELD(UInteger8, prio_dst),
-	DUMP_FIELD(int, has_prio_dst),
+	DUMP_FIELD(unsigned_char, prio_dst),
+	DUMP_FIELD(yes_no, has_prio_dst),
 	DUMP_FIELD(int, prio_override_dst),
 	DUMP_FIELD(rtu_filtering_entry_dynamic, dynamic),
 	DUMP_FIELD(int, age),
@@ -595,20 +661,32 @@ struct dump_info htab_info[] = {
 #define DUMP_STRUCT struct rtu_vlan_table_entry
 struct dump_info vlan_info[] = {
 	DUMP_FIELD(uint32_t, port_mask),
-	DUMP_FIELD(UInteger8, fid),
-	DUMP_FIELD(UInteger8, prio),
-	DUMP_FIELD(int, has_prio),
-	DUMP_FIELD(int, prio_override),
-	DUMP_FIELD(int, drop),
+	DUMP_FIELD(unsigned_char, fid),
+	DUMP_FIELD(unsigned_char, prio),
+	DUMP_FIELD(yes_no, has_prio),
+	DUMP_FIELD(yes_no, prio_override),
+	DUMP_FIELD(yes_no, drop),
+	DUMP_FIELD(timeval, creation_time),
 };
 
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct rtu_mirror_info
 struct dump_info mirror_info[] = {
-	DUMP_FIELD(int, en),
+	DUMP_FIELD(yes_no, en),
 	DUMP_FIELD(uint32_t, imask),
 	DUMP_FIELD(uint32_t, emask),
 	DUMP_FIELD(uint32_t, dmask),
+};
+
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct rtu_port_entry
+struct dump_info rtu_port_info[] = {
+	DUMP_FIELD(rtu_qmode, qmode),
+	DUMP_FIELD(yes_no, fix_prio),
+	DUMP_FIELD(unsigned_char, prio),
+	DUMP_FIELD(uint16_t, pvid),
+	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
+	DUMP_FIELD(yes_no, untag),
 };
 
 int dump_rtu_mem(struct wrs_shm_head *head)
@@ -618,7 +696,9 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	struct rtu_filtering_entry *rtu_filters_cur;
 	struct rtu_vlan_table_entry *rtu_vlans;
 	struct rtu_mirror_info *rtu_mirror;
+	struct rtu_port_entry *rtu_ports;
 	int i, j;
+	int nports;
 	char prefix[64];
 
 	if (head->version != RTU_SHMEM_VERSION) {
@@ -630,9 +710,17 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	rtu_filters = wrs_shm_follow(head, rtu_h->filters);
 	rtu_vlans = wrs_shm_follow(head, rtu_h->vlans);
 	rtu_mirror = wrs_shm_follow(head, rtu_h->mirror);
+	rtu_ports = wrs_shm_follow(head, rtu_h->rtu_ports);
 
 	if ((!rtu_filters) || (!rtu_vlans) || (!rtu_mirror)) {
 		fprintf(stderr, "dump rtu: cannot follow pointer in shm\n");
+		return -1;
+	}
+
+	/* get number of ports from rtu */
+	nports = rtu_h->rtu_nports;
+	if (nports <= 0) {
+		fprintf(stderr, "dump rtu: unable to get number of ports\n");
 		return -1;
 	}
 
@@ -664,6 +752,12 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	sprintf(prefix, "rtu.mirror");
 	dump_many_fields(rtu_mirror, mirror_info, ARRAY_SIZE(mirror_info),
 			prefix);
+
+	for (i = 0; i < nports; i++, rtu_ports++) {
+		sprintf(prefix,"rtu.ports.%d", i + 1);
+		dump_many_fields(rtu_ports, rtu_port_info,
+				 ARRAY_SIZE(rtu_port_info), prefix);
+	}
 
 	return 0;
 }
@@ -820,6 +914,7 @@ int main(int argc, char **argv)
 			printf("shm.%d.status:     %s\n",i,kill(head->pid, 0) < 0 ? "dead" : "alive");
 		}
 		printf("shm.%d.iterations: %d\n",i,head->pidsequence);
+		printf("shm.%d.mapbase:    %p\n", i, head->mapbase);
 		f = name_id_to_f[i];
 
 		/* if the area-specific function fails, fall back to generic */

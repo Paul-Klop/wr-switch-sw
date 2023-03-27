@@ -42,7 +42,7 @@ time_t wrsMemory_data_fill(void)
 	f = fopen(MEMINFO_FILE, "r");
 	if (!f) {
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
-			 " wrsMemoryGroup filed to open " MEMINFO_FILE"\n");
+			 " wrsMemoryGroup failed to open " MEMINFO_FILE"\n");
 		/* notify snmp about error in kernel modules */
 
 		return time_update;

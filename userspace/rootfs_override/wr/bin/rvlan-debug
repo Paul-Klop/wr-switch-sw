@@ -1,0 +1,12 @@
+#!/bin/sh
+
+F=/tmp/rvlan-is-verbose
+rm -f $F
+
+killall -USR2 radiusvlan || exit 1
+usleep 500000
+if [ -f /tmp/rvlan-is-verbose ]; then
+   echo "radiusvlan verbose level is now $(cat $F)"
+else
+    echo "radiusvlan not responding"
+fi

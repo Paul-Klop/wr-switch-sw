@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stddef.h>
 
 #include <libwr/pio.h>
 #include <libwr/wrs-msg.h>
@@ -106,19 +107,23 @@ i2c_fpga_reg_t fpga_bus1_reg = {
 	.prescaler = 500,
 };
 
+/* I2C pins are set to input to avoid wrong transfers (which can lead to
+ * e.g. overwrite of SFP's eeprom) on i2c buses if HAL was killed in
+ * the middle of a transfer (by e.g. system reset). */
+
 /* The Bit-Banged I2C bus connected to the PCA9548A Multiplexers. WORKS */
 pio_pin_t wr_mux_scl = {
 	.port = PIOB,
 	.pin = 25,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 pio_pin_t wr_mux_sda = {
 	.port = PIOB,
 	.pin = 27,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 struct i2c_bitbang wr_mux_bus_reg = {
@@ -131,14 +136,14 @@ pio_pin_t wr_link0_sda = {
 	.port = PIOB,
 	.pin = 23,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 pio_pin_t wr_link0_scl = {
 	.port = PIOB,
 	.pin = 26,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 struct i2c_bitbang wr_link0_reg = {
@@ -151,14 +156,14 @@ pio_pin_t wr_link1_sda = {
 	.port = PIOB,
 	.pin = 22,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 pio_pin_t wr_link1_scl = {
 	.port = PIOB,
 	.pin = 21,
 	.mode = PIO_MODE_GPIO,
-	.dir = PIO_OUT_0,
+	.dir = PIO_IN, /* Set as input to avoid toggle after reset */
 };
 
 struct i2c_bitbang wr_link1_reg = {
@@ -168,31 +173,37 @@ struct i2c_bitbang wr_link1_reg = {
 
 struct i2c_bus i2c_buses[] = {
 	{
-	 .name = "fpga_bus0",
-	 .type = I2C_BUS_TYPE_FPGA_REG,
-	 .type_specific = &fpga_bus0_reg,
-	 }, {
-	     .name = "fpga_bus1",
-	     .type = I2C_BUS_TYPE_FPGA_REG,
-	     .type_specific = &fpga_bus1_reg,
-	     }, {
-		 .name = "wr_mux_bus",
-		 .type = I2C_TYPE_BITBANG,
-		 .type_specific = &wr_mux_bus_reg,
-		 }, {
-		     .name = "wr_sfp0_link0",
-		     .type = I2C_TYPE_BITBANG,
-		     .type_specific = &wr_link0_reg,
-		     }, {
-			 .name = "wr_sfp0_link1",
-			 .type = I2C_TYPE_BITBANG,
-			 .type_specific = &wr_link1_reg,
-			 },
+		.name = "fpga_bus0",
+		.type = I2C_BUS_TYPE_FPGA_REG,
+		.type_specific = &fpga_bus0_reg,
+	},
+	{
+		.name = "fpga_bus1",
+		.type = I2C_BUS_TYPE_FPGA_REG,
+		.type_specific = &fpga_bus1_reg,
+	},
+	{
+		.name = "wr_mux_bus",
+		.type = I2C_TYPE_BITBANG,
+		.type_specific = &wr_mux_bus_reg,
+	},
+	{
+		.name = "wr_sfp0_link0",
+		.type = I2C_TYPE_BITBANG,
+		.type_specific = &wr_link0_reg,
+	},
+	{
+		.name = "wr_sfp0_link1",
+		.type = I2C_TYPE_BITBANG,
+		.type_specific = &wr_link1_reg,
+	},
 };
 
 int shw_sfp_buses_init(void)
 {
 	int i;
+	uint8_t byte1, byte2;
+	struct i2c_bus* mux_bus;
 
 	pr_info("Initializing SFP I2C busses...\n");
 	for (i = 0; i < ARRAY_SIZE(i2c_buses); i++) {
@@ -202,6 +213,15 @@ int shw_sfp_buses_init(void)
 			return -1;
 		}
 //              printf("init: success: %s\n", i2c_buses[i].name);
+	}
+	mux_bus = &i2c_buses[WR_MUX_BUS];
+	for (i = WR_SFP2_BUS; i <= WR_SFP17_BUS; i++) {
+		/* Set the mask in the PCA9548 */
+		byte1 = (1 << bus_masks[i]) & 0xff;
+		byte2 = ((1 << bus_masks[i]) >> 8) & 0xff;
+		i2c_transfer(mux_bus, 0x70, 1, 0, &byte1);
+		i2c_transfer(mux_bus, 0x71, 1, 0, &byte2);
+		i2c_slave_soft_reset(mux_bus, i + 1);
 	}
 	return 0;
 }
@@ -659,12 +679,53 @@ int shw_sfp_read_dom(int num, struct shw_sfp_dom *dom)
 	return 0;
 }
 
+/* read only values that are updated in real-time */
+int shw_sfp_read_dom_rt(int num, struct shw_sfp_dom *dom)
+{
+	int ret;
+	int rt_size;
+	size_t offset_temp;
+
+	if (shw_sfp_id(num) < 0) {
+		pr_error("shw_sfp_read_header: wrong SFP num %d\n", num + 1);
+		return -1;
+	}
+
+	ret = shw_sfp_module_scan();
+	if (!(ret & (1 << num))) {
+		pr_error("shw_sfp_read_header: SFP not present %d\n", num + 1);
+		return -2;
+	}
+
+	offset_temp = offsetof(struct shw_sfp_dom, temp);
+	rt_size = offsetof(struct shw_sfp_dom, alw) - offset_temp;
+
+	ret = shw_sfp_read(num, I2C_SFP_DOM_ADDRESS, offset_temp, rt_size,
+			   (uint8_t *) dom + offset_temp);
+	if (ret == I2C_DEV_NOT_FOUND) {
+		pr_error("shw_sfp_read_header: I2C_DEV_NOT_FOUND\n");
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
+
 /* Function to update SFP's Diagnostic Monitoring data from SFP's eeprom */
 int shw_sfp_update_dom(int num, struct shw_sfp_dom *dom)
 {
 	/* For now copy entire eeprom */
 	return shw_sfp_read_dom(num, dom);
 }
+
+/* Update the SFP diagnostics page, only real-time values */
+int shw_sfp_update_dom_rt(int num, struct shw_sfp_dom *dom)
+{
+	/* Copy only fields updated in real-time */
+	return shw_sfp_read_dom_rt(num, dom);
+}
+
+
 
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head)
 {

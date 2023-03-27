@@ -1,9 +1,20 @@
+From 75de386f758249d89c003a6ff0accbfee21c3129 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Oct 2020 06:35:13 +0200
+Subject: [PATCH 11/22] port to perl-5.22 and later
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ .../0002-port-to-perl-5.22-and-later.patch         | 23 ++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+ create mode 100644 package/automake/0002-port-to-perl-5.22-and-later.patch
+
 diff --git a/package/automake/0002-port-to-perl-5.22-and-later.patch b/package/automake/0002-port-to-perl-5.22-and-later.patch
 new file mode 100644
-index 0000000..a7213d4
+index 0000000..14f01b8
 --- /dev/null
 +++ b/package/automake/0002-port-to-perl-5.22-and-later.patch
-@@ -0,0 +1,23 @@ 
+@@ -0,0 +1,23 @@
 +Without this change, Perl 5.22 complains "Unescaped left brace in
 +regex is deprecated" and this is planned to become a hard error in
 +Perl 5.26.  See:
@@ -27,3 +38,6 @@ index 0000000..a7213d4
 ++  $text =~ s/\$[{]([^ \t=:+{}]+)}/substitute_ac_subst_variables_worker ($1)/ge;
 +   return $text;
 + }
+-- 
+2.1.4
+

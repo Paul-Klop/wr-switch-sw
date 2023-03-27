@@ -616,7 +616,7 @@ config PTP_OPT_DOMAIN_NUMBER
 	  other as defined by the PTP protocol. A domain defines the scope of
 	  PTP message communication, state, operations, data sets, and
 	  timescale. PTP devices may participate in multiple domains.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
 
 config PTP_OPT_PRIORITY1
 	int "priority1"
@@ -625,7 +625,7 @@ config PTP_OPT_PRIORITY1
 	help
 	  A user configurable designation that a clock belongs to an ordered
 	  set of PTP devices from which a PTP Master is selected.
-	  For more details please refer to the IEEE 1588-2008 standard
+	  For more details please refer to the IEEE 1588-2019 standard
 
 config PTP_OPT_PRIORITY2
 	int "priority2"
@@ -634,7 +634,7 @@ config PTP_OPT_PRIORITY2
 	help
 	  A user configurable designation that provides finer grained ordering
 	  among otherwise equivalent PTP devices.
-	  For more details please refer to the IEEE 1588-2008 standard
+	  For more details please refer to the IEEE 1588-2019 standard
 
 config PTP_OPT_CLOCK_CLASS
 	int "clock-class"
@@ -652,7 +652,7 @@ config PTP_OPT_CLOCK_CLASS
 	  An attribute defining the TAI traceability, synchronization state and
 	  expected performance of the time or frequency distributed by a
 	  Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
 
 config PTP_OPT_OVERWRITE_ATTRIBUTES
 	boolean "Overwrite default PTP device attributes"
@@ -673,7 +673,7 @@ config PTP_OPT_CLOCK_ACCURACY
 	help
 	  An attribute defining the accuracy of the Local Clock (e.g. local
 	  oscillator) of a Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
 
 config PTP_OPT_CLOCK_ALLAN_VARIANCE
 	int "clock-allan-variance/offsetScaledLogVariance"
@@ -684,7 +684,7 @@ config PTP_OPT_CLOCK_ALLAN_VARIANCE
 	help
 	  An attribute defining the stability of the Local Clock of a
 	  Boundary Clock or Ordinary Clock.
-	  For more details please refer to the IEEE 1588-2008 standard.
+	  For more details please refer to the IEEE 1588-2019 standard.
   
 config PTP_OPT_TIME_SOURCE
 	int "time-source"
@@ -794,6 +794,18 @@ config PTP_CONF_URL
 
 
 menu "Management configuration"
+config SNMP_SYSCONTACT
+	string "System contact reported by SNMP"
+	help
+	  If not empty, this value will be reported as System contact
+	  (SNMPv2-MIB::sysContact.0)
+
+config SNMP_SYSLOCATION
+	string "System location reported by SNMP"
+	help
+	  If not empty, this value will be reported as System Location
+	  (SNMPv2-MIB::sysLocation.0)
+
 config SNMP_TRAPSINK_ADDRESS
 	string "Static IP address or name where to send SNMPv1 traps"
 	help
@@ -923,6 +935,9 @@ choice SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT
 	default SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
 	help
 	  Defines the unit used for the check interval value.
+	  Please note that values more than a half of possible range
+	  (e.g. 40 minutes are not possible to set).
+	  Check cron manual for more details.
 
 config SNMP_SYSTEM_CLOCK_UNIT_MINUTES
 	bool "Minutes"
@@ -931,36 +946,45 @@ config SNMP_SYSTEM_CLOCK_UNIT_HOURS
 	bool "Hours"
 
 config SNMP_SYSTEM_CLOCK_UNIT_DAYS
-	bool "Days	"	
+	bool "Days"
 	
 endchoice
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_MINUTES
 	int "Interval to verify system clock (Minutes)"
-	range 1 59
+	range 1 30
 	default 10
 	help
 	  Sets the time interval between checks of the system clock. 
 	  This interval is expressed in minutes.
+	  Written to cron config file as:
+	  */val * * * *
+	  Check cron manual for more details.
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_HOURS
 	int "Interval to verify system clock (Hours)"
-	range 1 23
+	range 1 12
 	default 1
 	help
 	  Sets the time interval between checks of the system clock.
 	  This interval is expressed in hours.
+	  Written to cron config file  as:
+	  0 */val * * *
+	  Check cron manual for more details.
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED && SNMP_SYSTEM_CLOCK_UNIT_DAYS
 	int "Interval to verify system clock (Days)"
-	range 1 31 
+	range 1 16
 	default 1
 	help
 	  Sets the time interval between checks of the system clock.
 	  This interval is expressed in days
+	  Written to cron config file  as:
+	  0 0 */val * *
+	  Check cron manual for more details.
 
 endmenu
 
@@ -1124,6 +1148,62 @@ config LLDPD_MINIMUM_FRAME_SIZE
 	  which require low latency.
 endmenu
 
+menu "Radius-vlan options"
+config RVLAN_ENABLE
+	bool "Run the 'radius-vlan' authorization daemon"
+	help
+	  If the program runs, it implements a subset of 802.1X
+
+config RVLAN_PMASK
+	string "A port mask, as hex number, to be monitored by radiusvlan"
+	depends on RVLAN_ENABLE
+	default "ffffffff"
+	help
+	  The string must be a number, with or without leading 0x.
+	  Port "wri1" is selected by bit 0 and so on until bit 17.
+	  The mask is used to disable monitoring on some ports.
+	  All ports not configured as 'access' are never monitored,
+	  irrespective of this mask.
+
+config RVLAN_AUTH_VLAN
+	int "Default vlan to be used for ports during radius authorization"
+	depends on RVLAN_ENABLE
+	range 1 4094
+	default 4094
+
+config RVLAN_NOAUTH_VLAN
+	int "Vlan to be used for ports whose authorization is denied"
+	depends on RVLAN_ENABLE
+	range 1 4094
+	default 4094
+
+config RVLAN_OBEY_DOTCONFIG
+	bool "When auth is ok, ignore radius' vlan and obey dot-cofig instead"
+	depends on RVLAN_ENABLE
+	default N
+	help
+	  In some installations the radius server os only used to allow/deny
+	  a port to be configured in the WR network.  When this happens,
+	  the vlan number it returns must be ignored, and we obey what
+	  is configured in dot-config instead (e.g. CONFIG_VLANS_PORT03_VID)
+
+config RVLAN_RADIUS_SERVERS
+	string "IP Address(es) of the radius server(s)"
+	depends on RVLAN_ENABLE
+	default "192.168.16.181,192.168.16.182"
+	help
+	  This is an IPV4 address or a list of them.
+	  e.g. "192.168.16.181,192.168.16.182"
+
+config RVLAN_RADIUS_SECRET
+	string "The shared secret to encrypt radius queries"
+	depends on RVLAN_ENABLE
+	default "our-secret"
+	help
+	  The secret string used by radclient as called by radiusvlan
+
+endmenu
+
 config HTTPD_DISABLE
 	bool "Disable web interface"
 	default n
@@ -1239,5 +1319,3 @@ config RTU_HP_MASK_VAL
 endmenu
 
 source Kconfig_vlans.in
-
-

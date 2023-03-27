@@ -13,7 +13,7 @@ start() {
     if [ -f $dotconfig ]; then
 	. $dotconfig
     else
-	echo "$0 unable to start wrs_throttling, unable to source " \
+	echo "$0 unable to set VLANs, unable to source " \
 	      "dot-config ($dotconfig)!"
 	exit 1
     fi

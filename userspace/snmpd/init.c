@@ -28,6 +28,8 @@
 #include "wrsPstatsHCTable.h"
 #include "wrsPtpInstanceTable.h"
 
+#include "init_bridge_mib.h"
+
 #define DOTCONFIG_FILE "/wr/etc/dot-config"
 
 FILE *wrs_logf; /* for the local-hack messages */
@@ -66,4 +68,6 @@ void init_wrsSnmp(void)
 	wrsTimingStatus_data_fill();
 	wrsNetworkingStatus_data_fill();
 
+	/* BRIDGE-MIB and Q-BRIDGE-MIB */
+	init_bridge_mib();
 }

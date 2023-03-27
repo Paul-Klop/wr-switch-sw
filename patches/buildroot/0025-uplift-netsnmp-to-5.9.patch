@@ -1,0 +1,285 @@
+From f85216b2e9b4aa306cc5e06640ebdb850cdae0c1 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <dev_public@wujek.eu>
+Date: Wed, 16 Dec 2020 02:30:17 +0100
+Subject: [PATCH] uplift netsnmp to 5.9
+
+Signed-off-by: Adam Wujek <dev_public@wujek.eu>
+---
+ package/netsnmp/Config.in    |   6 +--
+ package/netsnmp/S59snmpd     | 101 ++++++++++++++++++++++++-------------------
+ package/netsnmp/netsnmp.hash |  10 +++--
+ package/netsnmp/netsnmp.mk   |  43 ++++++++----------
+ 4 files changed, 82 insertions(+), 78 deletions(-)
+ mode change 100755 => 100644 package/netsnmp/S59snmpd
+
+diff --git a/package/netsnmp/Config.in b/package/netsnmp/Config.in
+index 57cc6b9..f22e38b 100644
+--- a/package/netsnmp/Config.in
++++ b/package/netsnmp/Config.in
+@@ -46,9 +46,9 @@ config BR2_PACKAGE_NETSNMP_ENABLE_DEBUGGING
+ 	bool "Enable debugging code"
+ 	help
+ 	  By default net-snmp is compiled without debugging support
+-	  (--disable-debugging). Enable this options if you need debugging
+-	  support, including the ability to log with DEBUGMSG(),
+-	  DEBUGMSGTL() and companion macros.
++	  (--disable-debugging). Enable this options if you need
++	  debugging support, including the ability to log with
++	  DEBUGMSG(), DEBUGMSGTL() and companion macros.
+ 
+ config BR2_PACKAGE_NETSNMP_OPENSSL_INTERNAL
+ 	bool "Enable minimal internal OpenSSL code"
+diff --git a/package/netsnmp/S59snmpd b/package/netsnmp/S59snmpd
+old mode 100755
+new mode 100644
+index 4eea512..96ed823
+--- a/package/netsnmp/S59snmpd
++++ b/package/netsnmp/S59snmpd
+@@ -1,4 +1,4 @@
+-#! /bin/sh -e
++#! /bin/sh
+ ### BEGIN INIT INFO
+ # Provides:           snmpd snmptrapd
+ # Required-Start:     $network $local_fs
+@@ -11,13 +11,9 @@
+ #
+ # Author:    Jochen Friedrich <jochen@scram.de>
+ #
+-set -e
+ 
+ export PATH=/sbin:/usr/sbin:/bin:/usr/bin
+ 
+-test -x /usr/sbin/snmpd || exit 0
+-test -x /usr/sbin/snmptrapd || exit 0
+-
+ # Defaults
+ export MIBDIRS=/usr/share/snmp/mibs
+ SNMPDRUN=yes
+@@ -38,56 +34,71 @@ if [ "$SNMPDCOMPAT" = "yes" ]; then
+   ln -sf /var/agentx/master /var/run/agentx
+ fi
+ 
+-case "$1" in
+-  start)
+-    printf "Starting network management services:"
++start() {
+     if [ "$SNMPDRUN" = "yes" -a -f /etc/snmp/snmpd.conf ]; then
+-      start-stop-daemon -q -S -x /usr/sbin/snmpd -- $SNMPDOPTS
+-      printf " snmpd"
++        printf "Starting SNMP daemon: "
++        start-stop-daemon -q -S -x /usr/sbin/snmpd -- $SNMPDOPTS
++        [ $? = 0 ] && echo "OK" || echo "FAIL"
+     fi
++
+     if [ "$TRAPDRUN" = "yes" -a -f /etc/snmp/snmptrapd.conf ]; then
+-      start-stop-daemon -q -S -x /usr/sbin/snmptrapd -- $TRAPDOPTS
+-      printf " snmptrapd"
++        printf "Starting SNMP trap daemon: "
++        start-stop-daemon -q -S -x /usr/sbin/snmptrapd -- $TRAPDOPTS
++        [ $? = 0 ] && echo "OK" || echo "FAIL"
+     fi
+-    echo "."
+-    ;;
+-  stop)
+-    printf "Stopping network management services:"
+-    start-stop-daemon -q -K $ssd_oknodo -x /usr/sbin/snmpd
+-    printf " snmpd"
+-    start-stop-daemon -q -K $ssd_oknodo -x /usr/sbin/snmptrapd
+-    printf " snmptrapd"
+-    echo "."
+-    ;;
+-  restart)
+-    printf "Restarting network management services:"
+-    start-stop-daemon -q -K $ssd_oknodo -x /usr/sbin/snmpd
+-    start-stop-daemon -q -K $ssd_oknodo -x /usr/sbin/snmptrapd
+-    # Allow the daemons time to exit completely.
+-    sleep 2
++}
++
++stop() {
+     if [ "$SNMPDRUN" = "yes" -a -f /etc/snmp/snmpd.conf ]; then
+-      start-stop-daemon -q -S -x /usr/sbin/snmpd -- $SNMPDOPTS
+-      printf " snmpd"
++        printf "Stopping SNMP daemon: "
++        start-stop-daemon -q -K $ssd_oknodo -x /usr/sbin/snmpd
++        [ $? = 0 ] && echo "OK" || echo "FAIL"
+     fi
++
+     if [ "$TRAPDRUN" = "yes" -a -f /etc/snmp/snmptrapd.conf ]; then
+-      # Allow snmpd time to start up.
+-      sleep 1
+-      start-stop-daemon -q -S -x /usr/sbin/snmptrapd -- $TRAPDOPTS
+-      printf " snmptrapd"
++        printf "Stopping SNMP trap daemon: "
++        start-stop-daemon -q -K $ssd_oknodo -x /usr/sbin/snmptrapd
++        [ $? = 0 ] && echo "OK" || echo "FAIL"
+     fi
+-    echo "."
+-    ;;
+-  reload|force-reload)
+-    printf "Reloading network management services:"
++}
++
++reload() {
+     if [ "$SNMPDRUN" = "yes" -a -f /etc/snmp/snmpd.conf ]; then
+-      start-stop-daemon -q -K -s 1 -p /var/run/snmpd.pid -x /usr/sbin/snmpd
+-      printf " snmpd"
++        printf "Reloading SNMP daemon: "
++        start-stop-daemon -q -K -s 1 -p /var/run/snmpd.pid -x /usr/sbin/snmpd
++        [ $? = 0 ] && echo "OK" || echo "FAIL"
+     fi
+-    echo "."
+-    ;;
+-  *)
+-    echo "Usage: /etc/init.d/snmpd {start|stop|restart|reload|force-reload}"
+-    exit 1
++
++    if [ "$TRAPDRUN" = "yes" -a -f /etc/snmp/snmptrapd.conf ]; then
++        printf "Reloading SNMP trap daemon: "
++        start-stop-daemon -q -K -s 1 -p /var/run/snmptrapd.pid -x /usr/sbin/snmptrapd
++        [ $? = 0 ] && echo "OK" || echo "FAIL"
++    fi
++}
++
++case "$1" in
++    start)
++        start
++        ;;
++
++    stop)
++        stop
++        ;;
++
++    restart)
++        stop
++        # Allow the daemons time to exit completely.
++        sleep 2
++        start
++        ;;
++
++    reload|force-reload)
++        reload
++        ;;
++
++    *)
++        echo "Usage: $0 {start|stop|restart|reload|force-reload}"
++        exit 1
+ esac
+ 
+ exit 0
+diff --git a/package/netsnmp/netsnmp.hash b/package/netsnmp/netsnmp.hash
+index 2c18441..e529718 100644
+--- a/package/netsnmp/netsnmp.hash
++++ b/package/netsnmp/netsnmp.hash
+@@ -1,4 +1,6 @@
+-# From http://sourceforge.net/projects/net-snmp/files/net-snmp/5.7.3/
+-md5	d4a3459e1577d0efa8d96ca70a885e53	net-snmp-5.7.3.tar.gz
+-sha1	97dc25077257680815de44e34128d365c76bd839	net-snmp-5.7.3.tar.gz
+-
++# From http://sourceforge.net/projects/net-snmp/files/net-snmp/5.9/
++md5	382da80138897f294299badf9c62c699		net-snmp-5.9.tar.gz
++sha1	a06260b01e1abf254624dc3e5fd3ffa237a4c9c7	net-snmp-5.9.tar.gz
++# Locally computed
++sha256 04303a66f85d6d8b16d3cc53bde50428877c82ab524e17591dfceaeb94df6071  net-snmp-5.9.tar.gz
++sha256 ed869ea395a1f125819a56676385ab0557a21507764bf56f2943302011381e59  COPYING
+diff --git a/package/netsnmp/netsnmp.mk b/package/netsnmp/netsnmp.mk
+index 0eb3b26..6d8b155 100644
+--- a/package/netsnmp/netsnmp.mk
++++ b/package/netsnmp/netsnmp.mk
+@@ -4,8 +4,8 @@
+ #
+ ################################################################################
+ 
+-NETSNMP_VERSION = 5.7.3
+-NETSNMP_SITE = http://downloads.sourceforge.net/project/net-snmp/net-snmp/$(NETSNMP_VERSION)
++NETSNMP_VERSION = 5.9
++NETSNMP_SITE = https://downloads.sourceforge.net/project/net-snmp/net-snmp/$(NETSNMP_VERSION)
+ NETSNMP_SOURCE = net-snmp-$(NETSNMP_VERSION).tar.gz
+ NETSNMP_LICENSE = Various BSD-like
+ NETSNMP_LICENSE_FILES = COPYING
+@@ -30,14 +30,12 @@ NETSNMP_CONF_OPTS = \
+ 	--with-sys-location="Unknown" \
+ 	--with-mib-modules="$(call qstrip,$(BR2_PACKAGE_NETSNMP_WITH_MIB_MODULES))" \
+ 	--with-out-mib-modules="$(call qstrip,$(BR2_PACKAGE_NETSNMP_WITHOUT_MIB_MODULES))" \
+-	--with-out-transports="Unix" \
+ 	--disable-manuals
+ NETSNMP_INSTALL_STAGING_OPTS = DESTDIR=$(STAGING_DIR) LIB_LDCONFIG_CMD=true install
+ NETSNMP_INSTALL_TARGET_OPTS = DESTDIR=$(TARGET_DIR) LIB_LDCONFIG_CMD=true install
+ NETSNMP_MAKE = $(MAKE1)
+ NETSNMP_CONFIG_SCRIPTS = net-snmp-config
+-
+-NETSNMP_BLOAT_MIBS = BRIDGE DISMAN-EVENT DISMAN-SCHEDULE DISMAN-SCRIPT EtherLike RFC-1215 RFC1155-SMI RFC1213 SCTP SMUX
++NETSNMP_AUTORECONF = YES
+ 
+ ifeq ($(BR2_ENDIAN),"BIG")
+ NETSNMP_CONF_OPTS += --with-endianness=big
+@@ -45,17 +43,21 @@ else
+ NETSNMP_CONF_OPTS += --with-endianness=little
+ endif
+ 
++ifeq ($(BR2_PACKAGE_LIBNL),y)
++NETSNMP_DEPENDENCIES += host-pkgconf libnl
++NETSNMP_CONF_OPTS += --with-nl
++else
++NETSNMP_CONF_OPTS += --without-nl
++endif
++
+ # OpenSSL
+ ifeq ($(BR2_PACKAGE_OPENSSL),y)
+-NETSNMP_DEPENDENCIES += openssl
++NETSNMP_DEPENDENCIES += host-pkgconf openssl
+ NETSNMP_CONF_OPTS += \
+ 	--with-openssl=$(STAGING_DIR)/usr/include/openssl \
+ 	--with-security-modules="tsm,usm" \
+ 	--with-transports="DTLSUDP,TLSTCP"
+-ifeq ($(BR2_STATIC_LIBS),y)
+-# openssl uses zlib, so we need to explicitly link with it when static
+-NETSNMP_CONF_ENV += LIBS=-lz
+-endif
++NETSNMP_CONF_ENV += LIBS=`$(PKG_CONFIG_HOST_BINARY) --libs openssl`
+ else ifeq ($(BR2_PACKAGE_NETSNMP_OPENSSL_INTERNAL),y)
+ NETSNMP_CONF_OPTS += --with-openssl=internal
+ else
+@@ -67,6 +69,11 @@ ifeq ($(BR2_PACKAGE_PCIUTILS),y)
+ NETSNMP_DEPENDENCIES += pciutils
+ endif
+ 
++# For ucd-snmp/lmsensorsMib
++ifeq ($(BR2_PACKAGE_LM_SENSORS),y)
++NETSNMP_DEPENDENCIES += lm-sensors
++endif
++
+ ifneq ($(BR2_PACKAGE_NETSNMP_ENABLE_MIBS),y)
+ NETSNMP_CONF_OPTS += --disable-mib-loading
+ NETSNMP_CONF_OPTS += --disable-mibs
+@@ -88,14 +95,6 @@ else
+ NETSNMP_CONF_OPTS += --disable-applications
+ endif
+ 
+-define NETSNMP_REMOVE_BLOAT_MIBS
+-	for mib in $(NETSNMP_BLOAT_MIBS); do \
+-		rm -f $(TARGET_DIR)/usr/share/snmp/mibs/$$mib-MIB.txt; \
+-	done
+-endef
+-
+-NETSNMP_POST_INSTALL_TARGET_HOOKS += NETSNMP_REMOVE_BLOAT_MIBS
+-
+ ifeq ($(BR2_PACKAGE_NETSNMP_SERVER),y)
+ define NETSNMP_INSTALL_INIT_SYSV
+ 	$(INSTALL) -D -m 0755 package/netsnmp/S59snmpd \
+@@ -103,12 +102,4 @@ define NETSNMP_INSTALL_INIT_SYSV
+ endef
+ endif
+ 
+-define NETSNMP_STAGING_NETSNMP_CONFIG_FIXUP
+-	$(SED) 	"s,^includedir=.*,includedir=\'$(STAGING_DIR)/usr/include\',g" \
+-		-e "s,^libdir=.*,libdir=\'$(STAGING_DIR)/usr/lib\',g" \
+-		$(STAGING_DIR)/usr/bin/net-snmp-config
+-endef
+-
+-NETSNMP_POST_INSTALL_STAGING_HOOKS += NETSNMP_STAGING_NETSNMP_CONFIG_FIXUP
+-
+ $(eval $(autotools-package))
+-- 
+2.7.4
+

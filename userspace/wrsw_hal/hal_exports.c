@@ -170,6 +170,38 @@ int halexp_port_info_cmd(hexp_port_info_params_t * params)
 	return 1;
 }
 
+/* Phase/Clock adjutsment call. Called by the PTPd servo. Controls
+ * both the PLLs and the PPS Generator. */
+int halexp_sfp_tx_cmd(int cmd, int port)
+{
+	int new_status = 0;
+	int ret;
+
+	if (port < 1 || port > halPorts.numberOfPorts) {
+		pr_debug("%s: wrong port number %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	switch (cmd) {
+	case HEXP_SFP_TX_CMD_ENABLE_TX:
+	    new_status = 0;
+	    break;
+	case HEXP_SFP_TX_CMD_DISABLE_TX:
+	    new_status = 1;
+	    break;
+	case HEXP_SFP_TX_CMD_STATUS:
+	    ret = shw_sfp_gpio_get(port - 1);
+	    ret = (ret & SFP_TX_DISABLE) ? HEXP_SFP_TX_CMD_DISABLE_TX : HEXP_SFP_TX_CMD_ENABLE_TX;
+	    return ret;
+	default:
+	    return -EINVAL;
+	}
+
+	shw_sfp_set_tx_disable(port - 1, new_status);
+	return 0;
+}
+
+
 static void hal_cleanup_wripc(void)
 {
 	minipc_close(hal_ch);
@@ -212,6 +244,15 @@ static int export_port_info_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
+static int export_sfp_tx_cmd(const struct minipc_pd *pd,
+			     uint32_t * args, void *ret)
+{
+	int rval;
+
+	rval = halexp_sfp_tx_cmd(args[0] /* cmd */, args[1] /* port */);
+	*(int *)ret = rval;
+	return 0;
+}
 
 /* Creates a wripc server and exports all public API functions */
 int hal_wripc_init(struct hal_port_state *hal_ports, char *logfilename)
@@ -241,10 +282,12 @@ int hal_wripc_init(struct hal_port_state *hal_ports, char *logfilename)
 	__rpcdef_pps_cmd.f = export_pps_cmd;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
 	__rpcdef_port_info_cmd.f = export_port_info_cmd;
+	__rpcdef_sfp_tx_cmd.f = export_sfp_tx_cmd;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
 	minipc_export(hal_ch, &__rpcdef_port_info_cmd);
+	minipc_export(hal_ch, &__rpcdef_sfp_tx_cmd);
 
 	/* FIXME: pll_cmd is empty anyways???? */
 
@@ -277,9 +320,10 @@ int hal_check_running()
 
 	/* check if pid is 0 (shm not filled) or process with provided
 	 * pid does not exist (probably crashed) */
-	if ((hal_head->pid == 0) || (kill(hal_head->pid, 0) != 0))
+	if ((hal_head->pid == 0) || (kill(hal_head->pid, 0) != 0)) {
+		wrs_shm_put(hal_head);
 		return 0;
+	}
 
-	wrs_shm_put(hal_head);
 	return 1;
 }

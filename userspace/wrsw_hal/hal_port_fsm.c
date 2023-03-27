@@ -12,8 +12,10 @@
 #include <linux/if_ether.h>
 #include <linux/if_arp.h>
 #include <linux/if.h>
+#include <linux/rtnetlink.h>
 #include <stdlib.h>
 #include <rt_ipc.h>
+#include <errno.h>
 
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
@@ -66,6 +68,7 @@ static int port_fsm_state_link_up(fsm_t *fsm,  int eventMsk, int isNewState);
 static void init_port(struct hal_port_state * ps);
 static void reset_port(struct hal_port_state * ps);
 static int get_port_link_state(struct hal_port_state * ps,int *linkUp);
+static int link_status_process_netlink(struct hal_port_state * ports);
 
 static fsm_state_table_entry_t port_fsm_states[] =
 {
@@ -363,9 +366,11 @@ static  int port_fsm_build_events(fsm_t *fsm) {
 void hal_port_state_fsm_init_all( struct hal_port_state * ports, halGlobalLPDC_t *globalLpdc)
 {
 	int portIndex;
+	uint32_t bmcr;
+	struct hal_port_state* ps;
 
 	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
-		struct hal_port_state* ps = &ports[portIndex];
+		ps = &ports[portIndex];
 		
 		if ( ps->in_use)
 		{
@@ -383,6 +388,26 @@ void hal_port_state_fsm_init_all( struct hal_port_state * ports, halGlobalLPDC_t
 	hal_port_tx_setup_init_all(ports, globalLpdc);
 	hal_port_rx_setup_init_all(ports);
 	hal_port_pll_setup_init_all(ports);
+	
+	/* Read initial link state (up or down).
+	 * NOTE: Check with RTM_NEWLINK can only notify about changes, does not
+	 * read the current state. */
+	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
+		ps = &ports[portIndex];
+
+		/* Skip not used ports */
+		if (!ps->in_use)
+			continue;
+			
+		pcs_readl (ps, MII_BMCR, &bmcr);
+		ps->evt_powerDown = (bmcr & BMCR_PDOWN);
+
+		if (get_port_link_state(ps, &ps->evt_linkUp) < 0) {
+			/* IOTCL error : We put -1 in the link state.
+			 * It will be considered as invalid */
+			ps->evt_linkUp = -1;
+		}
+	}
 }
 
 /* Call FSM for on all ports */
@@ -390,6 +415,10 @@ void hal_port_state_fsm_run_all( struct hal_port_state * ports) {
 	int portIndex;
 
 	hal_port_poll_rts_state(); // Update rts state on all ports
+
+	/* Check if any link changed its status (up/down).
+	 * If changed, run fsm for it. */
+	link_status_process_netlink(ports);
 
 	/* Call state machine for all ports */
 	for (portIndex = 0; portIndex < HAL_MAX_PORTS; portIndex++) {
@@ -400,11 +429,6 @@ void hal_port_state_fsm_run_all( struct hal_port_state * ports) {
 			pcs_readl( ps, MII_BMCR, &bmcr );
 
 			ps->evt_powerDown = (bmcr & BMCR_PDOWN);
-
-			if ( get_port_link_state(ps, &ps->evt_linkUp) < 0 ) {
-				// IOTCL error : We put -1 in the link state. It will be considered as invalid
-				ps->evt_linkUp=-1;
-			}
 
 			fsm_generic_run(&ps->fsm);
 		}
@@ -495,3 +519,112 @@ static int get_port_link_state(struct hal_port_state * ps,int *linkUp)
 	return 0;
 }
 
+static void link_status_process_netlink_msg(struct hal_port_state * ports,
+					    struct nlmsghdr *h)
+{
+	int nlmsg_len;
+	int portIndex;
+	int new_state;
+	struct hal_port_state* ps;
+	struct ifinfomsg *ifi;
+	struct rtattr *attr;
+
+	ifi = NLMSG_DATA(h);
+	nlmsg_len = h->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
+
+	/* Check all attributes of the NEWLINK message */
+	for (attr = IFLA_RTA(ifi);
+	     RTA_OK(attr, nlmsg_len);
+	     attr = RTA_NEXT(attr, nlmsg_len)) {
+		switch(attr->rta_type) {
+		case IFLA_IFNAME:
+			/* Match interface of incoming message to wri port
+			 * (via interface name) */
+			for (portIndex = 0;
+			     portIndex < HAL_MAX_PORTS;
+			     portIndex++) {
+				ps = &ports[portIndex];
+
+				/* Skip not used ports */
+				if (!ps->in_use)
+				    continue;
+				
+				if (!strncmp((char *) RTA_DATA(attr),
+				    ps->name,
+				    sizeof(ps->name))) {
+					new_state = !!(ifi->ifi_flags & IFF_RUNNING);
+
+					if (ps->evt_linkUp == new_state)
+						continue;
+					
+					pr_info("%s: Link state change detected"
+					        ": was %s, is %s\n",
+						ps->name,
+						ps->evt_linkUp ? "up": "down",
+						new_state ? "up": "down");
+
+					ps->evt_linkUp = new_state;
+
+					/* Run fsm for this port to be sure that
+					 * link down/up event is reflected in
+					 * fsm state. */
+					fsm_generic_run(&ps->fsm);
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
+static int link_status_process_netlink(struct hal_port_state * ports)
+{
+	int ret;
+	static char buf[8192];
+	struct iovec iov = {buf, sizeof(buf)};
+	struct sockaddr_nl peer;
+	struct msghdr m = { &peer, sizeof(peer), &iov, 1};
+	struct nlmsghdr *h;
+
+	/* Pocess all available messages */
+	while (1) {
+		/* NOTE: Check with RTM_NEWLINK can only notify about changes,
+		 * does not read the current state. */
+		ret = recvmsg (halPorts.hal_link_state_fd, &m, MSG_DONTWAIT);
+		if (ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+			/* No message available */
+			return 1;
+		}
+		
+		if (ret < 0) {
+			/* Other error */
+			pr_error("%s: recvmsg(netlink): %s\n", __func__,
+				strerror(errno));
+			return -1;
+		}
+
+		for (h = (struct nlmsghdr *)buf;
+		    NLMSG_OK(h, ret);
+		    h = NLMSG_NEXT (h, ret)) {
+
+			if (h->nlmsg_type == NLMSG_DONE)
+				break;
+
+			if (h->nlmsg_type == NLMSG_ERROR) {
+				pr_error("%s: netlink message error\n", __func__);
+				continue;
+			}
+			if (h->nlmsg_type == RTM_NEWLINK) {
+				/* Link change detected, process it further */
+				link_status_process_netlink_msg(ports, h);
+				continue;
+			}
+			pr_error("%s: unexpected message %i\n", __func__,
+				h->nlmsg_type);
+		}
+	}
+
+	return 0;
+}

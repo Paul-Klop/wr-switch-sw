@@ -35,6 +35,7 @@ static struct pickinfo wrsVersion_pickinfo[] = {
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionGeneralCoresCommitId_i]),
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionWrCoresCommitId_i]),
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersionLastUpdateDate),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionFeatures_i]),
 };
 
 struct wrsVersion_s wrsVersion_s;
@@ -55,6 +56,7 @@ static struct wrs_v_item wrs_version[] = {
 	[wrsVersionSwitchHdlCommitId_i]		= {"wr_switch_hdl-commit:"},
 	[wrsVersionGeneralCoresCommitId_i]	= {"general-cores-commit:"},
 	[wrsVersionWrCoresCommitId_i]		= {"wr-cores-commit:"},
+	[wrsVersionFeatures_i]			= {"features:"},
 };
 
 

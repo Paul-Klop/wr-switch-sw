@@ -51,6 +51,7 @@
 "wrsVersionGeneralCoresCommitId"			"1.3.6.1.4.1.96.100.6.3.12"
 "wrsVersionWrCoresCommitId"			"1.3.6.1.4.1.96.100.6.3.13"
 "wrsVersionLastUpdateDate"			"1.3.6.1.4.1.96.100.6.3.14"
+"wrsVersionFeatures"			"1.3.6.1.4.1.96.100.6.3.15"
 "wrsExpertStatus"			"1.3.6.1.4.1.96.100.7"
 "wrsOperationStatus"			"1.3.6.1.4.1.96.100.7.1"
 "wrsCurrentTimeGroup"			"1.3.6.1.4.1.96.100.7.1.1"

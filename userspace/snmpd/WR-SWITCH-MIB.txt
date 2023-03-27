@@ -26,6 +26,13 @@ wrSwitchMIB MODULE-IDENTITY
     DESCRIPTION  "White Rabbit Switch internal details
                  "
 
+    REVISION     "202303260000Z"
+    DESCRIPTION
+        "Updates for v6.1 WRS firmware release
+        Added objects:
+         - wrsVersionFeatures
+        "
+
     REVISION     "202108310000Z"
     DESCRIPTION
         "Add wrsId OIDs to identify WRS version and manufacturer in sysObjectID.
@@ -546,6 +553,15 @@ wrsVersionLastUpdateDate      OBJECT-TYPE
         "Date and time of last firmware update, this information may not be
         accurate, due to hard restarts or lack of proper time at update."
     ::= { wrsVersionGroup 14 }
+
+wrsVersionFeatures             OBJECT-TYPE
+    SYNTAX                     DisplayString
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "List of extra features available on WR Switch:
+         LJD - Low-Jitter-Daughterboard "
+    ::= { wrsVersionGroup 15 }
 
 -- wrsOperationStatus (.7.1)
 wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }

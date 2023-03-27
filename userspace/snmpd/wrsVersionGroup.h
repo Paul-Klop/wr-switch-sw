@@ -16,9 +16,13 @@
 #define wrsVersionSwitchHdlCommitId_i		10
 #define wrsVersionGeneralCoresCommitId_i	11
 #define wrsVersionWrCoresCommitId_i		12
+/* wrsVersionLastUpdateDate */
+#define wrsVersionFeatures_i			13
+#define wrsVersionSIZE				14
+
 
 struct wrsVersion_s {
-	char wrsVersions[13][32];	/* array of version strings */
+	char wrsVersions[wrsVersionSIZE][32];	/* array of version strings */
 	char wrsVersionLastUpdateDate[32];
 };
 

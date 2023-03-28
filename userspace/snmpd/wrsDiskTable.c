@@ -17,16 +17,6 @@ static struct pickinfo wrsDiskTable_pickinfo[] = {
 	FIELD(wrsDiskTable_s, ASN_OCTET_STR, wrsDiskFilesystem),
 };
 
-static int32_t int_saturate(int64_t value)
-{
-	if (value >= INT32_MAX)
-		return INT32_MAX;
-	else if (value <= INT32_MIN)
-		return INT32_MIN;
-
-	return value;
-}
-
 time_t wrsDiskTable_data_fill(unsigned int *ret_n_rows)
 {
 	static time_t time_update;

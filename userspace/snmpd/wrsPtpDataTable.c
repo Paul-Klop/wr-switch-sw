@@ -33,16 +33,6 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 
 };
 
-static int32_t int_saturate(int64_t value)
-{
-	if (value >= INT32_MAX)
-		return INT32_MAX;
-	else if (value <= INT32_MIN)
-		return INT32_MIN;
-
-	return value;
-}
-
 time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 {
 	unsigned ii;

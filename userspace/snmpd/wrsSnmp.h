@@ -112,5 +112,6 @@ struct pickinfo {
 #define SL_INFO  "Info    "
 #define SL_DEBUG "DEBUG   "
 
+int32_t int_saturate(int64_t value);
 
 #endif /* WRS_SNMP_H */

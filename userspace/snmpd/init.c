@@ -71,3 +71,13 @@ void init_wrsSnmp(void)
 	/* BRIDGE-MIB and Q-BRIDGE-MIB */
 	init_bridge_mib();
 }
+
+int32_t int_saturate(int64_t value)
+{
+	if (value >= INT32_MAX)
+		return INT32_MAX;
+	else if (value <= INT32_MIN)
+		return INT32_MIN;
+
+	return value;
+}

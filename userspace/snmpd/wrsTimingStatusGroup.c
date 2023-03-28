@@ -514,13 +514,13 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			if (wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames) {
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "No TX PTP frames flowing for port %i (wri%i) which is up and in WR mode\n",
+					 "No TX PTP frames flowing for port %i (wri%i) which is configured for monitoring\n",
 					 slog_obj_name, i + 1, i + 1);
 			}
 			if (wrsPortStatusPtpRxFrames_prev[i] == p_a[i].wrsPortStatusPtpRxFrames) {
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "No RX PTP frames flowing for port %i (wri%i) which is up and in WR mode\n",
+					 "No RX PTP frames flowing for port %i (wri%i) which is configured for monitoring\n",
 					 slog_obj_name, i + 1, i + 1);
 			}
 			/* can't go worse, but check other ports for logging */

@@ -30,6 +30,7 @@ wrSwitchMIB MODULE-IDENTITY
     DESCRIPTION
         "Updates for v6.1 WRS firmware release
         Added objects:
+         - wrsSystemClockDriftUs
          - wrsVersionFeatures
         "
 
@@ -730,6 +731,15 @@ wrsLeapSecSourceURL OBJECT-TYPE
     DESCRIPTION
         "Url to the leap second file"
     ::= { wrsCurrentTimeGroup 11 }
+
+wrsSystemClockDriftUs OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Drift of system clock expressed in microseconds with saturation to
+            min/max integer values"
+    ::= { wrsCurrentTimeGroup 12 }
 
 --wrsBootStatusGroup (.7.1.2)
 wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }

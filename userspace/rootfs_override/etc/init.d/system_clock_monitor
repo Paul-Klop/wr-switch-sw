@@ -95,12 +95,17 @@ setCronConfig ()
 compareToThreshold () 
 {
 	local  __resultvar=$1
-	local  __c_offset=$2
+	# $(( )) to remove leading "+"
+	local  __c_offset=$(( $2 ))
 	local  __c_threshold=$3
 
 	if (( $__c_offset >= __c_threshold )) ; then
-		x=$(expr $__c_offset - $__c_threshold)
-		debug "System clock drift is exceedind the threshold by ${x} sec"
+		x=$(( $__c_offset - $__c_threshold ))
+		debug "X1System clock drift is exceeding the threshold by ${x} sec"
+		eval $__resultvar="1"
+	elif (( -$__c_offset >= __c_threshold )) ; then
+		x=$(( $__c_offset + $__c_threshold ))
+		debug "X2System clock drift is exceeding the threshold by ${x} sec"
 		eval $__resultvar="1"
 	else
 		debug "System clock drift is not exceeding the threshold"
@@ -109,26 +114,35 @@ compareToThreshold ()
 }
 
 #
-# Decode NTPD deamon output to get the offset in ms
+# Decode NTPD deamon output to get the offset in seconds.useconds
 #
 
-decodeOffsetMs () 
+decodeOffset ()
 {
 	local __resultvar=$1
 	local __str=$2
-	local __offset=$(echo $__str | sed -n 's/.* offset:[+-]\?\([0-9]*\).*/\1/p')
+	local __offset=$(echo $__str | sed -n 's/.* offset:\?\([+-][0-9]*\)\.\?\([0-9]*\) .*/\1.\2/p')
 	
 	if [[ -z "$__offset" ]] ; then
 		# Empty string
 		debug "Invalid Offset !!!"
 		debug "NTP msg=\"$__str\""
-		eval $__resultvar="-1"
-	else 
-		offset=$(expr $__offset + 0)
-		debug "NTP offset=$__offset ms" 
+		return 1
+	else
+		# Change the sign of the offset. ntpd returns a positive
+		# offset when the ntp time is ahead of the local time, which is
+		# counter-intuitive.
+		if [ "${__offset:0:1}" = "-" ]; then
+			__offset=+${__offset:1}
+		elif [ "${__offset:0:1}" = "+" ]; then
+			__offset=-${__offset:1}
+		fi
+		debug "NTP offset=$__offset s"
 		eval $__resultvar="'$__offset'"
+		return 0
 	fi 
 }
+
 
 #
 # Kill the NTPD daemon in background after few seconds
@@ -171,9 +185,9 @@ read_ntp_server()
 		killNTPD 10
 		ntpRes=$($ntpTool  -n -w -q -d -p  $server 2>&1)
 		if [ -n "$ntpRes" ] ; then
-			decodeOffsetMs offset "$ntpRes"
-			if (( $offset >= 0 )) ; then
-				compareToThreshold alarmState $offset $ltThreshold
+			decodeOffset offset "$ntpRes"
+			if [ $? -eq 0 ] ; then
+				compareToThreshold alarmState ${offset%.*} $ltThreshold
 				if (( $alarmState == 1 )) ; then
 					# Exceeded Threshold  
 					writeMsg "exceeded_threshold" $systemClockMonitoringStatus

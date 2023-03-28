@@ -54,6 +54,7 @@ static struct pickinfo wrsCurrentTime_pickinfo[] = {
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecStatusDetails),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecSourceStatusDetails),
 	FIELD(wrsCurrentTime_s, ASN_OCTET_STR, wrsLeapSecSourceUrl),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockDriftUs),
 };
 
 static service_exp_t services[]={
@@ -176,7 +177,9 @@ static void get_wrsSystemClockStatusDetails(void){
 	static int first_run=1;
 	char buff[21]; /* 1 for null char */
 	FILE *f;
-	int status=0, drift=0;
+	int status = 0;
+	int drift = 0;
+	int drift_us = 0;
 	static int 	threshold=0, unit=0, checkInterval=0;
 
 	update_expected_services();
@@ -212,10 +215,11 @@ static void get_wrsSystemClockStatusDetails(void){
 
 			if ((f=fopen(SYSTEMCLOCK_DRIFT, "r"))!=NULL) {
 				/* readline without newline */
-				if ( fscanf(f, "%d", &drift)!=1 ) {
+				if (fscanf(f, "%d.%d", &drift, &drift_us) != 2) {
 					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: invalid "
 						 "drift value in file " SYSTEMCLOCK_DRIFT "\n",slog_obj_name);
-					drift=0;
+					drift = 0;
+					drift_us = 0;
 				}
 				fclose(f);
 			} else {
@@ -270,6 +274,7 @@ static void get_wrsSystemClockStatusDetails(void){
 	}
 	wrsCurrentTime_s.wrsSystemClockStatusDetails = status;
 	wrsCurrentTime_s.wrsSystemClockDrift = drift;
+	wrsCurrentTime_s.wrsSystemClockDriftUs = int_saturate((int64_t)drift * 1000000 + (int64_t)drift_us);
 	wrsCurrentTime_s.wrsSystemClockDriftThreshold=threshold;
 	wrsCurrentTime_s.wrsSystemClockCheckInterval=checkInterval;
 	wrsCurrentTime_s.wrsSystemClockCheckIntervalUnit=unit;

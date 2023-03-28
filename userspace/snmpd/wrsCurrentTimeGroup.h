@@ -55,6 +55,7 @@ struct wrsCurrentTime_s {
 	int wrsLeapSecSourceStatusDetails; /* Leap second source status details*/
 	int wrsLeapSecSource;       /* Source of the leap seconds file */
 	char wrsLeapSecSourceUrl[WRS_LEAP_SECOND_SOURCE_URL_LEN + 1]; /* URL to download leap second file */
+	int wrsSystemClockDriftUs;    /* Current system clock drift value in us */
 };
 
 extern struct wrsCurrentTime_s wrsCurrentTime_s;

@@ -262,12 +262,6 @@ int64_t interval_to_picos(TimeInterval interval)
 	return (interval * 1000) >>  TIME_INTERVAL_FRACBITS;
 }
 
-int64_t pp_time_to_picos(struct pp_time *ts)
-{
-	return ts->secs * PP_NSEC_PER_SEC
-		+ ((ts->scaled_nsecs * 1000 + 0x8000) >> TIME_INTERVAL_FRACBITS);
-}
-
 TimeInterval pp_time_to_interval (struct pp_time *pptime) {
 	return pptime->scaled_nsecs;
 }
@@ -987,10 +981,6 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		printf("md:%s ", timeIntervalToString(servo->meanDelay,buf));
 		printf("dms:%s ", timeToString(&servo->servo_snapshot.delayMS,buf));
 		if ( wr_servo ) {
-			int64_t crtt= wr_servo->delayMM_ps - pp_time_to_picos(&wr_servo_ext->delta_txm) -
-					pp_time_to_picos(&wr_servo_ext->delta_rxm) - pp_time_to_picos(&wr_servo_ext->delta_txs) -
-					pp_time_to_picos(&wr_servo_ext->delta_rxs);
-
 			printf("lock:%i ", wr_servo->tracking_enabled);
 			printf("dtxm:%s ", timeToString(&wr_servo_ext->delta_txm,buf));
 			printf("drxm:%s ", timeToString(&wr_servo_ext->delta_rxm,buf));
@@ -1004,11 +994,12 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		 */
 		//printf("ll:%d ",
 		//       (int) (crtt / 2 / 1e6 * 299.792458 / 1.4827 * 100));
-			printf("crtt:%llu ", crtt);
+			printf("crtt:%lld ", wr_servo->delayMM_ps);
 			printf("setp:%d ", wr_servo->cur_setpoint_ps);
 		}
 		if ( l1e_servo ) {
 			printf("lock:%i ", l1e_servo->tracking_enabled);
+			printf("crtt:%lld ", l1e_servo->delayMM_ps);
 			printf("setp:%d ", l1e_servo->cur_setpoint_ps);
 		}
 		printf("asym:%s ", timeIntervalToString(servo->delayAsymmetry,buf));

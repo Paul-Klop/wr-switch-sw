@@ -631,7 +631,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 		}
 
 		if ( ppsi_alive && ppg_arch!=NULL) {
-			term_cprintf(C_BLUE, "TimingMode: ");
+			term_cprintf(C_BLUE, "PLL mode: ");
 			term_cprintf(C_WHITE, "%s",getStateAsString(timing_mode_state,((wrs_arch_data_t *)ppg_arch)->timingMode));
 			term_cprintf(C_BLUE, "    PLL locking state: ");
 			term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));

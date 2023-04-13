@@ -299,25 +299,27 @@ static void get_wrsSoftPLLStatus(void)
 		if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
 			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
-					  "SoftPLL in GrandMaster mode has unlocked from "
-					  "the external reference. Delock counter is %d\n",
-					  slog_obj_name, s->wrsSpllDelCnt);
+				 "SoftPLL in GrandMaster mode has unlocked from "
+				 "the external reference. "
+				 "Delock counter is %d, increased by %d\n",
+				 slog_obj_name, s->wrsSpllDelCnt,
+				 s->wrsSpllDelCnt - spll_DelCnt_prev);
 		}
 		if (s->wrsSpllMode == WRS_SPLL_MODE_MASTER && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
 			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
-					  "SoftPLL in Master mode has unlocked. Delock "
-					  "counter insceased by %d\n",
-					  slog_obj_name,
-					  s->wrsSpllDelCnt - spll_DelCnt_prev);
+				 "SoftPLL in Master mode has unlocked. "
+				 "Delock counter is %d, increased by %d\n",
+				 slog_obj_name, s->wrsSpllDelCnt,
+				 s->wrsSpllDelCnt - spll_DelCnt_prev);
 		}
 		if (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
 			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
-					  "SoftPLL in Slave mode has unlocked. Delock "
-					  "counter insceased by %d\n",
-					  slog_obj_name,
-					  s->wrsSpllDelCnt - spll_DelCnt_prev);
+				 "SoftPLL in Slave mode has unlocked. "
+				 "Delock counter is %d, increased by %d\n",
+				 slog_obj_name, s->wrsSpllDelCnt,
+				 s->wrsSpllDelCnt - spll_DelCnt_prev);
 		}
 	}
 	/* check if any of fields equal to 0 or WARNING_NA */

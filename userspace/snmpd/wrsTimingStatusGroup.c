@@ -296,7 +296,7 @@ static void get_wrsSoftPLLStatus(void)
 
 	/* check if warning */
 	if (!t->wrsSoftPLLStatus) {
-		if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0) {
+		if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
 			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: "
 					  "SoftPLL in GrandMaster mode has unlocked from "

@@ -16,6 +16,22 @@ start_counter() {
 	echo "$START_COUNTER" > $COUNTER_FILE
 }
 
+snmpd_start() {
+    # Log source address (-a)
+    start-stop-daemon -q -p $SNMP_PID -S \
+		--exec /usr/sbin/snmpd -- $LOG -p $SNMP_PID -a -c $SNMP_CONF
+
+    ret=$?
+    if [ $ret -eq 0 ]; then
+	start_counter
+	echo "OK"
+    elif [ $ret -eq 1 ]; then
+	echo "Failed (already running?)"
+    else
+	echo "Failed"
+    fi
+}
+
 start() {
     echo -n "Starting snmpd daemon: "
 
@@ -42,22 +58,13 @@ start() {
         # file doesn't exist yet so it's a boot call, delay to avoid spurious
 	# errors
 	echo "Delaying the start of snmp daemon"
-	sleep 60
+	{ sleep 60; snmpd_start; } &
+	return
     fi
 
-    # Log source address (-a)
-    start-stop-daemon -q -p $SNMP_PID -S \
-		--exec /usr/sbin/snmpd -- $LOG -p $SNMP_PID -a -c $SNMP_CONF
+    # start snmpd without delay
+    snmpd_start
 
-    ret=$?
-    if [ $ret -eq 0 ]; then
-	start_counter
-	echo "OK"
-    elif [ $ret -eq 1 ]; then
-	echo "Failed (already running?)"
-    else
-	echo "Failed"
-    fi
 }
 
 stop() {

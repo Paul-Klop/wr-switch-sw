@@ -19,8 +19,9 @@
 set init
 #if "set init" don't run as daemon. "set daemon" only specify interval
 set daemon  10              # check services at 10 seconds intervals,
-   with start delay 30      # optional: delay the first check by 30 seconds (by 
+   with start delay 90      # optional: delay the first check by 90 seconds (by
 #                           # default Monit check immediately after Monit start)
+#                           # Wait extra 60 seconds to give snmpd time to start
 #
 #
 ## Set syslog logging with the 'daemon' facility. If the FACILITY option is

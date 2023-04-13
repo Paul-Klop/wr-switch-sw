@@ -910,15 +910,6 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(delayMM,buf));
 		}
 
-		//term_cprintf(C_BLUE, "Estimated link length:     ");
-		/* (RTT - deltas) / 2 * c / ri
-		 c = 299792458 - speed of light in m/s
-		 ri = 1.4682 - refractive index for fiber g.652. However,
-			       experimental measurements using long (~5km) and
-			       short (few m) fibers gave a value 1.4827
-		 */
-		//term_cprintf(C_WHITE, "%10.2f meters\n",
-		//	crtt / 2 / 1e6 * 299.792458 / 1.4827);
 
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayAsymmetry   : ");
@@ -950,6 +941,17 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
 			term_cprintf(C_WHITE, "%16.3f nsec\n",wr_servo->skew_ps/1000.0);
+			term_cprintf(C_CYAN," | "); term_cprintf(C_BLUE, "Estimated link len:      ");
+			/* crtt / 2 * c / ri
+			c = 299792458 - speed of light in m/s
+			ri = 1.4682 - refractive index for fiber g.652. However,
+				    experimental measurements using long (~5km) and
+				    short (few m) fibers gave a value 1.4688.
+				    For different wavelengths this value will be different
+				    Please note that this value is just an estimation.
+			*/
+			term_cprintf(C_WHITE, "%10.3f meters\n",
+				     wr_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
 		}
 
 		if ( l1e_servo ) {
@@ -958,6 +960,17 @@ void show_servo(struct inst_servo_t *servo, int alive)
 
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
 			term_cprintf(C_WHITE, "%16.3f nsec\n",l1e_servo->skew_ps/1000.0);
+			term_cprintf(C_CYAN," | "); term_cprintf(C_BLUE, "Estimated link len:      ");
+			/* crtt / 2 * c / ri
+			c = 299792458 - speed of light in m/s
+			ri = 1.4682 - refractive index for fiber g.652. However,
+				    experimental measurements using long (~5km) and
+				    short (few m) fibers gave a value 1.4688.
+				    For different wavelengths this value will be different
+				    Please note that this value is just an estimation.
+			*/
+			term_cprintf(C_WHITE, "%10.3f meters\n",
+				     l1e_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
 		}
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Update counter   : ");
 		term_cprintf(C_WHITE, "%16u times\n", servo->servo_snapshot.update_count);
@@ -999,21 +1012,31 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			printf("drxm:%s ", timeToString(&wr_servo_ext->delta_rxm,buf));
 			printf("dtxs:%s ", timeToString(&wr_servo_ext->delta_txs,buf));
 			printf("drxs:%s ", timeToString(&wr_servo_ext->delta_rxs,buf));
-		/* (RTT - deltas) / 2 * c / ri
-		 c = 299792458 - speed of light in m/s
-		 ri = 1.4682 - refractive index for fiber g.652. However,
-			       experimental measurements using long (~5km) and
-			       short (few m) fibers gave a value 1.4827
-		 */
-		//printf("ll:%d ",
-		//       (int) (crtt / 2 / 1e6 * 299.792458 / 1.4827 * 100));
 			printf("crtt:%lld ", wr_servo->delayMM_ps);
 			printf("setp:%d ", wr_servo->cur_setpoint_ps);
+			/* crtt / 2 * c / ri
+			c = 299792458 - speed of light in m/s
+			ri = 1.4682 - refractive index for fiber g.652. However,
+				      experimental measurements using long (~5km) and
+				      short (few m) fibers gave a value 1.4688.
+				      For different wavelengths this value will be different
+				      Please note that this value is just an estimation.
+			*/
+			printf("ll:%.3f ", wr_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
 		}
 		if ( l1e_servo ) {
 			printf("lock:%i ", l1e_servo->tracking_enabled);
 			printf("crtt:%lld ", l1e_servo->delayMM_ps);
 			printf("setp:%d ", l1e_servo->cur_setpoint_ps);
+			/* crtt / 2 * c / ri
+			c = 299792458 - speed of light in m/s
+			ri = 1.4682 - refractive index for fiber g.652. However,
+				      experimental measurements using long (~5km) and
+				      short (few m) fibers gave a value 1.4688.
+				      For different wavelengths this value will be different
+				      Please note that this value is just an estimation.
+			*/
+			printf("ll:%.3f ", l1e_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
 		}
 		printf("asym:%s ", timeIntervalToString(servo->delayAsymmetry,buf));
 		printf("cko:%s ", timeIntervalToString(servo->offsetFromMaster,buf));

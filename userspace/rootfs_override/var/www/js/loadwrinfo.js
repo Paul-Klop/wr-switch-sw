@@ -60,9 +60,9 @@ function drawrowtable(data){
 }
 
 function drawtimingtable(data){
-	var names=[["WR time", "TAI"],["Switch time","UTC"],["Servo state", "ss"],["Round-trip time (mu)", "mu"],
+	var names=[["WR time", "TAI"],["Switch time","UTC"],["Servo state", "ss"],["Mean Delay (no deltas)", "md"],
 		["Master-slave delay","dms"],["Master PHY delays TX", "dtxm"], ["Master PHY delays RX", "drxm"],
-		["Slave PHY delays TX", "dtxs"],["Slave PHY delays RX", "drxs"], ["Total link asymmetry","asym"],
+		["Slave PHY delays TX", "dtxs"],["Slave PHY delays RX", "drxs"], ["Corrected Round-trip time (crtt)","crtt"], ["Total link asymmetry","asym"],
 		["Estimated link length","ll"],
 		["Clock offset", "cko"],["Phase setpoint","setp"],["Servo update counter","ucnt"]];
 	
@@ -71,34 +71,41 @@ function drawtimingtable(data){
 	
 	var j=0;
 	data = data.split(",");
+
 	for (var i = 0; i < data.length; i++) {
-		if((data[i].match(/:/g) || []).length>1){
-			tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i] + '</td></tr>';
-			j++;
-		}	
-		else if((data[i].match(/:/g) || []).length==1){	
-			data[i] = data[i].split(":");
-			if(data[i][0].indexOf("ss")>=0){
-				data[i][1] = data[i][1].replace("\'",'');
-				data[i][1] = data[i][1].replace("\'",'');
-				tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1] + '</td></tr>';
-                                j++;
+		if (i == 0 || i == 1)
+			tablewr += '<tr><td>' + names[i][0] + '</td><td>' + data[i] + '</td></tr>';
+		data[i] = data[i].split(":");
+
+		for (j = 0; j < names.length; j++) {
+			if (data[i][0] === names[j][1]) {
+				if (names[j][1] === "ucnt") {
+					tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1] + ' times' + '</td></tr>';
+				} else if (names[j][1] === "ss") {
+					data[i][1] = data[i][1].replace("\'",'');
+					data[i][1] = data[i][1].replace("\'",'');
+					tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1] + '</td></tr>';
+				} else if (names[j][1] === "dms"
+					   || names[j][1] === "dtxm"
+					   || names[j][1] === "drxm"
+					   || names[j][1] === "dtxs"
+					   || names[j][1] === "drxs"
+					  ) {
+					tablewr += '<tr><td>' + names[j][0] + '</td><td>' + (data[i][1]*1000000000).toFixed(3) + ' nsec' + '</td></tr>';
+				} else if (names[j][1] === "md"
+					   || names[j][1] === "crtt"
+					   || names[j][1] === "setp"
+					   || names[j][1] === "asym"
+					   || names[j][1] === "cko"
+					  ) {
+					tablewr += '<tr><td>' + names[j][0] +'</td><td>' + data[i][1] + ' nsec' + '</td></tr>';
+				} else if (names[j][1] === "ll") {
+					tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1] + ' meters' + '</td></tr>';
+				} else
+				tablewr += '<tr><td>' + names[j][0] +'</td><td>' + data[i][1] + '' + '</td></tr>';
 			}
-			else if(data[i][0].indexOf("ucnt")>=0){
-				tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1] + ' times' + '</td></tr>';
-				j++;
-			}
-			else if(data[i][0].indexOf("ll")>=0){
-				tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1]/100 + ' m ' + '</td></tr>';
-				j++;
-			}
-			else if(data[i][0].indexOf("sv")<0 && data[i][0].indexOf("crtt")<0 && data[i][0].indexOf("lock")<0){
-				tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1]/1000 + ' nsec' + '</td></tr>';
-				j++;
-			}	
 		}
 	}
-	
 	tablewr += '</table></div>';
 	return tablewr;
 }

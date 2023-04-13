@@ -191,7 +191,8 @@ function wrs_main_info(){
 	#Obtain the temperatures using the last line of (wr-mon -w)
 	$temperatures=shell_exec("cat /tmp/www_ports.txt 2>/dev/null | tail -1");
 	$arr = split(" ", $temperatures);
-	$temperatures = $arr[1];
+	array_shift($arr);
+	$temperatures = implode($arr, " ");
 
 	$ports = shell_exec("/wr/bin/wr_mon -w | tail -2 | head -1");
         $arr2 = explode(" ", $ports);

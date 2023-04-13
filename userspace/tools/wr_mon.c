@@ -671,6 +671,9 @@ void show_ports(int hal_alive, int ppsi_alive)
 				term_cprintf(C_RED, "     ");
 
 			term_cprintf(C_CYAN, "|");
+		}
+		
+		if (mode == SHOW_GUI || mode == WEB_INTERFACE) {
 
 			instance_port = 0;
 			/*
@@ -691,7 +694,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 						 * skip */
 						continue;
 					}
-					if (instance_port > 0) {
+					if (mode == SHOW_GUI && instance_port > 0) {
 						term_cprintf(C_CYAN, "\n      |      |");
 					}
 					instance_port++;
@@ -718,6 +721,22 @@ void show_ports(int hal_alive, int ppsi_alive)
 						}
 					}
 					str_config[sizeof(str_config)-1]=0; // Force the string to be well terminated
+					if (mode == WEB_INTERFACE) {
+						unsigned char *p = ppi->activePeer;
+						printf("%-5s ", if_name);
+						printf("%s ", state_up(port_state)
+							? "up" : "down");
+						printf("%s ", str_config);
+						printf("%s ", port_state->locked
+							? "Locked" : "NoLock");
+						printf("%s ", port_state->calib.rx_calibrated
+							&& port_state->calib.tx_calibrated
+							? "Calibrated" : "Uncalibrated");
+						printf("%02x:%02x:%02x:%02x:%02x:%02x ",
+							p[0], p[1], p[2], p[3], p[4], p[5]);
+						printf("\n");
+						continue;
+					}
 					/* print instance number */
 					term_cprintf(C_WHITE, " %2d ", j);
 					term_cprintf(C_CYAN, "|");
@@ -804,19 +823,13 @@ void show_ports(int hal_alive, int ppsi_alive)
 					}
 				}
 			}
-			if (!instance_port || !ppsi_alive) {
-				term_cprintf(C_WHITE, " -- ");
-				term_cprintf(C_CYAN, "|              |            |                   |                              |     |");
+			if (mode == SHOW_GUI) {
+				if (!instance_port || !ppsi_alive) {
+					term_cprintf(C_WHITE, " -- ");
+					term_cprintf(C_CYAN, "|              |            |                   |                              |     |");
+				}
+				term_cprintf(C_WHITE, "\n");
 			}
-			term_cprintf(C_WHITE, "\n");
-		} else if (mode & WEB_INTERFACE) {
-			printf("%s ", state_up(port_state)
-				? "up" : "down");
-			printf("%s ", port_state->locked
-				? "Locked" : "NoLock");
-			printf("%s ", port_state->calib.rx_calibrated
-				&& port_state->calib.tx_calibrated
-				? "Calibrated" : "Uncalibrated");
 		} else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state));
@@ -1011,6 +1024,8 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		/* SPEC shows temperature, but that can be selected separately
 		 * in this program
 		 */
+		if (mode & WEB_INTERFACE)
+			printf("\n");
 	}
 }
 
@@ -1026,7 +1041,7 @@ void show_servos(int alive) {
 
 void show_temperatures(void)
 {
-	if ((mode == SHOW_GUI) || (mode & WEB_INTERFACE)) {
+	if (mode == SHOW_GUI) {
 		if (mode == SHOW_GUI) {
 /*                                              -------------------------------------------------------------------------------*/
 			term_cprintf(C_CYAN, "\n-------------------------------- Temperatures ---------------------------------\n");
@@ -1052,12 +1067,16 @@ void show_temperatures(void)
 		printf("pll:%2.2f ", temp_sensors_local.pll/256.0);
 		printf("psl:%2.2f ", temp_sensors_local.psl/256.0);
 		printf("psr:%2.2f", temp_sensors_local.psr/256.0);
+		if (mode & WEB_INTERFACE)
+			printf("\n");
 	}
 }
 
 void show_time(void)
 {
 	printf("TIME sec:%lld nsec:%d ", seconds, nanoseconds);
+	if (mode & WEB_INTERFACE)
+		printf("\n");
 }
 
 void show_all(void)
@@ -1077,18 +1096,18 @@ void show_all(void)
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0))
 								+ ignore_alive;
 
-	if (mode & SHOW_WR_TIME) {
+	if (mode & (SHOW_WR_TIME | WEB_INTERFACE)) {
 		if (ppsi_alive)
 			show_time();
 		else if (mode == SHOW_ALL)
 			printf("PPSI is dead!\n");
 	}
 
-	if ((mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) || mode == SHOW_GUI) {
+	if ((mode & (SHOW_ALL_PORTS | WEB_INTERFACE)) || mode == SHOW_GUI) {
 		show_ports(hal_alive,ppsi_alive);
 	}
 
-	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
+	if ((mode & (SHOW_SERVO | WEB_INTERFACE)) || mode == SHOW_GUI) {
 		show_servos(ppsi_alive);
 	}
 

@@ -38,7 +38,7 @@ $options = Array (
 	Array ("HOSTNAME","Hostname","uname -n","y"),
 	Array ("KERNEL","Kernel Version","uname -r","y"),
 	Array ("KERNELCOMPILEDDATE","Kernel Compiled Date","uname -v","y"),
-	Array ("FIRMWARE","Firmware Version","/wr/bin/wrs_version |  awk '{print $4}'","y"),
+	Array ("FIRMWARE","Firmware Version","cat /tmp/www_wrs_version.txt | grep software-version |  awk '{print $2}'","y"),
 	Array ("HARDWARE","Hardware Version","cat /tmp/www_wrs_version.txt  | grep 'scb\|back' | sort -r | sed 's/back/ back/' | sed 's/-version: /: v/'","y"),
 	Array ("FPGA","FPGA Version","cat /tmp/www_wrs_version.txt | grep 'fpga-type' | sed 's/[^:]*: //'","y"),
 	Array ("COMPILEDBY","Compiled By","cat /tmp/www_wrs_version.txt | grep 'bult-by' | sed 's/[^:]*: //'","y"),

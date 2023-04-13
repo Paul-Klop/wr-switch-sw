@@ -29,7 +29,8 @@ function get_info(){
 
 function updateValues(){
 	$("#sfp_panel").html(datainfo[2]);
-	$("#temp").text(datainfo[0]);
+	datainfo[0].shift();
+	$("#temp").text(datainfo[0].join(" "));
 	$("#datewr").html(datainfo[1][0] + '<br>' + datainfo[1][1]);
 
 	var status;

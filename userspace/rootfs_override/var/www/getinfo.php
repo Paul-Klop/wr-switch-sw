@@ -12,7 +12,7 @@ include 'functionsget.php';
 
 $data = array();
 
-array_push($data, getTemperatures(1));
+array_push($data, getTemperatures());
 array_push($data, getWrDate());
 array_push($data, getTablePortStatus());
 array_push($data, getTiming());

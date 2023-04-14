@@ -193,7 +193,6 @@ function print_instance_header() {
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_T24P_TRANS_POINT" >>$OUTPUT_FILE
 	echo -e "    int \"timestampCorrectionPortDS.t24p_trans_point (ps)\"" >>$OUTPUT_FILE
-	echo -e "    default ${t24p}" >>$OUTPUT_FILE
 	echo -e " help" >>$OUTPUT_FILE
 	echo -e "	 Defines the phase transition point for reception timestamps t2/t4 (ps)" >>$OUTPUT_FILE
 		
@@ -329,8 +328,20 @@ function print_instance_header() {
 }
 
 function print_instance_footer() { 
- 
+	local portIdx=$1
+	local portStr=`printf "%02d" $portIdx`
+
+	local instIdx=$2
+	local instStr=`printf "%02d" $instIdx`
+
+	local t24p=${port_t24p[$1]}
+
 	echo -e "\nendmenu" >>$OUTPUT_FILE
+
+	echo -e "\n# Keep T24P_TRANS_POINT also for ports without instances" >>$OUTPUT_FILE
+	echo -e "config PORT${portStr}_INST${instStr}_T24P_TRANS_POINT" >>$OUTPUT_FILE
+	echo -e "    int" >>$OUTPUT_FILE
+	echo -e "    default ${t24p}" >>$OUTPUT_FILE
 }
 
 declare -A port_tx=(

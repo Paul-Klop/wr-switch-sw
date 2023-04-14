@@ -26,6 +26,7 @@
 #include "hal_ports.h"
 #include "hal_timer.h"
 #include "hal_timing.h"
+#include "hal_port_leds.h"
 
 #define MAX_CLEANUP_CALLBACKS 16
 

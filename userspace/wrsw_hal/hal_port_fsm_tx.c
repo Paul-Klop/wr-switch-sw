@@ -551,19 +551,6 @@ static void _load_tx_calibration_file(struct hal_port_state * ports) {
 	cfg_close(_calibrationConfig);
 }
 
-static int file_exists(const char *filename)
-{
-	FILE *f = fopen(filename, "r");
-
-	if (f != NULL)
-	{
-		fclose(f);
-		return 1;
-	}
-
-	return 0;
-}
-
 static void _write_tx_calibration_file(struct hal_port_state * ps)
 {
 	int i;

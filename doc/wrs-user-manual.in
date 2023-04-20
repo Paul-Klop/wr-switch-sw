@@ -2499,7 +2499,7 @@ decompression and the @t{-C} (change directory) option.
 
 
 
- Tools
+Most of the tools
 are build from source files in @file{userspace/tools} while the
 scripts are copied directly from @file{userspace/rootfs_override/wr/bin}.
 
@@ -2660,6 +2660,21 @@ The following tools and scripts are provided:
 	boot time with parameters from the dot-config. For more
 	information, please refer to the
 	@ref{Configuration Items that Apply at Run Time}.
+
+@item ethtool
+  The standad Linux tool used to query or control network driver and hardware
+  settings. In WRS the number of parameters that this tool can change is
+  limited. However, this tool can be used to:
+
+  ``@t{ethtool -s wriX autoneg off}'' disables (or enable if @t{on} is used)
+  autonegotiation
+
+  ``@t{ethtool --set-priv-flags wriX "Unidirectional Enable" on}'' enables
+  (or disables if @t{off} is used) transmit regardless of whether a valid link
+  has been established
+
+  ``@t{ethtool --set-priv-flags wriX "Accept RX Jumbo Frames" on}'' accepts
+  (or drops if @t{off} is used) RX Jumbo Frames
 
 @c FIXME: document rtu_stat spll_dbg_proxy
 @end table

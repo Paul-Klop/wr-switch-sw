@@ -248,9 +248,10 @@ is installed.
 Similarly, the scripts are likely to fail if spaces are used in directory
 names; that is because not all uses of shell variables are properly quoted.
 
-The expected build environment is a native GNU/Linux system; success reports
-about other environments (e.g. cygwin) are welcome, possibly with associated
-patches.
+The supported build environment is Ubuntu 18.04 LTS or Ubuntu 20.04 LTS
+@footnote{It is known that the build fails on Ubuntu 22.04 LTS}.
+Success reports about other environments (any other a native GNU/Linux system
+or cygwin) are welcome, possibly with associated patches.
 
 @c --------------------------------------------------------------------------
 @node Environment Variables

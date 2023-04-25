@@ -39,10 +39,15 @@ RELEASE=$(shell git describe --always --dirty)
 	$(MAKEINFO) --no-headers $< > $@
 
 ##############################################
-.PHONY: all check terse clean install wrs_failures
+DIRS=\
+	autonegotiation_ha_wr \
+	wrs_failures \
+
+.PHONY: all check terse clean install $(DIRS)
 .INTERMEDIATE: $(TEXI)
 
-all: $(ALL) wrs_failures
+
+all: $(ALL) $(DIRS)
 	$(MAKE) terse
 
 check: _err.ps
@@ -54,10 +59,12 @@ terse:
 
 clean: terse
 	rm -f $(ALL) $(TEXI)
-	$(MAKE) -C wrs_failures clean
+	for i in $(DIRS); do \
+		$(MAKE) -C $$i clean ; \
+	done
 
 install:
 	if [ -n $(WRS_OUTPUT_DIR) ]; then cp *.pdf  $(WRS_OUTPUT_DIR)/images/; fi
 
-wrs_failures:
-	$(MAKE) -C wrs_failures
+$(DIRS):
+	$(MAKE) -C $@

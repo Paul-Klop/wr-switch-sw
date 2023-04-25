@@ -1,0 +1,23 @@
+digraph finite_state_machine {
+    splines=line;
+    edge [minlen=1]  # in inches
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif"]
+    edge [fontname="Helvetica,Arial,sans-serif"]
+    rankdir=LR;
+    {rank=same; "PTP servo"; "WRH servo";}
+    {rank=source; "HA"}
+    {rank=sink; "WR"}
+
+    node [shape = ellipse];       "HA";
+    node [shape = ellipse];       "PTP servo";
+    node [shape = ellipse];       "WRH servo";
+    node [shape = ellipse];       "WR";
+    "WR" [label = "current_extension == WR"];
+    "HA" [label = "current_extension == HA"];
+
+    "HA" -> "WRH servo"	[label = "l1state == CONFIG_OK \nor l1state == L1_SYNC_UP"]
+    "HA" -> "PTP servo"	[label = "else              "]
+    "WR" -> "WRH servo"	[label = "wrMode == ON              "]
+    "WR" -> "PTP servo"	[label = "wrMode == OFF              "]
+}

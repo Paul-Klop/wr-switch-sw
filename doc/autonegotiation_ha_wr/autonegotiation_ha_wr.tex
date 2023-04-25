@@ -1,0 +1,848 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[english]{babel}
+\usepackage{fullpage}
+\usepackage[table,x11names,dvipsnames,table]{xcolor}
+\usepackage{pgf}
+\usepackage{tikz}
+\usepackage[overload]{textcase}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{textcomp}
+\usepackage{longtable} % table over many pages
+\usepackage[document]{ragged2e} %texta djustment
+\usepackage{mdwlist} % to have tight itemization
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{pdfpages}
+\usepackage[section,above,below]{placeins}
+\usepackage{enumitem}
+\usepackage[pdftex]{hyperref}  % makes cross references and URLs clickable, should be the last one!
+
+\newcommand{\newparagraph}[1]{\paragraph{#1}\mbox{}\\}
+
+\definecolor{wrlblue}{RGB}{165,195,210}
+\definecolor{wrlgray}{RGB}{209,211,212}
+\definecolor{light-gray}{gray}{0.95}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+
+% set listings as in other WR-doc(s)
+\lstset{columns=flexible, upquote=true, frame=single,
+basicstyle=\footnotesize\ttfamily, backgroundcolor=\color{light-gray}}
+
+\newcommand{\multirowpar}[2]{
+  \multirow{#1}{\hsize}{\parbox{\hsize}{\strut\raggedright#2\strut}}
+}
+
+\newcommand{\hdltablesection}[1]{
+  \multicolumn{4}{|c|}{\bf\small#1}
+}
+
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{M}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}\ttsmall}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{D}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}\ttsmall}m{#1}}
+
+\let\underscore\_
+\renewcommand{\_}{\underscore\allowbreak}
+
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\newcommand{\tts}[1]{
+  \texttt{\small{#1}}}
+
+% same as \tts{}, without argument
+\newcommand{\ttsmall}{\ttfamily\small}
+
+
+\title{Implementation proposal of autonegotiation between HA and WR}
+\author{Adam Wujek (dev\_public@wujek.eu)\hfill}
+
+\begin{document}
+% \input{version.tex}
+
+\makeatletter
+\hypersetup{pdftitle={\@title},pdfauthor={\@author}}
+\raggedright
+{\LARGE\bf\@title}\\[0.2 cm]
+\hrule height 4pt \vspace{0.1cm}
+{\large\hfill\today}\\
+\vspace*{\fill}
+{\large\@author}\\
+\hrule height 2pt
+\justify
+\makeatother
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+This document describes the implementation proposal and different use cases
+of autonegotiation between two White Rabbit devices using White Rabbit and/or
+High Accuracy/L1Sync extensions of PTP standard.
+
+Section~\ref{Autonegotiation_flowcharts} describes different scenarios
+depending on the configuration of two switches on the opposite side of a link.
+
+Section~\ref{Autonegotiation_fsm} contains the state machine of
+the autonegotiation.
+
+Section~\ref{Autonegotiation_fsm_simple} contains the simplified version of
+the autonegotiation state machine.
+
+
+
+NOTES:
+\begin{itemize} [noitemsep]
+ \item WR and HA differs in the timestamp format (delta correction of timestamps).
+ Due to that a PTP instance cannot transmit WR and HA timestamps at the same time.
+ \item Hopefully WR+HA mode can be merged with HA (blue text on flowcharts)
+\end{itemize}
+
+
+% ##########################################################################
+\section{Autonegotiation flowcharts}
+\label{Autonegotiation_flowcharts}
+
+\subsection{Use case 1}
+\label{uc_1}
+\begin{figure}[ht!]
+\centering
+% \includegraphics[scale=0.75]{sampaper.pdf}}
+\includegraphics[scale=0.6,page=1]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#1}
+\label{fig_uc1}
+\end{figure}
+
+In this use case WRS1 starts as HA or HA+WR. WRS2 starts as HA+WR.
+Circles with numbers from the Figure~\ref{fig_uc1} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 is in Listening. It sends L1sync until the 3x1s timeout.
+\item[(2) --] WRS2 in master state sends periodically in a random order L1sync, Sync followed by Follow\_up and Announce with WR TLV while waiting for other peer to appear.
+\item[(3) --] At this point WRS1 can get Announce with WR TLV, a number of them needs to be received before the Foreign Master is accepted. This gives WRS1 a time window to discover whether WRS2 supports HA (by receiving L1Sync).
+\item[(4) --] When WRS1 starts up and via Initializing state enters the Listening state, it immediately starts sending L1Sync to WRS2
+\item[(5) --] \textbf{[HA\_1]} WRS2 thanks to the arrival of L1Sync knows that on the other side is a peer with HA. At this point it stops attaching WR TLV in the Announce messages. Announce messages are still being sent
+\item[(6) --] From the WRS2 L1Sync messages are being send all the time
+\item[(7) --] \textbf{[HA\_1]} Due to the arrival of L1Sync from WRS2, WRS1 knows that WRS2 supports HA.
+\item[(8) --] If too few Announce messages are received within 5 seconds WRS1 goes to pre-master state. If enough messages are received then (9) happens in Listening state and WRS1 enters pre-master.
+\item[(9) --] WRS1 checks the Announce from WRS2 and sees that WRS1 wins BMCA. No change on WRS1 side.
+\item[(10) --] WRS2 checks the Announce from WRS1 and sees that WRS2 wins BMCA. WRS2 should become slave
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 2}
+\label{uc_2}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=2]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#2}
+\label{fig_uc2}
+\end{figure}
+
+In this use case WRS1 starts as HA or HA+WR. WRS2 starts as HA.
+Circles with numbers from the Figure~\ref{fig_uc2} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 is in Listening. It sends L1sync until the 3x1s timeout.
+\item[(2) --] WRS2 in master state sends periodically in random order L1sync, Sync followed by Follow\_up and Announce (without WR TLV) while waiting for other peer to appear.
+\item[(3) --] At this point WRS1 can get Announce without WR TLV, a number of them needs to be received before the Foreign Master is accepted. This gives WRS1 a time window to discover whether WRS2 supports HA (by receiving L1Sync).
+\item[(4) --] When WRS1 starts up and  via Initializing state enters the Listening state, it immediately starts sending L1Sync to WRS2
+\item[(5) --] WRS2 thanks to the arrival of L1Sync message knows that on the other side is a peer with HA.
+\item[(6) --] From the WRS2 L1Sync messages are being send all the time
+\item[(7) --] \textbf{[HA\_1]} Due to the arrival of L1Sync message from WRS2, WRS1 knows that WRS2 supports at HA.
+\item[(8) --] If too few Announce messages are received within 5 seconds WRS1 goes to pre-master state. If enough messages are received then (9) happens in Listening state and WRS1 enters pre-master.
+\item[(9) --] WRS1 checks the Announce from WRS2 and sees that WRS1 wins BMCA. No change on WRS1 side.
+\item[(10) --] WRS2 checks the Announce from WRS1 and sees that WRS2 wins BMCA. WRS2 should become slave
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\end{enumerate}
+
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 3}
+\label{uc_3}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=3]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#3}
+\label{fig_uc3}
+\end{figure}
+
+In this use case WRS1 starts as HA+WR. WRS2 starts as WR.
+Circles with numbers from the Figure~\ref{fig_uc3} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 is in Listening.
+\item[(2) --] WRS2 in master state sends periodically in random order Sync followed by Follow\_up and Announce with WR TLV while waiting for other peer to appear
+\item[(3) --] At this point WRS1 can get Announce with WR TLV, a number of them needs to be received before the Foreign Master is accepted. This gives WRS1 a time window to discover whether WRS2 supports WR (by receiving number of Announce messages with WR TLV) or HA (by receiving L1Sync messages).
+\item[(4) --] WRS1 sends L1Sync
+\item[(5) --] WRS2 ignores incoming L1Sync
+\item[(6) --] WRS1 after qualification window checks the Announce from WRS2 and sees that WRS1 wins BMCA. WRS1 becomes master.
+\item[(7) --] \textbf{[WR\_1]} No L1Sync were received on WRS1 during qualification window, degrade WRS1 to WR
+\item[(8) --] Due to the previous arrival of Announce with WR TLV from WRS2, WRS1 knows that WRS2 supports WR.
+\item[(9) --] WRS2 checks the Announce from WRS1 and sees that WRS1 wins BMCA. WRS2 should become slave
+\item[(10) --] WRS1 and WRS2 exchange WR specific signaling messages
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 4}
+\label{uc_4}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=4]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#4}
+\label{fig_uc4}
+\end{figure}
+
+In this use case WRS1 starts as WR. WRS2 starts as HA+WR.
+Circles with numbers from the Figure~\ref{fig_uc4} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 is in Listening. It sends L1sync until the 3x1s timeout. At this point WRS2 is in HA+WR
+\item[(2) --] WRS2 in Master state sends periodically in random order L1sync, Sync followed by Follow\_up and Announce with WR TLV while waiting for other peer to appear.
+\item[(3) --] At this point WRS1 can get Announce with WR TLV
+\item[(4) --] L1Sync is ignored by WRS1
+\item[(5) --] WRS1 got a number of Announce messages, checks them and sees that WRS1 wins BMCA. WRS1 transitions to pre-master and master
+\item[(6) --] L1Sync are still ignored by WRS1
+\item[(7) --] \textbf{[WR\_1]} Due to the arrival of Announce with WR TLV from WRS2, WRS1 knows that WRS2 supports WR. If the other peer were supporting HA L1Sync would be retreived before Announce
+\item[(8) --] WRS2 checks the Announce from WRS1 and sees that WRS1 wins BMCA. WRS2 should become slave
+\item[(9) --] WRS1 and WRS2 exchange WR specific signaling messages
+\item[(10) --] WRS2 enters Slave state
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 5}
+\label{uc_5}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=5]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#5}
+\label{fig_uc5}
+\end{figure}
+
+In this use case WRS1 starts as HA or HA+WR. WRS2 starts as HA or HA+WR with
+the external port configuration enabled and configured as slave.
+Circles with numbers from the Figure~\ref{fig_uc5} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 starts in the Initializing state, it immediately goes to Uncalibrated
+\item[(2) --] WRS2 immediately goes from Uncalibrated state to Slave
+\item[(3) --] WRS2 in the Slave state periodically sends L1Sync messages.
+\item[(4) --] When WRS1 starts up and  via Initializing state enters via Initializing to the Listening state, it immediately starts sending L1Sync to WRS2.
+\item[(5) --] \textbf{[HA\_1]} WRS2 thanks to the arrival of L1Sync knows that on the other side is a peer with HA.
+\item[(6) --] From the WRS2 L1Sync messages are being send all the time
+\item[(7) --] \textbf{[HA\_1]} Due to the arrival of L1Sync from WRS2, WRS1 knows that WRS2 supports HA.
+\item[(8) --] If too few Announce messages are received within 5 seconds WRS1 goes to pre-master state.
+\item[(9) --] WRS1 send Announce to WR2
+\item[(10) --] WRS2 sees the Announce from WRS1 and enters the uncalibrated, then again slave state
+\end{enumerate}
+
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 6}
+\label{uc_6}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=6]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#6}
+\label{fig_uc6}
+\end{figure}
+
+In this use case WRS1 starts as HA+WR. WRS2 starts as WR with
+the external port configuration enabled and configured as slave.
+Circles with numbers from the Figure~\ref{fig_uc6} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 starts in the Initializing state, it immediately goes to Uncalibrated
+\item[(2) --] WRS2 immediately goes from Uncalibrated state to Slave
+\item[(3) --] When WRS1 starts up and via Initializing state enters to the Listening state, it immediately starts sending L1Sync messages to WRS2.
+\item[(4) --] WRS2 ignores all L1Sync messages
+\item[(5) --] If too few Announce messages are received within 5 seconds WRS1 goes to pre-master state.
+\item[(6) --] WRS1 send Announce message with WR TLV to WRS2
+\item[(7) --] WRS2 sees the Announce from WRS1 and enters the uncalibrated state
+\item[(8) --] WRS1 and WRS2 exchange WR specific signaling messages
+\item[(9) --] \textbf{[WR\_2]} WRS1 changes to WR after receive of M\_SLAVE\_PRESENT
+\item[(10) --] WRS2 enters Slave state
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 7}
+\label{uc_7}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=7]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#7}
+\label{fig_uc7}
+\end{figure}
+
+In this use case WRS1 starts as WR. WRS2 starts as HA+WR with
+the external port configuration enabled and configured as slave.
+Circles with numbers from the Figure~\ref{fig_uc7} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 starts in the Initializing state, it immediately goes to Uncalibrated
+\item[(2) --] WRS2 immediately goes from Uncalibrated state to Slave
+\item[(3) --] WRS2 in the Slave state periodically sends L1Sync messages.
+\item[(4) --] When WRS1 starts up and  via Initializing state enters to the Listening state
+\item[(5) --] If too few Announce messages are received within 5 seconds WRS1 goes to pre-master state.
+\item[(6) --] WRS1 send Announce message with WR TLV to WR2
+\item[(7) --] WRS2 sees the Announce from WRS1 and enters the uncalibrated state
+\item[(8) --] \textbf{[WR\_1]}  WRS2 sees the Announce with WR TLV from WRS1 and switches from HA+WR to WR
+\item[(9) --] WRS1 and WRS2 exchange WR specific signaling messages
+\item[(10) --] WRS2 enters Slave state
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 8}
+\label{uc_8}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=8]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#8}
+\label{fig_uc8}
+\end{figure}
+
+In this use case WRS1 starts as HA+WR. WRS2 starts as WR with
+the external port configuration enabled and configured as slave.
+Circles with numbers from the Figure~\ref{fig_uc8} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 starts in the Initializing state, it immediately goes to Uncalibrated
+\item[(2) --] WRS2 immediately goes from Uncalibrated state to Slave
+\item[(3) --] When WRS1 starts up and via Initializing state enters to the Master state, it immediately starts sending L1Sync to WRS2.
+\item[(4) --] WRS2 ignores L1Sync messages
+\item[(5) --] WRS1 send Announce message with WR TLV to WR2
+\item[(6) --] WRS2 sees the Announce from WRS1 and enters the uncalibrated state
+\item[(7) --] WRS1 sends M\_SLAVE\_PRESENT
+\item[(8) --] \textbf{[WR\_2]}  WRS1 sees  M\_SLAVE\_PRESENT from WRS2 and switches from HA+WR to WR
+\item[(9) --] WRS2 enters Slave state
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 9}
+\label{uc_9}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=9]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#9}
+\label{fig_uc9}
+\end{figure}
+
+Communication is established between WRS1 and WRS2. WRS1 is a WR master,
+WRS2 is configured as WR+HA, but degraded to use WR.
+Circles with numbers from the Figure~\ref{fig_uc9} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason without link down (e.g. PTP daemon restart) WRS1 becomes HA (or HA+WR) master
+\item[(2) --] WRS1 starts sending L1Sync messages and Announce with WR TLV
+\item[(3) --] \textbf{[HA\_4]} WRS2 retrieves L1Sync within qualification window. Since it is configured as HA+WR it jumps out from Slave state and becomes HA
+\item[(4) --] After the retrieve of a number of L1Sync within qualification window WRS1 become HA
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 10}
+\label{uc_10}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=10]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#10}
+\label{fig_uc10}
+\end{figure}
+
+Communication is established between WRS1 and WRS2. WRS1 is configured as
+WR+HA master, but degraded to use WR, WRS2 is a WR slave.
+Circles with numbers from the Figure~\ref{fig_uc10} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS2 becomes HA (or HA+WR) slave without link down
+\item[(2) --] WRS2 starts sending L1Sync messages
+\item[(3) --] \textbf{[HA\_4]} WRS1 retrieves L1Sync, since it is configured as HA+WR it jumps out from Master state and becomes HA
+\item[(4) --] WRS1 starts sending L1Sync messages and Announce
+\item[(5) --] L1Sync is received within qualification window (before master is qualified as WR). WRS1 becomes HA
+\item[(6) --] After the retrieve of a number of L1Sync within qualification window WRS1 become HA (FIXME: alternatively it can happen at (3))
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 11}
+\label{uc_11}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=11]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#11}
+\label{fig_uc11}
+\end{figure}
+
+In this use case WRS1 starts as HA+WR or PTP. WRS2 starts as PTP.
+Circles with numbers from the Figure~\ref{fig_uc11} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] At this point WRS1 can get Announce, a number of them needs to be received before the Foreign Master is accepted. This gives WRS1 a time window to discover whether WRS2 supports HA (by receiving L1Sync).
+\item[(2) --] WRS1 sends L1Sync messages
+\item[(3) --] WRS2 ignores L1Sync messages
+\item[(4) --] Enough Announce messages were received during qualification window, go to pre-master
+\item[(5) --] \textbf{[HA\_2]} No L1Sync were received on WRS1 during qualification window, degrade WRS1 to HA
+\item[(6) --] WRS1 checks the Announce from WRS2 and sees that WRS1 wins BMCA. No change on WRS1 side.
+\item[(7) --] WRS2 checks the Announce from WRS1 and sees that WRS1 wins BMCA. WRS2 should become slave. L1Syncs are ignored
+\item[(8) --] WRS1 as Master stays in HA and keeps sending L1Sync. WRS2 ignores L1Syncs
+\end{enumerate}
+
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 12}
+\label{uc_12}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=12]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#12}
+\label{fig_uc12}
+\end{figure}
+
+In this use case WRS1 starts as PTP. WRS2 starts as HA+WR.
+Circles with numbers from the Figure~\ref{fig_uc12} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] At this point WRS1 can get Announce, a number of them needs to be received before the Foreign Master is accepted.
+\item[(2) --] WRS2 sends L1Sync messages
+\item[(3) --] WRS1 ignores L1Sync messages
+\item[(4) --] Enough Announce messages were received during qualification window, go to pre-master. WR TLV is ignored
+\item[(5) --] WRS1 checks the Announce from WRS2 and sees that WRS1 wins BMCA. No change on WRS1 side. WR TLV is ignored
+\item[(6) --] WRS2 checks the Announce from WRS1 and sees that WRS1 wins BMCA. WRS2 should become slave.
+\item[(7) --] \textbf{[HA\_2]} No L1Sync has been received after having received enough Announce messages, go to HA and perform PTP
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 13}
+\label{uc_13}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=13]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#13}
+\label{fig_uc13}
+\end{figure}
+
+Communication is established between WRS1 and WRS2. WRS1 is a PTP master,
+WRS2 is configured as WR+HA, but degraded to use PTP. This use case is similar
+to Use Case~9 (section~\ref{uc_9}).
+Circles with numbers from the Figure~\ref{fig_uc13} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS1 became HA (or HA+WR) master without link down
+\item[(2) --] WRS1 starts sending L1Sync messages
+\item[(3) --] WRS2 retrieves L1Sync, since it is configured as HA+WR, it was running standard servo in HA, HA servo needs to bestarted
+\item[(4) --] \textbf{[HA\_1]} After the retrieve of a number of L1Sync within qualification window WRS1 become HA
+\end{enumerate}
+
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 14}
+\label{uc_14}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=14]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#14}
+\label{fig_uc14}
+\end{figure}
+Communication is established between WRS1 and WRS2. WRS1 is configured as
+WR+HA master, but degraded to use PTP, WRS2 is a PTP slave.
+This use case is similar to Use Case~10 (section~\ref{uc_10}).
+Circles with numbers from the Figure~\ref{fig_uc14} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS2 became HA (or HA+WR) slave without link down
+\item[(2) --] WRS2 starts sending L1Sync messages
+\item[(3) --] WRS1 retrieves L1Sync, since it is configured as HA+WR, it was aleady in HA (when speaking to PTP), nothing chnages
+\item[(4) --] WRS1 keeps sending L1Sync
+\item[(5) --] \textbf{[HA\_1]} L1Sync is received within qualification window. WRS1 becomes HA
+\item[(6) --] After the retrieve of a number of L1Sync within qualification window WRS1 become HA (FIXME: alternatively it can happen at (3))
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 15}
+\label{uc_15}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=15]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#15}
+\label{fig_uc15}
+\end{figure}
+
+In this use case WRS1 starts as PTP. WRS2 starts as HA+WR.
+This use case is similar to Use Case~12 (section~\ref{uc_12}).
+Circles with numbers from the Figure~\ref{fig_uc15} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS2 starts sending L1Sync messages
+\item[(2) --] WRS1 enters Listening state and ignores all L1Sync messages
+\item[(3) --] Too few Announce messages are received within 5 seconds, WRS1 goes to pre-master state.
+\item[(4) --] WRS1 enters master and still ignores L1Sync messages
+\item[(5) --] \textbf{[HA\_2]} No L1Sync messages are received after having received Nx Announce, switches to HA (PTP servo). It does not switch to WR because Announce messages from WRS1 does not contain WR TLV
+\end{enumerate}
+
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 16}
+\label{uc_16}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=16]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#16}
+\label{fig_uc16}
+\end{figure}
+
+Communication is established between WRS1 and WRS2. WRS1 is a HA master,
+WRS2 is configured as WR+HA, but autonegotiated to use HA.
+This use case is similar
+to Use Case~9 (section~\ref{uc_9}).
+Circles with numbers from the Figure~\ref{fig_uc16} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS1 became WR master without link down
+\item[(2) --] WRS1 starts sending Announce messages with WR TLV
+\item[(3) --] WRS2 stops retrieving L1Sync
+\item[(4) --] \textbf{[WR\_3]} (\textbf{[WR\_1]} if HA+WR and HA is merged) No L1Sync messages are received after having received Nx Announce with WR TLV, WRS2 switches to HA+WR and WRS2 goes to Uncalibrated state
+\item[(5) --] WRS2 sends SLAVE\_PRESENT message and starts WR-specific handshake
+\item[(6) --] After successful handshake, WRS2 enters Slave state
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 17}
+\label{uc_17}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=17]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#17}
+\label{fig_uc17}
+\end{figure}
+Communication is established between WRS1 and WRS2. WRS1 is configured as WR+HA master, but autonegotiated to use HA, WRS2 is a HA slave.
+WRS2 is configured as WR+HA, but degraded to use PTP. This use case is similar
+to Use Case~10 (section~\ref{uc_10}).
+Circles with numbers from the Figure~\ref{fig_uc17} are described in
+the following list:
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS2 became WR slave without link down
+\item[(2) --] WRS2 ignores L1Sync messages
+\item[(3) --] WRS2 received Announce message without WR TLV and enters Uncalibrated state (PTP servo)
+\item[(4) --] WRS1 does not know that it is connected to WR-capable switch, it has degraded to PTP
+\item[(5) --] WRS1 stays in HA (PTP degradation)
+\item[(6) --] PTP synchronization
+\end{enumerate}
+
+\textit{NOTE: There is a difference if in HA we send Announce with WR TLV.
+However, if the HA state is merged with HA+WR both cases looks exactly the same.}
+
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS2 became WR slave without link down
+\item[(2) --] WRS2 ignores L1Sync messages
+\item[(3) --] WRS2 received Announce message with WR TLV and enters Uncalibrated state
+\item[(4) --] After entering Uncalibrated state, WRS2 issues SLAVE\_PRESENT message.
+\item[(5) --] \textbf{[WR\_2]} Receive of SLAVE\_PRESENT message causes a switch to WR, reenter to Master state and continue of WR handshake
+\item[(6) --] After successful handshake WRS2 enters Slave state
+\end{enumerate}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 18}
+\label{uc_18}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=18]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#18}
+\label{fig_uc18}
+\end{figure}
+
+Communication is established between WRS1 and WRS2. WRS1 is a WR master,
+WRS2 is configured as WR+HA, but autonegotiated to use WR.
+This use case is similar (or even identical)
+to Use Case~9 (section~\ref{uc_9}).
+Circles with numbers from the Figure~\ref{fig_uc18} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS1 became HA master without link down
+\item[(2) --] WRS1 starts sending L1Sync
+\item[(3) --] WRS2 starts retrieving L1Sync
+\item[(4) --] \textbf{[HA\_4]} L1Sync messages are received, WRS2 switches to HA and WRS2 goes to Uncalibrated state
+\item[(5) --] HA runs
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+\textit{NOTE: If announce with WR TLV, identical to UC\#9.}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 19}
+\label{uc_19}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=19]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#19}
+\label{fig_uc19}
+\end{figure}
+
+In this use case WRS1 starts first as HA+WR, then WRS2 as PTP.
+Circles with numbers from the Figure~\ref{fig_uc19} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] WRS1 enters Listening state and is sending L1Sync
+\item[(2) --] Since WR2 is still down no messages were received and after timeout it goes to Pre-master and Master
+\item[(3) --] In Master state WRS1 is sending periodically Announce with TLV and L1Sync messages
+\item[(4) --] WRS2 ignores WR TLV in Announce and L1Sync
+\item[(5) --] WRS2 after a number of Announce messages recieved recognizes that there is a Master on the other side of a link. WRS2 sees that WRS1 wins BMCA and WRS2 goes to Uncalibrated and Slave state
+\item[(6) --] WRS1 continues sending periodically Announce with TLV and L1Sync messages
+\item[(7) --] WRS2 and WRS1 start exchange of Delay\_req and Delay\_resp messages
+\end{enumerate}
+If HA state is separated from HA+WR more actions take place:
+\begin{enumerate}  [noitemsep]
+\item[(8) --] If no L1Sync messages are received within a number of Delay\_req are received by WRS1, WRS1 degrades from HA+HR to HA. WR TLV is no more attached to Announce messages
+\end{enumerate}
+
+\textit{NOTE: No difference if in HA we send Announce with WR TLV.}
+
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Use case 20}
+\label{uc_20}
+\begin{figure}[ht!]
+\centering
+\includegraphics[scale=0.6,page=20]{flowcharts/autonegotiation_flowcharts.pdf}
+\caption{Use case \#20}
+\label{fig_uc20}
+\end{figure}
+
+Communication is established between WRS1 and WRS2. WRS1 is a WR master, WRS2 is configured as WR+HA, but autonegotiated to use PTP
+Circles with numbers from the Figure~\ref{fig_uc20} are described in
+the following list:
+
+\begin{enumerate}  [noitemsep]
+\item[(1) --] For an unknown reason (e.g. PTP daemon restart) WRS1 became PTP master without link down
+\item[(2) --] WRS1 starts sending Announce messages without WR TLV
+\item[(3) --] if a number of Announces without TLV is received without reception of L1Sync, WRS2 will change to HA (or HA+WR if merged) to provide standard PTP. WRS2 goes to Uncalibrated then back to Slave State
+\item[(4) --] WRS2 continues starts sending L1Sync messages
+\end{enumerate}
+
+\FloatBarrier
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\FloatBarrier
+\newpage
+\section{(To be removed) Autonegotiation state machine}
+\label{Autonegotiation_fsm}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=\textwidth]{dot/ha_auto.pdf}
+\caption{State machine of Autonegotiation}
+\label{fig_state_machine}
+\end{figure}
+
+Edges marked with a blue dashed line are transitions used only when
+the External Port Configuration (EPC) is used.
+
+The shape of a node in the Figure~\ref{fig_state_machine} depends on the mode:
+\begin{itemize} [noitemsep]
+ \item Octagon -- HA+WR (Multi)
+ \item Ellipse -- HA
+ \item Square box -- WR
+\end{itemize}
+
+Note: It is known that some edges are missing.
+
+\FloatBarrier
+\newpage
+\section{(Simplified) Autonegotiation state machine}
+\label{Autonegotiation_fsm_simple}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=\textwidth]{dot/ha_auto_simple.pdf}
+\caption{Simplified state machine of Autonegotiation}
+\label{fig_state_machine_simple}
+\end{figure}
+
+The shape of a node in the Figure~\ref{fig_state_machine_simple} depends on the mode:
+\begin{itemize} [noitemsep]
+ \item Octagon -- HA+WR (Multi)
+ \item Ellipse -- HA
+ \item Square box -- WR
+\end{itemize}
+
+Blue color represents the alternative state machine without HA state.
+In this version state HA and Multi is combined into one state Multi.
+
+The same description in the pseudocode:
+\begin{lstlisting}[language=C]
+if (current_extension == WR+HA) {
+
+    // use cases:1, 2, 5, 13, 14
+    if(received at minimum 1 x L1sync within L1SyncReceiptTimeout)
+	return HA_1; //NOTE: no other messages need to be received
+	
+    // use cases: 3, 4, 7
+    if (received no L1Sync after reception of  N x Announce with WR TLV)
+	return WR_1;
+
+    // use cases: 6, 8
+    if (received SLAVE_PRESENT)
+	return WR_2;
+	
+    // use case: 11, 12, 15, 17 (maybe)
+    if (received no L1Sync after reception of  N x Announce without WR TLV)
+	return HA_2; // the peer is standard PTP
+	
+    // use case 21 (to be added)
+    if (received no L1Sync  after reception M x delayReq)
+	return HA_3; // the peer is standard PTP
+	//TODO: check P2P
+    }
+
+if (current_extension == WR) {
+    // use cases: 9, 10, 18, 19
+    if (received L1Sync) //maybe some qualifiction needed, e.g. 2 x L1Sync
+	return HA_4; // or WR+HA
+
+    //use cases: 20
+    if (reception of N x Announce without WR TLV)
+	return WR+HA_1;
+    }
+
+if (current_extension == HA) {
+    // use case: 16
+    if(received no L1Sync after reception of N x Announce with WR TLV)
+	return WR_3; //WR+HA_2;
+
+//    if(received no L1Sync after N x L1SyncInterval)
+//        return WR+HA;
+    }
+\end{lstlisting}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=\textwidth]{dot/servo.pdf}
+\caption{Used Servo}
+\label{fig_servo}
+\end{figure}
+
+
+Servo decision pseudocode. Implementation uses the same code for WR and HA
+servo (WRH servo).
+\begin{lstlisting}[language=C]
+  if(current_extension == WR)
+    if(wrMode == ON)
+       return WR_servo    // S_W
+    if (wrMode == OFF)
+       return PTP_servo  // S_P
+
+  if(current_extension == HA)
+     if (l1state == CONFIG_OK or l1state == L1_SYNC_UP)
+        return HA_servo    // S_H
+     else
+        return PTP_servo // S_P
+
+\end{lstlisting}
+
+\end{document}

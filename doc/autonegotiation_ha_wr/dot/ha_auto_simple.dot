@@ -1,0 +1,24 @@
+digraph finite_state_machine {
+    edge [minlen=1]  # in inches
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif"]
+    edge [fontname="Helvetica,Arial,sans-serif"]
+    rankdir=LR;
+    node [shape = ellipse];       "HA";
+    node [shape = doubleoctagon, color = "blue", fontcolor = "blue"]; "Multi";
+    node [shape = box, color = "blue", fontcolor = "blue"];           "WR";
+    node [shape = pentagon];
+
+
+    "Multi"                -> "HA"     [label = "\n\nreceived L1sync before\n reception of < N x Announce [H1]"];
+    "Multi"                -> "WR"     [label = "received no L1Sync after\n reception of  N x Announce with WR TLV [W1]", color = "blue", fontcolor = "blue"];
+    "Multi"                -> "WR"     [label = "received SLAVE_PRESENT [W2]", color = "blue", fontcolor = "blue"];
+    "Multi"                -> "HA"     [label = "\n\nreceived no L1Sync\n after reception of N x Announce without no WR TLV [H2]\n the peer is standard PTP"];
+    "Multi"                -> "HA"     [label = "\n\nreceived no L1Sync\n  after reception M x delayReq [H3]\n the peer is standard PTP"];
+    "WR"                   -> "Multi"  [label = "\nreceived L1Sync [H4]", color = "blue", fontcolor = "blue"];
+    "WR"                   -> "Multi"  [label = "\n\nreception of N x Announce without WR TLV [M1]", color = "blue", fontcolor = "blue"];
+    "HA"                   -> "Multi"  [label = "after reception of N x Announce with WR TLV [M2]"];
+    "HA"                   -> "Multi"  [label = "received no L1Sync after N x L1SyncInterval [M3]\n (commented out)", color = "gray", fontcolor = "gray"];
+}
+
+

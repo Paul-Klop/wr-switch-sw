@@ -1,0 +1,98 @@
+digraph finite_state_machine {
+    edge [minlen=1]  # in inches
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif"]
+    edge [fontname="Helvetica,Arial,sans-serif"]
+    rankdir=TB;
+    node [shape = doubleoctagon]; "Disabled Multi";
+    node [shape = doubleoctagon]; "Initializing Multi";
+    node [shape = doubleoctagon]; "Listening Multi";
+    node [shape = doubleoctagon]; "Pre-master Multi";
+    node [shape = doubleoctagon]; "Master Multi";
+    node [shape = doubleoctagon]; "Uncalibrated Multi";
+    node [shape = doubleoctagon]; "Slave Multi";
+    node [shape = ellipse];       "Disabled HA";
+    node [shape = ellipse];       "Initializing HA";
+    node [shape = ellipse];       "Listening HA";
+    node [shape = ellipse];       "Pre-master HA";
+    node [shape = ellipse];       "Master HA";
+    node [shape = ellipse];       "Uncalibrated HA";
+    node [shape = ellipse];       "Slave HA";
+    node [shape = box];           "Disabled WR";
+    node [shape = box];           "Initializing WR";
+    node [shape = box];           "Listening WR";
+    node [shape = box];           "Pre-master WR";
+    node [shape = box];           "Master WR";
+    node [shape = box];           "Uncalibrated WR";
+    node [shape = box];           "Slave WR";
+    node [shape = pentagon];
+
+
+/* NODES */
+    "Initializing Multi" [label="Initializing\n Multi"];
+    "Initializing HA"    [label="Initializing\n HA"];
+    "Initializing WR"    [label="Initializing\n WR"];
+    "Listening Multi"    [label="Listening\n Multi\n Emits:\n -L1Sync"];
+    "Listening HA"       [label="Listening\n HA\n Emits:\n  -L1Sync"];
+    "Listening WR"       [label="Listening\n WR"];
+    "Pre-master Multi"   [label="Pre-master\n Multi"];
+    "Pre-master HA"      [label="Pre-master\n HA"];
+    "Pre-master WR"      [label="Pre-master\n WR"];
+    "Master Multi"       [label="Master\n Multi\n Emits:\n -Announce (WR TLV)\n -L1Sync"];
+    "Master HA"          [label="Master\n HA\n Emits:\n -Announce\n -L1Sync"];
+    "Master WR"          [label="Master\n WR\n Emits:\n -Announce (WR TLV)"];
+    "Uncalibrated Multi" [label="Uncalibrated\n Multi"];
+    "Uncalibrated HA"    [label="Uncalibrated\n HA"];
+    "Uncalibrated WR"    [label="Uncalibrated\n WR\n Emits:\n M_SLAVE_PRESENT"];
+    "Slave Multi"        [label="Slave\n Multi\n Emits:\n -L1Sync"];
+    "Slave HA"           [label="Slave\n HA\n Emits:\n -L1Sync"];
+    "Slave WR"           [label="Slave\n WR"];
+    
+/* Edges */
+    "Startup"              -> "Disabled Multi"     [label = "System startup"]
+    "Startup"              -> "Disabled HA"        [label = "System startup"]
+    "Startup"              -> "Disabled WR"        [label = "System startup"]
+    "Disabled Multi"       -> "Initializing Multi" [label = "Port up"];
+    "Disabled HA"          -> "Initializing HA"    [label = "Port up"];
+    "Disabled WR"          -> "Initializing WR"    [label = "Port up"];
+    "Initializing Multi"   -> "Listening Multi"    [label = ""];
+    "Initializing Multi"   -> "Uncalibrated Multi" [label = "(EPC)", style = "dashed", color = "blue", fontcolor = "blue"];  // EPC
+    "Initializing HA"      -> "Listening HA"       [label = ""];
+    "Initializing HA"      -> "Uncalibrated HA"    [label = "(EPC)", style = "dashed", color = "blue", fontcolor = "blue"];  // EPC
+    "Initializing WR"      -> "Listening WR"       [label = ""];
+    "Initializing WR"      -> "Uncalibrated WR"    [label = "(EPC)", style = "dashed", color = "blue", fontcolor = "blue"];  // EPC
+    "Listening Multi"      -> "Pre-master Multi"   [label = "5 sec timeout"];
+    "Listening Multi"      -> "Listening HA"       [label = "Receive of L1Sync"];
+    "Listening Multi"      -> "Pre-master WR"      [label = "Receive of 3 Announces WR TLV"];
+    "Listening HA"         -> "Pre-master HA"      [label = "Receive of 3 Announces"];
+    "Listening HA"         -> "Pre-master HA"      [label = "5 sec timeout"];
+    "Listening WR"         -> "Pre-master WR"      [label = "5 sec timeout"];
+    "Listening WR"         -> "Pre-master WR"      [label = "Receive of 3 Announces WR TLV "];
+    "Pre-master Multi"     -> "Master Multi"       [label = ""];
+    "Pre-master HA"        -> "Master HA"          [label = ""];
+    "Pre-master WR"        -> "Master WR"          [label = ""];
+    "Master Multi"         -> "Master HA"          [label = "Receive of L1Sync"];
+    "Master Multi"         -> "Master WR"          [label = "Receive of 3 Announces WR TLV"];
+    "Master Multi"         -> "Master WR"          [label = "reception of WR Signalling SLAVE_PRESENT"];  //can happen not only with EPC. When master starts before slave. Slave will not send any announce
+    "Master HA"            -> "Uncalibrated HA"    [label = "Receive of Announce\n lost BMCA"];
+    "Master HA"            -> "Master HA"          [label = "Receive of Announce\n won BMCA"];
+    "Master HA"            -> "Master HA"          [label = "Receive of L1Sync"];           // optional on the graph
+    "Master WR"            -> "Uncalibrated WR"    [label = "Receive of Announce TLV\n lost BMCA"];
+    "Master WR"            -> "Master HA"          [label = "Receive of L1Sync\n(if configured as multi)", style = "dashed", color = "blue", fontcolor = "blue"];  //EPC
+    "Master WR"            -> "Master WR"          [label = "Receive of Announce TLV\n won BMCA"];
+
+    "Uncalibrated Multi"   -> "Slave Multi"        [label = "(EPC)", style = "dashed", color = "blue", fontcolor = "blue"];  //EPC
+    "Uncalibrated HA"      -> "Slave HA"           [label = ""];
+    "Uncalibrated WR"      -> "Slave WR"           [label = "WR-handshake successful"];
+
+    "Slave Multi"          -> "Slave HA"           [label = "Receive of L1Sync\n(if configured as multi)", style = "dashed", color = "blue", fontcolor = "blue"];    // EPC
+    "Slave Multi"          -> "Uncalibrated WR"    [label = "Receive of 3 Announces WR TLV", style = "dashed", color = "blue", fontcolor = "blue"];    // EPC
+    "Slave HA"             -> "Slave HA"           [label = "Receive of L1Sync"];             // optional on the graph
+    "Slave HA"             -> "Slave HA"           [label = "Receive of Announce\n lost BMCA"];    // optional on the graph
+    "Slave HA"             -> "Master HA"          [label = "Receive of Announce\n won BMCA"];
+//  "Slave HA"             -> "Slave HA"           [label = "Receive of Announce  WR TLV"];   // ignored
+    "Slave WR"             -> "Slave WR"           [label = "Receive of Announce WR TLV\n lost BMCA"];    // optional on the graph
+    "Slave WR"             -> "Uncalibrated HA"    [label = "Receive of L1Sync\n(if configured as multi)"];    // EPC or restart of a link
+    "Slave WR"             -> "Master WR"          [label = "Receive of Announce WR TLV\n won BMCA"];
+
+}

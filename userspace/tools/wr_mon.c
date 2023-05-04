@@ -58,6 +58,14 @@ struct inst_servo_t {
 	void *               servo_ext_snapshot; /* image of the extension servo */
 };
 
+struct gm_t {
+	int                  valid_gm_data;           /* 1 means GM data is vaild */
+	UInteger16           stepsRemoved;            /* currentDS.stepsRemoved */
+	ClockIdentity        grandmasterIdentity;     /* parentDS.grandmasterIdentity */
+	ClockQuality         grandmasterClockQuality; /* parentDS.grandmasterClockQuality */
+	Enumeration8         timeSource;              /* timePropertiesDS.timeSource */
+};
+
 /* protocol extension data */
 #define IS_PROTO_EXT_INFO_AVAILABLE( proto_id ) \
 	((proto_id < sizeof(proto_ext_info)/sizeof(struct proto_ext_info_t)) \
@@ -124,6 +132,7 @@ static pp_instance_ptr_t instances[PP_MAX_LINKS];
 
 
 static struct inst_servo_t servos[MAX_INST_SERVO];
+static struct gm_t gm_info;
 
 int mode = SHOW_GUI;
 
@@ -274,6 +283,78 @@ char *optimized_pp_time_toString(struct pp_time *pptime, char *buf ) {
 	else
 		sprintf(buf,"%16s nsec",timeIntervalToString(pp_time_to_interval(pptime),lbuf));
 	return buf;
+}
+
+static char *getAccuracyLabel(int accuracy)
+{
+	if (accuracy <= 0x16
+	    || (accuracy >= 0x32 && accuracy <= 0x7F))
+		return "(reserved)";
+	if (accuracy == 0x17) return "(1ps)";
+	if (accuracy == 0x18) return "(2.5ps)";
+	if (accuracy == 0x19) return "(10ps)";
+	if (accuracy == 0x1A) return "(25ps)";
+	if (accuracy == 0x1B) return "(100ps)";
+	if (accuracy == 0x1C) return "(250ps)";
+	if (accuracy == 0x1D) return "(1ns)";
+	if (accuracy == 0x1E) return "(2.5ns)";
+	if (accuracy == 0x1F) return "(10ns)";
+	if (accuracy == 0x20) return "(25ns)";
+	if (accuracy == 0x21) return "(100ns)";
+	if (accuracy == 0x22) return "(250ns)";
+	if (accuracy == 0x23) return "(1us)";
+	if (accuracy == 0x24) return "(2.5us)";
+	if (accuracy == 0x25) return "(10us)";
+	if (accuracy == 0x26) return "(25us)";
+	if (accuracy == 0x27) return "(100us)";
+	if (accuracy == 0x28) return "(250us)";
+	if (accuracy == 0x29) return "(1ms)";
+	if (accuracy == 0x2A) return "(2.5ms)";
+	if (accuracy == 0x2B) return "(10ms)";
+	if (accuracy == 0x2C) return "(25ms)";
+	if (accuracy == 0x2D) return "(100ms)";
+	if (accuracy == 0x2E) return "(250ms)";
+	if (accuracy == 0x2F) return "(1s)";
+	if (accuracy == 0x30) return "(10s)";
+	if (accuracy == 0x31) return "(>10s)";
+	if (accuracy >= 0x80 && accuracy <= 0xFD) return "(altPTP)";
+	if (accuracy == 0xFE) return "(unkn)";
+
+	return "";
+}
+
+static char * getTimeSourceLabel(int ts)
+{
+	if (ts == 0x10) return "(atomic)";
+	if (ts == 0x20) return "(GNSS)";
+	if (ts == 0x30) return "(terrestrialRadio)";
+	if (ts == 0x39) return "(serialTimeCode)";
+	if (ts == 0x40) return "(PTP)";
+	if (ts == 0x50) return "(NTP)";
+	if (ts == 0x60) return "(handSet)";
+	if (ts == 0x90) return "(other)";
+	if (ts == 0xA0) return "(intOscillator)";
+	if (ts >= 0xF0 && ts <= 0xFE) return "(intOscillator)";
+	if (ts == 0xFF) return "(reserved)";
+	return "";
+}
+
+static char * getClockClassLabel(int cc)
+{
+	if (cc == 6) return "(GM)";
+	if (cc == 193) return "(FR)";
+	if (cc == 248) return "(BC)";
+
+	return "";
+}
+
+static char * getHopSuffix(int hop)
+{
+	if (((hop % 10) == 1) && ((hop % 100) != 11)) return "st";
+	if (((hop % 10) == 2) && ((hop % 100) != 12)) return "nd";
+	if (((hop % 10) == 3) && ((hop % 100) != 13)) return "rd";
+
+	return "th";
 }
 
 #if 0
@@ -441,6 +522,46 @@ int read_servo(void){
 	return 0;
 }
 
+static int read_gm_info(void)
+{
+	unsigned ii;
+	unsigned retries = 0;
+	parentDS_t *parentDS;
+	currentDS_t *currentDS;
+	timePropertiesDS_t *timePropertiesDS;
+
+	gm_info.valid_gm_data = 0;
+
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+		/* Copy extra interesting data */
+
+		if (!(currentDS = wrs_shm_follow(ppsi_head, ppg->currentDS)))
+			break;
+		gm_info.stepsRemoved = currentDS->stepsRemoved;
+
+		if (!(parentDS = wrs_shm_follow(ppsi_head, ppg->parentDS)))
+			break;
+		gm_info.grandmasterIdentity = parentDS->grandmasterIdentity;
+		gm_info.grandmasterClockQuality = parentDS->grandmasterClockQuality;
+
+		if (!(timePropertiesDS = wrs_shm_follow(ppsi_head, ppg->timePropertiesDS)))
+			break;
+		gm_info.timeSource = timePropertiesDS->timeSource;
+
+		if (!wrs_shm_seqretry(ppsi_head, ii)) {
+			gm_info.valid_gm_data = 1;
+			break; /* consistent read */
+		}
+
+		retries++;
+		if (retries > 100)
+			break;
+	}
+
+	return 0;
+}
+
 void ppsi_connect_minipc(void)
 {
 	if (ptp_ch) {
@@ -550,6 +671,54 @@ void init_shm(void)
 	ppsi_connect_minipc();
 }
 
+static void print_gm_info(void)
+{
+	char buf[128];
+	ClockIdentity *p = &gm_info.grandmasterIdentity;
+
+	if (!gm_info.valid_gm_data)
+		return;
+
+	term_cprintf(C_CYAN,  "--------------------------+--------------  Grand Master Info ------------------------+----------------+--------\n");
+	term_cprintf(C_CYAN,  "      Grand Master Id     |  stepsRemoved  |  clockClass  |        timeSource        |    accuracy    |  logVar\n");
+
+	/* GM: ID */
+	term_cprintf(C_WHITE, "  %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+		     p->id[0], p->id[1], p->id[2], p->id[3],
+		     p->id[4], p->id[5], p->id[6], p->id[7]);
+	term_cprintf(C_CYAN,  " |");
+
+	/* Hops from GM */
+	snprintf(buf, sizeof(buf), "%d%s", gm_info.stepsRemoved,
+		 getHopSuffix(gm_info.stepsRemoved));
+
+	term_cprintf(C_WHITE, "%11s hop", buf);
+	term_cprintf(C_CYAN,  " |");
+
+	/* ClockClass */
+	snprintf(buf, sizeof(buf), "%d%s",
+		 gm_info.grandmasterClockQuality.clockClass,
+		 getClockClassLabel(gm_info.grandmasterClockQuality.clockClass));
+	term_cprintf(C_WHITE, "%13s", buf);
+	term_cprintf(C_CYAN,  " | ");
+
+	/* TimeSource */
+	snprintf(buf, sizeof(buf), "0x%X%s", gm_info.timeSource,
+		 getTimeSourceLabel(gm_info.timeSource));
+	term_cprintf(C_WHITE, "%24s", buf);
+	term_cprintf(C_CYAN,  " | ");
+
+	/* Accuracy */
+	snprintf(buf, sizeof(buf), "0x%X%s",
+		 gm_info.grandmasterClockQuality.clockAccuracy,
+		 getAccuracyLabel(gm_info.grandmasterClockQuality.clockAccuracy));
+	term_cprintf(C_WHITE, "%14s", buf);
+	term_cprintf(C_CYAN,  " |");
+
+	/* logVar */
+	term_cprintf(C_WHITE, "%8d\n", gm_info.grandmasterClockQuality.offsetScaledLogVariance );
+}
+
 static struct desired_state_t{
 	char *str_state;
 	int state;
@@ -636,6 +805,9 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_BLUE, "    PLL locking state: ");
 			term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
 		}
+
+		print_gm_info();
+
 		term_cprintf(C_CYAN, "----- HAL ---|---------------------------------- PPSI --------------------------------------------------------\n");
 		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States    | Pro | VLANs\n");
 		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+------------------------------+-----+------\n");
@@ -991,7 +1163,6 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			term_cprintf(C_WHITE,"%s",optimized_pp_time_toString(&wr_servo_ext->delta_txs,buf));
 			term_cprintf(C_BLUE, "  RX: ");
 			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&wr_servo_ext->delta_rxs,buf));
-			term_cprintf(C_WHITE,"\n");
 		}
 	} else {
 		/* TJP: commented out fields are present on the SPEC,
@@ -1260,6 +1431,7 @@ int main(int argc, char *argv[])
 		shw_pps_gen_read_time(&seconds, &nanoseconds);
 		if (seconds != last_seconds) {
 			read_servo();
+			read_gm_info();
 			read_hal();
 			show_all();
 

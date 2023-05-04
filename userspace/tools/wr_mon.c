@@ -808,9 +808,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 		print_gm_info();
 
-		term_cprintf(C_CYAN, "----- HAL ---|---------------------------------- PPSI --------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface| Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States    | Pro | VLANs\n");
-		term_cprintf(C_CYAN, "------+------+----+--------------+------------+-------------------+------------------------------+-----+------\n");
+		term_cprintf(C_CYAN, "----- HAL ----|---------------------------------- PPSI --------------------------------------------------------\n");
+		term_cprintf(C_CYAN, " Iface | Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States    | Pro | VLANs\n");
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -831,11 +830,15 @@ void show_ports(int hal_alive, int ppsi_alive)
 			continue;
 
 		if (mode == SHOW_GUI) {
+			/* check if SFP is in database */
+			if (!(port_state->calib.sfp.flags & SFP_FLAG_IN_DB))
+				term_cprintf(C_BLUE, "-");
 			/* check if link is up */
 			if (state_up(port_state))
-				term_cprintf(C_GREEN, " %-5s", if_name);
-			else
-				term_cprintf(C_RED, "*%-5s", if_name);
+				term_cprintf(C_GREEN, "%s %-5s", port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? "+" : "", if_name);
+			else {
+				term_cprintf(C_RED, "%s*%-5s", port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? "+" : "", if_name);
+			}
 			term_cprintf(C_CYAN, "| ");
 			if (port_state->locked)
 				term_cprintf(C_GREEN, "Lock ");
@@ -1010,8 +1013,9 @@ void show_ports(int hal_alive, int ppsi_alive)
 		}
 	}
 	if (mode == SHOW_GUI) {
-		term_cprintf(C_BLUE, "Pro - Protocol mapping: V-Ethernet over "
-			     "VLAN; U-UDP; R-Ethernet\n");
+		term_cprintf(C_BLUE, "Iface: +/- SFP in DB; "
+			     "Pro - Protocol mapping: V-Ethernet over VLAN, "
+			     "U-UDP, R-Ethernet\n");
 	}
 }
 

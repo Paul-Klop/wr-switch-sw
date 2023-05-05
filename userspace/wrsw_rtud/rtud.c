@@ -280,9 +280,11 @@ static int rtu_daemon_learning_process(void)
 				      err);
 				break;
 			}
-		} else {
+		} else if (err < 0) {
 			pr_error("Read learning queue: error %d\n", err);
 		}
+		/* If err > 0 retry rtu_read_learning_queue in the next loop
+		 * iteration. */
 	}
 	return err;
 }

@@ -227,6 +227,7 @@ static int irq_disabled = 1;
 int rtu_read_learning_queue(struct rtu_request *req)
 {
 	int err;
+	int errno_local;
 
 	if (irq_disabled) {
 		ioctl(fd, WR_RTU_IRQENA);
@@ -235,8 +236,22 @@ int rtu_read_learning_queue(struct rtu_request *req)
 	// If learning queue is empty, wait for UFIFO IRQ
 	if (rtu_ufifo_is_empty()) {
 		err = ioctl(fd, WR_RTU_IRQWAIT);
-		if (err && (err != -EAGAIN))
+		errno_local = errno;
+		/* Check if ioctl was interrupted by a signal. Please note that
+		 * the driver's function returns -ERESTARTSYS, but userspace
+		 * gets -1 (and errno == EINTR) from the ioctl call. */
+		if (err == -1 && errno_local == EINTR)
+			return 1;
+
+		/* IRQ disabled, driver/ioctl sets errno to EAGAIN */
+		if (err == -1 && errno_local == EAGAIN)
+			return 2;
+
+		/* Other error */
+		if (err) {
+			pr_error("%s: error %d errno %s (%d)\n", __func__, err, strerror(errno_local), errno_local);
 			return err;
+		}
 	}
 
 	// read data from mapped IO memory

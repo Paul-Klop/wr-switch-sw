@@ -127,8 +127,7 @@ static void wrn_update_link_status(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	u32 ecr, bmsr, bmcr, lpa;
-	uint32_t value;
-	
+
 	bmsr = wrn_phy_read(dev, 0, MII_BMSR);
 	bmcr = wrn_phy_read(dev, 0, MII_BMCR);
 

@@ -2507,6 +2507,45 @@ The following tools and scripts are provided:
 
 @table @file
 
+@item apply_dot-config
+	The script is used to apply @t{dot-config} settings to the
+	current configuration files.  It is run at boot time before
+	any service is started and by the web interface to apply changes in
+	the local @t{dot-config}.
+	The @t{dot-config} mechanism is documented in @ref{Configuration of the
+	Device}.
+
+@item assembly_ppsi_conf.sh
+	The script is used to assembly ppsi configuration file based on
+	information stored in @t{dot-config}.
+	This script is called by @t{apply_dot-config}.
+
+@item change_dot-config
+	This script changes the current @t{dot-config} file. It is
+	designed to be the back-end of the web interface, when changing
+	configuration items.  The script does nothing to @i{apply}
+	the changes, and it only performs editing.
+	It is the responsibility of the caller to ensure the proper
+	service is restarted with the new configuration.
+
+@item com
+	The program is a simple program for talking with serial ports.
+
+@item ethtool
+	The standad Linux tool used to query or control network driver and
+	hardware settings. In WRS the number of parameters that this tool can
+	change is limited. However, this tool can be used to:
+
+	``@t{ethtool -s wriX autoneg off}'' disables (or enable if @t{on} is
+	used) autonegotiation
+
+	``@t{ethtool --set-priv-flags wriX "Unidirectional Enable" on}'' enables
+	(or disables if @t{off} is used) transmit regardless of whether a valid
+	link has been established
+
+	``@t{ethtool --set-priv-flags wriX "Accept RX Jumbo Frames" on}''
+	accepts (or drops if @t{off} is used) RX Jumbo Frames
+
 @item lm32-vuart
 	The tool allows connecting to the virtual UART of the LM32 soft-core CPU.
 	It can be used to observe log messages from the SoftPLL (the same as
@@ -2514,82 +2553,28 @@ The following tools and scripts are provided:
 	physical UART port available in the back of a WR switch). Use
 	@code{Ctrl+C} escape combination to go back to WR Switch Linux shell.
 
-@item load-virtex
-@itemx load-lm32
 
+@item load-lm32
+@itemx load-virtex
 	They load into the FPGA the gateware and the LM32 application.
-        They are used by the init scripts of the Linux system. The LM32
-        loader can also change variables in the loaded binary, and
-        read or write variables without stopping the running CPU.
-        This is limited to 32-bit integer variables, though. See the
-        commit message for details.
+	They are used by the init scripts of the Linux system. The LM32
+	loader can also change variables in the loaded binary, and
+	read or write variables without stopping the running CPU.
+	This is limited to 32-bit integer variables, though. See the
+	commit message for details.
 @c FIXME: document better load-lm32 for elf.
 
 @item mapper
 @itemx wmapper
 	The former reads from a file using @i{mmap}
-        (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
-        The latter reads from @i{stdin} and writes using @i{mmap}.
-        They are classic tools distributed in the @i{Linux Device Drivers}
-        examples since 1998.
+	(usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
+	The latter reads from @i{stdin} and writes using @i{mmap}.
+	They are classic tools distributed in the @i{Linux Device Drivers}
+	examples since 1998.
 
-@item com
-	The program is a simple program for talking with serial ports.
-
-@item wr_phytool
-	A tool to read and write PHY registers in the switch.
-
-@item wr_mon
-	A simple monitor of White Rabbit status. It prints to @i{stdout}
-        using the standard escape sequences for color output. Please check
-        @t{wr_mon}'s help (@t{--help} parameter) for further information.
-        (This is probably the most important diagnostic tool on the switch.)
-
-@item wrs_pps_control
-        A tool to manually enable/disable/read status of  PPS output.
-        It can also enable/disable/read status of the 50ohm termination for 1-PPS input.
-        Usage:
-
-        ``@t{wrs_pps_control pps on}'' enables the PPS output,
-
-        ``@t{wrs_pps_control pps off}'' disables the PPS output,
-
-        ``@t{wrs_pps_control pps read}'' checks whether PPS output is enabled or disabled.
-
-        Switching the output on/off is independent
-        of the PPSi process, but PPSi switches the PPS output back on when a
-        link restart is detected and PPSi comes into @t{'TRACK_PHASE'} state.
-        To on/off/read the 50ohm termination for 1-PPS input use
-        @t{wrs_pps_control} with a parameter @t{50ohm-term-in} followed by
-        @t{on}, @t{off} or @t{read}.
-
-@item wr_date
-@anchor{wr_date}
-
-	The program can read or set the White Rabbit date. Usage:
-        
-        ``@t{wr_date set} @i{value}'' sets an arbitrary date and time as the system time,
-
-        ``@t{wr_date set host}'' passes the host time to White Rabbit.
-
-        If the file @t{/etc/leap-seconds.list} exists, it is used to
-        pass the TAI offset to the kernel, and to consider it in setting
-        White Rabbit time to the current TAI value.  The program is
-        meant to prime the White Rabbit counter at boot time, and is
-        run by @t{/etc/init.d/wr_date} -- this script uses NTP
-        to set host time as a first step, if @t{/etc/wr_date.conf}
-        exists and includes a line of the form @t{ntpserver 192.168.16.1}.
-        The file @t{/etc/wr_date.conf} is created at boot time by the script
-        @t{apply_dot-config} if a NTP server is defined (@t{CONFIG_NTP_SERVER}).
-
-        With ``@t{wr_date get}'' you can read White Rabbit time, and
-        by using @t{wr_date get tohost}'' you can set host time from
-        White Rabbit time. This can be useful in slave switches that
-        are not synced to NTP at boot.
-
-@item wrs_version
-	Print information about the software, gateware, hardware version of the WRS.
-	Please check the help message.
+@item sdb-read
+	The tool, copied from the @t{fpga-config-space} project,
+	is documented in the next section,
 
 @item shw_ver
 	A symbolic link to @t{wrs_version}, to be compatible with
@@ -2597,40 +2582,60 @@ The following tools and scripts are provided:
         inconsistent with anything else in the switch, so it was
         replaced.
 
-@item wrs_vlans
-	The tool allows to configure VLAN settings
-        for each port and for the RTU daemon. The @t{--help} option
-        lists all configuration items of the tool. For details please
-        refer to the @ref{wrs_vlans}.
+@item wr_date
+@anchor{wr_date}
 
-@item apply_dot-config
-	The script is used to apply @t{dot-config} settings to the
-        current configuration files.  It is run at boot time before
-        any service is started and by the web interface to apply changes in
-        the local @t{dot-config}.
-        The @t{dot-config} mechanism is documented in @ref{Configuration of the
-        Device}.
+	The program can read or set the White Rabbit date. Usage:
 
-@item assembly_ppsi_conf.sh
-	The script is used to assembly ppsi configuration file based on
-        information stored in @t{dot-config}.
-        This script is called by @t{apply_dot-config}.
+	``@t{wr_date set} @i{value}'' sets an arbitrary date and time as the system time,
 
-@item change_dot-config
-	This script changes the current @t{dot-config} file. It is
-        designed to be the back-end of the web interface, when changing
-        configuration items.  The script does nothing to @i{apply}
-        the changes, and it only performs editing.
-        It is the responsibility of the caller to ensure the proper
-        service is restarted with the new configuration.
+	``@t{wr_date set host}'' passes the host time to White Rabbit.
 
-@item sdb-read
-	The tool, copied from the @t{fpga-config-space} project,
-	is documented in the next section,
+	If the file @t{/etc/leap-seconds.list} exists, it is used to
+	pass the TAI offset to the kernel, and to consider it in setting
+	White Rabbit time to the current TAI value.  The program is
+	meant to prime the White Rabbit counter at boot time, and is
+	run by @t{/etc/init.d/wr_date} -- this script uses NTP
+	to set host time as a first step, if @t{/etc/wr_date.conf}
+	exists and includes a line of the form @t{ntpserver 192.168.16.1}.
+	The file @t{/etc/wr_date.conf} is created at boot time by the script
+	@t{apply_dot-config} if a NTP server is defined (@t{CONFIG_NTP_SERVER}).
+
+	With ``@t{wr_date get}'' you can read White Rabbit time, and
+	by using @t{wr_date get tohost}'' you can set host time from
+	White Rabbit time. This can be useful in slave switches that
+	are not synced to NTP at boot.
+
+@item wr_mon
+	A simple monitor of White Rabbit status. It prints to @i{stdout}
+	using the standard escape sequences for color output. Please check
+	@t{wr_mon}'s help (@t{--help} parameter) for further information.
+	(This is probably the most important diagnostic tool on the switch.)
+
+@item wr_phytool
+	A tool to read and write PHY registers in the switch.
 
 @item wrs_auxclk
-  The tool allows to setup the parameters of a clock generated on the @i{clk2}
-  SMC output on the front panel.
+	The tool allows to setup the parameters of a clock generated on the
+	@i{clk2} SMC output on the front panel.
+
+@item wrs_pps_control
+	A tool to manually enable/disable/read status of  PPS output.
+	It can also enable/disable/read status of the 50ohm termination for 1-PPS input.
+	Usage:
+
+	``@t{wrs_pps_control pps on}'' enables the PPS output,
+
+	``@t{wrs_pps_control pps off}'' disables the PPS output,
+
+	``@t{wrs_pps_control pps read}'' checks whether PPS output is enabled or disabled.
+
+	Switching the output on/off is independent
+	of the PPSi process, but PPSi switches the PPS output back on when a
+	link restart is detected and PPSi comes into @t{'TRACK_PHASE'} state.
+	To on/off/read the 50ohm termination for 1-PPS input use
+	@t{wrs_pps_control} with a parameter @t{50ohm-term-in} followed by
+	@t{on}, @t{off} or @t{read}.
 
 @item wrs_pstats
 	The tool is used to read various per-port statistics counters from the
@@ -2661,20 +2666,18 @@ The following tools and scripts are provided:
 	information, please refer to the
 	@ref{Configuration Items that Apply at Run Time}.
 
-@item ethtool
-  The standad Linux tool used to query or control network driver and hardware
-  settings. In WRS the number of parameters that this tool can change is
-  limited. However, this tool can be used to:
+@item wrs_version
+	Print information about the software, gateware, hardware version of the WRS.
+	Please check the help message.
 
-  ``@t{ethtool -s wriX autoneg off}'' disables (or enable if @t{on} is used)
-  autonegotiation
+@item wrs_vlans
+	The tool allows to configure VLAN settings
+	for each port and for the RTU daemon. The @t{--help} option
+	lists all configuration items of the tool. For details please
+	refer to the @ref{wrs_vlans}.
 
-  ``@t{ethtool --set-priv-flags wriX "Unidirectional Enable" on}'' enables
-  (or disables if @t{off} is used) transmit regardless of whether a valid link
-  has been established
-
-  ``@t{ethtool --set-priv-flags wriX "Accept RX Jumbo Frames" on}'' accepts
-  (or drops if @t{off} is used) RX Jumbo Frames
+@item wmapper
+	See @t{mapper}.
 
 @c FIXME: document rtu_stat spll_dbg_proxy
 @end table

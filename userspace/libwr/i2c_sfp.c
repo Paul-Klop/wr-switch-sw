@@ -309,7 +309,10 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	printf("Identifier: %02X\n", head->id);
 	printf("Extended Identifier: %02X\n", head->ext_id);
 	printf("Connector: %02X\n", head->connector);
-	printf("Transceiver: %016llX\n", ((uint64_t *) head->transciever)[0]);
+	printf("Transceiver: ");
+	for(i = 0; i < sizeof(head->transciever); i++)
+		printf("%02X", head->transciever[i]);
+	printf("\n");
 	printf("Encoding: %02x\n", head->encoding);
 	printf("Nominal Bit Rate: %d Megabits/s\n", head->br_nom * 100);
 	printf("Length (9m): %dkm\n", head->length1);

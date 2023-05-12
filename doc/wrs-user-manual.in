@@ -1842,13 +1842,21 @@ parameter itself.
 @subsection SFP name matching
 
 Each time you plug an SFP transceiver into any of the @sc{wrs} ports, it has to be matched
-against @t{dot-config} entries specifying timing parameters for the supported transceivers.
-The matching algorithm reads from the SFP its vendor name (@i{vn}), part number (@i{pn}) and vendor
-serial (@i{vs}). Then, SFP parameters are compared with values stored in
-@t{CONFIG_SFP@i{xx}_PARAMS} @t{dot-config} entries:
+against @t{dot-config} entries specifying the timing parameters and wavelength for the
+supported transceivers.
+The matching algorithm reads from the SFP its vendor name (@i{vn}), part number (@i{pn}), vendor
+serial (@i{vs}) and TX wavelength in @t{nm}. Note that it only reads the integer part (i.e. rounded down)
+of the TX wavelength, as shown by @t{wrs_sfp_dump}. Then, these SFP parameters are compared
+ with the values stored in the @t{CONFIG_SFP@i{xx}_PARAMS} @t{dot-config} entries:
 @itemize
+@item
+  The @i{wl_txrx} field in the @t{CONFIG_SFP@i{xx}_PARAMS} must contain the transmit and receive
+  wavelengths of the SFP in @t{nm}, as integers, separated by a '+'. The TX wavelength as
+  reported by the SFP is matched against the tx entry (first number) in the @i{wl_txrx} entry. If these do
+  not match, then this @t{CONFIG_SFP@i{xx}_PARAMS} entry cannot match against this SFP.
 @item 
-  The first try is to match a complete set of SFP identifiers (@i{vn}, @i{pn} and @i{vs}).
+  For the remaining parameters, first a match against all the vendor SFP identifiers
+  (@i{vn}, @i{pn} and @i{vs}) is attempted.
 @item
   If a corresponding entry cannot be found, the match is limited to @i{vn} and @i{pn} and
   compared only with those @t{dot-config} entries that do not specify any vendor serial.
@@ -1861,24 +1869,25 @@ To understand better the operation of SFP matching algorithm, please see below s
 @itemize @bullet
 @item
   @t{CONFIG_SFP00_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,vs=AX12390009629,
-  tx=0,rx=0,..."}
+  tx=0,rx=0,wl_txrx=1490+1310"}
 
   This entry can be matched only to one SFP transceiver as it specifies full set of parameters,
   including the unique vendor serial number (@i{vs}).
 
 @item
   @t{CONFIG_SFP01_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,
-  wl_txrx=1310+1490"}
+  wl_txrx=1490+1310"}
 
-  This entry may be matched only to all SFPs with vendor name "Axcen Photonics" and
-  part number "AXGE-3454-0531", with exception to the SFP that was already matched to
+  This entry may be matched only to all SFPs with vendor name "Axcen Photonics",
+  part number "AXGE-3454-0531" and a TX wavelength of 1490 nm, with exception of the SFP
+  that was already matched to
   the previous entry @t{CONFIG_SFP00_PARAMS} (with vendor serial defined).
 
 @item
-  @t{CONFIG_SFP02_PARAMS="pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"}
+  @t{CONFIG_SFP02_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"}
 
-  This entry will be matched to all SFPs with part number "AXGE-3454-0531",
-  that were not matched by any of the entries listed earlier.
+  This entry will be matched to all SFPs with part number "AXGE-3454-0531" and TX wavelength of
+  1310 nm, that were not matched by any of the entries listed earlier.
 
 @end itemize
 
@@ -1900,7 +1909,14 @@ and long fibers, you should provide an appropriate value of alpha,
 according to laboratory measures of your fiber type. The
 @t{CONFIG_FIBER@i{xx}_PARAMS} items are parsed as a list of
 comma-separated assignments, so you can specify multiple
-wavelength pairs.  The accuracy of your value depends on the length
+wavelength pairs. Each entry has the form @t{alpha_1310_1490=2.6787e-4}, where the numbers
+are again the wavelength in integer @t{nm}. Note that only one value of alpha is needed for
+each pair of wavelenghts, the switch will calculate the corect value of alpha when the wavelenghts
+are switched around.
+
+Example: @t{CONFIG_FIBER00_PARAMS="alpha_1310_1490=2.6787e-04"}
+
+The accuracy of your value depends on the length
 of the fiber link.  For a 10km fiber (100us round-trip) you need to know
 alpha up to 1e-7 if you want the related uncertainty to be
 less than 10ps.

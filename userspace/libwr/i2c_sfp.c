@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stddef.h>
+#include <math.h>
 
 #include <libwr/pio.h>
 #include <libwr/wrs-msg.h>
@@ -347,11 +348,13 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 
 void shw_sfp_print_dom(struct shw_sfp_dom * dom)
 {
+	float tx_pow = (dom->tx_pow[0]*256 + dom->tx_pow[1])/(float)10000;
+	float rx_pow = (dom->rx_pow[0]*256 + dom->rx_pow[1])/(float)10000;
 	printf("Temperature: %.3f C\n", (int8_t)dom->temp[0] + dom->temp[1]/(float)256);
 	printf("Voltage: %.3f V\n", (dom->vcc[0]*256 + dom->vcc[1])/(float)10000);
 	printf("Bias Current:  %.3f mA\n", (dom->tx_bias[0]*256+dom->tx_bias[1])/(float)500);
-	printf("TX power: %.3f mW\n", (dom->tx_pow[0]*256 + dom->tx_pow[1])/(float)10000);
-	printf("RX power: %.3f mW\n", (dom->rx_pow[0]*256 + dom->rx_pow[1])/(float)10000);
+	printf("TX power: %.4f mW (%.1f dBm)\n", tx_pow, 10 * log10(tx_pow));
+	printf("RX power: %.4f mW (%.1f dBm)\n", rx_pow, 10 * log10(rx_pow));
 }
 
 void shw_sfp_header_dump(struct shw_sfp_header *head)

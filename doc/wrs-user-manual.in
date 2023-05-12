@@ -1207,6 +1207,7 @@ appropriate way, before the respective service is started.
 @itemx CONFIG_PPSGEN_PTP_THRESHOLD_MS
 @itemx CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC
 @itemx CONFIG_PPSGEN_FORCE
+@itemx CONFIG_PPSGEN_FR_ON_SYNC_ONLY
 
 	Configuration of the 1-PPS (Pulse Per Second) output.
   The generation of 1-PPS output heavily depends on the configured timing mode:
@@ -1214,7 +1215,9 @@ appropriate way, before the respective service is started.
     @item GrandMaster (@t{CONFIG_TIME_GM}, PTP clock class 6)
       PPS generation is always enabled.
     @item Free-running Master (@t{CONFIG_TIME_FM}, PTP clock class 193)
-      PPS generation is always enabled.
+      PPS generation is by default always enabled.
+      If @t{CONFIG_PPSGEN_FR_ON_SYNC_ONLY} is set, then PPS is generated only
+      when a switch becomes slave and synchronize to another master.
     @item Arbitrary GrandMaster (@t{CONFIG_TIME_ARB_GM}, PTP clock class 13)
       PPS generation is disabled unless @t{CONFIG_PPSGEN_FORCE} is set
     @item Boundary Clock (@t{CONFIG_TIME_BC}, PTP clock class 248)

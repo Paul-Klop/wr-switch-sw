@@ -734,12 +734,23 @@ config PPSGEN_GM_DELAY_TO_GEN_PPS_SEC
 		transitory phase is terminated. This option then allows to define a delay in seconds to respect before 
 		generating the PPS when a GM by BMCA is detected.  
 		A 0 value desactivate this feature.
-		
+
 config PPSGEN_FORCE
-	bool "Force PPS for testing purpose"
-	default N
+	bool "Force generation of PPS all the time (not for FR)"
+	depends on !TIME_FM
+	default n
 	help
-	  This option enables the PPS generation for all cases. It should only be used for testing purpose. 
+	  This option enables the PPS generation all the time in various modes
+	  except Free-Running Master.
+
+config PPSGEN_FR_ON_SYNC_ONLY
+	bool "In FR mode generate PPS only when synchronized to master"
+	depends on TIME_FM
+	default n
+	help
+	  If device is configured as Free-Running master, generate PPS only
+	  when synchronized to another master. Otherwise PPS is generated all
+	  the time."
 
 endmenu
 

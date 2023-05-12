@@ -427,10 +427,17 @@ fi
 if [ -n "$CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC" ]; then
 	globals[gmDelayToGenPpsSec]="$CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC"
 fi
-  
-if [ -n "$CONFIG_PPSGEN_FORCE" ]; then
+
+# Force PPS generation if selected and if not TIME_FM
+if [ -n "$CONFIG_PPSGEN_FORCE" ] && ! [ "$CONFIG_TIME_FM" = y ]; then
 	globals[forcePpsGen]="$CONFIG_PPSGEN_FORCE"
 fi
+
+# Force PPS generation in TIME_FM unless PPSGEN_FR_ON_SYNC_ONLY selected
+if [ "$CONFIG_TIME_FM" = y ] && ! [ "$CONFIG_PPSGEN_FR_ON_SYNC_ONLY" = y ]; then
+	globals[forcePpsGen]=y
+fi
+
 
 vlan_error_detected=0 # If a VLAN error is detected, then VLAN are disabled on all ports 
 

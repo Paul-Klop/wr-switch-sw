@@ -2567,6 +2567,11 @@ The following tools and scripts are provided:
 	information stored in @t{dot-config}.
 	This script is called by @t{apply_dot-config}.
 
+@item assembly_snmpd_conf.sh
+	The script is used to assembly SNMP daemon's configuration file based on
+	information stored in @t{dot-config}.
+	This script is called by @t{apply_dot-config}.
+
 @item change_dot-config
 	This script changes the current @t{dot-config} file. It is
 	designed to be the back-end of the web interface, when changing
@@ -2619,6 +2624,24 @@ The following tools and scripts are provided:
 	They are classic tools distributed in the @i{Linux Device Drivers}
 	examples since 1998.
 
+@item ptpdump
+	This is a sniffer for @sc{ptp} frames. It reports all Ethernet frames
+	and UDP datagrams that talk @sc{ptp}, from a specific network interface.
+	The output format is line-oriented to help running @i{grep} over log
+	files.
+	The number of blank lines between frames depends on how much time
+	elapsed between them; this should help identifying sync/follow-up
+	pairs at a glimpse of the eye.
+
+	The program receives one optional argument on the command line, which is
+	the name of the interface where it should listen; by default it uses
+	@t{eth0}.
+
+@item rtu_stat
+	The tool allows to configure switching rules
+	for each port via RTU daemon. The @t{--help} option
+	lists all configuration items of the tool.
+
 @item sdb-read
 	The tool, copied from the @t{fpga-config-space} project.
 	For details please refer to the @ref{sdb-read}.
@@ -2629,6 +2652,11 @@ The following tools and scripts are provided:
         older versions that used this tool name. The name is
         inconsistent with anything else in the switch, so it was
         replaced.
+
+@c spll_dbg_proxy
+
+@item wmapper
+	See @t{mapper}.
 
 @item wr_date
 @anchor{wr_date}
@@ -2667,6 +2695,33 @@ The following tools and scripts are provided:
 	The tool allows to setup the parameters of a clock generated on the
 	@i{clk2} SMC output on the front panel.
 
+@item wrs_checkcfg
+	Simple program performing a basic validation of a @t{dot-config}.
+	Used during startup for validation of a received @t{dot-config}.
+
+@item wrs_dump_shmem
+	Probably the most useful tool for advanced debugging of a switch.
+	It can dump and interpret many internal variables from HAL, rtud, PPSi
+	and SoftPLL.
+	The output is presented in a grep-friendly format as "@t{NAME: VALUE}".
+	Please check its help (@t{--help} parameter) for more information.
+
+@item wrs_leapsec
+	This tools read the local time and checks for an incoming leap second.
+	If it detects a incoming leap seconds in the next 12 hours,
+	the information is set in the kernel and will be available for PPSi.
+
+@c wrs_menuconfig
+@c wrs_nconfig
+	wrs_menuconfig and wrs_nconfig use a different framework to display and
+	change switch configuration.
+	This is the preferred way over manual editing of @t{dot-config},
+	since menuconfig can preserve number of constraints on values and
+	between configuration items.
+	Please make sure that after the changes are done, the local config
+	is configured to be used
+	(configuration item @t{CONFIG_DOTCONF_SOURCE_LOCAL}).
+
 @item wrs_pps_control
 	A tool to manually enable/disable/read status of  PPS output.
 	It can also enable/disable/read status of the 50ohm termination for 1-PPS input.
@@ -2689,6 +2744,7 @@ The following tools and scripts are provided:
 	The tool is used to read various per-port statistics counters from the
 	console. Please note that the same values are also provided through SNMP
 	objects.
+	For details please refer to the @ref{wrs_pstats}.
 
 @item wrs_sfp_dump
 	Dump the content of SFPs internal memory. This tool can read SFP info
@@ -2703,6 +2759,9 @@ The following tools and scripts are provided:
 	care.
 	
 	For more details please refer to the tool's help.
+
+@c wrs_status_led
+	Simple tool used during startup and restart to control the status LED.
 
 @item wrs_throttling
 	The tool is used to control Rx bandwidth throttling of the traffic that
@@ -2724,8 +2783,11 @@ The following tools and scripts are provided:
 	lists all configuration items of the tool. For details please
 	refer to the @ref{wrs_vlans}.
 
-@item wmapper
-	See @t{mapper}.
+@c @item wrs_watchdog
+	A daemon used to reset the SWcore HDL if there is still some hidden bug
+	inside. The number of occurred timeouts can be read using
+	@t{-g} parameter and is also reported via SNMP in
+	@t{WR-SWITCH-MIB.txt::wrsGwWatchdogTimeouts}.
 
 @c FIXME: document rtu_stat spll_dbg_proxy
 @end table

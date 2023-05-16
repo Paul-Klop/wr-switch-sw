@@ -42,8 +42,8 @@
 @finalout
 
 @titlepage
-@title Radius Vlan
-@subtitle Description of the mechanism used in WR switch
+@title White Rabbit Switch: Radius Vlan
+@subtitle Description of the Radius Vlan mechanism used in WR switch
 @subtitle @value{update-month} (@value{release})
 @author A. Rubini
 @end titlepage

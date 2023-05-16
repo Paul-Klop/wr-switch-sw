@@ -118,6 +118,11 @@ This is the current set of manuals that accompany the @sc{wrs}:
    failure scenarios of a switch and ways how to recognize them.
    Additionally, it describes SNMP exports of a switch (@t{WR-SWITCH-MIB}).
 
+@item @i{White Rabbit Switch: Radius Vlan}: describes functionality and usage
+   of Radius Vlan which is a subset of IEEE 802.1X.
+   When a devices is detected on a configured port, a Radius server is queried
+   for authorization.
+
 @end itemize
 
 The official @sc{pdf} copy of these manuals at each release
@@ -1245,7 +1250,18 @@ appropriate way, before the respective service is started.
 	The @t{CONFIG_PPSGEN_PTP_FALLBACK} option, if activated, enables the PPS generation
   when a slave instance programmed to use an extension protocol (WR, L1Sync, ...)
   is falling back to regular PTP synchronization. 
-	
+
+@item CONFIG_RVLAN_ENABLE
+@itemx CONFIG_RVLAN_PMASK
+@itemx CONFIG_RVLAN_AUTH_VLAN
+@itemx CONFIG_RVLAN_NOAUTH_VLAN
+@itemx CONFIG_RVLAN_OBEY_DOTCONFIG
+@itemx CONFIG_RVLAN_RADIUS_SERVERS
+@itemx CONFIG_RVLAN_RADIUS_SECRET
+	Configuration items related to @i{radiusvlans}, which can be used to
+	limit access to WR network for connected devices based on MAC address.
+	For more details please refer to @i{White Rabbit Switch: Radius Vlan}.
+
 @item CONFIG_SNMP_TRAPSINK_ADDRESS
 @itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
 @itemx CONFIG_SNMP_RO_COMMUNITY

@@ -23,7 +23,7 @@ case ${SCB_MAJOR} in
 esac
 
 case ${MANUFACTURER} in
-    "Seven Solutions")
+    "Seven Solutions" | "7S")
 	MANUFACTURER_N=2
 	;;
 
@@ -35,7 +35,7 @@ case ${MANUFACTURER} in
 	MANUFACTURER_N=4
 	;;
 
-    "OPNT")
+    "OPNT" | "OPNT           ")
 	MANUFACTURER_N=5
 	;;
 

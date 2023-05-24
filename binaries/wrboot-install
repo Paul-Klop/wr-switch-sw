@@ -37,7 +37,7 @@ addpart /dev/mem  4M@0x71000000(kernel)
 addpart /dev/mem  4M@0x71800000(initramfs)
 
 # These files are sent in by sam-ba tools when installing from usb
-tftp zImage/dev/mem.kernel
+tftp zImage /dev/mem.kernel
 tftp wrs-initramfs.gz /dev/mem.initramfs
 
 # The following stanza comes from env/bin/init in the install case

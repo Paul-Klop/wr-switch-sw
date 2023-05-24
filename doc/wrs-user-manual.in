@@ -2443,6 +2443,9 @@ this is the default place where the NFS-Root filesystem is mounted
 from, as shown in the log excerpt above. So you'll have your
 @file{wrboot} in the same place.
 
+Note that the IP address of the TFTP server can be specified using the DHCP
+@t{next-server <address>} configuration option.
+
 @b{Note:} recent @i{barebox} versions require scripts to include a
 leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
 line until April 2014 included.
@@ -2470,7 +2473,7 @@ of known-working wrboot scripts as examples;
 @item wrboot-nand
 
 	This script is a copy of the default boot script executed
-        bt standalone switches.  Booting from a script allows
+        by standalone switches.  Booting from a script allows
         changing the kernel command line or anything else it may
         be useful to developers.
 

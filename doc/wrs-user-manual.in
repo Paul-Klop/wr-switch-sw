@@ -1301,6 +1301,15 @@ appropriate way, before the respective service is started.
 @c	Error if frame rate of any RX priority exceed given value.
 @c	(currently not implemented)
 
+@item CONFIG_SNMP_SYSCONTACT
+	Free text intended to be the textual identification of the contact
+	person for this switch, together with information on how to contact this
+	person. Reported by SNMP as SNMPv2-MIB::sysContact.0
+
+@item CONFIG_SNMP_SYSLOCATION
+	Free text intended to be The physical location of this node.
+	Reported by SNMP as SNMPv2-MIB::sysLocation.0
+
 @item CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
 @itemx CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
 @itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS

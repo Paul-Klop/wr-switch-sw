@@ -3102,9 +3102,19 @@ is @t{private},
 but you can change it from the @t{Kconfig} interface before building.
 The default read-write community is @t{private}.
 
-The switch supports all the standard information through the @i{net-snmp}
-installation. The additional, switch-specific information are in the
-``enterprise.96.100'' subtree, where @t{96} is CERN and @t{100} is White
+The switch supports all the information through the standard @i{net-snmp}
+installation.
+In addition it implements the subset of @t{BRIDGE-MIB} (switching table,
+defined in RFC 1493),
+@t{Q-BRIDGE-MIB} (VLANs entries, defined in RFC 4363) and
+@t{LLDP-MIB} (if LLDP is enabled in dot-config).
+The OID @t{SNMPv2-MIB::sysObjectID} is filled depending on manufacturer and
+hardware version based on the information stored in @t{hwinfo}.
+OIDs @t{SNMPv2-MIB::sysContact} and @t{SNMPv2-MIB::sysLocation} can be defined
+a free text in dot-config.
+
+The additional, switch-specific information are in the
+``@t{enterprise.96.100}'' subtree, where @t{96} is CERN and @t{100} is White
 Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
 where related source files live as well.
 

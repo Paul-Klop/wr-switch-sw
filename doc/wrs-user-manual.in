@@ -2620,8 +2620,9 @@ The following tools and scripts are provided:
 	examples since 1998.
 
 @item sdb-read
-	The tool, copied from the @t{fpga-config-space} project,
-	is documented in the next section,
+	The tool, copied from the @t{fpga-config-space} project.
+	For details please refer to the @ref{sdb-read}.
+
 
 @item shw_ver
 	A symbolic link to @t{wrs_version}, to be compatible with
@@ -2804,6 +2805,99 @@ The following option flags are supported:
 @end table
 
 @c --------------------------------------------------------------------------
+@node wrs_auxclk
+@section wrs_auxclk
+
+The @i{wrs_auxclk} shell tool can be used to configure parameters of a clock
+signal generated on the @i{clk2} SMC connector on the front panel.
+
+@b{Note:} you need to have WRS hardware at least in version 3.4 to have @i{clk2}
+output.
+
+By default @i{wrs_auxclk} is called by init scripts to generate 10MHz clock
+signal with 50% duty cycle. This configuration can be modified by using various
+options:
+
+@table @code
+
+@item --freq <f>
+  Desired frequency of the generated clock signal in MHz. Available range from
+  4kHz to 250MHz.
+
+@item --duty <frac>
+  Desired duty cycle given as a fraction (e.g. 0.5, 0.4).
+
+@item --cshift <csh>
+  Coarse shift (granularity 2ns) of the generated clock signal. This parameter
+  can be used to get desired delay relation between generated 1-PPS and
+  @i{clk2}. The delay between 1-PPS and @i{clk2} is constant for a given
+  bitstream but may be different for various hardware versions and
+  re-synthesized gateware. Therefore it should be measured and adjusted only
+  once for given hardware and gateware version.
+
+@item --sigdel <steps>
+  Clock signal generated from the FPGA is cleaned by a discrete flip-flop.
+  It may happen that generated aux clock is in phase with the flip-flop clock.
+  In that case it is visible on the oscilloscope that @i{clk2} clock is
+  jittering by 4ns. The @code{--sigdel} parameter allows to add a precise delay
+  to the FPGA-generated clock to avoid such jitter. This delay is specified in
+  steps, where each step is around 150ps. This value, same as the
+  @code{--cshift} parameter, is constant for a given bitstream so should be
+  verified only once.
+
+@item --ppshift <steps>
+  If one needs to precisely align 1-PPS output with the @i{clk2} aux clock using
+  @code{--cshift} parameter is not enough as it has 4ns granularity. In that
+  case @code{--ppshift} lets you shift 1-PPS output by a configured number
+  of 150ps steps. However, please have in mind that 1-PPS output is used as a
+  reference for WR calibration procedure. Therefore, once this parameter is
+  modified, the device should be re-calibrated. Otherwise, 1-PPS output
+  will be shifted from the WR timescale by <steps>*150ps.
+
+
+@end table
+
+@c --------------------------------------------------------------------------
+@node wrs_pstats
+@section wrs_pstats
+
+The @i{wrs_pstats} shell tool can be used to read per-port statistics counters
+from FPGA. When it is executed without any parameters all displayed values are
+counted from the moment the tool was started. In case you're interested in the
+values gathered from the start of WR switch, you can use @i{-s} option. The
+following counters for each port are reported:
+
+@multitable @columnfractions .18 .8
+@headitem Counter @tab Description
+@item @code{0:Tu-run} @tab Number of TX underrun errors
+@item @code{1:Ro-run} @tab Number of RX overrun errors
+@item @code{2:Riv-cd} @tab Number of invalid 8B10B characters received
+@item @code{3:Rsyn-l} @tab Number of RX link synchronization lost events
+@item @code{4:Rpause} @tab Number of received pause frames
+@item @code{5:Rpf-dp} @tab Number of received frames dropped by the Packet Filter
+@item @code{6:Rpcs-e} @tab Number of PCS errors during frame reception
+@item @code{7:Rgiant} @tab Number of received giant frames
+@item @code{8:Rrunt} @tab Number of received runt frames (smaller than 64 bytes)
+@item @code{9:Rcrc_e} @tab Number of CRC errors in received frames
+@item @code{10-17:Rpcl_0-7} @tab Number of received frames qualified by Packet Filter to classes 0 to 7
+@item @code{18:Tframe} @tab Number of transmitted frames
+@item @code{19:Rframe} @tab Number of received frames
+@item @code{20:Rrtu_f} @tab Number of RX frames dropped due to RTU full
+@item @code{21-28:Rpri_0-7} @tab Number of received 802.1Q frames with priorities 0 to 7
+@item @code{29:RTUreq} @tab Number of RTU requests
+@item @code{30:RTUrsp} @tab Number of RTU responses
+@item @code{31:RTUdrp} @tab Number of frames dropped by the RTU
+@item @code{32:RTUhp} @tab Number of high priority frames routed by RTU
+@item @code{33:RTUf-f} @tab Number of forwarded frames matched by RTU fast match engine
+@item @code{34:RTUn-f} @tab Number of not forwarded frames matched by RTU fast match engine
+@item @code{35:RTUfst} @tab Number of RTU fast match decisions
+@item @code{36:RTUful} @tab Number of RTU full match decisions
+@item @code{37:RTUfwd} @tab Total number of frames forwarded by RTU
+@item @code{39:NIC_Tx} @tab Number of frames sent from WR Switch ARM to that port
+
+@end multitable
+
+@c --------------------------------------------------------------------------
 @node wrs_vlans
 @section wrs_vlans
 
@@ -2936,97 +3030,6 @@ with these parameters:
   wrs_vlans --port 1-3,6 --pmode 0 --pvid 5 --port 4,5 --pmode 0 --pvid 6 \
     --rvid 5 --rmask 0x27 --rvid 6 --rmask 0x18
 @end example
-
-@c --------------------------------------------------------------------------
-@node wrs_auxclk
-@section wrs_auxclk
-
-The @i{wrs_auxclk} shell tool can be used to configure parameters of a clock
-signal generated on the @i{clk2} SMC connector on the front panel.
-
-@b{Note:} you need to have WRS hardware at least in version 3.4 to have @i{clk2}
-output.
-
-By default @i{wrs_auxclk} is called by init scripts to generate 10MHz clock
-signal with 50% duty cycle. This configuration can be modified by using various
-options:
-
-@table @code
-
-@item --freq <f>
-  Desired frequency of the generated clock signal in MHz. Available range from
-  4kHz to 250MHz.
-
-@item --duty <frac>
-  Desired duty cycle given as a fraction (e.g. 0.5, 0.4).
-
-@item --cshift <csh>
-  Coarse shift (granularity 2ns) of the generated clock signal. This parameter
-  can be used to get desired delay relation between generated 1-PPS and
-  @i{clk2}. The delay between 1-PPS and @i{clk2} is constant for a given
-  bitstream but may be different for various hardware versions and
-  re-synthesized gateware. Therefore it should be measured and adjusted only
-  once for given hardware and gateware version.
-
-@item --sigdel <steps>
-  Clock signal generated from the FPGA is cleaned by a discrete flip-flop.
-  It may happen that generated aux clock is in phase with the flip-flop clock.
-  In that case it is visible on the oscilloscope that @i{clk2} clock is
-  jittering by 4ns. The @code{--sigdel} parameter allows to add a precise delay
-  to the FPGA-generated clock to avoid such jitter. This delay is specified in
-  steps, where each step is around 150ps. This value, same as the
-  @code{--cshift} parameter, is constant for a given bitstream so should be
-  verified only once.
-
-@item --ppshift <steps>
-  If one needs to precisely align 1-PPS output with the @i{clk2} aux clock using
-  @code{--cshift} parameter is not enough as it has 4ns granularity. In that
-  case @code{--ppshift} lets you shift 1-PPS output by a configured number
-  of 150ps steps. However, please have in mind that 1-PPS output is used as a
-  reference for WR calibration procedure. Therefore, once this parameter is
-  modified, the device should be re-calibrated. Otherwise, 1-PPS output
-  will be shifted from the WR timescale by <steps>*150ps.
-  
-
-@end table
-
-@section wrs_pstats
-
-The @i{wrs_pstats} shell tool can be used to read per-port statistics counters
-from FPGA. When it is executed without any parameters all displayed values are
-counted from the moment the tool was started. In case you're interested in the
-values gathered from the start of WR switch, you can use @i{-s} option. The
-following counters for each port are reported:
-
-@multitable @columnfractions .18 .8
-@headitem Counter @tab Description
-@item @code{0:Tu-run} @tab Number of TX underrun errors
-@item @code{1:Ro-run} @tab Number of RX overrun errors
-@item @code{2:Riv-cd} @tab Number of invalid 8B10B characters received
-@item @code{3:Rsyn-l} @tab Number of RX link synchronization lost events
-@item @code{4:Rpause} @tab Number of received pause frames
-@item @code{5:Rpf-dp} @tab Number of received frames dropped by the Packet Filter
-@item @code{6:Rpcs-e} @tab Number of PCS errors during frame reception
-@item @code{7:Rgiant} @tab Number of received giant frames
-@item @code{8:Rrunt} @tab Number of received runt frames (smaller than 64 bytes)
-@item @code{9:Rcrc_e} @tab Number of CRC errors in received frames
-@item @code{10-17:Rpcl_0-7} @tab Number of received frames qualified by Packet Filter to classes 0 to 7
-@item @code{18:Tframe} @tab Number of transmitted frames
-@item @code{19:Rframe} @tab Number of received frames
-@item @code{20:Rrtu_f} @tab Number of RX frames dropped due to RTU full
-@item @code{21-28:Rpri_0-7} @tab Number of received 802.1Q frames with priorities 0 to 7
-@item @code{29:RTUreq} @tab Number of RTU requests
-@item @code{30:RTUrsp} @tab Number of RTU responses
-@item @code{31:RTUdrp} @tab Number of frames dropped by the RTU
-@item @code{32:RTUhp} @tab Number of high priority frames routed by RTU
-@item @code{33:RTUf-f} @tab Number of forwarded frames matched by RTU fast match engine
-@item @code{34:RTUn-f} @tab Number of not forwarded frames matched by RTU fast match engine
-@item @code{35:RTUfst} @tab Number of RTU fast match decisions
-@item @code{36:RTUful} @tab Number of RTU full match decisions
-@item @code{37:RTUfwd} @tab Total number of frames forwarded by RTU
-@item @code{39:NIC_Tx} @tab Number of frames sent from WR Switch ARM to that port
-
-@end multitable
 
 @c ##########################################################################
 @node SNMP Support

@@ -1193,7 +1193,7 @@ config RVLAN_OBEY_DOTCONFIG
 	depends on RVLAN_ENABLE
 	default N
 	help
-	  In some installations the radius server os only used to allow/deny
+	  In some installations the radius server is only used to allow/deny
 	  a port to be configured in the WR network.  When this happens,
 	  the vlan number it returns must be ignored, and we obey what
 	  is configured in dot-config instead (e.g. CONFIG_VLANS_PORT03_VID)

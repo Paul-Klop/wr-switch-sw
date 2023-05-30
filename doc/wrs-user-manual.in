@@ -39,12 +39,12 @@ This document is licensed under the Attribution-ShareAlike 4.0 International (CC
 
 @setchapternewpage off
 
-@set update-month January 2023
+@set update-month June 2023
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
 @comment %**useful declaration used in the document
-@set release_version 6.0
+@set release_version 6.1
 @set release_version_tiny 0
 @set url_docs https://www.ohwr.org/project/wr-switch-sw/wikis/Documents#files
 
@@ -183,12 +183,69 @@ explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
 
 @c ==========================================================================
-@node Upgrade from v5.0.1 to v@value{release_version}
-@section Upgrade from v5.0.1 to v@value{release_version}
+@node Upgrade from v6.0.x to v@value{release_version}
+@section Upgrade from v6.0.x to v@value{release_version}
 
-Apart from following the instructions in the previous section, there
+Apart from the instructions in the previous section, there
 is no special action needed from the user when upgrading firmware from
-v5.0.1 to v@value{release_version}. Yet, special attention should be payed
+v6.0.x to v@value{release_version}.
+
+The most important changes introduced in v6.1 are:
+@itemize
+@item Display information about GrandMaster in @t{wr_mon}
+@item Informing about unrecognized SFP in @t{wr_mon}
+@item Improved reporting of offset between NTP and WR time via SNMP
+@item Support of disabling SFP's TX laser with @t{wrs_sfp_dump}
+@item Fixes in handling of SFP's diagnostics (if SFP diagnostic is used with
+      firmware v6.0.x it can corrupt SFP's eeprom!)
+@item Detect whether a switch is a low-jitter version (@t{wrs_version}, SNMP and
+      web interface)
+@item Added subset of IP-MIB, BRIDGE-MIB and QBRIDGE-MIB to SNMP
+@item Make value of @t{sysObjectID} OID to reflect WRS manufacturer and
+      HW version
+@item Implement radius-802.1X for MAC authentication
+@end itemize
+
+The following configuration items were added to the dot-config:
+@itemize
+@item LLDP related
+@itemize
+@item @t{CONFIG_VLANS_PORT@i{xx}_LLDP_TX_VID}
+@item @t{CONFIG_VLANS_PORT@i{xx}_LLDP_TX_PRIO}
+@end itemize
+
+@item Radius related:
+@itemize
+@item @t{CONFIG_RVLAN_ENABLE}
+@item @t{CONFIG_RVLAN_PMASK}
+@item @t{CONFIG_RVLAN_AUTH_VLAN}
+@item @t{CONFIG_RVLAN_NOAUTH_VLAN}
+@item @t{CONFIG_RVLAN_OBEY_DOTCONFIG}
+@item @t{CONFIG_RVLAN_RADIUS_SERVERS}
+@item @t{CONFIG_RVLAN_RADIUS_SECRET}
+@end itemize
+
+@item SNMP related:
+@itemize
+@item @t{CONFIG_SNMP_SYSCONTACT}
+@item @t{CONFIG_SNMP_SYSLOCATION}
+@end itemize
+
+@item @t{CONFIG_PPSGEN_FR_ON_SYNC_ONLY}
+@end itemize
+
+Firmware v6.1 uses the same GW as v6.0.x, so the calibration values remain
+the same.
+
+Please note that Web interface remains disabled by default.
+
+@c ==========================================================================
+@node Upgrade from v5.0.1 to v6.0.x
+@section Upgrade from v5.0.1 to v6.0.x
+
+Apart from the instructions in the introduction to this chapter, there
+is no special action needed from the user when upgrading firmware from
+v5.0.1 to v6.0.x. Yet, special attention should be payed
 to a number of improvements in configuration and slight changes in
 the behavior of the WR Switch. Here are highlights:
 @itemize

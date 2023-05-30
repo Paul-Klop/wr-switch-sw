@@ -322,6 +322,10 @@ the behavior of the WR Switch. Here are highlights:
     Alternatively consider use of the option to limit LLDP frame size to about 
     60-70 bytes.
   @item @b{Disable web interface} - web interface is now disabled by default
+    @footnote{Actually, web interface is disabled by default from firmware
+    v6.0.2.
+    The documentation of v6.0 claimed that it was already disabled, but it was
+    wrong.}.
     and considered deprecated (no effort was put in making sure it works
     properly). @b{Users are strongly discouraged from using the web interface}.
     A number of serious security vulnerabilities were found in the web interface
@@ -352,7 +356,8 @@ the behavior of the WR Switch. Here are highlights:
   Interface tool in the WR switch has been updated to provide more information,
   here are the highlights:
     @itemize
-    @item @b{Timing Mode} indicates the current timing mode of the Soft PLL,
+    @item @b{Timing Mode}@footnote{@i{PLL mode} from firmware v6.1}
+      indicates the current timing mode of the Soft PLL,
       it is not the intended @i{Timing Mode} configured in the @t{dot-config}
       file. So, a GM or BC switch will show the @b{Timing Mode} to be @i{FR}
       (free running) until it locks to the source of time, i.e. input 10MHz &
@@ -377,11 +382,11 @@ the behavior of the WR Switch. Here are highlights:
       @itemize
       @item @b{DelayMM} is the previously  @i{Round-trip time (mu)}
       @item @b{DelayMS} is the previously  @i{Master-slave delay}
-      @item @b{Total link asymmetry}is the previously  @i{delayAsymmetry}
+      @item @b{delayAsymmetry} is the previously  @i{Total link asymmetry}
       @item @b{delayCoefficient} is the previously @i{alpha}
       @item @b{ingressLatency} is the previously @i{Slave PHY delay RX} without the bitslide
       @item @b{egressLatency}  @i{Slave PHY delay TX}
-      @item @b{offsetFrmoMaster} is the previously @i{Clock offset}
+      @item @b{offsetFromMaster} is the previously @i{Clock offset}
       @item @b{semistaticLatency} is a new parameter that inditactes the bistlide value
       @end itemize
     @end itemize
@@ -834,9 +839,9 @@ appropriate way, before the respective service is started.
 @itemx CONFIG_AUTH_KRB5_SERVER
 
         Choose the authentication method. @t{CONFIG_AUTH_LDAP} for LDAP
-        authentication, @t{CONFIG_AUTH_LDAP} for Kerberos authentication.
+        authentication, @t{CONFIG_AUTH_KRB5} for Kerberos authentication.
         For the later one it is obligatory to specify Kerberos Realm
-        @t{CONFIG_AUTH_KRB5_SERVER}.
+        in @t{CONFIG_AUTH_KRB5_SERVER}.
 
 @item CONFIG_ROOT_PWD_IS_ENCRYPTED
 @itemx CONFIG_ROOT_PWD_CLEAR
@@ -2116,7 +2121,7 @@ possible with some limitations/simplifications which made the life of the user e
 but prevented some exotic VLAN configurations. From the firmware v6.0, all 
 possible configuration can be set via dot-config. By default, the more
 user-friendly configuration is used (similar to the one in v5.0). To have
-full control over VLAN configuratin, "raw ports configuration" must be enabled.
+full control over VLAN configuration, "raw ports configuration" must be enabled.
 
 Another alternative working on pre-v5.0 to set VLANs is to use the web
 interface. However, as it is in v5.0, the web-interface is not capable to store
@@ -2131,7 +2136,7 @@ This section describes how to configure VLANs on a switch using the
 @t{dot-config} and available command line tools.
 The description assumes that switch has only these 3 ports.
 
-In this configuration, port 1 is synchronised to an upstream WR device. This
+In this configuration, port 1 is synchronized to an upstream WR device. This
 device does not need to have any VLAN configuration. Port 1 is in @t{ACCESS} mode,
 thus it tags the ingress Ethernet frames. VLAN-tags with VID 1 and priority
 4 are added so that frames received at this port belong to VLAN 1. Port 1 also
@@ -2139,7 +2144,7 @@ untags the egress frames. In this configuration, only port 1
 belongs to VLAN 1, which means that none of the traffic received on port 1 is
 forwarded to other ports. The only traffic received on port 1 that is not
 dropped are the PTP messages which are forwarded to the PTP daemon (@i{PPSi}). Such
-an arrangement can be useful if the synchronisation is to be propagated through
+an arrangement can be useful if the synchronization is to be propagated through
 WR network, i.e. between the upstream and this switch, but the data needs to be
 separated.
 

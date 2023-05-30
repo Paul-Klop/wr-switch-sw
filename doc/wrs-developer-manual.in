@@ -60,9 +60,8 @@ This document is licensed under the Attribution-ShareAlike 4.0 International (CC
 @end iftex
 
 @c ##########################################################################
-@c in texinfo we are mandated to have a Top node
-@node Top
-@top Introduction
+@c Top node is not included in tex
+@unnumbered Introduction
 
 The White Rabbit switch (or @sc{wrs}) is a major component of the
 White Rabbit (@sc{wr}) network.  Like any modern managed switch, the

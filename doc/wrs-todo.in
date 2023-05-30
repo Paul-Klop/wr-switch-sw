@@ -56,8 +56,8 @@
 @end iftex
 
 @c ##########################################################################
-@node Top
-@top Introduction
+@c Top node is not included in tex
+@unnumbered Introduction
 
 This document lists the items I think are suboptimal in the current
 @t{wr-switch-sw} package.  This is Alessandro's own personal opition,

@@ -55,9 +55,8 @@
 @end iftex
 
 @c ##########################################################################
-@c in texinfo we are mandated to have a Top node
-@node Top
-@top Introduction
+@c Top node is not included in tex
+@unnumbered Introduction
 
 This document describes a new feature of the White Rabbit Switch,
 to be used in GSI, which is a subset of IEEE 802.1X.

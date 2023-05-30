@@ -56,8 +56,8 @@
 @end iftex
 
 @c ##########################################################################
-@node Top
-@top Introduction
+@c Top node is not included in tex
+@unnumbered Introduction
 
 This summarizes my experience with @sc{snmp} and the WR switch, which
 has been a real pain to me.

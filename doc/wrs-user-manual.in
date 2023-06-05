@@ -198,12 +198,14 @@ The most important changes introduced in v6.1 are:
 @item Support of disabling SFP's TX laser with @t{wrs_sfp_dump}
 @item Fixes in handling of SFP's diagnostics (if SFP diagnostic is used with
       firmware v6.0.x it can corrupt SFP's eeprom!)
-@item Detect whether a switch is a low-jitter version (@t{wrs_version}, SNMP and
-      web interface)
-@item Added subset of IP-MIB, BRIDGE-MIB and QBRIDGE-MIB to SNMP
-@item Make value of @t{sysObjectID} OID to reflect WRS manufacturer and
+@item Detection whether a switch is a low-jitter version (displayed in
+      @t{wrs_version}, SNMP and web interface), and fix to leap-seconds.list update
+@item Addition of a subset of IP-MIB, BRIDGE-MIB and QBRIDGE-MIB objects
+      to SNMP support
+@item Implementation of @t{sysObjectID} OID value to reflect WRS manufacturer and
       HW version
-@item Implement radius-802.1X for MAC authentication
+@item Implementation of radius-802.1X for MAC authentication (subset of IEEE 802.1X)
+@item Support of LLDP with VLANs
 @end itemize
 
 The following configuration items were added to the dot-config:
@@ -382,7 +384,7 @@ the behavior of the WR Switch. Here are highlights:
     @footnote{Actually, web interface is disabled by default from firmware
     v6.0.2.
     The documentation of v6.0 claimed that it was already disabled, but it was
-    wrong.}.
+    wrong.}
     and considered deprecated (no effort was put in making sure it works
     properly). @b{Users are strongly discouraged from using the web interface}.
     A number of serious security vulnerabilities were found in the web interface
@@ -1296,8 +1298,8 @@ appropriate way, before the respective service is started.
   @end itemize
 
   Additionally to the conditions listed above, if PTP Best Master Clock Algorithm (BMCA) is enabled
-  some spurious PPS can be generated during the transitory phase e.g. when the whole network is
-  initialized. To suppress those @t{CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC} defines a delay time
+  some spurious PPS can be generated during the transitory phase e.g. when the network hierarchy is
+  being established (during startup or re-organization). To suppress those @t{CONFIG_PPSGEN_GM_DELAY_TO_GEN_PPS_SEC} defines a delay time
   in seconds from the moment @sc{wrs} became a PTP grandmaster to the moment PPS starts to be generated.
   By default this parameter is set to 60s.
   
@@ -2000,7 +2002,7 @@ according to laboratory measures of your fiber type. The
 comma-separated assignments, so you can specify multiple
 wavelength pairs. Each entry has the form @t{alpha_1310_1490=2.6787e-4}, where the numbers
 are again the wavelength in integer @t{nm}. Note that only one value of alpha is needed for
-each pair of wavelenghts, the switch will calculate the corect value of alpha when the wavelenghts
+each pair of wavelengths, the switch will calculate the correct value of alpha when the wavelengths
 are switched around.
 
 Example: @t{CONFIG_FIBER00_PARAMS="alpha_1310_1490=2.6787e-04"}
@@ -2647,13 +2649,16 @@ The following tools and scripts are provided:
 @item ethtool
 	The standad Linux tool used to query or control network driver and
 	hardware settings. In WRS the number of parameters that this tool can
-	change is limited. However, this tool can be used to:
+	change is limited. However, this tool can be used on WRS with the
+	following commands:
 
-	``@t{ethtool -s wriX autoneg off}'' disables (or enable if @t{on} is
-	used) autonegotiation
+	``@t{ethtool -s wriX autoneg off}'' disables (or enable if @t{on})
+	autonegotiation @footnote{WRS does not support other link speeds
+	than 1Gbps, thus when autonegotation is enabled, no other link speed
+	can be actually negotiated}
 
 	``@t{ethtool --set-priv-flags wriX "Unidirectional Enable" on}'' enables
-	(or disables if @t{off} is used) transmit regardless of whether a valid
+	(or disables if @t{off}) transmission regardless of whether a valid
 	link has been established
 
 	``@t{ethtool --set-priv-flags wriX "Accept RX Jumbo Frames" on}''
@@ -2673,8 +2678,7 @@ The following tools and scripts are provided:
 	They are used by the init scripts of the Linux system. The LM32
 	loader can also change variables in the loaded binary, and
 	read or write variables without stopping the running CPU.
-	This is limited to 32-bit integer variables, though. See the
-	commit message for details.
+	This is limited to 32-bit integer variables, though. 
 @c FIXME: document better load-lm32 for elf.
 
 @item mapper
@@ -2703,6 +2707,14 @@ The following tools and scripts are provided:
 	for each port via RTU daemon. The @t{--help} option
 	lists all configuration items of the tool.
 
+@item rvlan-status
+@item rvlan-debug
+
+	The tools allow to check status, as well as debug and throttle verbosity
+	of the Radius Vlan mechanism, if enabled. See details in a separate
+	manual: @i{White Rabbit Switch: Radius Vlan}.
+
+
 @item sdb-read
 	The tool, copied from the @t{fpga-config-space} project.
 	For details please refer to the @ref{sdb-read}.
@@ -2716,12 +2728,8 @@ The following tools and scripts are provided:
 
 @c spll_dbg_proxy
 
-@item wmapper
-	See @t{mapper}.
-
 @item wr_date
 @anchor{wr_date}
-
 	The program can read or set the White Rabbit date. Usage:
 
 	``@t{wr_date set} @i{value}'' sets an arbitrary date and time as the system time,
@@ -2755,6 +2763,7 @@ The following tools and scripts are provided:
 @item wrs_auxclk
 	The tool allows to setup the parameters of a clock generated on the
 	@i{clk2} SMC output on the front panel.
+	For details please refer to the @ref{wrs_auxclk}.
 
 @item wrs_checkcfg
 	Simple program performing a basic validation of a @t{dot-config}.
@@ -2772,8 +2781,8 @@ The following tools and scripts are provided:
 	If it detects a incoming leap seconds in the next 12 hours,
 	the information is set in the kernel and will be available for PPSi.
 
-@c wrs_menuconfig
-@c wrs_nconfig
+@item wrs_menuconfig
+@itemx wrs_nconfig
 	wrs_menuconfig and wrs_nconfig use a different framework to display and
 	change switch configuration.
 	This is the preferred way over manual editing of @t{dot-config},
@@ -2821,7 +2830,7 @@ The following tools and scripts are provided:
 	
 	For more details please refer to the tool's help.
 
-@c wrs_status_led
+@item wrs_status_led
 	Simple tool used during startup and restart to control the status LED.
 
 @item wrs_throttling
@@ -2844,7 +2853,7 @@ The following tools and scripts are provided:
 	lists all configuration items of the tool. For details please
 	refer to the @ref{wrs_vlans}.
 
-@c @item wrs_watchdog
+@item wrs_watchdog
 	A daemon used to reset the SWcore HDL if there is still some hidden bug
 	inside. The number of occurred timeouts can be read using
 	@t{-g} parameter and is also reported via SNMP in
@@ -2934,7 +2943,7 @@ The following option flags are supported:
 The @i{wrs_auxclk} shell tool can be used to configure parameters of a clock
 signal generated on the @i{clk2} SMC connector on the front panel.
 
-@b{Note:} you need to have WRS hardware at least in version 3.4 to have @i{clk2}
+@b{Note:} You need to have WRS hardware at least in version 3.4 to have @i{clk2}
 output.
 
 By default @i{wrs_auxclk} is called by init scripts to generate 10MHz clock
@@ -2962,7 +2971,7 @@ options:
   Clock signal generated from the FPGA is cleaned by a discrete flip-flop.
   It may happen that generated aux clock is in phase with the flip-flop clock.
   In that case it is visible on the oscilloscope that @i{clk2} clock is
-  jittering by 4ns. The @code{--sigdel} parameter allows to add a precise delay
+  jittering by 2ns. The @code{--sigdel} parameter allows to add a precise delay
   to the FPGA-generated clock to avoid such jitter. This delay is specified in
   steps, where each step is around 150ps. This value, same as the
   @code{--cshift} parameter, is constant for a given bitstream so should be
@@ -3154,6 +3163,9 @@ with these parameters:
     --rvid 5 --rmask 0x27 --rvid 6 --rmask 0x18
 @end example
 
+@b{Note:} The above operation is not atomic, i.e. the configuration will be
+applied to one port at a time.
+
 @c ##########################################################################
 @node SNMP Support
 @chapter SNMP Support
@@ -3209,10 +3221,6 @@ implementation of the WRS snmp.
 	subsystems.
 
 @end table
-
-@c @b{Note:} due to a bug in management of 64-bit values in @i{net-snmp},
-@c we are using a bad work-around in the code, that may cause wrong values
-@c to be returned by other versions of the agent, where this bug is fixed.
 
 The easiest way to retrieve the values is using @i{snmpwalk}, telling
 it to access our MIB file in order to use symbolic names. Assuming
@@ -3399,7 +3407,7 @@ The @t{wrs_dump.sh} is independent from the WR software, it can be used on
 different versions of firmware.
 It can be run from a host computer or even WR switch
 (however, @t{wrs_dump.sh} is not included in the firmware).
-It connects form a host machine via @t{ssh} to a switch and gets the following
+It connects from a host machine via @t{ssh} to a switch and gets the following
 information in the order:
 @itemize
   @item firmware version information (output of @t{wrs_version})

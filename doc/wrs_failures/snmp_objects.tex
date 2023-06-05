@@ -183,7 +183,9 @@
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllMlock}} equals to 0 (for
     Boundary Clock mode).\\
     \texttt{Warning} when \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}}
-    has changed (for all modes).\\
+    has changed (for all modes). The \texttt{Warning} is asserted only during
+    the first SNMP read of the object (or related group) and is de-asserted
+    afterwords.\\
     \underline{On error:}\\
     For GrandMaster WRS:
     \begin{pck_proc}

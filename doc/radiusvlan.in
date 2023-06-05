@@ -58,8 +58,8 @@
 @c Top node is not included in tex
 @unnumbered Introduction
 
-This document describes a new feature of the White Rabbit Switch,
-to be used in GSI, which is a subset of IEEE 802.1X.
+This document describes a new feature of the White Rabbit Switch, added
+for application at GSI, which is a subset of IEEE 802.1X.
 
 When a devices is detected on a port which is
 configured as ``access'', a Radius server is queried for authorization.
@@ -70,7 +70,7 @@ to @i{buildroot} in a new @i{freeradius-utils} package. The package
 installs @i{radtest}, @i{radclient} and a minimal dictionary (the full
 dictionary is more than 1MB worth of data).
 
-I chose to install an older version of radclient because the current
+It was chosen to install an older version of radclient because the current
 version requires a special allocator (libtalloc), that had to be added
 to buildroot too.
 
@@ -183,7 +183,7 @@ on @i{select()}).
 	This state is the default state for enumerated ports, and it
         is entered whenever @i{netlink} reports that the
         interface went down. This state turns the port to @i{vlan_auth}
-        and forgets the peer's mac address it.
+        and forgets the peer's mac address.
         It also closes any open file descriptor and
         kills the child process, if it exists.  Thus, no remaining
         garbage remains in the system even if the fiber is unplugged
@@ -197,7 +197,7 @@ on @i{select()}).
 
 	The port was just reported as ``up'' and we must start
         authentication. The first step is identifying the MAC address
-        of the peer. Thus, the tool starts sniffing the port, but opening
+        of the peer. Thus, the tool starts sniffing the port, by opening
         a raw socket listening to this port.
 
 @item RVLAN_SNIFF
@@ -369,8 +369,8 @@ server.
 
 The only weak point is in understanding @i{radclient}'s replies.
 A sane tool would @i{exit(1)} or @i{exit(2)} to mean different things,
-but @i{radclient} always does @i{exit(1)}, so we ar forced to rely
-on the output strings, which might change from one version to he next.
+but @i{radclient} always does @i{exit(1)}, so we are forced to rely
+on the output strings, which might change from one version to the next.
 
 @c ##########################################################################
 @node Diagnostic Tools
@@ -381,7 +381,7 @@ on the output strings, which might change from one version to he next.
 @section Checking the Current Status
 
 You can always see the current configuration by running @t{rvlan-status}.
-This example is taken in a running switch,where port @i{wri1} is in
+This example is taken on a running switch, where port @i{wri1} is in
 trunk mode (and thus not monitored), and only port @i{wri17} is connected to
 a slave, which was authorized:
 

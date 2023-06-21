@@ -17,7 +17,7 @@
 #include <minipc.h>
 #include <signal.h>
 #include <ppsi-wrs.h>
-
+#include "../proto-ext-common/wrh-servo_state_name.h"
 
 #include "term.h"
 #include <time_lib.h>
@@ -655,8 +655,8 @@ void init_shm(void)
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
 	/* Access to ppg arch data */
-	if ( ppg->arch_data!=NULL)
-		ppg_arch=wrs_shm_follow(ppsi_head, ppg->arch_data);
+	if ( ppg->arch_glbl_data!=NULL)
+		ppg_arch=wrs_shm_follow(ppsi_head, ppg->arch_glbl_data);
 
 	/* Access to defaultDS data */
 	defaultDS = wrs_shm_follow(ppsi_head, ppg->defaultDS);
@@ -1063,7 +1063,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			term_cprintf(C_WHITE, "%s:%s: %s%s\n",
 				     servo->ppi->cfg.iface_name,
 					 pe_info->ext_name,
-					 servo->servo_snapshot.servo_state_name,
+					 wrh_servo_state_name[servo->servo_snapshot.state],
 					 servo->servo_snapshot.flags & PP_SERVO_FLAG_WAIT_HW ?
 				     " (wait for hw)" : "");
 		}
@@ -1177,7 +1177,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 /*		printf("rx:");*/
 /*		printf("tx:");*/
 		printf("sv:%d ", servo->servo_snapshot.flags & PP_SERVO_FLAG_VALID ? 1 : 0);
-		printf("ss:'%s' ", servo->servo_snapshot.servo_state_name);
+		printf("ss:'%s' ", wrh_servo_state_name[servo->servo_snapshot.state]);
 /*		printf("aux:");*/
 		printf("md:%s ", timeIntervalToString(servo->meanDelay,buf));
 		printf("dms:%s ", timeToString(&servo->servo_snapshot.delayMS,buf));

@@ -43,6 +43,7 @@ CFLAGS += -DCONFIG_PRINT_BUFSIZE=$(CONFIG_PRINT_BUFSIZE)
 
 SHLIB = wrsSnmp.so
 PPSI_SOURCES=\
+	../ppsi/lib/div64.c\
 	../ppsi/lib/time-arith.c\
 	../ppsi/pp_printf/printf.c\
 	../ppsi/pp_printf/vsprintf-full.c

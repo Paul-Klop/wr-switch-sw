@@ -11,3 +11,7 @@ void __wrs_msg(int level, const char *func, int line, const char *fmt, ...)
 	snmp_vlog(level, fmt, args);
 	va_end(args);
 }
+
+void __pp_diag(void *ppi, int th, int level, const char *fmt, ...)
+{
+}

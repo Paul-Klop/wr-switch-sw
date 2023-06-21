@@ -1,6 +1,7 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
 #include "wrsPtpDataTable.h"
+#include "../proto-ext-common/wrh-servo_state_name.h"
 
 struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
 
@@ -132,9 +133,8 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					sizeof(ClockIdentity));
 
 				/* wrsPtpServoState */
-				strncpy(ptp_a[si].wrsPtpServoState,
-				ppsi_servo->servo_state_name,
-				sizeof(ppsi_servo->servo_state_name));
+				strcpy(ptp_a[si].wrsPtpServoState,
+				       wrh_servo_state_name[ppsi_servo->state]);
 
 				/* wrsPtpServoStateN */
 				if ( ppsi_i->extState == PP_EXSTATE_DISABLE

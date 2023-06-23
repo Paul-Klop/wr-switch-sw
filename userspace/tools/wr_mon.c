@@ -74,7 +74,6 @@ struct gm_t {
 struct proto_ext_info_t {
 	int valid;
 	char *ext_name; /* Extension name */
-	char short_ext_name; /* Very short extension name - just one character */
 	int servo_ext_size; /* Size of the extension */
 	int ipc_cmd_tacking; /* Command to enable/disable servo tacking*/
 	int track_onoff;     /* Tracking on/off */
@@ -86,7 +85,6 @@ static struct proto_ext_info_t proto_ext_info [] = {
 		[PPSI_EXT_NONE] = {
 				.valid=1,
 				.ext_name="PTP",
-				.short_ext_name='P',
 				.ipc_cmd_tacking=-1, /* Invalid */
 		},
 
@@ -94,7 +92,6 @@ static struct proto_ext_info_t proto_ext_info [] = {
 		[PPSI_EXT_WR] = {
 				.valid=1,
 				.ext_name="White-Rabbit",
-				.short_ext_name='W',
 				.servo_ext_size=sizeof(struct wr_data),
 				.ipc_cmd_tacking=PPSIEXP_COMMAND_WR_TRACKING,
 				.track_onoff = 1,
@@ -104,23 +101,11 @@ static struct proto_ext_info_t proto_ext_info [] = {
 		[PPSI_EXT_L1S] = {
 				.valid=1,
 				.ext_name="L1Sync",
-				.short_ext_name='L',
 				.servo_ext_size=sizeof(struct l1e_data),
 				.ipc_cmd_tacking=PPSIEXP_COMMAND_L1SYNC_TRACKING,
 				.track_onoff = 1,
 		},
 #endif
-#if CONFIG_HAS_EXT_CUSTOM
-		[PPSI_EXT_CUSTOM] = {
-				.valid=1,
-				.ext_name="Custom",
-				.short_ext_name='C',
-				.servo_ext_size=sizeof(struct l1e_data),
-				.ipc_cmd_tacking=PPSIEXP_COMMAND_L1SYNC_TRACKING,
-				.track_onoff = 1,
-		},
-#endif
-
 };
 
 typedef struct {
@@ -160,6 +145,15 @@ static int ignore_alive;
 /* define size of pp_instance_state_to_name as a last element + 1 */
 #define PP_INSTANCE_STATE_MAX (sizeof(pp_instance_state_to_name)/sizeof(char *))
 
+/* define conversion array for the field profile in the struct pp_instance.cfg */
+static char *pp_instance_profile[] = {
+	/* from ppsi/include/ppsi/ieee1588_types.h, enum pp_std_states */
+	/* PPS_END_OF_TABLE = 0 */
+	[PPSI_PROFILE_PTP] =      "PTP",
+	[PPSI_PROFILE_HA_WR]  =   "H/W",
+	[PPSI_PROFILE_CUSTOM]  =  "CST",
+	};
+
 /* define conversion array for the field state in the struct pp_instance */
 static char *pp_instance_state_to_name[] = {
 	/* from ppsi/include/ppsi/ieee1588_types.h, enum pp_std_states */
@@ -177,7 +171,7 @@ static char *pp_instance_state_to_name[] = {
 	NULL
 	};
 
-#define EMPTY_EXTENSION_STATE_NAME "          "
+#define EMPTY_EXTENSION_STATE_NAME "             "
 
 #if CONFIG_HAS_EXT_L1SYNC
 static char * l1e_instance_extension_state[]={
@@ -809,7 +803,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 		print_gm_info();
 
 		term_cprintf(C_CYAN, "----- HAL ----|--------------------------- PPSI -----------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface | Freq |Inst| Name  |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrC | VLANs\n");
+		term_cprintf(C_CYAN, " Iface | Freq |Inst| Name  |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrConf | VLANs\n");
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -860,8 +854,6 @@ void show_ports(int hal_alive, int ppsi_alive)
 					char str_config[15];
 					pp_instance_ptr_t *ppi_pt=&instances[j];
 					struct pp_instance *ppi=ppi_pt->ppi;
-					int proto_extension=ppi->protocol_extension;
-					struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
 
 					if (strcmp(if_name,
 							ppi->cfg.iface_name)) {
@@ -967,6 +959,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 							break;
 						}
 #endif
+						default:
+							break;
 						}
 						term_cprintf(C_GREEN, "%s/%s",extension_state_name,getStateAsString(prot_detection_state_name,ppi->pdstate));
 					} // else {
@@ -986,8 +980,21 @@ void show_ports(int hal_alive, int ppsi_alive)
 					} else {
 						term_cprintf(C_WHITE, "?");
 					}
+
+					if (ppi->cfg.extAutonegEnable == PPSI_EXT_AUTONEG_ENABLE) {
+						term_cprintf(ppi->protocol_extension == PPSI_EXT_L1S ? C_GREEN : C_WHITE, "l");
+						term_cprintf(ppi->protocol_extension == PPSI_EXT_WR ? C_GREEN : C_WHITE, "w");
+					} else if (ppi->protocol_extension == PPSI_EXT_WR) {
+						term_cprintf(C_WHITE, "-");
+						term_cprintf(C_GREEN, "w");
+					} else if (ppi->protocol_extension == PPSI_EXT_L1S) {
+						term_cprintf(C_GREEN, "l");
+						term_cprintf(C_WHITE, "-");
+					} else
+						term_cprintf(C_WHITE, "--");
+
 					color=extensionStateColor(ppi);
-					term_cprintf(color, "-%c",pe_info->short_ext_name);
+					term_cprintf(color, "%s", getStateAsString(pp_instance_profile, ppi->cfg.profile));
 
 					nvlans = ppi->nvlans;
 					term_cprintf(C_CYAN, " | ");
@@ -1002,7 +1009,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 			if (mode == SHOW_GUI) {
 				if (!instance_port || !ppsi_alive) {
 					term_cprintf(C_WHITE, " -- ");
-					term_cprintf(C_CYAN, "|              |            |                   |                              |     |");
+					term_cprintf(C_CYAN, "|       |            |                   |                                 |        |");
 				}
 				term_cprintf(C_WHITE, "\n");
 			}
@@ -1015,7 +1022,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 	}
 	if (mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "Iface: +/- SFP in DB; "
-			     "PrC-Protocol config: V-Eth over VLAN, "
+			     "PrConf-Protocol config: V-Eth over VLAN, "
 			     "U-UDP, R-Ethernet; a-ext autoneg; Profile: W-WR, L-HA\n");
 	}
 }

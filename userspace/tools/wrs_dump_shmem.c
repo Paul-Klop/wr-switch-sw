@@ -438,7 +438,7 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo, char *prefi
 	int i;
 
 	if (!addr) {
-		fprintf(stderr, "dump: pointer not valid\n");
+		fprintf(stderr, "dump: pointer not valid (%s)\n", prefix);
 		return;
 	}
 	for (i = 0; i < ninfo; i++) {

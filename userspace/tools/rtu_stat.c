@@ -574,7 +574,7 @@ int main(int argc, char **argv)
 		sleep(1);
 	}
 	if (use_static_shmem != SHMEM_STATIC_NO_IPC)
-		minipc_set_logfile(rtud_ch,stderr);
+		minipc_set_logfile(rtud_ch, stdout);
 
 	/* Open rtud's shmem, it should be available after connecting rtud's
 	 * minipc */

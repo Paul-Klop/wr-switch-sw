@@ -21,7 +21,7 @@ start() {
     fi
 
     if [ "$CONFIG_RVLAN_ENABLE" != "y" ]; then
-	echo "Radius-VLAN: disabled\n"
+	echo "Radius-VLAN: disabled"
 	exit 0
     fi
     echo -n "Starting Radius-VLAN daemon: "

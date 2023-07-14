@@ -72,6 +72,8 @@ enum dump_type {
 	dump_type_hal_mode,
 	dump_type_hal_fsm,
 	dump_type_hal_pllfsm,
+	dump_type_hal_lpdc_tx_setup_fsm,
+	dump_type_hal_lpdc_rx_setup_fsm,
 };
 
 
@@ -106,6 +108,8 @@ typedef int            shmemState;
 typedef int            hal_mode;
 typedef int            hal_fsm;
 typedef int            hal_pllfsm;
+typedef int            hal_lpdc_tx_setup_fsm;
+typedef int            hal_lpdc_rx_setup_fsm;
 /*
  * A structure to dump fields. This is meant to simplify things, see use here
  */

@@ -19,6 +19,8 @@
 #include <ppsi-wrs.h>
 #include "time_lib.h"
 #include "hal_port_fsm_pllP.h"
+#include "hal_port_fsm_rxP.h"
+#include "hal_port_fsm_txP.h"
 
 /*  be safe, in case some other header had them slightly differently */
 #undef container_of
@@ -427,6 +429,42 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("\n");
 		break;
 
+	case dump_type_hal_lpdc_tx_setup_fsm:
+		i = *(uint32_t *)p;
+		switch(i) {
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_START, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_RESET_PCS, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_WAIT_LOCK, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_MEASURE_PHASE, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_VALIDATE, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_WAIT_OTHER_PORTS, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_TX_SETUP_STATE_DONE, char_p);
+		default:
+			char_p = "Unknown";
+		}
+		printf("%d", i);
+		print_str(char_p);
+		printf("\n");
+		break;
+
+	case dump_type_hal_lpdc_rx_setup_fsm:
+		i = *(uint32_t *)p;
+		switch(i) {
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_INIT, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_START, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_RESET_PCS, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_WAIT_LOCK, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_VALIDATE, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_RESTART, char_p);
+		ENUM_TO_P_IN_CASE(HAL_PORT_RX_SETUP_STATE_DONE, char_p);
+		default:
+			char_p = "Unknown";
+		}
+		printf("%d", i);
+		print_str(char_p);
+		printf("\n");
+		break;
+
 	default:
 		dump_one_field_ppsi_wrs(info->type, info->size, p, value);
 		break;
@@ -534,9 +572,9 @@ struct dump_info hal_port_info [] = {
 #undef DUMP_STRUCT
 #define DUMP_STRUCT halPortLPDC_t
 struct dump_info hal_port_info_lpdc [] = {
-		DUMP_FIELD(int, isSupported),
-		DUMP_FIELD(int, txSetupFSM.st.state),
-		DUMP_FIELD(int, rxSetupFSM.st.state),
+		DUMP_FIELD(yes_no, isSupported),
+		DUMP_FIELD(hal_lpdc_tx_setup_fsm, txSetupFSM.st.state),
+		DUMP_FIELD(hal_lpdc_rx_setup_fsm, rxSetupFSM.st.state),
 };
 
 /* map for fields of hal_port_state.lpdc.txsetup (hal_shmem.h) */

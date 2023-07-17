@@ -221,6 +221,13 @@ static char * wr_instance_extension_state[]={
 
 #endif
 
+static char * bmca_type[] = {
+		[PPSI_BMCA_STANDARD] =        "Standard",
+		[PPSI_BMCA_EXT_PORT_CONFIG] = "extPortCfg",
+		NULL
+	};
+
+
 static char *prot_detection_state_name[]={
 		"NONE   ", /* No meaning. No extension present */
 		"WA_MSG ", /* Waiting first message */
@@ -797,7 +804,10 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_BLUE, "PLL mode: ");
 			term_cprintf(C_WHITE, "%s",getStateAsString(timing_mode_state,((wrs_arch_data_t *)ppg_arch)->timingMode));
 			term_cprintf(C_BLUE, "    PLL locking state: ");
-			term_cprintf(C_WHITE, "%s\n",getStateAsString(pll_locking_state,((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
+			term_cprintf(C_WHITE, "%s", getStateAsString(pll_locking_state, ((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
+			term_cprintf(C_BLUE, "    BMCA: ");
+			term_cprintf(C_WHITE, "%s", getStateAsString(bmca_type, defaultDS->bmcaType));
+			term_cprintf(C_WHITE, "\n");
 		}
 
 		print_gm_info();

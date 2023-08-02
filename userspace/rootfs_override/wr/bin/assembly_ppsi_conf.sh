@@ -283,6 +283,13 @@ function set_profile_for_HA() {
  	lv="$inst[asymmetryCorrectionEnable]"; eval ${lv}="y" 
 }
 
+function set_profile_for_autoneg() {
+	local inst=$1
+	local lv
+	lv="$inst[extAutonegotiation]"; eval ${lv}="y"
+	return
+}
+
 function set_instance_profile() {
 		local inst=$1
 		local lv="$inst[profile]"
@@ -291,6 +298,9 @@ function set_instance_profile() {
 			eval ${lv}="wr"
 			set_profile_for_WR $inst
 		elif [ "${value}" == "ha" ]; then
+		    eval ${lv}="ha"
+		elif [ "${value}" == "autoneg" ]; then
+		    # For autonegotation use HA as a default profile
 		    eval ${lv}="ha"
 		elif [ "${value}" == "custom" ]; then
 		    eval ${lv}="custom"
@@ -305,8 +315,11 @@ function set_instance_profile() {
 			# default
 			eval ${lv}="ha"
 		fi
+		if [ "${value}" == "autoneg" ]; then
+		    set_profile_for_autoneg  $inst
+		fi
 		value=${!lv}
-		if [ "${value}" == "ha" ]; then 
+		if [ "${value}" == "ha" ] || [ "${value}" == "autoneg" ]; then
 		    set_profile_for_HA  $inst
 		fi
 }
@@ -348,7 +361,8 @@ port_ppsi_keys=$(build_port_ppsi_keys)
 declare -A inst_dotc_ppsi_key_mapping='(\
 [PROTOCOL_RAW]="proto raw" [PROTOCOL_UDP_IPV4]="proto udp" \
 [MECHANISM_E2E]="mechanism e2e" [MECHANISM_P2P]="mechanism p2p" \
-[PROFILE_PTP]="profile ptp" [PROFILE_WR]="profile wr" [PROFILE_HA]="profile ha" [PROFILE_CUSTOM]="profile custom" \
+[PROFILE_PTP]="profile ptp" [PROFILE_WR]="profile wr" [PROFILE_HA]="profile ha" [PROFILE_CUSTOM]="profile custom" [PROFILE_AUTONEG]="profile autoneg" \
+[AUTONEG]="extAutonegotiation" \
 [DESIRADE_STATE_MASTER]="desiredState master" [DESIRADE_STATE_SLAVE]="desiredState slave" [DESIRADE_STATE_PASSIVE]="desiredState passive" \
 [ANNOUNCE_INTERVAL]="logAnnounceInterval" [ANNOUNCE_RECEIPT_TIMEOUT]="announceReceiptTimeout" \
 [SYNC_INTERVAL]="logSyncInterval" \

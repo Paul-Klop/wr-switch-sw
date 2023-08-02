@@ -161,7 +161,7 @@ function print_instance_header() {
 	echo -e "endchoice" >>$OUTPUT_FILE
 	
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ASYMMETRY_CORRECTION_ENABLE" >>$OUTPUT_FILE
-	echo -e "	depends on !PORT${portStr}_INST${instStr}_PROFILE_HA && !PORT${portStr}_INST${instStr}_PROFILE_WR" >>$OUTPUT_FILE
+	echo -e "	depends on !PORT${portStr}_INST${instStr}_PROFILE_HA && !PORT${portStr}_INST${instStr}_PROFILE_WR && !PORT${portStr}_INST${instStr}_PROFILE_AUTONEG" >>$OUTPUT_FILE
 	echo -e "    bool \"asymmetryCorrectionPortDS.enable\"" >>$OUTPUT_FILE
 	echo -e "    default y" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -259,7 +259,7 @@ function print_instance_header() {
 		echo -e "	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled" >>$OUTPUT_FILE
 	
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\")" >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || PORT${portStr}_INST${instStr}_PROFILE_AUTONEG || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\")" >>$OUTPUT_FILE
 		echo -e "	int \"L1SyncBasicPortDS.logL1SyncInterval\"" >>$OUTPUT_FILE
 		echo -e "	default 0" >>$OUTPUT_FILE
 		echo -e "	range -4 4" >>$OUTPUT_FILE
@@ -270,7 +270,7 @@ function print_instance_header() {
 		echo -e "	  The configurable range shall be -4 to 4" >>$OUTPUT_FILE
 			
 		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT" >>$OUTPUT_FILE
-		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\") " >>$OUTPUT_FILE
+		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_HA || PORT${portStr}_INST${instStr}_PROFILE_AUTONEG || (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\")" >>$OUTPUT_FILE
 		echo -e "	int \"L1SyncBasicPortDS.L1SyncReceiptTimeout\"" >>$OUTPUT_FILE
 		echo -e "	default 3" >>$OUTPUT_FILE
 		echo -e "	range 2 10" >>$OUTPUT_FILE
@@ -364,9 +364,10 @@ declare -A port_t24p=(
 
 # Profile configuration
 defaultProfile="WR"
-profileList="PTP HA WR"
+profileList="PTP HA WR AUTONEG"
 declare -A profileNames=(
 	[PTP]="PTP" [HA]="High Accuracy" [WR]="White Rabbit" [CUSTOM]="Custom"
+	[AUTONEG]="HA/WR autonegotiation"
 )
 
 # Generation parameters

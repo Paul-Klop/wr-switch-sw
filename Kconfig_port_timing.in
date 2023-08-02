@@ -82,6 +82,8 @@ choice
         bool "High Accuracy"
     config PORT01_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT01_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -98,7 +100,7 @@ choice
 endchoice
 
 config PORT01_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT01_INST01_PROFILE_HA && !PORT01_INST01_PROFILE_WR
+	depends on !PORT01_INST01_PROFILE_HA && !PORT01_INST01_PROFILE_WR && !PORT01_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -194,7 +196,7 @@ config PORT01_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT01_INST01_L1SYNC_INTERVAL
-	depends on PORT01_INST01_PROFILE_HA || (PORT01_INST01_PROFILE_CUSTOM && PORT01_INST01_L1SYNC_ENABLED="y")
+	depends on PORT01_INST01_PROFILE_HA || PORT01_INST01_PROFILE_AUTONEG || (PORT01_INST01_PROFILE_CUSTOM && PORT01_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -205,7 +207,7 @@ config PORT01_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT01_INST01_PROFILE_HA || (PORT01_INST01_PROFILE_CUSTOM && PORT01_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT01_INST01_PROFILE_HA || PORT01_INST01_PROFILE_AUTONEG || (PORT01_INST01_PROFILE_CUSTOM && PORT01_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -335,6 +337,8 @@ choice
         bool "High Accuracy"
     config PORT02_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT02_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -350,7 +354,7 @@ choice
 endchoice
 
 config PORT02_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT02_INST01_PROFILE_HA && !PORT02_INST01_PROFILE_WR
+	depends on !PORT02_INST01_PROFILE_HA && !PORT02_INST01_PROFILE_WR && !PORT02_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -446,7 +450,7 @@ config PORT02_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT02_INST01_L1SYNC_INTERVAL
-	depends on PORT02_INST01_PROFILE_HA || (PORT02_INST01_PROFILE_CUSTOM && PORT02_INST01_L1SYNC_ENABLED="y")
+	depends on PORT02_INST01_PROFILE_HA || PORT02_INST01_PROFILE_AUTONEG || (PORT02_INST01_PROFILE_CUSTOM && PORT02_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -457,7 +461,7 @@ config PORT02_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT02_INST01_PROFILE_HA || (PORT02_INST01_PROFILE_CUSTOM && PORT02_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT02_INST01_PROFILE_HA || PORT02_INST01_PROFILE_AUTONEG || (PORT02_INST01_PROFILE_CUSTOM && PORT02_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -587,6 +591,8 @@ choice
         bool "High Accuracy"
     config PORT03_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT03_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -602,7 +608,7 @@ choice
 endchoice
 
 config PORT03_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT03_INST01_PROFILE_HA && !PORT03_INST01_PROFILE_WR
+	depends on !PORT03_INST01_PROFILE_HA && !PORT03_INST01_PROFILE_WR && !PORT03_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -698,7 +704,7 @@ config PORT03_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT03_INST01_L1SYNC_INTERVAL
-	depends on PORT03_INST01_PROFILE_HA || (PORT03_INST01_PROFILE_CUSTOM && PORT03_INST01_L1SYNC_ENABLED="y")
+	depends on PORT03_INST01_PROFILE_HA || PORT03_INST01_PROFILE_AUTONEG || (PORT03_INST01_PROFILE_CUSTOM && PORT03_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -709,7 +715,7 @@ config PORT03_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT03_INST01_PROFILE_HA || (PORT03_INST01_PROFILE_CUSTOM && PORT03_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT03_INST01_PROFILE_HA || PORT03_INST01_PROFILE_AUTONEG || (PORT03_INST01_PROFILE_CUSTOM && PORT03_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -839,6 +845,8 @@ choice
         bool "High Accuracy"
     config PORT04_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT04_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -854,7 +862,7 @@ choice
 endchoice
 
 config PORT04_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT04_INST01_PROFILE_HA && !PORT04_INST01_PROFILE_WR
+	depends on !PORT04_INST01_PROFILE_HA && !PORT04_INST01_PROFILE_WR && !PORT04_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -950,7 +958,7 @@ config PORT04_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT04_INST01_L1SYNC_INTERVAL
-	depends on PORT04_INST01_PROFILE_HA || (PORT04_INST01_PROFILE_CUSTOM && PORT04_INST01_L1SYNC_ENABLED="y")
+	depends on PORT04_INST01_PROFILE_HA || PORT04_INST01_PROFILE_AUTONEG || (PORT04_INST01_PROFILE_CUSTOM && PORT04_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -961,7 +969,7 @@ config PORT04_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT04_INST01_PROFILE_HA || (PORT04_INST01_PROFILE_CUSTOM && PORT04_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT04_INST01_PROFILE_HA || PORT04_INST01_PROFILE_AUTONEG || (PORT04_INST01_PROFILE_CUSTOM && PORT04_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -1091,6 +1099,8 @@ choice
         bool "High Accuracy"
     config PORT05_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT05_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -1106,7 +1116,7 @@ choice
 endchoice
 
 config PORT05_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT05_INST01_PROFILE_HA && !PORT05_INST01_PROFILE_WR
+	depends on !PORT05_INST01_PROFILE_HA && !PORT05_INST01_PROFILE_WR && !PORT05_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -1202,7 +1212,7 @@ config PORT05_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT05_INST01_L1SYNC_INTERVAL
-	depends on PORT05_INST01_PROFILE_HA || (PORT05_INST01_PROFILE_CUSTOM && PORT05_INST01_L1SYNC_ENABLED="y")
+	depends on PORT05_INST01_PROFILE_HA || PORT05_INST01_PROFILE_AUTONEG || (PORT05_INST01_PROFILE_CUSTOM && PORT05_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -1213,7 +1223,7 @@ config PORT05_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT05_INST01_PROFILE_HA || (PORT05_INST01_PROFILE_CUSTOM && PORT05_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT05_INST01_PROFILE_HA || PORT05_INST01_PROFILE_AUTONEG || (PORT05_INST01_PROFILE_CUSTOM && PORT05_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -1343,6 +1353,8 @@ choice
         bool "High Accuracy"
     config PORT06_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT06_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -1358,7 +1370,7 @@ choice
 endchoice
 
 config PORT06_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT06_INST01_PROFILE_HA && !PORT06_INST01_PROFILE_WR
+	depends on !PORT06_INST01_PROFILE_HA && !PORT06_INST01_PROFILE_WR && !PORT06_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -1454,7 +1466,7 @@ config PORT06_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT06_INST01_L1SYNC_INTERVAL
-	depends on PORT06_INST01_PROFILE_HA || (PORT06_INST01_PROFILE_CUSTOM && PORT06_INST01_L1SYNC_ENABLED="y")
+	depends on PORT06_INST01_PROFILE_HA || PORT06_INST01_PROFILE_AUTONEG || (PORT06_INST01_PROFILE_CUSTOM && PORT06_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -1465,7 +1477,7 @@ config PORT06_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT06_INST01_PROFILE_HA || (PORT06_INST01_PROFILE_CUSTOM && PORT06_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT06_INST01_PROFILE_HA || PORT06_INST01_PROFILE_AUTONEG || (PORT06_INST01_PROFILE_CUSTOM && PORT06_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -1595,6 +1607,8 @@ choice
         bool "High Accuracy"
     config PORT07_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT07_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -1610,7 +1624,7 @@ choice
 endchoice
 
 config PORT07_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT07_INST01_PROFILE_HA && !PORT07_INST01_PROFILE_WR
+	depends on !PORT07_INST01_PROFILE_HA && !PORT07_INST01_PROFILE_WR && !PORT07_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -1706,7 +1720,7 @@ config PORT07_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT07_INST01_L1SYNC_INTERVAL
-	depends on PORT07_INST01_PROFILE_HA || (PORT07_INST01_PROFILE_CUSTOM && PORT07_INST01_L1SYNC_ENABLED="y")
+	depends on PORT07_INST01_PROFILE_HA || PORT07_INST01_PROFILE_AUTONEG || (PORT07_INST01_PROFILE_CUSTOM && PORT07_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -1717,7 +1731,7 @@ config PORT07_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT07_INST01_PROFILE_HA || (PORT07_INST01_PROFILE_CUSTOM && PORT07_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT07_INST01_PROFILE_HA || PORT07_INST01_PROFILE_AUTONEG || (PORT07_INST01_PROFILE_CUSTOM && PORT07_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -1847,6 +1861,8 @@ choice
         bool "High Accuracy"
     config PORT08_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT08_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -1862,7 +1878,7 @@ choice
 endchoice
 
 config PORT08_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT08_INST01_PROFILE_HA && !PORT08_INST01_PROFILE_WR
+	depends on !PORT08_INST01_PROFILE_HA && !PORT08_INST01_PROFILE_WR && !PORT08_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -1958,7 +1974,7 @@ config PORT08_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT08_INST01_L1SYNC_INTERVAL
-	depends on PORT08_INST01_PROFILE_HA || (PORT08_INST01_PROFILE_CUSTOM && PORT08_INST01_L1SYNC_ENABLED="y")
+	depends on PORT08_INST01_PROFILE_HA || PORT08_INST01_PROFILE_AUTONEG || (PORT08_INST01_PROFILE_CUSTOM && PORT08_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -1969,7 +1985,7 @@ config PORT08_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT08_INST01_PROFILE_HA || (PORT08_INST01_PROFILE_CUSTOM && PORT08_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT08_INST01_PROFILE_HA || PORT08_INST01_PROFILE_AUTONEG || (PORT08_INST01_PROFILE_CUSTOM && PORT08_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -2099,6 +2115,8 @@ choice
         bool "High Accuracy"
     config PORT09_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT09_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -2114,7 +2132,7 @@ choice
 endchoice
 
 config PORT09_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT09_INST01_PROFILE_HA && !PORT09_INST01_PROFILE_WR
+	depends on !PORT09_INST01_PROFILE_HA && !PORT09_INST01_PROFILE_WR && !PORT09_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -2210,7 +2228,7 @@ config PORT09_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT09_INST01_L1SYNC_INTERVAL
-	depends on PORT09_INST01_PROFILE_HA || (PORT09_INST01_PROFILE_CUSTOM && PORT09_INST01_L1SYNC_ENABLED="y")
+	depends on PORT09_INST01_PROFILE_HA || PORT09_INST01_PROFILE_AUTONEG || (PORT09_INST01_PROFILE_CUSTOM && PORT09_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -2221,7 +2239,7 @@ config PORT09_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT09_INST01_PROFILE_HA || (PORT09_INST01_PROFILE_CUSTOM && PORT09_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT09_INST01_PROFILE_HA || PORT09_INST01_PROFILE_AUTONEG || (PORT09_INST01_PROFILE_CUSTOM && PORT09_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -2351,6 +2369,8 @@ choice
         bool "High Accuracy"
     config PORT10_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT10_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -2366,7 +2386,7 @@ choice
 endchoice
 
 config PORT10_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT10_INST01_PROFILE_HA && !PORT10_INST01_PROFILE_WR
+	depends on !PORT10_INST01_PROFILE_HA && !PORT10_INST01_PROFILE_WR && !PORT10_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -2462,7 +2482,7 @@ config PORT10_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT10_INST01_L1SYNC_INTERVAL
-	depends on PORT10_INST01_PROFILE_HA || (PORT10_INST01_PROFILE_CUSTOM && PORT10_INST01_L1SYNC_ENABLED="y")
+	depends on PORT10_INST01_PROFILE_HA || PORT10_INST01_PROFILE_AUTONEG || (PORT10_INST01_PROFILE_CUSTOM && PORT10_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -2473,7 +2493,7 @@ config PORT10_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT10_INST01_PROFILE_HA || (PORT10_INST01_PROFILE_CUSTOM && PORT10_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT10_INST01_PROFILE_HA || PORT10_INST01_PROFILE_AUTONEG || (PORT10_INST01_PROFILE_CUSTOM && PORT10_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -2603,6 +2623,8 @@ choice
         bool "High Accuracy"
     config PORT11_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT11_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -2618,7 +2640,7 @@ choice
 endchoice
 
 config PORT11_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT11_INST01_PROFILE_HA && !PORT11_INST01_PROFILE_WR
+	depends on !PORT11_INST01_PROFILE_HA && !PORT11_INST01_PROFILE_WR && !PORT11_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -2714,7 +2736,7 @@ config PORT11_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT11_INST01_L1SYNC_INTERVAL
-	depends on PORT11_INST01_PROFILE_HA || (PORT11_INST01_PROFILE_CUSTOM && PORT11_INST01_L1SYNC_ENABLED="y")
+	depends on PORT11_INST01_PROFILE_HA || PORT11_INST01_PROFILE_AUTONEG || (PORT11_INST01_PROFILE_CUSTOM && PORT11_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -2725,7 +2747,7 @@ config PORT11_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT11_INST01_PROFILE_HA || (PORT11_INST01_PROFILE_CUSTOM && PORT11_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT11_INST01_PROFILE_HA || PORT11_INST01_PROFILE_AUTONEG || (PORT11_INST01_PROFILE_CUSTOM && PORT11_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -2855,6 +2877,8 @@ choice
         bool "High Accuracy"
     config PORT12_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT12_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -2870,7 +2894,7 @@ choice
 endchoice
 
 config PORT12_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT12_INST01_PROFILE_HA && !PORT12_INST01_PROFILE_WR
+	depends on !PORT12_INST01_PROFILE_HA && !PORT12_INST01_PROFILE_WR && !PORT12_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -2966,7 +2990,7 @@ config PORT12_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT12_INST01_L1SYNC_INTERVAL
-	depends on PORT12_INST01_PROFILE_HA || (PORT12_INST01_PROFILE_CUSTOM && PORT12_INST01_L1SYNC_ENABLED="y")
+	depends on PORT12_INST01_PROFILE_HA || PORT12_INST01_PROFILE_AUTONEG || (PORT12_INST01_PROFILE_CUSTOM && PORT12_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -2977,7 +3001,7 @@ config PORT12_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT12_INST01_PROFILE_HA || (PORT12_INST01_PROFILE_CUSTOM && PORT12_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT12_INST01_PROFILE_HA || PORT12_INST01_PROFILE_AUTONEG || (PORT12_INST01_PROFILE_CUSTOM && PORT12_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -3107,6 +3131,8 @@ choice
         bool "High Accuracy"
     config PORT13_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT13_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -3122,7 +3148,7 @@ choice
 endchoice
 
 config PORT13_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT13_INST01_PROFILE_HA && !PORT13_INST01_PROFILE_WR
+	depends on !PORT13_INST01_PROFILE_HA && !PORT13_INST01_PROFILE_WR && !PORT13_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -3218,7 +3244,7 @@ config PORT13_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT13_INST01_L1SYNC_INTERVAL
-	depends on PORT13_INST01_PROFILE_HA || (PORT13_INST01_PROFILE_CUSTOM && PORT13_INST01_L1SYNC_ENABLED="y")
+	depends on PORT13_INST01_PROFILE_HA || PORT13_INST01_PROFILE_AUTONEG || (PORT13_INST01_PROFILE_CUSTOM && PORT13_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -3229,7 +3255,7 @@ config PORT13_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT13_INST01_PROFILE_HA || (PORT13_INST01_PROFILE_CUSTOM && PORT13_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT13_INST01_PROFILE_HA || PORT13_INST01_PROFILE_AUTONEG || (PORT13_INST01_PROFILE_CUSTOM && PORT13_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -3359,6 +3385,8 @@ choice
         bool "High Accuracy"
     config PORT14_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT14_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -3374,7 +3402,7 @@ choice
 endchoice
 
 config PORT14_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT14_INST01_PROFILE_HA && !PORT14_INST01_PROFILE_WR
+	depends on !PORT14_INST01_PROFILE_HA && !PORT14_INST01_PROFILE_WR && !PORT14_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -3470,7 +3498,7 @@ config PORT14_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT14_INST01_L1SYNC_INTERVAL
-	depends on PORT14_INST01_PROFILE_HA || (PORT14_INST01_PROFILE_CUSTOM && PORT14_INST01_L1SYNC_ENABLED="y")
+	depends on PORT14_INST01_PROFILE_HA || PORT14_INST01_PROFILE_AUTONEG || (PORT14_INST01_PROFILE_CUSTOM && PORT14_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -3481,7 +3509,7 @@ config PORT14_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT14_INST01_PROFILE_HA || (PORT14_INST01_PROFILE_CUSTOM && PORT14_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT14_INST01_PROFILE_HA || PORT14_INST01_PROFILE_AUTONEG || (PORT14_INST01_PROFILE_CUSTOM && PORT14_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -3611,6 +3639,8 @@ choice
         bool "High Accuracy"
     config PORT15_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT15_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -3626,7 +3656,7 @@ choice
 endchoice
 
 config PORT15_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT15_INST01_PROFILE_HA && !PORT15_INST01_PROFILE_WR
+	depends on !PORT15_INST01_PROFILE_HA && !PORT15_INST01_PROFILE_WR && !PORT15_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -3722,7 +3752,7 @@ config PORT15_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT15_INST01_L1SYNC_INTERVAL
-	depends on PORT15_INST01_PROFILE_HA || (PORT15_INST01_PROFILE_CUSTOM && PORT15_INST01_L1SYNC_ENABLED="y")
+	depends on PORT15_INST01_PROFILE_HA || PORT15_INST01_PROFILE_AUTONEG || (PORT15_INST01_PROFILE_CUSTOM && PORT15_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -3733,7 +3763,7 @@ config PORT15_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT15_INST01_PROFILE_HA || (PORT15_INST01_PROFILE_CUSTOM && PORT15_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT15_INST01_PROFILE_HA || PORT15_INST01_PROFILE_AUTONEG || (PORT15_INST01_PROFILE_CUSTOM && PORT15_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -3863,6 +3893,8 @@ choice
         bool "High Accuracy"
     config PORT16_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT16_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -3878,7 +3910,7 @@ choice
 endchoice
 
 config PORT16_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT16_INST01_PROFILE_HA && !PORT16_INST01_PROFILE_WR
+	depends on !PORT16_INST01_PROFILE_HA && !PORT16_INST01_PROFILE_WR && !PORT16_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -3974,7 +4006,7 @@ config PORT16_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT16_INST01_L1SYNC_INTERVAL
-	depends on PORT16_INST01_PROFILE_HA || (PORT16_INST01_PROFILE_CUSTOM && PORT16_INST01_L1SYNC_ENABLED="y")
+	depends on PORT16_INST01_PROFILE_HA || PORT16_INST01_PROFILE_AUTONEG || (PORT16_INST01_PROFILE_CUSTOM && PORT16_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -3985,7 +4017,7 @@ config PORT16_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT16_INST01_PROFILE_HA || (PORT16_INST01_PROFILE_CUSTOM && PORT16_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT16_INST01_PROFILE_HA || PORT16_INST01_PROFILE_AUTONEG || (PORT16_INST01_PROFILE_CUSTOM && PORT16_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -4115,6 +4147,8 @@ choice
         bool "High Accuracy"
     config PORT17_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT17_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -4130,7 +4164,7 @@ choice
 endchoice
 
 config PORT17_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT17_INST01_PROFILE_HA && !PORT17_INST01_PROFILE_WR
+	depends on !PORT17_INST01_PROFILE_HA && !PORT17_INST01_PROFILE_WR && !PORT17_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -4226,7 +4260,7 @@ config PORT17_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT17_INST01_L1SYNC_INTERVAL
-	depends on PORT17_INST01_PROFILE_HA || (PORT17_INST01_PROFILE_CUSTOM && PORT17_INST01_L1SYNC_ENABLED="y")
+	depends on PORT17_INST01_PROFILE_HA || PORT17_INST01_PROFILE_AUTONEG || (PORT17_INST01_PROFILE_CUSTOM && PORT17_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -4237,7 +4271,7 @@ config PORT17_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT17_INST01_PROFILE_HA || (PORT17_INST01_PROFILE_CUSTOM && PORT17_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT17_INST01_PROFILE_HA || PORT17_INST01_PROFILE_AUTONEG || (PORT17_INST01_PROFILE_CUSTOM && PORT17_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10
@@ -4367,6 +4401,8 @@ choice
         bool "High Accuracy"
     config PORT18_INST01_PROFILE_WR
         bool "White Rabbit"
+    config PORT18_INST01_PROFILE_AUTONEG
+        bool "HA/WR autonegotiation"
 endchoice
 
 choice
@@ -4382,7 +4418,7 @@ choice
 endchoice
 
 config PORT18_INST01_ASYMMETRY_CORRECTION_ENABLE
-	depends on !PORT18_INST01_PROFILE_HA && !PORT18_INST01_PROFILE_WR
+	depends on !PORT18_INST01_PROFILE_HA && !PORT18_INST01_PROFILE_WR && !PORT18_INST01_PROFILE_AUTONEG
     bool "asymmetryCorrectionPortDS.enable"
     default y
 	help
@@ -4478,7 +4514,7 @@ config PORT18_INST01_L1SYNC_ENABLED
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
 config PORT18_INST01_L1SYNC_INTERVAL
-	depends on PORT18_INST01_PROFILE_HA || (PORT18_INST01_PROFILE_CUSTOM && PORT18_INST01_L1SYNC_ENABLED="y")
+	depends on PORT18_INST01_PROFILE_HA || PORT18_INST01_PROFILE_AUTONEG || (PORT18_INST01_PROFILE_CUSTOM && PORT18_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.logL1SyncInterval"
 	default 0
 	range -4 4
@@ -4489,7 +4525,7 @@ config PORT18_INST01_L1SYNC_INTERVAL
 	  The configurable range shall be -4 to 4
 
 config PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT
-	depends on PORT18_INST01_PROFILE_HA || (PORT18_INST01_PROFILE_CUSTOM && PORT18_INST01_L1SYNC_ENABLED="y") 
+	depends on PORT18_INST01_PROFILE_HA || PORT18_INST01_PROFILE_AUTONEG || (PORT18_INST01_PROFILE_CUSTOM && PORT18_INST01_L1SYNC_ENABLED="y")
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
 	default 3
 	range 2 10

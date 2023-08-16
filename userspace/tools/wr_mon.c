@@ -334,7 +334,7 @@ static char * getTimeSourceLabel(int ts)
 	if (ts == 0x60) return "(handSet)";
 	if (ts == 0x90) return "(other)";
 	if (ts == 0xA0) return "(intOscillator)";
-	if (ts >= 0xF0 && ts <= 0xFE) return "(intOscillator)";
+	if (ts >= 0xF0 && ts <= 0xFE) return "(altPTPprofile)";
 	if (ts == 0xFF) return "(reserved)";
 	return "";
 }

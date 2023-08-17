@@ -2689,6 +2689,21 @@ The following tools and scripts are provided:
 	They are classic tools distributed in the @i{Linux Device Drivers}
 	examples since 1998.
 
+@item ppsi_conf
+	The tool that can be used to change some of PPSi's parameters in
+	runtime.
+	Some parameters that can be changed are global (e.g. @t{priority1},
+	@t{servo tracking}), other are specific for PPSi instance
+	(e.g. @t{delay-req-interval}, @t{sync-interval}).
+	This tool supports a change of parameter's value for all instances on
+	a given port or for all existing instances.
+
+	NOTE: This tool can be used to change in runtime diagnostics level
+	(verbocity) of PPSi, global and per instance.
+
+	For more information about supported parameters please refer to
+	PPSi's documentation or tool's help (@t{--help} parameter).
+
 @item ptpdump
 	This is a sniffer for @sc{ptp} frames. It reports all Ethernet frames
 	and UDP datagrams that talk @sc{ptp}, from a specific network interface.

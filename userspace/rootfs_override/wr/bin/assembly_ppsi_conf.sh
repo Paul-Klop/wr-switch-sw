@@ -243,32 +243,7 @@ function gen_ppsi_conf_json() {
 	echo "}" >>$output
 }
 
-function disable_L1sync() {
-	local inst=$1
-	local lv
-	
-	for k in l1SyncEnabled l1SyncTxCoherentIsRequired  l1SyncRxCoherentIsRequired \
-	         l1SyncCongruentIsRequired logL1SyncInterval l1SyncReceiptTimeout l1SyncOptParamsEnabled; do
- 		lv="$inst[$k]"; unset ${lv}
- 	done
-}
-
-function set_profile_for_PTP() {
-	local inst=$1
-	local lv
-	
-	disable_L1sync $inst
-}
-
-
-function set_profile_for_WR() {
-	local inst=$1
-	local lv
-	
-	disable_L1sync $inst
-}
-
-function set_profile_for_HA() {
+function set_extension_for_L1S() {
 	local inst=$1
 	local lv
 	# L1SYNC mandatory values
@@ -283,7 +258,7 @@ function set_profile_for_HA() {
  	lv="$inst[asymmetryCorrectionEnable]"; eval ${lv}="y" 
 }
 
-function set_profile_for_autoneg() {
+function set_extension_for_autoneg() {
 	local inst=$1
 	local lv
 	lv="$inst[extAutonegotiation]"; eval ${lv}="y"
@@ -294,33 +269,52 @@ function set_instance_profile() {
 		local inst=$1
 		local lv="$inst[profile]"
 		local value=${!lv}
-		if [ "${value}" == "wr" ]; then
-			eval ${lv}="wr"
-			set_profile_for_WR $inst
-		elif [ "${value}" == "ha" ]; then
-		    eval ${lv}="ha"
-		elif [ "${value}" == "autoneg" ]; then
-		    # For autonegotation use HA as a default profile
-		    eval ${lv}="ha"
+
+		if [ "${value}" == "ptp" ]; then
+			eval ${lv}="ptp"
+		elif [ "${value}" == "ha_wr" ]; then
+			eval ${lv}="ha_wr"
 		elif [ "${value}" == "custom" ]; then
-		    eval ${lv}="custom"
-		elif [ "${value}" == "none" ] || [ "${value}" == "ptp" ]; then
-			# do nothing
-		    eval ${lv}="ptp"
-			set_profile_for_PTP $inst
+			eval ${lv}="custom"
+		elif [ "${value}" == "keep_global" ]; then
+			# Set the same profile as global
+			eval ${lv}=${globals[globalProfile]}
 		elif [ -n "$p" ]; then
 			echo "$script_name: Invalid parameter profile=\"$p\" in ${inst}" | tee $log_output
-			eval ${lv}="ha"
+			eval ${lv}="ha_wr"
 		else
 			# default
-			eval ${lv}="ha"
+			eval ${lv}="ha_wr"
 		fi
-		if [ "${value}" == "autoneg" ]; then
-		    set_profile_for_autoneg  $inst
+}
+
+function set_instance_extension() {
+		local inst=$1
+		local lv="$inst[extension]"
+		local value=${!lv}
+
+		if [ "${value}" == "wr" ]; then
+			eval ${lv}="wr"
+		elif [ "${value}" == "l1s" ]; then
+			eval ${lv}="l1s"
+		elif [ "${value}" == "autonegotation" ]; then
+			# For autonegotation use l1s as a default extension
+			set_extension_for_autoneg  $inst
+			eval ${lv}="l1s"
+		elif [ "${value}" == "none" ]; then
+			# do nothing
+			true
+		elif [ -n "${value}" ]; then
+			echo "$script_name: Invalid parameter extension=\"${value}\" in ${inst}" | tee $log_output
+			eval ${lv}="l1s"
+		else
+			# default
+			eval ${lv}="l1s"
 		fi
+		# recalculate value
 		value=${!lv}
-		if [ "${value}" == "ha" ] || [ "${value}" == "autoneg" ]; then
-		    set_profile_for_HA  $inst
+		if [ "${value}" == "l1s" ]; then
+			set_extension_for_L1S  $inst
 		fi
 }
 
@@ -344,8 +338,24 @@ function build_inst_ppsi_keys() {
  	echo `echo $s | xargs -n1 | sort -u | xargs`
 }
 
-
-globals_indexes='clock-class clock-accuracy clock-allan-variance time-source domain-number priority1 priority2 externalPortConfigurationEnabled slaveOnly ptpPpsThresholdMs ptpFallbackPpsGen gmDelayToGenPpsSec forcePpsGen'
+# Order is important, in this order options will appear in the ppsi.conf.
+# globalProfile should be the first one, since validation of some options'
+# values (e.g. bmca) depends on its value
+globals_indexes='\
+    globalProfile \
+    bmca \
+    clock-accuracy \
+    clock-allan-variance \
+    clock-class \
+    domain-number \
+    forcePpsGen \
+    gmDelayToGenPpsSec \
+    priority1 \
+    priority2 \
+    ptpFallbackPpsGen \
+    ptpPpsThresholdMs \
+    time-source \
+'
 globals_not_yet_supported='empty'
 
 # PHYSICAL PORT PARAMETERS
@@ -360,13 +370,22 @@ port_ppsi_keys=$(build_port_ppsi_keys)
 # PPSI INSTANCE PARAMETERS
 declare -A inst_dotc_ppsi_key_mapping='(\
 [PROTOCOL_RAW]="proto raw" [PROTOCOL_UDP_IPV4]="proto udp" \
-[MECHANISM_E2E]="mechanism e2e" [MECHANISM_P2P]="mechanism p2p" \
-[PROFILE_PTP]="profile ptp" [PROFILE_WR]="profile wr" [PROFILE_HA]="profile ha" [PROFILE_CUSTOM]="profile custom" [PROFILE_AUTONEG]="profile autoneg" \
-[AUTONEG]="extAutonegotiation" \
+[MECHANISM_E2E]="mechanism e2e" \
+[MECHANISM_P2P]="mechanism p2p" \
+[PROFILE_KEEP_GLOBAL]="profile keep_global" \
+[PROFILE_PTP]="profile ptp" \
+[PROFILE_HA_WR]="profile ha_wr" \
+[PROFILE_CUSTOM]="profile custom" \
+[EXTENSION_NONE]="extension none" \
+[EXTENSION_WR]="extension wr" \
+[EXTENSION_L1S]="extension l1s" \
+[EXTENSION_L1S_WR]="extension autonegotation" \
 [DESIRADE_STATE_MASTER]="desiredState master" [DESIRADE_STATE_SLAVE]="desiredState slave" [DESIRADE_STATE_PASSIVE]="desiredState passive" \
-[ANNOUNCE_INTERVAL]="logAnnounceInterval" [ANNOUNCE_RECEIPT_TIMEOUT]="announceReceiptTimeout" \
-[SYNC_INTERVAL]="logSyncInterval" \
-[MIN_DELAY_REQ_INTERVAL]="logMinDelayReqInterval" [MIN_PDELAY_REQ_INTERVAL]="logMinPDelayReqInterval" \
+[ANNOUNCE_INTERVAL_VAL]="logAnnounceInterval" \
+[ANNOUNCE_RECEIPT_TIMEOUT_VAL]="announceReceiptTimeout" \
+[SYNC_INTERVAL_VAL]="logSyncInterval" \
+[MIN_DELAY_REQ_INTERVAL_VAL]="logMinDelayReqInterval" \
+[MIN_PDELAY_REQ_INTERVAL_VAL]="logMinPDelayReqInterval" \
 [ASYMMETRY_CORRECTION_ENABLE]="asymmetryCorrectionEnable" \
 [BMODE_MASTER_ONLY]="masterOnly" \
 [EGRESS_LATENCY]="egressLatency" [INGRESS_LATENCY]="ingressLatency" \
@@ -377,7 +396,9 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [L1SYNC_RX_COHERENT_IS_REQUIRED]="l1SyncRxCoherentIsRequired" \
 [L1SYNC_CONGRUENT_IS_REQUIRED]="l1SyncCongruentIsRequired" \
 [_VLAN]="vlan" \
+[_FAKE1]="extAutonegotiation" \
 )'
+
 
 inst_dotc_keys="${!inst_dotc_ppsi_key_mapping[@]}"
 inst_ppsi_keys=$(build_inst_ppsi_keys)
@@ -386,49 +407,55 @@ declare -A globals
 
 # Read specific configuration : Still use the old format - to discuss
 [[ "$PRE_FILE" != "" ]] && [[ -f $PRE_FILE ]] && decode_pre_file "$PRE_FILE"
-	
 
-if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
-	globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS"
+if [ "$CONFIG_GLOBAL_PROFILE_PTP" = y ]; then
+	globals[globalProfile]="ptp"
+elif [ "$CONFIG_GLOBAL_PROFILE_HA_WR" = y ]; then
+	globals[globalProfile]="ha_wr"
+elif [ "$CONFIG_GLOBAL_PROFILE_CUSTOM" = y ]; then
+	globals[globalProfile]="custom"
+else
+	echo "Global profile not defined! Use HA_WR as default" | tee $log_output
+	globals[globalProfile]="ha_wr"
+fi
+
+if [ "$CONFIG_PTP_OPT_BMCA_STANDARD" = y ]; then
+	globals[bmca]="ptp"
+elif [ "$CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG" = y ]; then
+	globals[bmca]="externalPortConfiguration"
+else
+	echo "BMCA not defined! Use standard PTP as default" | tee $log_output
+	globals[bmca]="ptp"
+fi
+
+if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS_VAL" ]; then
+	globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS_VAL"
 else # Use BC as default
 	globals[clock-class]="248" 
 fi
 
-if [ -n "$CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES" ]; then
-	# Overwrite default PTP device attributes
-	if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
-		globals[clock-accuracy]="$CONFIG_PTP_OPT_CLOCK_ACCURACY"
-	fi
-	if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE" ]; then
-		globals[clock-allan-variance]="$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE"
-	fi
-	if [ -n "$CONFIG_PTP_OPT_TIME_SOURCE" ]; then
-		globals[time-source]="$CONFIG_PTP_OPT_TIME_SOURCE"
-	fi
+if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
+	globals[clock-accuracy]="$CONFIG_PTP_OPT_CLOCK_ACCURACY"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER" ]; then
-	globals[domain-number]="$CONFIG_PTP_OPT_DOMAIN_NUMBER"
+if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE_VAL" ]; then
+	globals[clock-allan-variance]="$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE_VAL"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_PRIORITY1" ]; then
-	globals[priority1]="$CONFIG_PTP_OPT_PRIORITY1"
+if [ -n "$CONFIG_PTP_OPT_TIME_SOURCE_VAL" ]; then
+	globals[time-source]="$CONFIG_PTP_OPT_TIME_SOURCE_VAL"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_PRIORITY2" ]; then
-	globals[priority2]="$CONFIG_PTP_OPT_PRIORITY2"
+if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER_VAL" ]; then
+	globals[domain-number]="$CONFIG_PTP_OPT_DOMAIN_NUMBER_VAL"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED" ]; then
-	globals[externalPortConfigurationEnabled]="$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED"
-else
-	globals[externalPortConfigurationEnabled]="n"
-fi 
+if [ -n "$CONFIG_PTP_OPT_PRIORITY1_VAL" ]; then
+	globals[priority1]="$CONFIG_PTP_OPT_PRIORITY1_VAL"
+fi
 
-if [ -n "$CONFIG_PTP_SLAVE_ONLY" ] && [ "${globals[externalPortConfigurationEnabled]}" = "n" ]; then
-	globals[slaveOnly]="$CONFIG_PTP_SLAVE_ONLY"
-else
-	globals[slaveOnly]="n"
+if [ -n "$CONFIG_PTP_OPT_PRIORITY2_VAL" ]; then
+	globals[priority2]="$CONFIG_PTP_OPT_PRIORITY2_VAL"
 fi
 
 if [ -n "$CONFIG_PPSGEN_PTP_THRESHOLD_MS" ]; then
@@ -452,7 +479,6 @@ fi
 if [ "$CONFIG_TIME_FM" = y ] && ! [ "$CONFIG_PPSGEN_FR_ON_SYNC_ONLY" = y ]; then
 	globals[forcePpsGen]=y
 fi
-
 
 vlan_error_detected=0 # If a VLAN error is detected, then VLAN are disabled on all ports 
 
@@ -522,7 +548,11 @@ for i_port in {01..18}; do # scan all the physical ports
 		# set the profile
 		set_instance_profile $inst_vn
 		v="$inst_vn[profile]"; p_profile=${!v}
-		
+
+		# set the extension
+		set_instance_extension $inst_vn
+		v="$inst_vn[extension]"; p_extension=${!v}
+
 		# define instance name
 		v="$port_vn[iface]"; p_iface=${!v}
 		v="$inst_vn[proto]"; p_proto=${!v}

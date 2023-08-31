@@ -181,12 +181,12 @@ static char *pp_instance_state_to_name[] = {
 
 #if CONFIG_HAS_EXT_L1SYNC
 static char * l1e_instance_extension_state[]={
-		[__L1SYNC_MISSING   ] = "INVALID   ",
-		[L1SYNC_DISABLED    ] = "DISABLED  ",
-		[L1SYNC_IDLE        ] = "IDLE      ",
-		[L1SYNC_LINK_ALIVE  ] = "LINK ALIVE",
-		[L1SYNC_CONFIG_MATCH] = "CFG MATCH ",
-		[L1SYNC_UP          ] = "UP        ",
+		[__L1SYNC_MISSING   ] = "L1:INVALID   ",
+		[L1SYNC_DISABLED    ] = "L1:DISABLED  ",
+		[L1SYNC_IDLE        ] = "L1:IDLE      ",
+		[L1SYNC_LINK_ALIVE  ] = "L1:LINK ALIVE",
+		[L1SYNC_CONFIG_MATCH] = "L1:CFG MATCH ",
+		[L1SYNC_UP          ] = "L1:UP        ",
 		NULL
 };
 #define L1S_INSTANCE_EXTENSION_STATE_MAX (sizeof (l1e_instance_extension_state)/sizeof(char *) )
@@ -212,15 +212,15 @@ static char * pll_locking_state[] = {
 
 #if CONFIG_HAS_EXT_WR
 static char * wr_instance_extension_state[]={
-		[WRS_IDLE ]=              "IDLE      ",
-		[WRS_PRESENT] =           "WR_PRESENT",
-		[WRS_S_LOCK] =            "WR_S_LOCK ",
-		[WRS_M_LOCK] =            "WR_M_LOCK ",
-		[WRS_LOCKED] =            "WR_LOCKED ",
-		[WRS_CALIBRATION] =       "WR_CAL-ION",
-		[WRS_CALIBRATED] =        "WR_CAL-ED ",
-		[WRS_RESP_CALIB_REQ] =    "WR_RSP_CAL",
-		[WRS_WR_LINK_ON] =        "WR_LINK_ON",
+		[WRS_IDLE ]=              "WR:IDLE      ",
+		[WRS_PRESENT] =           "WR:PRESENT   ",
+		[WRS_S_LOCK] =            "WR:S_LOCK    ",
+		[WRS_M_LOCK] =            "WR:M_LOCK    ",
+		[WRS_LOCKED] =            "WR:LOCKED    ",
+		[WRS_CALIBRATION] =       "WR:CAL-ION   ",
+		[WRS_CALIBRATED] =        "WR:CAL-ED    ",
+		[WRS_RESP_CALIB_REQ] =    "WR:RSP_CAL   ",
+		[WRS_WR_LINK_ON] =        "WR:LINK_ON   ",
 		NULL
 };
 #define WR_INSTANCE_EXTENSION_STATE_MAX (sizeof (wr_instance_extension_state)/sizeof(char *) )
@@ -808,8 +808,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 		print_gm_info();
 
-		term_cprintf(C_CYAN, "----- HAL ----|---------------------------------- PPSI --------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface | Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States    | Pro | VLANs\n");
+		term_cprintf(C_CYAN, "----- HAL ----|---------------------------------- PPSI -----------------------------------------------------------\n");
+		term_cprintf(C_CYAN, " Iface | Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | Pro | VLANs\n");
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {

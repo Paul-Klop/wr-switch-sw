@@ -809,7 +809,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 		print_gm_info();
 
 		term_cprintf(C_CYAN, "----- HAL ----|---------------------------------- PPSI -----------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface | Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | Pro | VLANs\n");
+		term_cprintf(C_CYAN, " Iface | Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrC | VLANs\n");
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -1014,8 +1014,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 	}
 	if (mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "Iface: +/- SFP in DB; "
-			     "Pro - Protocol mapping: V-Ethernet over VLAN, "
-			     "U-UDP, R-Ethernet\n");
+			     "PrC-Protocol config: V-Eth over VLAN, "
+			     "U-UDP, R-Ethernet; a-ext autoneg; Profile: W-WR, L-HA\n");
 	}
 }
 

@@ -247,8 +247,8 @@ function disable_L1sync() {
 	local inst=$1
 	local lv
 	
- 	for k in l1SyncEnabled l1SyncTxCoherencyIsRequired  l1SyncRxCoherencyIsRequired \
- 	         l1SyncCongruencyIsRequired logL1SyncInterval l1SyncReceiptTimeout l1SyncOptParamsEnabled; do 
+	for k in l1SyncEnabled l1SyncTxCoherentIsRequired  l1SyncRxCoherentIsRequired \
+	         l1SyncCongruentIsRequired logL1SyncInterval l1SyncReceiptTimeout l1SyncOptParamsEnabled; do
  		lv="$inst[$k]"; unset ${lv}
  	done
 }
@@ -272,7 +272,7 @@ function set_profile_for_HA() {
 	local inst=$1
 	local lv
 	# L1SYNC mandatory values
- 	for k in l1SyncEnabled l1SyncTxCoherencyIsRequired  l1SyncRxCoherencyIsRequired l1SyncCongruencyIsRequired ; do 
+	for k in l1SyncEnabled l1SyncTxCoherentIsRequired  l1SyncRxCoherentIsRequired l1SyncCongruentIsRequired ; do
  		lv="$inst[$k]"; eval ${lv}="y"
  	done
  	lv="$inst[l1SyncOptParamsEnabled]"; eval ${lv}="n"
@@ -359,8 +359,9 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [L1SYNC_ENABLED]="l1SyncEnabled" [L1SYNC_INTERVAL]="logL1SyncInterval" \
 [L1SYNC_RECEIPT_TIMEOUT]="l1SyncReceiptTimeout" \
 [L1SYNC_OPT_PARAMS_ENABLED]="l1SyncOptParamsEnabled" [L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED]="l1SyncTimestampsCorrectedTxEnabled" \
-[L1SYNC_TX_COHERENCY_IS_REQUIRED]="l1SyncTxCoherencyIsRequired" \
-[L1SYNC_RX_COHERENCY_IS_REQUIRED]="l1SyncRxCoherencyIsRequired" [L1SYNC_CONGRUENCY_IS_REQUIRED]="l1SyncCongruencyIsRequired" \
+[L1SYNC_TX_COHERENT_IS_REQUIRED]="l1SyncTxCoherentIsRequired" \
+[L1SYNC_RX_COHERENT_IS_REQUIRED]="l1SyncRxCoherentIsRequired" \
+[L1SYNC_CONGRUENT_IS_REQUIRED]="l1SyncCongruentIsRequired" \
 [_VLAN]="vlan" \
 )'
 

@@ -281,27 +281,27 @@ function print_instance_header() {
 		echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 		echo -e "	  The configurable range shall be 2 to 10" >>$OUTPUT_FILE
 		
-		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENCY_IS_REQUIRED" >>$OUTPUT_FILE
+		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED" >>$OUTPUT_FILE
 		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
-		echo -e "	bool \"L1SyncBasicPortDS.txCoherencyIsRequired\"" >>$OUTPUT_FILE
+		echo -e "	bool \"L1SyncBasicPortDS.txCoherentIsRequired\"" >>$OUTPUT_FILE
 		echo -e "	default y" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
 		echo -e "	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the" >>$OUTPUT_FILE
 		echo -e "	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is" >>$OUTPUT_FILE
 		echo -e "	   required to be a transmit coherent port." >>$OUTPUT_FILE
 	
-		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENCY_IS_REQUIRED" >>$OUTPUT_FILE
+		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED" >>$OUTPUT_FILE
 		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
-		echo -e "	bool \"L1SyncBasicPortDS.rxCoherencyIsRequired\"" >>$OUTPUT_FILE
+		echo -e "	bool \"L1SyncBasicPortDS.rxCoherentIsRequired\"" >>$OUTPUT_FILE
 		echo -e "	default y" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
 		echo -e "	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the" >>$OUTPUT_FILE
 		echo -e "	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is" >>$OUTPUT_FILE
 		echo -e "	  required to be a receive coherent port." >>$OUTPUT_FILE
 	
-		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENCY_IS_REQUIRED" >>$OUTPUT_FILE
+		echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED" >>$OUTPUT_FILE
 		echo -e "	depends on PORT${portStr}_INST${instStr}_PROFILE_CUSTOM && PORT${portStr}_INST${instStr}_L1SYNC_ENABLED=\"y\"" >>$OUTPUT_FILE
-		echo -e "	bool \"L1SyncBasicPortDS.congruencyIsRequired\"" >>$OUTPUT_FILE
+		echo -e "	bool \"L1SyncBasicPortDS.congruentIsRequired\"" >>$OUTPUT_FILE
 		echo -e "	default y" >>$OUTPUT_FILE
 		echo -e "	help" >>$OUTPUT_FILE
 		echo -e "	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected" >>$OUTPUT_FILE

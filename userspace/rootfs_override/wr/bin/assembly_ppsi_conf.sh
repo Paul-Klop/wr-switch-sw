@@ -556,7 +556,7 @@ for i_port in {01..18}; do # scan all the physical ports
 		# define instance name
 		v="$port_vn[iface]"; p_iface=${!v}
 		v="$inst_vn[proto]"; p_proto=${!v}
-		v="$inst_vn[port]"; eval ${v}="${p_iface}-${j_inst_int}-${p_profile:0:2}-${p_proto}"
+		v="$inst_vn[port]"; eval ${v}="${p_iface}-${j_inst_int}"
 		
 		# if extPortConfiguration enabled, get the desired state
 		if [ "$CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED" == 'y' ] ; then

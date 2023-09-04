@@ -808,8 +808,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 		print_gm_info();
 
-		term_cprintf(C_CYAN, "----- HAL ----|---------------------------------- PPSI -----------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface | Freq |Inst|     Name     |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrC | VLANs\n");
+		term_cprintf(C_CYAN, "----- HAL ----|--------------------------- PPSI -----------------------------------------------------------\n");
+		term_cprintf(C_CYAN, " Iface | Freq |Inst| Name  |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrC | VLANs\n");
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -915,8 +915,9 @@ void show_ports(int hal_alive, int ppsi_alive)
 					/* print instance number */
 					term_cprintf(C_WHITE, " %2d ", j);
 					term_cprintf(C_CYAN, "|");
-					/* print instance name */
-					term_cprintf(C_WHITE, "%-14s",ppi->cfg.port_name);
+					/* Print instance name. expected is wriXX-X.
+					 * If the name is longer table's alignment will be broken */
+					term_cprintf(C_WHITE, "%-7s",ppi->cfg.port_name);
 					term_cprintf(C_CYAN, "|");
 					term_cprintf(C_WHITE, "%-12s",str_config);
 					term_cprintf(C_CYAN, "| ");

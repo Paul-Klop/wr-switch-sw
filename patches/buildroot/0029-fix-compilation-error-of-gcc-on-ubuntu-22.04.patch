@@ -1,0 +1,50 @@
+From 2fb64e663a84db79a12ef3d9d112a0e7ac36056e Mon Sep 17 00:00:00 2001
+From: Quentin Genoud <quentin.genoud.duvillaret@cern.ch>
+Date: Thu, 14 Sep 2023 10:58:52 +0200
+Subject: [PATCH] fix compilation error of gcc on ubuntu 22.04
+
+---
+ .../4.9.3/0001-Apply-patch-to-reload.h.patch  | 31 +++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+ create mode 100644 package/gcc/4.9.3/0001-Apply-patch-to-reload.h.patch
+
+diff --git a/package/gcc/4.9.3/1001-fix-compilation-of-gcc-for-ubuntu-22.04.patch b/package/gcc/4.9.3/1001-fix-compilation-of-gcc-for-ubuntu-22.04.patch
+new file mode 100644
+index 00000000..75e9b4bf
+--- /dev/null
++++ b/package/gcc/4.9.3/1001-fix-compilation-of-gcc-for-ubuntu-22.04.patch
+@@ -0,0 +1,31 @@
++From c270277b3ac7a4441960827f2af31e142b8cda9d Mon Sep 17 00:00:00 2001
++From: Quentin Genoud <quentin.genoud.duvillaret@cern.ch>
++Date: Thu, 14 Sep 2023 10:23:16 +0200
++Subject: [PATCH] Apply patch to reload.h
++ This patch is from gcc.gnu.org website:
++ https://gcc.gnu.org/git/?p=gcc.git;a=blobdiff;f=gcc/reload.h;h=a089faafffeb9649e1e8508eccacd7d7930634f8;hp=a58b9025bf55b11c6a87dc77ec64ee335ee9d9ef;hb=d57c99458933a21fdf94f508191f145ad8d5ec58;hpb=f7df4a840c47845783129279750f1c214e74e7d1
++ It changes the type of variable of "x_spill_indirect_levels" inside struct
++ "target_reload" from bool to unsigned char. Bool type was causing an error in
++ file reload1.c because the code was trying to increment this variable using
++ "++" which is forbidden on a bool variable in C++17.
++
++---
++ gcc/reload.h | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/gcc/reload.h b/gcc/reload.h
++index 65fa29c..e3ec30a 100644
++--- a/gcc/reload.h
+++++ b/gcc/reload.h
++@@ -166,7 +166,7 @@ struct target_reload {
++      value indicates the level of indirect addressing supported, e.g., two
++      means that (MEM (MEM (REG n))) is also valid if (REG n) does not get
++      a hard register.  */
++-  bool x_spill_indirect_levels;
+++  unsigned char x_spill_indirect_levels;
++ 
++   /* True if caller-save has been reinitialized.  */
++   bool x_caller_save_initialized_p;
++-- 
++2.34.1
++
+-- 
+2.34.1
+

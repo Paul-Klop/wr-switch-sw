@@ -1095,17 +1095,29 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		term_cprintf(C_CYAN, "\n +- Timing parameters ---------------------------------------------------------\n");
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "meanDelay        : ");
-		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString(servo->meanDelay,buf));
+		term_cprintf(C_WHITE, "%16s nsec%s", timeIntervalToString(servo->meanDelay,buf), wrh_servo ? "" : "\n");
+		if (wrh_servo) {
+			term_cprintf(C_BLUE, "%18serr state:","");
+			term_cprintf(C_WHITE, "%8d\n", wrh_servo->n_err_state);
+		}
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMS          : ");
-		term_cprintf(C_WHITE, "%s\n", optimized_pp_time_toString(&servo->servo_snapshot.delayMS,buf));
+		term_cprintf(C_WHITE, "%s%s", optimized_pp_time_toString(&servo->servo_snapshot.delayMS,buf), wrh_servo ? "" : "\n");
+		if (wrh_servo) {
+			term_cprintf(C_BLUE, "%18serr offset:","");
+			term_cprintf(C_WHITE, "%7d\n", wrh_servo->n_err_offset);
+		}
 
 		{
 			struct pp_time *delayMM= wr_servo_ext ?
 					&wr_servo_ext->rawDelayMM :
 					&servo->servo_snapshot.delayMM;
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMM          : ");
-			term_cprintf(C_WHITE, "%s\n", optimized_pp_time_toString(delayMM, buf));
+			term_cprintf(C_WHITE, "%s%s", optimized_pp_time_toString(delayMM, buf), wrh_servo ? "" : "\n");
+		}
+		if (wrh_servo) {
+			term_cprintf(C_BLUE, "%18serr delta:","");
+			term_cprintf(C_WHITE, "%8d\n", wrh_servo->n_err_delta_rtt);
 		}
 
 

@@ -375,18 +375,18 @@ void help(char *prgname)
 		prgname, prgname);
 	fprintf(stderr,
 		"  The program has the following options\n"
+		"  -a   show all (same as -i -m -s -o -e -t options)\n"
+		"  -b   black and white output\n"
+		"  -e   show servo statistics\n"
 		"  -h   print help\n"
+		"  -H <dir> Open shmem dumps from the given directory\n"
 		"  -i   show White Rabbit time.\n"
 		"	   very close\n"
 		"  -m   show master ports\n"
-		"  -s   show slave ports\n"
 		"  -o   show other ports\n"
-		"  -e   show servo statistics\n"
+		"  -s   show slave ports\n"
 		"  -t   show temperatures\n"
-		"  -a   show all (same as -i -m -s -o -e -t options)\n"
-		"  -b   black and white output\n"
 		"  -w   web interface mode\n"
-		"  -H <dir> Open shmem dumps from the given directory\n"
 		"\n"
 		"During execution the user can enter 'q' to exit the program\n"
 		"and 't' to toggle printing of state information on/off\n");

@@ -75,8 +75,6 @@ struct proto_ext_info_t {
 	int valid;
 	char *ext_name; /* Extension name */
 	int servo_ext_size; /* Size of the extension */
-	int ipc_cmd_tacking; /* Command to enable/disable servo tacking*/
-	int track_onoff;     /* Tracking on/off */
 	time_t lastt;
 	int last_count;
 };
@@ -85,7 +83,6 @@ static struct proto_ext_info_t proto_ext_info [] = {
 		[PPSI_EXT_NONE] = {
 				.valid=1,
 				.ext_name="PTP",
-				.ipc_cmd_tacking=-1, /* Invalid */
 		},
 
 #if CONFIG_HAS_EXT_WR
@@ -93,8 +90,6 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.valid=1,
 				.ext_name="White-Rabbit",
 				.servo_ext_size=sizeof(struct wr_data),
-				.ipc_cmd_tacking=PPSIEXP_COMMAND_WR_TRACKING,
-				.track_onoff = 1,
 		},
 #endif
 #if CONFIG_HAS_EXT_L1SYNC
@@ -102,8 +97,6 @@ static struct proto_ext_info_t proto_ext_info [] = {
 				.valid=1,
 				.ext_name="L1Sync",
 				.servo_ext_size=sizeof(struct l1e_data),
-				.ipc_cmd_tacking=PPSIEXP_COMMAND_L1SYNC_TRACKING,
-				.track_onoff = 1,
 		},
 #endif
 };
@@ -388,8 +381,9 @@ void help(char *prgname)
 		"  -t   show temperatures\n"
 		"  -w   web interface mode\n"
 		"\n"
-		"During execution the user can enter 'q' to exit the program\n"
-		"and 't' to toggle printing of state information on/off\n");
+		"During execution the user can enter:\n"
+		"q - to exit the program\n"
+		"t - to toggle forcibly disabled tracking\n");
 	exit(1);
 }
 
@@ -1325,24 +1319,17 @@ void show_all(void)
 	fflush(stdout);
 }
 
-static void enable_disable_tracking(int proto_extension) {
+static void toggle_tracking(void)
+{
+	int rval;
 
-	if ( IS_PROTO_EXT_INFO_AVAILABLE(proto_extension)  ) {
-		struct proto_ext_info_t *pe_info= &proto_ext_info[proto_extension];
-
-		if ( pe_info->ipc_cmd_tacking!=-1 ) {
-			int rval;
-
-			pe_info->track_onoff = 1-pe_info->track_onoff;
-			if (ptp_ch_pid != ppsi_head->pid) {
-				/* ppsi was restarted since minipc
-				 * connection, reconnect now */
-				ppsi_connect_minipc();
-			}
-			minipc_call(ptp_ch, 200, &__rpcdef_cmd,
-				&rval, pe_info->ipc_cmd_tacking,pe_info->track_onoff);
-		}
+	if (ptp_ch_pid != ppsi_head->pid) {
+		/* ppsi was restarted since minipc connection, reconnect now */
+		ppsi_connect_minipc();
 	}
+
+	minipc_call(ptp_ch, 200, &__rpcdef_cmd, &rval, PPSIEXP_COMMAND_TRACKING,
+		    PPSIEXP_COMMAND_TRACKING_TOGGLE);
 }
 
 int main(int argc, char *argv[])
@@ -1427,11 +1414,11 @@ int main(int argc, char *argv[])
 			switch (c) {
 			case 'q':
 				goto quit;
-			case 'w' :
-				enable_disable_tracking (PPSI_EXT_WR);
-				break;
-			case 'l' :
-				enable_disable_tracking (PPSI_EXT_L1S);
+
+			case 't' :
+				toggle_tracking();
+				/* Force refresh */
+				last_seconds = 0;
 				break;
 			}
 		}

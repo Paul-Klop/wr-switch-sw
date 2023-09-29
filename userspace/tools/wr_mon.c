@@ -135,6 +135,9 @@ static uint32_t nanoseconds;
 /* ignore checking if process is alive */
 static int ignore_alive;
 
+/* Print extra ppsi configuration like priority1, sync-interval etc. */
+static int print_extra_ppsi_conf = 0;
+
 /* define size of pp_instance_state_to_name as a last element + 1 */
 #define PP_INSTANCE_STATE_MAX (sizeof(pp_instance_state_to_name)/sizeof(char *))
 
@@ -370,6 +373,7 @@ void help(char *prgname)
 		"  The program has the following options\n"
 		"  -a   show all (same as -i -m -s -o -e -t options)\n"
 		"  -b   black and white output\n"
+		"  -c   printout of extra PPSI configuration parameters\n"
 		"  -e   show servo statistics\n"
 		"  -h   print help\n"
 		"  -H <dir> Open shmem dumps from the given directory\n"
@@ -383,6 +387,7 @@ void help(char *prgname)
 		"\n"
 		"During execution the user can enter:\n"
 		"q - to exit the program\n"
+		"c - to toggle printout of extra PPSI configuration parameters\n"
 		"t - to toggle forcibly disabled tracking\n");
 	exit(1);
 }
@@ -742,6 +747,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 	int vlan_i;
 	int nvlans;
 	int *p;
+	char *ppsi_extra_conf_header_dash_str;
+	char *ppsi_extra_conf_header_str;
 
 	struct PPSG_WB *pps=(struct PPSG_WB *)(_fpga_base_virt+FPGA_BASE_PPS_GEN);
 
@@ -804,12 +811,51 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_BLUE, "    Domain: ");
 			term_cprintf(C_WHITE, "%d", defaultDS->domainNumber);
 			term_cprintf(C_WHITE, "\n");
+
+			if (print_extra_ppsi_conf) {
+				ClockIdentity *p = &defaultDS->clockIdentity;
+
+				term_cprintf(C_BLUE, "local clockId: ");
+				term_cprintf(C_WHITE, "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+					     p->id[0], p->id[1], p->id[2], p->id[3],
+					     p->id[4], p->id[5], p->id[6], p->id[7]);
+
+				term_cprintf(C_BLUE, " clockClass:");
+				term_cprintf(C_WHITE, "%4d%s", defaultDS->clockQuality.clockClass, getClockClassLabel(defaultDS->clockQuality.clockClass));
+
+				term_cprintf(C_BLUE, " clockAccuracy:");
+				term_cprintf(C_WHITE, "0x%X%-8s", defaultDS->clockQuality.clockAccuracy, getAccuracyLabel(defaultDS->clockQuality.clockAccuracy));
+
+				term_cprintf(C_BLUE, " logVar:");
+				term_cprintf(C_WHITE, "%6d", defaultDS->clockQuality.offsetScaledLogVariance);
+
+				term_cprintf(C_WHITE, "\n");
+
+				term_cprintf(C_BLUE, "prio1:");
+				term_cprintf(C_WHITE, "%4d  ", defaultDS->priority1);
+
+				term_cprintf(C_BLUE, "prio2:");
+				term_cprintf(C_WHITE, "%4d", defaultDS->priority2);
+
+				term_cprintf(C_WHITE, "\n");
+			}
 		}
 
 		print_gm_info();
 
-		term_cprintf(C_CYAN, "----- HAL ----|--------------------------- PPSI -----------------------------------------------------------\n");
-		term_cprintf(C_CYAN, " Iface | Freq |Inst| Name  |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrConf | VLANs\n");
+		ppsi_extra_conf_header_dash_str = "";
+		ppsi_extra_conf_header_str = "";
+
+		if (print_extra_ppsi_conf) {
+			ppsi_extra_conf_header_dash_str = "----------------------------";
+			ppsi_extra_conf_header_str =      "annI|syncI|delReqI|pdelReqI|";
+		}
+		
+
+		term_cprintf(C_CYAN, "----- HAL ----|--------------------------- PPSI --------------------------------------------------------%s------\n",
+			     ppsi_extra_conf_header_dash_str);
+		term_cprintf(C_CYAN, " Iface | Freq |Inst| Name  |   Config   | MAC of peer port  |    PTP/EXT/PDETECT States       | PrConf |%s VLANs\n",
+			     ppsi_extra_conf_header_str);
 
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -821,6 +867,7 @@ void show_ports(int hal_alive, int ppsi_alive)
 		int print_port = 0;
 		int instance_port = 0;
 		int color;
+		int port_up = 0;
 
 		snprintf(if_name, 10, "wri%d", i + 1);
 
@@ -834,9 +881,10 @@ void show_ports(int hal_alive, int ppsi_alive)
 			if (!(port_state->calib.sfp.flags & SFP_FLAG_IN_DB))
 				term_cprintf(C_BLUE, "-");
 			/* check if link is up */
-			if (state_up(port_state))
+			if (state_up(port_state)) {
 				term_cprintf(C_GREEN, "%s %-5s", port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? "+" : "", if_name);
-			else {
+				port_up = 1;
+			} else {
 				term_cprintf(C_RED, "%s*%-5s", port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? "+" : "", if_name);
 			}
 			term_cprintf(C_CYAN, "| ");
@@ -1001,11 +1049,27 @@ void show_ports(int hal_alive, int ppsi_alive)
 
 					color=extensionStateColor(ppi);
 					term_cprintf(color, "%s", getStateAsString(pp_instance_profile, ppi->cfg.profile));
+					term_cprintf(C_CYAN, " |");
+
+					if (print_extra_ppsi_conf) {
+						if (port_up)
+							color = C_GREEN;
+						else
+							color = C_RED;
+						term_cprintf(color, "%3d", ppi_pt->portDS->logAnnounceInterval);
+						term_cprintf(C_CYAN, " |");
+						
+						term_cprintf(color, "%4d", ppi_pt->portDS->logSyncInterval);
+						term_cprintf(C_CYAN, " |");
+						term_cprintf(color, "%6d", ppi_pt->portDS->logMinDelayReqInterval);
+						term_cprintf(C_CYAN, " |");
+						term_cprintf(color, "%7d", ppi_pt->portDS->logMinPdelayReqInterval);
+						term_cprintf(C_CYAN, " |");
+					}
 
 					nvlans = ppi->nvlans;
-					term_cprintf(C_CYAN, " | ");
 					for (vlan_i = 0; vlan_i < nvlans; vlan_i++) {
-						term_cprintf(C_WHITE, "%d",
+						term_cprintf(C_WHITE, " %d",
 								ppi->vlans[vlan_i]);
 						if (vlan_i < nvlans - 1)
 							term_cprintf(C_WHITE, ",");
@@ -1030,6 +1094,9 @@ void show_ports(int hal_alive, int ppsi_alive)
 		term_cprintf(C_BLUE, "Iface: +/- SFP in DB; "
 			     "PrConf-Protocol config: V-Eth over VLAN, "
 			     "U-UDP, R-Ethernet; a-ext autoneg; Profile: W-WR, L-HA\n");
+		if (print_extra_ppsi_conf) {
+			term_cprintf(C_BLUE, "annI-logAnnounceInterval;syncI-logSyncInterval;delReqI-logMinDelayReqInterval;pdelReqI-logMinPdelayReqInterval;\n");
+		}
 	}
 }
 
@@ -1284,7 +1351,7 @@ void show_all(void)
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor ");
 		term_cprintf(C_WHITE, "%s", __GIT_VER__);
-		term_cprintf(C_BLUE, " [q = quit]\n\n");
+		term_cprintf(C_BLUE, " [q = quit, t = toggle servo, c = extra ppsi params]\n\n");
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0))
@@ -1342,7 +1409,7 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv, LOG_USER);
 
-	while ((opt = getopt(argc, argv, "himsoetabwqvH:")) != -1) {
+	while ((opt = getopt(argc, argv, "abcehimoqstvwH:")) != -1) {
 		switch(opt)
 		{
 			case 'h':
@@ -1373,6 +1440,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'w':
 				mode |= WEB_INTERFACE;
+				break;
+			case 'c':
+				print_extra_ppsi_conf = !print_extra_ppsi_conf;
 				break;
 			case 'H':
 				wrs_shm_set_path(optarg);
@@ -1412,6 +1482,12 @@ int main(int argc, char *argv[])
 			int c = term_get();
 
 			switch (c) {
+			case 'c' :
+				print_extra_ppsi_conf = !print_extra_ppsi_conf;
+				/* Force refresh */
+				last_seconds = 0;
+				break;
+
 			case 'q':
 				goto quit;
 

@@ -1042,21 +1042,22 @@ void show_ports(int hal_alive, int ppsi_alive)
 void show_servo(struct inst_servo_t *servo, int alive)
 {
 
-	wrh_servo_t * wr_servo;
+	wrh_servo_t * wrh_servo = NULL;
 	wr_servo_ext_t * wr_servo_ext=NULL;
 
 	char buf[128];
-	wrh_servo_t * l1e_servo;
 	int proto_extension=servo->ppi->extState!=PP_EXSTATE_DISABLE ? servo->ppi->protocol_extension : PPSI_EXT_NONE;
 	struct proto_ext_info_t *pe_info= IS_PROTO_EXT_INFO_AVAILABLE(proto_extension) ? &proto_ext_info[proto_extension] :  &proto_ext_info[0] ;
 
-	wr_servo= (servo->ppi->protocol_extension==PPSI_EXT_WR && servo->ppi->extState==PP_EXSTATE_ACTIVE) ?
-			( wrh_servo_t* ) servo->servo_ext_snapshot : NULL;
-	if ( wr_servo ) {
-		wr_servo_ext= &((struct wr_data *)wr_servo)->servo_ext;
+	if (servo->ppi->extState == PP_EXSTATE_ACTIVE) {
+		if (servo->ppi->protocol_extension == PPSI_EXT_WR) {
+			wrh_servo = (wrh_servo_t *)servo->servo_ext_snapshot;
+			wr_servo_ext = &((struct wr_data *)wrh_servo)->servo_ext;
+		}
+		if (servo->ppi->protocol_extension == PPSI_EXT_L1S) {
+			wrh_servo = (wrh_servo_t *)servo->servo_ext_snapshot;
+		}
 	}
-	l1e_servo= (servo->ppi->protocol_extension==PPSI_EXT_L1S && servo->ppi->extState==PP_EXSTATE_ACTIVE) ?
-			( wrh_servo_t * ) servo->servo_ext_snapshot : NULL;
 
 	if (mode == SHOW_GUI) {
 		term_cprintf(C_CYAN, "\n--------------------------- Synchronization status ----------------------------\n");
@@ -1089,23 +1090,23 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		}
 
 		/* "tracking disabled" is just a testing tool */
-		if (wr_servo  && !wr_servo->tracking_enabled)
+		if (wrh_servo && !wrh_servo->tracking_enabled)
 			term_cprintf(C_RED, "Tracking forcibly disabled\n");
 		term_cprintf(C_CYAN, "\n +- Timing parameters ---------------------------------------------------------\n");
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "meanDelay        : ");
-		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString(servo->meanDelay,buf) );
+		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString(servo->meanDelay,buf));
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMS          : ");
-		term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(&servo->servo_snapshot.delayMS,buf));
+		term_cprintf(C_WHITE, "%s\n", optimized_pp_time_toString(&servo->servo_snapshot.delayMS,buf));
+
 		{
 			struct pp_time *delayMM= wr_servo_ext ?
 					&wr_servo_ext->rawDelayMM :
 					&servo->servo_snapshot.delayMM;
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayMM          : ");
-			term_cprintf(C_WHITE,"%s\n",optimized_pp_time_toString(delayMM,buf));
+			term_cprintf(C_WHITE, "%s\n", optimized_pp_time_toString(delayMM, buf));
 		}
-
 
 
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE,  "delayAsymmetry   : ");
@@ -1131,12 +1132,12 @@ void show_servo(struct inst_servo_t *servo, int alive)
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "offsetFromMaster : ");
 		term_cprintf(C_WHITE, "%16s nsec\n", timeIntervalToString (servo->offsetFromMaster,buf));
 
-		if ( wr_servo ) {
+		if (wrh_servo) {
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
-			term_cprintf(C_WHITE, "%16.3f nsec\n",wr_servo->cur_setpoint_ps/1000.0);
+			term_cprintf(C_WHITE, "%16.3f nsec\n",wrh_servo->cur_setpoint_ps/1000.0);
 
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
-			term_cprintf(C_WHITE, "%16.3f nsec\n",wr_servo->skew_ps/1000.0);
+			term_cprintf(C_WHITE, "%16.3f nsec\n",wrh_servo->skew_ps/1000.0);
 			term_cprintf(C_CYAN," | "); term_cprintf(C_BLUE, "Estimated link len:      ");
 			/* crtt / 2 * c / ri
 			c = 299792458 - speed of light in m/s
@@ -1147,27 +1148,9 @@ void show_servo(struct inst_servo_t *servo, int alive)
 				    Please note that this value is just an estimation.
 			*/
 			term_cprintf(C_WHITE, "%10.3f meters\n",
-				     wr_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
+				     wrh_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
 		}
 
-		if ( l1e_servo ) {
-			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Phase setpoint   : ");
-			term_cprintf(C_WHITE, "%16.3f nsec\n",l1e_servo->cur_setpoint_ps/1000.0);
-
-			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Skew             : ");
-			term_cprintf(C_WHITE, "%16.3f nsec\n",l1e_servo->skew_ps/1000.0);
-			term_cprintf(C_CYAN," | "); term_cprintf(C_BLUE, "Estimated link len:      ");
-			/* crtt / 2 * c / ri
-			c = 299792458 - speed of light in m/s
-			ri = 1.4682 - refractive index for fiber g.652. However,
-				    experimental measurements using long (~5km) and
-				    short (few m) fibers gave a value 1.4688.
-				    For different wavelengths this value will be different
-				    Please note that this value is just an estimation.
-			*/
-			term_cprintf(C_WHITE, "%10.3f meters\n",
-				     l1e_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
-		}
 		term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Update counter   : ");
 		term_cprintf(C_WHITE, "%16u times\n", servo->servo_snapshot.update_count);
 		if (servo->servo_snapshot.update_count != pe_info->last_count) {
@@ -1175,7 +1158,7 @@ void show_servo(struct inst_servo_t *servo, int alive)
 			pe_info->last_count = servo->servo_snapshot.update_count;
 		}
 
-		if ( wr_servo ) {
+		if (wrh_servo && servo->ppi->protocol_extension == PPSI_EXT_WR) {
 			term_cprintf(C_CYAN," | ");term_cprintf(C_BLUE, "Master PHY delays ");
 			term_cprintf(C_BLUE, "TX: ");
 			term_cprintf(C_WHITE,"%s",optimized_pp_time_toString(&wr_servo_ext->delta_txm,buf));
@@ -1201,14 +1184,16 @@ void show_servo(struct inst_servo_t *servo, int alive)
 /*		printf("aux:");*/
 		printf("md:%s ", timeIntervalToString(servo->meanDelay,buf));
 		printf("dms:%s ", timeToString(&servo->servo_snapshot.delayMS,buf));
-		if ( wr_servo ) {
-			printf("lock:%i ", wr_servo->tracking_enabled);
-			printf("dtxm:%s ", timeToString(&wr_servo_ext->delta_txm,buf));
-			printf("drxm:%s ", timeToString(&wr_servo_ext->delta_rxm,buf));
-			printf("dtxs:%s ", timeToString(&wr_servo_ext->delta_txs,buf));
-			printf("drxs:%s ", timeToString(&wr_servo_ext->delta_rxs,buf));
-			printf("crtt:%lld ", wr_servo->delayMM_ps);
-			printf("setp:%d ", wr_servo->cur_setpoint_ps);
+		if (wrh_servo) {
+			printf("lock:%i ", wrh_servo->tracking_enabled);
+			if (servo->ppi->protocol_extension == PPSI_EXT_WR) {
+				printf("dtxm:%s ", timeToString(&wr_servo_ext->delta_txm, buf));
+				printf("drxm:%s ", timeToString(&wr_servo_ext->delta_rxm, buf));
+				printf("dtxs:%s ", timeToString(&wr_servo_ext->delta_txs, buf));
+				printf("drxs:%s ", timeToString(&wr_servo_ext->delta_rxs, buf));
+			}
+			printf("crtt:%lld ", wrh_servo->delayMM_ps);
+			printf("setp:%d ", wrh_servo->cur_setpoint_ps);
 			/* crtt / 2 * c / ri
 			c = 299792458 - speed of light in m/s
 			ri = 1.4682 - refractive index for fiber g.652. However,
@@ -1217,22 +1202,9 @@ void show_servo(struct inst_servo_t *servo, int alive)
 				      For different wavelengths this value will be different
 				      Please note that this value is just an estimation.
 			*/
-			printf("ll:%.3f ", wr_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
+			printf("ll:%.3f ", wrh_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
 		}
-		if ( l1e_servo ) {
-			printf("lock:%i ", l1e_servo->tracking_enabled);
-			printf("crtt:%lld ", l1e_servo->delayMM_ps);
-			printf("setp:%d ", l1e_servo->cur_setpoint_ps);
-			/* crtt / 2 * c / ri
-			c = 299792458 - speed of light in m/s
-			ri = 1.4682 - refractive index for fiber g.652. However,
-				      experimental measurements using long (~5km) and
-				      short (few m) fibers gave a value 1.4688.
-				      For different wavelengths this value will be different
-				      Please note that this value is just an estimation.
-			*/
-			printf("ll:%.3f ", l1e_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688);
-		}
+
 		printf("asym:%s ", timeIntervalToString(servo->delayAsymmetry,buf));
 		printf("cko:%s ", timeIntervalToString(servo->offsetFromMaster,buf));
 /*		printf("hd:");*/

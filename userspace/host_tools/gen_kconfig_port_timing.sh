@@ -171,6 +171,7 @@ function print_instance_header() {
 	echo -e "		bool \"Master\"" >>$OUTPUT_FILE
 	echo -e "	config PORT${portStr}_INST${instStr}_DESIRADE_STATE_SLAVE" >>$OUTPUT_FILE
 	echo -e "		bool \"Slave\"" >>$OUTPUT_FILE
+	echo -e "		depends on !TIME_GM" >>$OUTPUT_FILE
 	echo -e "	config PORT${portStr}_INST${instStr}_DESIRADE_STATE_PASSIVE" >>$OUTPUT_FILE
 	echo -e "		bool \"Passive\"" >>$OUTPUT_FILE
 	echo -e "endchoice" >>$OUTPUT_FILE

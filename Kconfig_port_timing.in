@@ -113,6 +113,7 @@ choice
 		bool "Master"
 	config PORT01_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT01_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -559,6 +560,7 @@ choice
 		bool "Master"
 	config PORT02_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT02_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -1005,6 +1007,7 @@ choice
 		bool "Master"
 	config PORT03_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT03_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -1451,6 +1454,7 @@ choice
 		bool "Master"
 	config PORT04_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT04_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -1897,6 +1901,7 @@ choice
 		bool "Master"
 	config PORT05_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT05_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -2343,6 +2348,7 @@ choice
 		bool "Master"
 	config PORT06_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT06_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -2789,6 +2795,7 @@ choice
 		bool "Master"
 	config PORT07_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT07_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -3235,6 +3242,7 @@ choice
 		bool "Master"
 	config PORT08_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT08_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -3681,6 +3689,7 @@ choice
 		bool "Master"
 	config PORT09_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT09_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -4127,6 +4136,7 @@ choice
 		bool "Master"
 	config PORT10_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT10_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -4573,6 +4583,7 @@ choice
 		bool "Master"
 	config PORT11_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT11_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -5019,6 +5030,7 @@ choice
 		bool "Master"
 	config PORT12_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT12_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -5465,6 +5477,7 @@ choice
 		bool "Master"
 	config PORT13_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT13_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -5911,6 +5924,7 @@ choice
 		bool "Master"
 	config PORT14_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT14_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -6357,6 +6371,7 @@ choice
 		bool "Master"
 	config PORT15_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT15_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -6803,6 +6818,7 @@ choice
 		bool "Master"
 	config PORT16_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT16_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -7249,6 +7265,7 @@ choice
 		bool "Master"
 	config PORT17_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT17_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice
@@ -7695,6 +7712,7 @@ choice
 		bool "Master"
 	config PORT18_INST01_DESIRADE_STATE_SLAVE
 		bool "Slave"
+		depends on !TIME_GM
 	config PORT18_INST01_DESIRADE_STATE_PASSIVE
 		bool "Passive"
 endchoice

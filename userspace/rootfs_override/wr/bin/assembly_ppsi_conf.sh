@@ -243,19 +243,22 @@ function gen_ppsi_conf_json() {
 	echo "}" >>$output
 }
 
-function set_extension_for_L1S() {
+function set_extension_for_L1S_profile_custom() {
 	local inst=$1
 	local lv
+
 	# L1SYNC mandatory values
-	for k in l1SyncEnabled l1SyncTxCoherentIsRequired  l1SyncRxCoherentIsRequired l1SyncCongruentIsRequired ; do
- 		lv="$inst[$k]"; eval ${lv}="y"
- 	done
- 	lv="$inst[l1SyncOptParamsEnabled]"; eval ${lv}="n"
- 	# Free parameters
- 	test ! ${inst_vn[logL1SyncInterval]+_}    && (lv="$inst_vn[logL1SyncInterval]";    eval ${lv}="0") # Set default value
- 	test ! ${inst_vn[l1SyncReceiptTimeout]+_} && (lv="$inst_vn[l1SyncReceiptTimeout]"; eval ${lv}="3") # Set default value
- 	# Force asymmetry correction
- 	lv="$inst[asymmetryCorrectionEnable]"; eval ${lv}="y" 
+	for k in    l1SyncEnabled \
+		    l1SyncTxCoherentIsRequired \
+		    l1SyncRxCoherentIsRequired \
+		    l1SyncCongruentIsRequired \
+		    l1SyncOptParamsEnabled \
+		    logL1SyncInterval \
+		    l1SyncReceiptTimeout;
+		    do
+		# If a parameter is disabled in dot-config add it as disabled to ppsi.conf
+		lv="$inst[$k]" && test ! ${!lv} && eval ${lv}="n"
+	done
 }
 
 function set_extension_for_autoneg() {
@@ -286,6 +289,15 @@ function set_instance_profile() {
 			# default
 			eval ${lv}="ha_wr"
 		fi
+
+		# recalculate value
+		value=${!lv}
+
+		if [ "${value}" == "custom" ]; then
+			# For the custom profile if asymmetryCorrectionEnable
+			# is not set add this parameter as disabled
+			lv="$inst[asymmetryCorrectionEnable]" && test ! ${!lv} && eval ${lv}="n"
+		fi
 }
 
 function set_instance_extension() {
@@ -311,10 +323,16 @@ function set_instance_extension() {
 			# default
 			eval ${lv}="l1s"
 		fi
+
 		# recalculate value
 		value=${!lv}
-		if [ "${value}" == "l1s" ]; then
-			set_extension_for_L1S  $inst
+
+		local lprofile="$inst[profile]"
+		local profile_value=${!lprofile}
+
+		if [ "${value}" == "l1s" ] && [ $profile_value == "custom" ]; then
+			# Set some extra parameters for l1s
+			set_extension_for_L1S_profile_custom $inst
 		fi
 }
 
@@ -389,12 +407,14 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [ASYMMETRY_CORRECTION_ENABLE]="asymmetryCorrectionEnable" \
 [BMODE_MASTER_ONLY]="masterOnly" \
 [EGRESS_LATENCY]="egressLatency" [INGRESS_LATENCY]="ingressLatency" \
-[L1SYNC_ENABLED]="l1SyncEnabled" [L1SYNC_INTERVAL]="logL1SyncInterval" \
-[L1SYNC_RECEIPT_TIMEOUT]="l1SyncReceiptTimeout" \
-[L1SYNC_OPT_PARAMS_ENABLED]="l1SyncOptParamsEnabled" [L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED]="l1SyncTimestampsCorrectedTxEnabled" \
-[L1SYNC_TX_COHERENT_IS_REQUIRED]="l1SyncTxCoherentIsRequired" \
-[L1SYNC_RX_COHERENT_IS_REQUIRED]="l1SyncRxCoherentIsRequired" \
-[L1SYNC_CONGRUENT_IS_REQUIRED]="l1SyncCongruentIsRequired" \
+[L1SYNC_ENABLED_VAL]="l1SyncEnabled" \
+[L1SYNC_INTERVAL_VAL]="logL1SyncInterval" \
+[L1SYNC_RECEIPT_TIMEOUT_VAL]="l1SyncReceiptTimeout" \
+[L1SYNC_OPT_PARAMS_ENABLED_VAL]="l1SyncOptParamsEnabled" \
+[L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL]="l1SyncTimestampsCorrectedTxEnabled" \
+[L1SYNC_TX_COHERENT_IS_REQUIRED_VAL]="l1SyncTxCoherentIsRequired" \
+[L1SYNC_RX_COHERENT_IS_REQUIRED_VAL]="l1SyncRxCoherentIsRequired" \
+[L1SYNC_CONGRUENT_IS_REQUIRED_VAL]="l1SyncCongruentIsRequired" \
 [_VLAN]="vlan" \
 [_FAKE1]="extAutonegotiation" \
 )'

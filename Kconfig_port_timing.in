@@ -261,31 +261,68 @@ config PORT01_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT01_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT01_INST01_EXTENSION_L1S \
+		   || PORT01_INST01_EXTENSION_L1S_WR
+
+
+config PORT01_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT01_INST01_PROFILE_CUSTOM || (PORT01_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT01_INST01_EXTENSION_L1S || PORT01_INST01_EXTENSION_L1S_WR)
+
+config PORT01_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT01_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT01_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT01_INST01_PROFILE_CUSTOM || (PORT01_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT01_INST01_EXTENSION_L1S || PORT01_INST01_EXTENSION_L1S_WR)
+	default PORT01_INST01_L1SYNC_ENABLED if PORT01_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT01_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT01_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT01_INST01_EXTENSION_L1S \
 		   || PORT01_INST01_EXTENSION_L1S_WR
+
+config PORT01_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT01_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT01_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT01_INST01_EXTENSION_L1S \
+		   || PORT01_INST01_EXTENSION_L1S_WR
+	default PORT01_INST01_L1SYNC_INTERVAL if PORT01_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT01_INST01_EXTENSION_L1S \
+		   || PORT01_INST01_EXTENSION_L1S_WR
 
 config PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT01_INST01_EXTENSION_L1S \
-		   || PORT01_INST01_EXTENSION_L1S_WR
+	depends on PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -295,51 +332,113 @@ config PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT01_INST01_EXTENSION_L1S \
+		   || PORT01_INST01_EXTENSION_L1S_WR
+	default PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT01_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT01_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+
 config PORT01_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT01_INST01_L1SYNC_ENABLED
+	depends on PORT01_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT01_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+	default PORT01_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT01_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT01_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+
 config PORT01_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT01_INST01_L1SYNC_ENABLED
+	depends on PORT01_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT01_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+	default PORT01_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT01_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT01_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+
 config PORT01_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT01_INST01_L1SYNC_ENABLED
+	depends on PORT01_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT01_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+	default PORT01_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT01_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+
 config PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT01_INST01_L1SYNC_ENABLED
+	depends on PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+	default PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+
 config PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT01_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT01_INST01_L1SYNC_ENABLED_VAL
+	default PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT01_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 1 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT01_INST01_T24P_TRANS_POINT
@@ -608,31 +707,68 @@ config PORT02_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT02_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT02_INST01_EXTENSION_L1S \
+		   || PORT02_INST01_EXTENSION_L1S_WR
+
+
+config PORT02_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT02_INST01_PROFILE_CUSTOM || (PORT02_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT02_INST01_EXTENSION_L1S || PORT02_INST01_EXTENSION_L1S_WR)
+
+config PORT02_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT02_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT02_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT02_INST01_PROFILE_CUSTOM || (PORT02_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT02_INST01_EXTENSION_L1S || PORT02_INST01_EXTENSION_L1S_WR)
+	default PORT02_INST01_L1SYNC_ENABLED if PORT02_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT02_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT02_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT02_INST01_EXTENSION_L1S \
 		   || PORT02_INST01_EXTENSION_L1S_WR
+
+config PORT02_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT02_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT02_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT02_INST01_EXTENSION_L1S \
+		   || PORT02_INST01_EXTENSION_L1S_WR
+	default PORT02_INST01_L1SYNC_INTERVAL if PORT02_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT02_INST01_EXTENSION_L1S \
+		   || PORT02_INST01_EXTENSION_L1S_WR
 
 config PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT02_INST01_EXTENSION_L1S \
-		   || PORT02_INST01_EXTENSION_L1S_WR
+	depends on PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -642,51 +778,113 @@ config PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT02_INST01_EXTENSION_L1S \
+		   || PORT02_INST01_EXTENSION_L1S_WR
+	default PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT02_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT02_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+
 config PORT02_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT02_INST01_L1SYNC_ENABLED
+	depends on PORT02_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT02_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+	default PORT02_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT02_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT02_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+
 config PORT02_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT02_INST01_L1SYNC_ENABLED
+	depends on PORT02_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT02_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+	default PORT02_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT02_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT02_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+
 config PORT02_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT02_INST01_L1SYNC_ENABLED
+	depends on PORT02_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT02_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+	default PORT02_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT02_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+
 config PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT02_INST01_L1SYNC_ENABLED
+	depends on PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+	default PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+
 config PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT02_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT02_INST01_L1SYNC_ENABLED_VAL
+	default PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT02_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 2 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT02_INST01_T24P_TRANS_POINT
@@ -955,31 +1153,68 @@ config PORT03_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT03_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT03_INST01_EXTENSION_L1S \
+		   || PORT03_INST01_EXTENSION_L1S_WR
+
+
+config PORT03_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT03_INST01_PROFILE_CUSTOM || (PORT03_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT03_INST01_EXTENSION_L1S || PORT03_INST01_EXTENSION_L1S_WR)
+
+config PORT03_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT03_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT03_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT03_INST01_PROFILE_CUSTOM || (PORT03_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT03_INST01_EXTENSION_L1S || PORT03_INST01_EXTENSION_L1S_WR)
+	default PORT03_INST01_L1SYNC_ENABLED if PORT03_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT03_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT03_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT03_INST01_EXTENSION_L1S \
 		   || PORT03_INST01_EXTENSION_L1S_WR
+
+config PORT03_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT03_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT03_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT03_INST01_EXTENSION_L1S \
+		   || PORT03_INST01_EXTENSION_L1S_WR
+	default PORT03_INST01_L1SYNC_INTERVAL if PORT03_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT03_INST01_EXTENSION_L1S \
+		   || PORT03_INST01_EXTENSION_L1S_WR
 
 config PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT03_INST01_EXTENSION_L1S \
-		   || PORT03_INST01_EXTENSION_L1S_WR
+	depends on PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -989,51 +1224,113 @@ config PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT03_INST01_EXTENSION_L1S \
+		   || PORT03_INST01_EXTENSION_L1S_WR
+	default PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT03_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT03_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+
 config PORT03_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT03_INST01_L1SYNC_ENABLED
+	depends on PORT03_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT03_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+	default PORT03_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT03_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT03_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+
 config PORT03_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT03_INST01_L1SYNC_ENABLED
+	depends on PORT03_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT03_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+	default PORT03_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT03_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT03_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+
 config PORT03_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT03_INST01_L1SYNC_ENABLED
+	depends on PORT03_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT03_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+	default PORT03_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT03_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+
 config PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT03_INST01_L1SYNC_ENABLED
+	depends on PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+	default PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+
 config PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT03_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT03_INST01_L1SYNC_ENABLED_VAL
+	default PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT03_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 3 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT03_INST01_T24P_TRANS_POINT
@@ -1302,31 +1599,68 @@ config PORT04_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT04_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT04_INST01_EXTENSION_L1S \
+		   || PORT04_INST01_EXTENSION_L1S_WR
+
+
+config PORT04_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT04_INST01_PROFILE_CUSTOM || (PORT04_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT04_INST01_EXTENSION_L1S || PORT04_INST01_EXTENSION_L1S_WR)
+
+config PORT04_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT04_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT04_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT04_INST01_PROFILE_CUSTOM || (PORT04_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT04_INST01_EXTENSION_L1S || PORT04_INST01_EXTENSION_L1S_WR)
+	default PORT04_INST01_L1SYNC_ENABLED if PORT04_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT04_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT04_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT04_INST01_EXTENSION_L1S \
 		   || PORT04_INST01_EXTENSION_L1S_WR
+
+config PORT04_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT04_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT04_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT04_INST01_EXTENSION_L1S \
+		   || PORT04_INST01_EXTENSION_L1S_WR
+	default PORT04_INST01_L1SYNC_INTERVAL if PORT04_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT04_INST01_EXTENSION_L1S \
+		   || PORT04_INST01_EXTENSION_L1S_WR
 
 config PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT04_INST01_EXTENSION_L1S \
-		   || PORT04_INST01_EXTENSION_L1S_WR
+	depends on PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -1336,51 +1670,113 @@ config PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT04_INST01_EXTENSION_L1S \
+		   || PORT04_INST01_EXTENSION_L1S_WR
+	default PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT04_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT04_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+
 config PORT04_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT04_INST01_L1SYNC_ENABLED
+	depends on PORT04_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT04_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+	default PORT04_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT04_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT04_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+
 config PORT04_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT04_INST01_L1SYNC_ENABLED
+	depends on PORT04_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT04_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+	default PORT04_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT04_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT04_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+
 config PORT04_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT04_INST01_L1SYNC_ENABLED
+	depends on PORT04_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT04_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+	default PORT04_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT04_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+
 config PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT04_INST01_L1SYNC_ENABLED
+	depends on PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+	default PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+
 config PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT04_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT04_INST01_L1SYNC_ENABLED_VAL
+	default PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT04_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 4 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT04_INST01_T24P_TRANS_POINT
@@ -1649,31 +2045,68 @@ config PORT05_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT05_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT05_INST01_EXTENSION_L1S \
+		   || PORT05_INST01_EXTENSION_L1S_WR
+
+
+config PORT05_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT05_INST01_PROFILE_CUSTOM || (PORT05_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT05_INST01_EXTENSION_L1S || PORT05_INST01_EXTENSION_L1S_WR)
+
+config PORT05_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT05_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT05_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT05_INST01_PROFILE_CUSTOM || (PORT05_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT05_INST01_EXTENSION_L1S || PORT05_INST01_EXTENSION_L1S_WR)
+	default PORT05_INST01_L1SYNC_ENABLED if PORT05_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT05_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT05_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT05_INST01_EXTENSION_L1S \
 		   || PORT05_INST01_EXTENSION_L1S_WR
+
+config PORT05_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT05_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT05_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT05_INST01_EXTENSION_L1S \
+		   || PORT05_INST01_EXTENSION_L1S_WR
+	default PORT05_INST01_L1SYNC_INTERVAL if PORT05_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT05_INST01_EXTENSION_L1S \
+		   || PORT05_INST01_EXTENSION_L1S_WR
 
 config PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT05_INST01_EXTENSION_L1S \
-		   || PORT05_INST01_EXTENSION_L1S_WR
+	depends on PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -1683,51 +2116,113 @@ config PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT05_INST01_EXTENSION_L1S \
+		   || PORT05_INST01_EXTENSION_L1S_WR
+	default PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT05_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT05_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+
 config PORT05_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT05_INST01_L1SYNC_ENABLED
+	depends on PORT05_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT05_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+	default PORT05_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT05_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT05_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+
 config PORT05_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT05_INST01_L1SYNC_ENABLED
+	depends on PORT05_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT05_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+	default PORT05_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT05_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT05_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+
 config PORT05_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT05_INST01_L1SYNC_ENABLED
+	depends on PORT05_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT05_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+	default PORT05_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT05_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+
 config PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT05_INST01_L1SYNC_ENABLED
+	depends on PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+	default PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+
 config PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT05_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT05_INST01_L1SYNC_ENABLED_VAL
+	default PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT05_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 5 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT05_INST01_T24P_TRANS_POINT
@@ -1996,31 +2491,68 @@ config PORT06_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT06_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT06_INST01_EXTENSION_L1S \
+		   || PORT06_INST01_EXTENSION_L1S_WR
+
+
+config PORT06_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT06_INST01_PROFILE_CUSTOM || (PORT06_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT06_INST01_EXTENSION_L1S || PORT06_INST01_EXTENSION_L1S_WR)
+
+config PORT06_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT06_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT06_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT06_INST01_PROFILE_CUSTOM || (PORT06_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT06_INST01_EXTENSION_L1S || PORT06_INST01_EXTENSION_L1S_WR)
+	default PORT06_INST01_L1SYNC_ENABLED if PORT06_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT06_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT06_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT06_INST01_EXTENSION_L1S \
 		   || PORT06_INST01_EXTENSION_L1S_WR
+
+config PORT06_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT06_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT06_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT06_INST01_EXTENSION_L1S \
+		   || PORT06_INST01_EXTENSION_L1S_WR
+	default PORT06_INST01_L1SYNC_INTERVAL if PORT06_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT06_INST01_EXTENSION_L1S \
+		   || PORT06_INST01_EXTENSION_L1S_WR
 
 config PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT06_INST01_EXTENSION_L1S \
-		   || PORT06_INST01_EXTENSION_L1S_WR
+	depends on PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -2030,51 +2562,113 @@ config PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT06_INST01_EXTENSION_L1S \
+		   || PORT06_INST01_EXTENSION_L1S_WR
+	default PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT06_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT06_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+
 config PORT06_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT06_INST01_L1SYNC_ENABLED
+	depends on PORT06_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT06_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+	default PORT06_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT06_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT06_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+
 config PORT06_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT06_INST01_L1SYNC_ENABLED
+	depends on PORT06_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT06_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+	default PORT06_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT06_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT06_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+
 config PORT06_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT06_INST01_L1SYNC_ENABLED
+	depends on PORT06_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT06_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+	default PORT06_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT06_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+
 config PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT06_INST01_L1SYNC_ENABLED
+	depends on PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+	default PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+
 config PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT06_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT06_INST01_L1SYNC_ENABLED_VAL
+	default PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT06_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 6 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT06_INST01_T24P_TRANS_POINT
@@ -2343,31 +2937,68 @@ config PORT07_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT07_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT07_INST01_EXTENSION_L1S \
+		   || PORT07_INST01_EXTENSION_L1S_WR
+
+
+config PORT07_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT07_INST01_PROFILE_CUSTOM || (PORT07_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT07_INST01_EXTENSION_L1S || PORT07_INST01_EXTENSION_L1S_WR)
+
+config PORT07_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT07_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT07_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT07_INST01_PROFILE_CUSTOM || (PORT07_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT07_INST01_EXTENSION_L1S || PORT07_INST01_EXTENSION_L1S_WR)
+	default PORT07_INST01_L1SYNC_ENABLED if PORT07_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT07_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT07_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT07_INST01_EXTENSION_L1S \
 		   || PORT07_INST01_EXTENSION_L1S_WR
+
+config PORT07_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT07_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT07_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT07_INST01_EXTENSION_L1S \
+		   || PORT07_INST01_EXTENSION_L1S_WR
+	default PORT07_INST01_L1SYNC_INTERVAL if PORT07_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT07_INST01_EXTENSION_L1S \
+		   || PORT07_INST01_EXTENSION_L1S_WR
 
 config PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT07_INST01_EXTENSION_L1S \
-		   || PORT07_INST01_EXTENSION_L1S_WR
+	depends on PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -2377,51 +3008,113 @@ config PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT07_INST01_EXTENSION_L1S \
+		   || PORT07_INST01_EXTENSION_L1S_WR
+	default PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT07_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT07_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+
 config PORT07_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT07_INST01_L1SYNC_ENABLED
+	depends on PORT07_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT07_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+	default PORT07_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT07_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT07_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+
 config PORT07_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT07_INST01_L1SYNC_ENABLED
+	depends on PORT07_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT07_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+	default PORT07_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT07_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT07_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+
 config PORT07_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT07_INST01_L1SYNC_ENABLED
+	depends on PORT07_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT07_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+	default PORT07_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT07_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+
 config PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT07_INST01_L1SYNC_ENABLED
+	depends on PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+	default PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+
 config PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT07_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT07_INST01_L1SYNC_ENABLED_VAL
+	default PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT07_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 7 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT07_INST01_T24P_TRANS_POINT
@@ -2690,31 +3383,68 @@ config PORT08_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT08_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT08_INST01_EXTENSION_L1S \
+		   || PORT08_INST01_EXTENSION_L1S_WR
+
+
+config PORT08_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT08_INST01_PROFILE_CUSTOM || (PORT08_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT08_INST01_EXTENSION_L1S || PORT08_INST01_EXTENSION_L1S_WR)
+
+config PORT08_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT08_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT08_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT08_INST01_PROFILE_CUSTOM || (PORT08_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT08_INST01_EXTENSION_L1S || PORT08_INST01_EXTENSION_L1S_WR)
+	default PORT08_INST01_L1SYNC_ENABLED if PORT08_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT08_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT08_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT08_INST01_EXTENSION_L1S \
 		   || PORT08_INST01_EXTENSION_L1S_WR
+
+config PORT08_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT08_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT08_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT08_INST01_EXTENSION_L1S \
+		   || PORT08_INST01_EXTENSION_L1S_WR
+	default PORT08_INST01_L1SYNC_INTERVAL if PORT08_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT08_INST01_EXTENSION_L1S \
+		   || PORT08_INST01_EXTENSION_L1S_WR
 
 config PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT08_INST01_EXTENSION_L1S \
-		   || PORT08_INST01_EXTENSION_L1S_WR
+	depends on PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -2724,51 +3454,113 @@ config PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT08_INST01_EXTENSION_L1S \
+		   || PORT08_INST01_EXTENSION_L1S_WR
+	default PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT08_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT08_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+
 config PORT08_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT08_INST01_L1SYNC_ENABLED
+	depends on PORT08_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT08_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+	default PORT08_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT08_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT08_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+
 config PORT08_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT08_INST01_L1SYNC_ENABLED
+	depends on PORT08_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT08_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+	default PORT08_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT08_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT08_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+
 config PORT08_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT08_INST01_L1SYNC_ENABLED
+	depends on PORT08_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT08_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+	default PORT08_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT08_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+
 config PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT08_INST01_L1SYNC_ENABLED
+	depends on PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+	default PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+
 config PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT08_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT08_INST01_L1SYNC_ENABLED_VAL
+	default PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT08_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 8 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT08_INST01_T24P_TRANS_POINT
@@ -3037,31 +3829,68 @@ config PORT09_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT09_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT09_INST01_EXTENSION_L1S \
+		   || PORT09_INST01_EXTENSION_L1S_WR
+
+
+config PORT09_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT09_INST01_PROFILE_CUSTOM || (PORT09_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT09_INST01_EXTENSION_L1S || PORT09_INST01_EXTENSION_L1S_WR)
+
+config PORT09_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT09_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT09_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT09_INST01_PROFILE_CUSTOM || (PORT09_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT09_INST01_EXTENSION_L1S || PORT09_INST01_EXTENSION_L1S_WR)
+	default PORT09_INST01_L1SYNC_ENABLED if PORT09_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT09_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT09_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT09_INST01_EXTENSION_L1S \
 		   || PORT09_INST01_EXTENSION_L1S_WR
+
+config PORT09_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT09_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT09_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT09_INST01_EXTENSION_L1S \
+		   || PORT09_INST01_EXTENSION_L1S_WR
+	default PORT09_INST01_L1SYNC_INTERVAL if PORT09_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT09_INST01_EXTENSION_L1S \
+		   || PORT09_INST01_EXTENSION_L1S_WR
 
 config PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT09_INST01_EXTENSION_L1S \
-		   || PORT09_INST01_EXTENSION_L1S_WR
+	depends on PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -3071,51 +3900,113 @@ config PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT09_INST01_EXTENSION_L1S \
+		   || PORT09_INST01_EXTENSION_L1S_WR
+	default PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT09_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT09_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+
 config PORT09_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT09_INST01_L1SYNC_ENABLED
+	depends on PORT09_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT09_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+	default PORT09_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT09_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT09_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+
 config PORT09_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT09_INST01_L1SYNC_ENABLED
+	depends on PORT09_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT09_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+	default PORT09_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT09_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT09_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+
 config PORT09_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT09_INST01_L1SYNC_ENABLED
+	depends on PORT09_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT09_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+	default PORT09_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT09_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+
 config PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT09_INST01_L1SYNC_ENABLED
+	depends on PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+	default PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+
 config PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT09_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT09_INST01_L1SYNC_ENABLED_VAL
+	default PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT09_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 9 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT09_INST01_T24P_TRANS_POINT
@@ -3384,31 +4275,68 @@ config PORT10_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT10_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT10_INST01_EXTENSION_L1S \
+		   || PORT10_INST01_EXTENSION_L1S_WR
+
+
+config PORT10_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT10_INST01_PROFILE_CUSTOM || (PORT10_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT10_INST01_EXTENSION_L1S || PORT10_INST01_EXTENSION_L1S_WR)
+
+config PORT10_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT10_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT10_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT10_INST01_PROFILE_CUSTOM || (PORT10_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT10_INST01_EXTENSION_L1S || PORT10_INST01_EXTENSION_L1S_WR)
+	default PORT10_INST01_L1SYNC_ENABLED if PORT10_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT10_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT10_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT10_INST01_EXTENSION_L1S \
 		   || PORT10_INST01_EXTENSION_L1S_WR
+
+config PORT10_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT10_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT10_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT10_INST01_EXTENSION_L1S \
+		   || PORT10_INST01_EXTENSION_L1S_WR
+	default PORT10_INST01_L1SYNC_INTERVAL if PORT10_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT10_INST01_EXTENSION_L1S \
+		   || PORT10_INST01_EXTENSION_L1S_WR
 
 config PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT10_INST01_EXTENSION_L1S \
-		   || PORT10_INST01_EXTENSION_L1S_WR
+	depends on PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -3418,51 +4346,113 @@ config PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT10_INST01_EXTENSION_L1S \
+		   || PORT10_INST01_EXTENSION_L1S_WR
+	default PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT10_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT10_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+
 config PORT10_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT10_INST01_L1SYNC_ENABLED
+	depends on PORT10_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT10_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+	default PORT10_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT10_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT10_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+
 config PORT10_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT10_INST01_L1SYNC_ENABLED
+	depends on PORT10_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT10_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+	default PORT10_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT10_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT10_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+
 config PORT10_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT10_INST01_L1SYNC_ENABLED
+	depends on PORT10_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT10_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+	default PORT10_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT10_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+
 config PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT10_INST01_L1SYNC_ENABLED
+	depends on PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+	default PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+
 config PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT10_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT10_INST01_L1SYNC_ENABLED_VAL
+	default PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT10_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 10 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT10_INST01_T24P_TRANS_POINT
@@ -3731,31 +4721,68 @@ config PORT11_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT11_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT11_INST01_EXTENSION_L1S \
+		   || PORT11_INST01_EXTENSION_L1S_WR
+
+
+config PORT11_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT11_INST01_PROFILE_CUSTOM || (PORT11_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT11_INST01_EXTENSION_L1S || PORT11_INST01_EXTENSION_L1S_WR)
+
+config PORT11_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT11_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT11_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT11_INST01_PROFILE_CUSTOM || (PORT11_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT11_INST01_EXTENSION_L1S || PORT11_INST01_EXTENSION_L1S_WR)
+	default PORT11_INST01_L1SYNC_ENABLED if PORT11_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT11_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT11_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT11_INST01_EXTENSION_L1S \
 		   || PORT11_INST01_EXTENSION_L1S_WR
+
+config PORT11_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT11_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT11_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT11_INST01_EXTENSION_L1S \
+		   || PORT11_INST01_EXTENSION_L1S_WR
+	default PORT11_INST01_L1SYNC_INTERVAL if PORT11_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT11_INST01_EXTENSION_L1S \
+		   || PORT11_INST01_EXTENSION_L1S_WR
 
 config PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT11_INST01_EXTENSION_L1S \
-		   || PORT11_INST01_EXTENSION_L1S_WR
+	depends on PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -3765,51 +4792,113 @@ config PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT11_INST01_EXTENSION_L1S \
+		   || PORT11_INST01_EXTENSION_L1S_WR
+	default PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT11_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT11_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+
 config PORT11_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT11_INST01_L1SYNC_ENABLED
+	depends on PORT11_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT11_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+	default PORT11_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT11_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT11_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+
 config PORT11_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT11_INST01_L1SYNC_ENABLED
+	depends on PORT11_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT11_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+	default PORT11_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT11_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT11_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+
 config PORT11_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT11_INST01_L1SYNC_ENABLED
+	depends on PORT11_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT11_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+	default PORT11_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT11_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+
 config PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT11_INST01_L1SYNC_ENABLED
+	depends on PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+	default PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+
 config PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT11_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT11_INST01_L1SYNC_ENABLED_VAL
+	default PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT11_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 11 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT11_INST01_T24P_TRANS_POINT
@@ -4078,31 +5167,68 @@ config PORT12_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT12_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT12_INST01_EXTENSION_L1S \
+		   || PORT12_INST01_EXTENSION_L1S_WR
+
+
+config PORT12_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT12_INST01_PROFILE_CUSTOM || (PORT12_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT12_INST01_EXTENSION_L1S || PORT12_INST01_EXTENSION_L1S_WR)
+
+config PORT12_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT12_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT12_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT12_INST01_PROFILE_CUSTOM || (PORT12_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT12_INST01_EXTENSION_L1S || PORT12_INST01_EXTENSION_L1S_WR)
+	default PORT12_INST01_L1SYNC_ENABLED if PORT12_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT12_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT12_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT12_INST01_EXTENSION_L1S \
 		   || PORT12_INST01_EXTENSION_L1S_WR
+
+config PORT12_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT12_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT12_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT12_INST01_EXTENSION_L1S \
+		   || PORT12_INST01_EXTENSION_L1S_WR
+	default PORT12_INST01_L1SYNC_INTERVAL if PORT12_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT12_INST01_EXTENSION_L1S \
+		   || PORT12_INST01_EXTENSION_L1S_WR
 
 config PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT12_INST01_EXTENSION_L1S \
-		   || PORT12_INST01_EXTENSION_L1S_WR
+	depends on PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -4112,51 +5238,113 @@ config PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT12_INST01_EXTENSION_L1S \
+		   || PORT12_INST01_EXTENSION_L1S_WR
+	default PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT12_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT12_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+
 config PORT12_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT12_INST01_L1SYNC_ENABLED
+	depends on PORT12_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT12_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+	default PORT12_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT12_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT12_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+
 config PORT12_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT12_INST01_L1SYNC_ENABLED
+	depends on PORT12_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT12_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+	default PORT12_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT12_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT12_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+
 config PORT12_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT12_INST01_L1SYNC_ENABLED
+	depends on PORT12_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT12_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+	default PORT12_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT12_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+
 config PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT12_INST01_L1SYNC_ENABLED
+	depends on PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+	default PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+
 config PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT12_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT12_INST01_L1SYNC_ENABLED_VAL
+	default PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT12_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 12 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT12_INST01_T24P_TRANS_POINT
@@ -4425,31 +5613,68 @@ config PORT13_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT13_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT13_INST01_EXTENSION_L1S \
+		   || PORT13_INST01_EXTENSION_L1S_WR
+
+
+config PORT13_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT13_INST01_PROFILE_CUSTOM || (PORT13_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT13_INST01_EXTENSION_L1S || PORT13_INST01_EXTENSION_L1S_WR)
+
+config PORT13_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT13_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT13_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT13_INST01_PROFILE_CUSTOM || (PORT13_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT13_INST01_EXTENSION_L1S || PORT13_INST01_EXTENSION_L1S_WR)
+	default PORT13_INST01_L1SYNC_ENABLED if PORT13_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT13_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT13_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT13_INST01_EXTENSION_L1S \
 		   || PORT13_INST01_EXTENSION_L1S_WR
+
+config PORT13_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT13_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT13_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT13_INST01_EXTENSION_L1S \
+		   || PORT13_INST01_EXTENSION_L1S_WR
+	default PORT13_INST01_L1SYNC_INTERVAL if PORT13_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT13_INST01_EXTENSION_L1S \
+		   || PORT13_INST01_EXTENSION_L1S_WR
 
 config PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT13_INST01_EXTENSION_L1S \
-		   || PORT13_INST01_EXTENSION_L1S_WR
+	depends on PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -4459,51 +5684,113 @@ config PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT13_INST01_EXTENSION_L1S \
+		   || PORT13_INST01_EXTENSION_L1S_WR
+	default PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT13_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT13_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+
 config PORT13_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT13_INST01_L1SYNC_ENABLED
+	depends on PORT13_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT13_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+	default PORT13_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT13_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT13_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+
 config PORT13_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT13_INST01_L1SYNC_ENABLED
+	depends on PORT13_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT13_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+	default PORT13_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT13_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT13_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+
 config PORT13_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT13_INST01_L1SYNC_ENABLED
+	depends on PORT13_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT13_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+	default PORT13_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT13_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+
 config PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT13_INST01_L1SYNC_ENABLED
+	depends on PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+	default PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+
 config PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT13_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT13_INST01_L1SYNC_ENABLED_VAL
+	default PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT13_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 13 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT13_INST01_T24P_TRANS_POINT
@@ -4772,31 +6059,68 @@ config PORT14_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT14_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT14_INST01_EXTENSION_L1S \
+		   || PORT14_INST01_EXTENSION_L1S_WR
+
+
+config PORT14_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT14_INST01_PROFILE_CUSTOM || (PORT14_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT14_INST01_EXTENSION_L1S || PORT14_INST01_EXTENSION_L1S_WR)
+
+config PORT14_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT14_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT14_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT14_INST01_PROFILE_CUSTOM || (PORT14_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT14_INST01_EXTENSION_L1S || PORT14_INST01_EXTENSION_L1S_WR)
+	default PORT14_INST01_L1SYNC_ENABLED if PORT14_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT14_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT14_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT14_INST01_EXTENSION_L1S \
 		   || PORT14_INST01_EXTENSION_L1S_WR
+
+config PORT14_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT14_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT14_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT14_INST01_EXTENSION_L1S \
+		   || PORT14_INST01_EXTENSION_L1S_WR
+	default PORT14_INST01_L1SYNC_INTERVAL if PORT14_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT14_INST01_EXTENSION_L1S \
+		   || PORT14_INST01_EXTENSION_L1S_WR
 
 config PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT14_INST01_EXTENSION_L1S \
-		   || PORT14_INST01_EXTENSION_L1S_WR
+	depends on PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -4806,51 +6130,113 @@ config PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT14_INST01_EXTENSION_L1S \
+		   || PORT14_INST01_EXTENSION_L1S_WR
+	default PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT14_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT14_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+
 config PORT14_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT14_INST01_L1SYNC_ENABLED
+	depends on PORT14_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT14_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+	default PORT14_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT14_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT14_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+
 config PORT14_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT14_INST01_L1SYNC_ENABLED
+	depends on PORT14_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT14_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+	default PORT14_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT14_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT14_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+
 config PORT14_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT14_INST01_L1SYNC_ENABLED
+	depends on PORT14_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT14_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+	default PORT14_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT14_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+
 config PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT14_INST01_L1SYNC_ENABLED
+	depends on PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+	default PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+
 config PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT14_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT14_INST01_L1SYNC_ENABLED_VAL
+	default PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT14_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 14 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT14_INST01_T24P_TRANS_POINT
@@ -5119,31 +6505,68 @@ config PORT15_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT15_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT15_INST01_EXTENSION_L1S \
+		   || PORT15_INST01_EXTENSION_L1S_WR
+
+
+config PORT15_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT15_INST01_PROFILE_CUSTOM || (PORT15_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT15_INST01_EXTENSION_L1S || PORT15_INST01_EXTENSION_L1S_WR)
+
+config PORT15_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT15_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT15_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT15_INST01_PROFILE_CUSTOM || (PORT15_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT15_INST01_EXTENSION_L1S || PORT15_INST01_EXTENSION_L1S_WR)
+	default PORT15_INST01_L1SYNC_ENABLED if PORT15_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT15_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT15_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT15_INST01_EXTENSION_L1S \
 		   || PORT15_INST01_EXTENSION_L1S_WR
+
+config PORT15_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT15_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT15_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT15_INST01_EXTENSION_L1S \
+		   || PORT15_INST01_EXTENSION_L1S_WR
+	default PORT15_INST01_L1SYNC_INTERVAL if PORT15_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT15_INST01_EXTENSION_L1S \
+		   || PORT15_INST01_EXTENSION_L1S_WR
 
 config PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT15_INST01_EXTENSION_L1S \
-		   || PORT15_INST01_EXTENSION_L1S_WR
+	depends on PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -5153,51 +6576,113 @@ config PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT15_INST01_EXTENSION_L1S \
+		   || PORT15_INST01_EXTENSION_L1S_WR
+	default PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT15_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT15_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+
 config PORT15_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT15_INST01_L1SYNC_ENABLED
+	depends on PORT15_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT15_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+	default PORT15_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT15_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT15_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+
 config PORT15_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT15_INST01_L1SYNC_ENABLED
+	depends on PORT15_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT15_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+	default PORT15_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT15_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT15_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+
 config PORT15_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT15_INST01_L1SYNC_ENABLED
+	depends on PORT15_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT15_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+	default PORT15_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT15_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+
 config PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT15_INST01_L1SYNC_ENABLED
+	depends on PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+	default PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+
 config PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT15_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT15_INST01_L1SYNC_ENABLED_VAL
+	default PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT15_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 15 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT15_INST01_T24P_TRANS_POINT
@@ -5466,31 +6951,68 @@ config PORT16_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT16_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT16_INST01_EXTENSION_L1S \
+		   || PORT16_INST01_EXTENSION_L1S_WR
+
+
+config PORT16_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT16_INST01_PROFILE_CUSTOM || (PORT16_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT16_INST01_EXTENSION_L1S || PORT16_INST01_EXTENSION_L1S_WR)
+
+config PORT16_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT16_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT16_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT16_INST01_PROFILE_CUSTOM || (PORT16_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT16_INST01_EXTENSION_L1S || PORT16_INST01_EXTENSION_L1S_WR)
+	default PORT16_INST01_L1SYNC_ENABLED if PORT16_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT16_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT16_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT16_INST01_EXTENSION_L1S \
 		   || PORT16_INST01_EXTENSION_L1S_WR
+
+config PORT16_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT16_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT16_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT16_INST01_EXTENSION_L1S \
+		   || PORT16_INST01_EXTENSION_L1S_WR
+	default PORT16_INST01_L1SYNC_INTERVAL if PORT16_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT16_INST01_EXTENSION_L1S \
+		   || PORT16_INST01_EXTENSION_L1S_WR
 
 config PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT16_INST01_EXTENSION_L1S \
-		   || PORT16_INST01_EXTENSION_L1S_WR
+	depends on PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -5500,51 +7022,113 @@ config PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT16_INST01_EXTENSION_L1S \
+		   || PORT16_INST01_EXTENSION_L1S_WR
+	default PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT16_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT16_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+
 config PORT16_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT16_INST01_L1SYNC_ENABLED
+	depends on PORT16_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT16_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+	default PORT16_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT16_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT16_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+
 config PORT16_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT16_INST01_L1SYNC_ENABLED
+	depends on PORT16_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT16_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+	default PORT16_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT16_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT16_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+
 config PORT16_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT16_INST01_L1SYNC_ENABLED
+	depends on PORT16_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT16_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+	default PORT16_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT16_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+
 config PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT16_INST01_L1SYNC_ENABLED
+	depends on PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+	default PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+
 config PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT16_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT16_INST01_L1SYNC_ENABLED_VAL
+	default PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT16_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 16 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT16_INST01_T24P_TRANS_POINT
@@ -5813,31 +7397,68 @@ config PORT17_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT17_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT17_INST01_EXTENSION_L1S \
+		   || PORT17_INST01_EXTENSION_L1S_WR
+
+
+config PORT17_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT17_INST01_PROFILE_CUSTOM || (PORT17_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT17_INST01_EXTENSION_L1S || PORT17_INST01_EXTENSION_L1S_WR)
+
+config PORT17_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT17_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT17_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT17_INST01_PROFILE_CUSTOM || (PORT17_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT17_INST01_EXTENSION_L1S || PORT17_INST01_EXTENSION_L1S_WR)
+	default PORT17_INST01_L1SYNC_ENABLED if PORT17_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT17_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT17_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT17_INST01_EXTENSION_L1S \
 		   || PORT17_INST01_EXTENSION_L1S_WR
+
+config PORT17_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT17_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT17_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT17_INST01_EXTENSION_L1S \
+		   || PORT17_INST01_EXTENSION_L1S_WR
+	default PORT17_INST01_L1SYNC_INTERVAL if PORT17_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT17_INST01_EXTENSION_L1S \
+		   || PORT17_INST01_EXTENSION_L1S_WR
 
 config PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT17_INST01_EXTENSION_L1S \
-		   || PORT17_INST01_EXTENSION_L1S_WR
+	depends on PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -5847,51 +7468,113 @@ config PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT17_INST01_EXTENSION_L1S \
+		   || PORT17_INST01_EXTENSION_L1S_WR
+	default PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT17_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT17_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+
 config PORT17_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT17_INST01_L1SYNC_ENABLED
+	depends on PORT17_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT17_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+	default PORT17_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT17_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT17_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+
 config PORT17_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT17_INST01_L1SYNC_ENABLED
+	depends on PORT17_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT17_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+	default PORT17_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT17_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT17_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+
 config PORT17_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT17_INST01_L1SYNC_ENABLED
+	depends on PORT17_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT17_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+	default PORT17_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT17_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+
 config PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT17_INST01_L1SYNC_ENABLED
+	depends on PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+	default PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+
 config PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT17_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT17_INST01_L1SYNC_ENABLED_VAL
+	default PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT17_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 17 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT17_INST01_T24P_TRANS_POINT
@@ -6160,31 +7843,68 @@ config PORT18_INST01_MIN_PDELAY_REQ_INTERVAL_VAL
 	default 0
 
 # L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile
-config PORT18_INST01_L1SYNC_ENABLED
-	bool "L1SyncBasicPortDS.L1SyncEnabled"
+comment "Options specific to L1Sync"
+	depends on PORT18_INST01_EXTENSION_L1S \
+		   || PORT18_INST01_EXTENSION_L1S_WR
+
+
+config PORT18_INST01_L1SYNC_ENABLED_OVERWRITE
+	bool "Overwrite default value for enabling L1Sync (only for Custom profile)"
 	depends on (PORT18_INST01_PROFILE_CUSTOM || (PORT18_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
 		   && (PORT18_INST01_EXTENSION_L1S || PORT18_INST01_EXTENSION_L1S_WR)
+
+config PORT18_INST01_L1SYNC_ENABLED
+	bool "L1SyncBasicPortDS.L1SyncEnabled"
+	depends on PORT18_INST01_L1SYNC_ENABLED_OVERWRITE
+	default y
+	help
+	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
+	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled.
+	  Used only for Custom profile.
+
+config PORT18_INST01_L1SYNC_ENABLED_VAL
+	bool
+	depends on (PORT18_INST01_PROFILE_CUSTOM || (PORT18_INST01_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \
+		   && (PORT18_INST01_EXTENSION_L1S || PORT18_INST01_EXTENSION_L1S_WR)
+	default PORT18_INST01_L1SYNC_ENABLED if PORT18_INST01_L1SYNC_ENABLED_OVERWRITE
 	default y
 	help
 	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If
 	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled
 
-config PORT18_INST01_L1SYNC_INTERVAL
-	int "L1SyncBasicPortDS.logL1SyncInterval"
+
+config PORT18_INST01_L1SYNC_INTERVAL_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.logL1SyncInterval"
 	depends on PORT18_INST01_EXTENSION_L1S \
 		   || PORT18_INST01_EXTENSION_L1S_WR
+
+config PORT18_INST01_L1SYNC_INTERVAL
+	int "L1SyncBasicPortDS.logL1SyncInterval"
+	depends on PORT18_INST01_L1SYNC_INTERVAL_OVERWRITE
 	default 0
 	range -4 4
 	help
 	  The L1Sync interval specifies the time interval
 	  between successive periodic L1_SYNC TLV.
 	  The value is the logarithm to the base 2.
-	  The configurable range shall be -4 to 4
+	  The configurable range shall be -4 to 4.
+
+config PORT18_INST01_L1SYNC_INTERVAL_VAL
+	int
+	depends on PORT18_INST01_EXTENSION_L1S \
+		   || PORT18_INST01_EXTENSION_L1S_WR
+	default PORT18_INST01_L1SYNC_INTERVAL if PORT18_INST01_L1SYNC_INTERVAL_OVERWRITE
+	default 0
+
+
+config PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout"
+	depends on PORT18_INST01_EXTENSION_L1S \
+		   || PORT18_INST01_EXTENSION_L1S_WR
 
 config PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT
 	int "L1SyncBasicPortDS.L1SyncReceiptTimeout"
-	depends on PORT18_INST01_EXTENSION_L1S \
-		   || PORT18_INST01_EXTENSION_L1S_WR
+	depends on PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
 	default 3
 	range 2 10
 	help
@@ -6194,51 +7914,113 @@ config PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT
 	  The value is the logarithm to the base 2.
 	  The configurable range shall be 2 to 10
 
+config PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT_VAL
+	int
+	depends on PORT18_INST01_EXTENSION_L1S \
+		   || PORT18_INST01_EXTENSION_L1S_WR
+	default PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT if PORT18_INST01_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+	default 3
+
+
+config PORT18_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+
 config PORT18_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.txCoherentIsRequired"
-	depends on PORT18_INST01_L1SYNC_ENABLED
+	depends on PORT18_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the
 	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	   required to be a transmit coherent port.
 
+config PORT18_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+	default PORT18_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT18_INST01_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT18_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired"
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+
 config PORT18_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.rxCoherentIsRequired"
-	depends on PORT18_INST01_L1SYNC_ENABLED
+	depends on PORT18_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the
 	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is
 	  required to be a receive coherent port.
 
+config PORT18_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+	default PORT18_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT18_INST01_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT18_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.congruentIsRequired"
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+
 config PORT18_INST01_L1SYNC_CONGRUENT_IS_REQUIRED
 	bool "L1SyncBasicPortDS.congruentIsRequired"
-	depends on PORT18_INST01_L1SYNC_ENABLED
+	depends on PORT18_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
 	default y
 	help
 	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected
 	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to
 	  be a congruent port
 
+config PORT18_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_VAL
+	bool
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+	default PORT18_INST01_L1SYNC_CONGRUENT_IS_REQUIRED if PORT18_INST01_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+	default y
+
+
+config PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.optParamsEnabled"
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+
 config PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED
 	bool "L1SyncBasicPortDS.optParamsEnabled"
-	depends on PORT18_INST01_L1SYNC_ENABLED
+	depends on PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
 	default n
 	help
 	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC
 	  TLV extends this TLV with the information about the optional parameters.
 
+config PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED_VAL
+	bool
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+	default PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED if PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+	default n
+
+
+config PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	bool "Overwrite default L1SyncBasicPortDS.txCoherentIsRequired"
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+
 config PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
 	bool "L1SyncBasicPortDS.timestampsCorrectedTx"
-	depends on PORT18_INST01_L1SYNC_OPT_PARAMS_ENABLED=y
+	depends on PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
 	default n
 	help
 	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE,
 	  the L1Sync port shall correct the transmitted egress timestamps with
 	  the known value of the phase offset.
 
-endmenu
+config PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL
+	bool
+	depends on PORT18_INST01_L1SYNC_ENABLED_VAL
+	default PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT18_INST01_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+	default n
+
+endmenu # Port 18 Instance 1
 
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT18_INST01_T24P_TRANS_POINT

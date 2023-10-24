@@ -1,0 +1,17 @@
+digraph finite_state_machine {
+    edge [minlen=1]  # in inches
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif"]
+    edge [fontname="Helvetica,Arial,sans-serif"]
+    rankdir=LR;
+    node [shape = ellipse]; "HA/PTP";
+    node [shape = ellipse];           "WR";
+
+
+    "HA/PTP"               -> "WR"      [label = "no L1Sync received within\n reception of  N x Announce with WR TLV [W1]"];
+    "HA/PTP"               -> "WR"      [label = "received SLAVE_PRESENT [W2]"];
+    "WR"                   -> "HA/PTP"  [label = "\nreceived L1Sync [H1]"];
+    "WR"                   -> "HA/PTP"  [label = "\n\nreception of N x Announce without WR TLV [P1]"];
+}
+
+

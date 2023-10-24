@@ -16,6 +16,12 @@ PDF  = $(INPUT:.in=.pdf)
 
 ALL    = $(INFO) $(HTML) $(TXT) $(PDF)
 
+SRC_DOT=\
+    images/dot/autonegotiation_simple.dot
+PDF_DOT=$(SRC_DOT:dot=pdf)
+
+IMG_PDF=images/wr_mon.pdf
+
 MAKEINFO ?= makeinfo
 
 RELEASE=$(shell git describe --always --dirty)
@@ -38,6 +44,9 @@ RELEASE=$(shell git describe --always --dirty)
 %.txt: %.texi
 	$(MAKEINFO) --no-headers $< > $@
 
+images/dot/%.pdf: images/dot/%.dot
+	dot $< -Tpdf > $@
+
 ##############################################
 DIRS=\
 	autonegotiation_ha_wr \
@@ -49,6 +58,8 @@ DIRS=\
 
 all: $(ALL) $(DIRS)
 	$(MAKE) terse
+
+wrs-user-manual.texi: ../userspace/ppsi/doc/ppsi_conf-manual.in $(PDF_DOT) $(IMG_PDF)
 
 check: _err.ps
 	gs -sDEVICE=linux -r320x200x16 $<

@@ -39,12 +39,12 @@ This document is licensed under the Attribution-ShareAlike 4.0 International (CC
 
 @setchapternewpage off
 
-@set update-month June 2023
+@set update-month July 2024
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
 @comment %**useful declaration used in the document
-@set release_version 6.1
+@set release_version 7.0
 @set release_version_tiny 0
 @set url_docs https://www.ohwr.org/project/wr-switch-sw/wikis/Documents#files
 
@@ -140,7 +140,7 @@ development.
 @node Supported Hardware Versions
 @section Supported Hardware Versions
 
-This document applies to versions 3.3 and 3.4 of the @sc{wrs}
+This document applies to hardware versions 3.3 and 3.4 of the @sc{wrs}
 device.
 
 Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
@@ -177,18 +177,248 @@ When checksums in the @t{wrs-firmware.tar} are not available
 (for example during downgrading to version pre-v5.0) appropriate warning
 message is printed to the console.
 
-If this method of upgrading firmware works for you, you can ignore the rest of
-this chapter, which
+If this method of upgrading firmware works for you, you can ignore chapter
+@ref{Upgrading from v3.x}, which
 explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
 
 @c ==========================================================================
-@node Upgrade from v6.0.x to v@value{release_version}
-@section Upgrade from v6.0.x to v@value{release_version}
+@node Upgrade from v6.1 to v@value{release_version}
+@section Upgrade from v6.1 to v@value{release_version}
 
-Apart from the instructions in the previous section, there
+
+The most important changes introduced in v7.0 are:
+@itemize
+@item Introduce support of @i{High Accuracy Profile} with
+      @i{L1Sync extension} (defined in IEEE1588-2019 Annex L).
+
+      NOTE: By default, White Rabbit extension of IEEE1588-2008 is used.
+
+@item Introduce autonegotiation between @i{L1Sync} and @i{WR} extensions.
+@item Display information about @i{L1Sync} and autonegotiation in @t{wr_mon}
+@item Reorganize some of the PTP related attributes
+      (@i{announceInterval}, @i{announceReceiptTimeout},
+      @i{logMinDelayReqInterval}, @i{logMinPDelayReqInterval},
+      @i{logSyncInterval}) in @i{dot-config} to
+      improve the handling of the default values (options with suffix
+      @t{_OVERWRITE}).
+      For more see @ref{Converting dot-config from v6.x to v7.0}.
+@item Add clarification of the difference between PTP @i{profile} and
+      @i{extension} (@ref{Relation between profile and extension}).
+@item Introduce separate options in @i{dot-config} for setting PTP @i{profile}
+      (global and per instance) and @i{extension}.
+      For more see @ref{Converting dot-config from v6.x to v7.0}.
+@item By default, use PTP version v2.0 in PTP messages when the @i{White Rabbit}
+      extension is used and PTP v2.1 when the @i{L1Sync} extension or no
+      extension is used.
+@item Support overwrite of the used PTP version in PTP messages.
+@item Display the current configuration of some of PPSi's parameters in
+      @t{wr_mon} (after "c" is pressed).
+      Displayed parameters: @i{logAnnounceInterval}, @i{logSyncInterval},
+      @i{local ClockId}, @i{clockClass}, @i{clockAccuracy}, @i{logVar},
+      @i{priority1}, @i{priority2}.
+@item Display information about the current Grandmaster in @t{wr_mon}.
+@item Fix that @i{delay_req} interval is taken from @i{delay_resp} message
+      received from the current master (as defined in IEEE1588-2019).
+@item Add mechanism for runtime reconfiguration of PPSi's parameters (PTP
+      datasets) with the @t{ppsi_conf} tool.
+      Currently, only the following parameters can be configured in runtime:
+      @itemize
+      @item @t{alpha}
+      @item @t{announce-interval}
+      @item @t{autonegotiation}
+      @item @t{delay-req-interval}
+      @item @t{diags}
+      @item @t{diags-inst}
+      @item @t{extension}
+      @item @t{global-profile}
+      @item @t{instance}/@t{ppi}
+      @item @t{port}
+      @item @t{prio1}/@t{priority1}
+      @item @t{prio2}/@t{priority2}
+      @item @t{profile}
+      @item @t{sync-interval}
+      @item @t{tracking}
+      @end itemize
+      For more details please check @ref{ppsi_conf}.
+@item Support setting an offset between PPS-in and PPS-out in
+      the Grandmaster mode.
+      In @i{dot-config}, with item @t{CONFIG_EXT_PPS_LATENCY_PS},
+      or in runtime using @t{wrsw_hal_conf} tool.
+@item Add mechanism for runtime reconfiguration of @t{wrsw_hal} with the
+      @t{wrsw_hal_conf} tool.
+      Currently, only changing an offset between PPS-in and PPS-out
+      in Grandmaster mode is supported.
+      For more details please check @ref{wrsw_hal_conf}.
+@item Support Fan-Less version of WRS manufactured by SyncTechnology.
+@end itemize
+
+In terms of @i{dot-config} configuration of the @sc{wrs}, there
+are some non backward compatible changes in the @i{dot-config} when upgrading
+firmware from v6.x to v@value{release_version}.
+For the exact changes and how to deal with them see
+@ref{Changes in dot-config in v7.0} and
+@ref{Converting dot-config from v6.x to v7.0}.
+
+
+@b{NOTE: Other than updating the @i{dot-config}, there is no special action
+needed from the user when upgrading firmware from v6.1 to v7.0.}
+
+
+@b{NOTE: Firmware v7.0 uses different FPGA GW/bitstream than v6.x,
+so the calibration values are different.}
+
+@c =-------------------------------------------------------------------------
+@node Changes in dot-config in v7.0
+@subsection Changes in dot-config in v7.0
+
+@b{NOTE: It is strongly advised to use a dedicated tool to generate the
+@i{dot-config}.
+Such a tool is either the @i{wrs_menuconfig} manually configuring @i{behavior}
+or the @t{dot-config_converter_6_x_to_7_0.sh} to automatically convert
+@i{dot-config} from v6.x to v7.0.}
+
+The following configuration items were added to @i{dot-config}:
+@itemize
+
+@item Profile/extension related (global):
+      @itemize
+      @item @t{CONFIG_GLOBAL_PROFILE_CUSTOM}
+      @item @t{CONFIG_GLOBAL_PROFILE_HA_WR}
+      @item @t{CONFIG_GLOBAL_PROFILE_PTP}
+      @end itemize
+@item Profile/extension related (port and instance related):
+      @itemize
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_NONE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_WR}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_CUSTOM}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL}
+      @end itemize
+
+@item BMCA related:
+      @itemize
+      @item @t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG}
+      @item @t{CONFIG_PTP_OPT_BMCA_STANDARD}
+      @end itemize
+
+@item PTP parameters related (global):
+      @itemize
+      @item @t{CONFIG_PTP_OPT_PTP_VERSION_OVERWRITE}
+      @end itemize
+
+@item PTP parameters related (port and instance related):
+      @itemize
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_2_0}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_2_1}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL_OVERWRITE}
+      @end itemize
+
+@item L1Sync related (port and instance related):
+      @itemize
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENT_IS_REQUIRED}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENT_IS_REQUIRED}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENT_IS_REQUIRED}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE}
+      @end itemize
+
+@item Other:
+      @itemize
+      @item @t{CONFIG_EXT_PPS_LATENCY_PS}
+      @end itemize
+@end itemize
+
+The following configuration items were removed from @i{dot-config}:
+@itemize
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_AUTO} -- replaced indirectly by
+      @t{CONFIG_PTP_OPT_BMCA_STANDARD}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR} -- replaced indirectly by
+      @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR} and
+      @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_WR}
+@item @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} -- replaced indirectly by
+      @t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG}
+@item @t{CONFIG_PTP_SLAVE_ONLY}
+@end itemize
+
+@c =-------------------------------------------------------------------------
+@node Converting dot-config from v6.x to v7.0
+@subsection Converting dot-config from v6.x to v7.0
+
+In the WRS firmware v7.0 to improve the handling of the default values there
+was a reorganization of some PTP related attributes in @i{dot-config}
+(options with suffix @t{_OVERWRITE}).
+The affected parameters are:
+@itemize
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL}
+@end itemize
+If any of these configuration items were used in the WRS v6.x @i{dot-config}
+with a custom value, please keep an existing item
+and set item with suffix @t{_OVERWRITE} to "@t{y}".
+For example if @i{dot-config} for WRS firmware v6.1 used
+@t{CONFIG_PORT01_INST01_ANNOUNCE_INTERVAL=0}, for WRS firmware v7.0
+replace it with (the order is not important):
+@example
+CONFIG_PORT01_INST01_ANNOUNCE_INTERVAL_OVERWRITE=y
+CONFIG_PORT01_INST01_ANNOUNCE_INTERVAL=0
+@end example
+
+From the firmware v7.0, @i{BMCA} or @i{external port configuration}
+(fixed roles) is selected in a different way than it was in firmware v6.x.
+In v6.x if @i{external port configuration} was used then
+@t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED=y}, if @i{BMCA} mechanism was used
+then this configuration item was not set.
+In v7.0 there are separate items for @i{BMCA} (@t{CONFIG_PTP_OPT_BMCA_STANDARD})
+and @i{external port configuration} (@t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG}).
+Use them accordingly.
+
+Another non-compatible changes are in the area of selecting profile/extension.
+In v6.x there was no distinction between profile and extension.
+In v7.0 a profile and an extension are set separately.
+In the most common scenario, when @i{White Rabbit} was used on a port the
+@t{PORT@i{xx}_INST@i{yy}_PROFILE_WR} item was enabled for that particular port.
+From version v7.0, the profile has to be set globally to
+@t{CONFIG_GLOBAL_PROFILE_HA_WR} and
+for a port to @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL} or
+@t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR}.
+Then use @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_WR} to select
+@i{White Rabbit} extension.
+
+For more information about profiles/extensions please refer to
+@ref{Relation between profile and extension}.
+
+@b{Firmware v7.0 uses different FPGA GW/bitstream than v6.0.x,
+please use the new calibration values!}
+
+@c ==========================================================================
+@node Upgrade from v6.0.x to v6.1
+@section Upgrade from v6.0.x to v6.1
+
+Apart from the instructions in the introduction to this chapter, there
 is no special action needed from the user when upgrading firmware from
-v6.0.x to v@value{release_version}.
+v6.0.x to v6.1
 
 The most important changes introduced in v6.1 are:
 @itemize
@@ -210,7 +440,7 @@ The most important changes introduced in v6.1 are:
 
 The following configuration items were added to the dot-config:
 @itemize
-@item LLDP related
+@item LLDP related:
 @itemize
 @item @t{CONFIG_VLANS_PORT@i{xx}_LLDP_TX_VID}
 @item @t{CONFIG_VLANS_PORT@i{xx}_LLDP_TX_PRIO}
@@ -605,7 +835,6 @@ your own @i{hwinfo} structure by specifying your MAC addresses.
 @t{wr-switch-sw} includes specific tools for both steps. They are
 described in the @i{Developer's Manual}, because they are expected to
 only be performed by the manufacturer, not the final user.
-
 
 @c ##########################################################################
 @node Configuration of the Device
@@ -1100,7 +1329,6 @@ appropriate way, before the respective service is started.
 	Please note that unknown facility names will generate a runtime error
 	on the switch.
 
-
 @item   CONFIG_RVLAN_ENABLE
 @itemx  CONFIG_RVLAN_PMASK
 @itemx  CONFIG_RVLAN_AUTH_VLAN
@@ -1110,7 +1338,8 @@ appropriate way, before the respective service is started.
 @itemx  CONFIG_RVLAN_RADIUS_SECRET
         Configuration items related to @i{radiusvlans}, which can be used to
         limit access to WR network for connected devices based on MAC address.
-        For more details please refer to @i{White Rabbit Switch: Radius Vlan}.
+        For more details please refer to the document
+        @i{White Rabbit Switch: Radius Vlan}.
 
 @item   CONFIG_SNMP_TRAPSINK_ADDRESS
 @itemx  CONFIG_SNMP_TRAP2SINK_ADDRESS
@@ -1371,13 +1600,13 @@ instances of the WR switch.
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
 
-@item   CONFIG_PTP_SLAVE_ONLY
+@c @item   CONFIG_PTP_SLAVE_ONLY
 
-        A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
-        which does not enable transition to MASTER state.
-        This option is only available if @t{PTP_OPT_EXT_PORT_CONFIG_ENABLED}
-        is not used.
-        For more details please refer to the IEEE 1588-2020 (clause 9.2.2.1)
+@c         A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
+@c         which does not enable transition to MASTER state.
+@c         This option is only available if @t{PTP_OPT_EXT_PORT_CONFIG_ENABLED}
+@c         is not used.
+@c         For more details please refer to the IEEE 1588-2019 (clause 9.2.2.1)
 
 @item   CONFIG_TIME_GM
 @itemx  CONFIG_TIME_ARB_GM
@@ -1391,6 +1620,7 @@ instances of the WR switch.
         @itemize
         @item @t{CONFIG_TIME_GM} a grand-master with external reference, e.g.
               GPS or Cesium.
+              Please make sure that none of the ports is configured a slave.
         @item @t{CONFIG_TIME_ARB_GM} a arbitrary grand-master which designates
               a clock that is synchronized to an application-specific source of
               time.
@@ -1400,34 +1630,89 @@ instances of the WR switch.
               is slave on some ports and master on other ports.
         @item @t{CONFIG_TIME_CUSTOM} an option which leaves the possibility
               to define freely the PTP clock class.
+              It allows to set other PTP attributes without a need of use
+              @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
         @end itemize
 
-@item   CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED
+@item   CONFIG_GLOBAL_PROFILE_PTP
+@itemx  CONFIG_GLOBAL_PROFILE_HA_WR
+@itemx  CONFIG_GLOBAL_PROFILE_CUSTOM
+        Selection of a global profile may set allowed and default values of
+        global attributes.
+        @t{CONFIG_GLOBAL_PROFILE_PTP} must be set for the Default PTP Profile,
+        @t{CONFIG_GLOBAL_PROFILE_HA_WR} must
+        be set to use the @i{White Rabbit} or @i{High Accuracy} profile.
+        @i{White Rabbit} and @i{High Accuracy} profiles use the same
+        configuration option because they share the same values for all
+        attributes except the used extension.
 
-        This option enables forcing the PTP state for each port instance using
-        @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_*} parameters.
-        When set, each port instance can be forces to always stay either in the
-        slave, master or passive state.
-        The PTP Best Master Clock Algorithm (BMCA) is then disabled.
-        This option is only available for a boundary clock (@t{CONFIG_TIME_BC}).
-        For more details please refer to the IEEE 1588-2020 (clause 17.6.2)
+        Custom (@t{CONFIG_GLOBAL_PROFILE_CUSTOM}) is an experimental profile
+        with relaxed constraints about allowed values for attributes.
+        This profile can be used when it is necessary to set attributes'
+        values outside the allowed values defined by a other profiles.
+
+@item   CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG
+@itemx  CONFIG_PTP_OPT_BMCA_STANDARD
+
+        These options select how port states are assigned -- this is selected
+        for the entire device, i.e. all ports.
+        The selection can be either the default
+        @i{Best Master Clock Algorithm} (BMCA), which is used when
+        @t{CONFIG_PTP_OPT_BMCA_STANDARD} is selected and it allows for automatic
+        selection of port's state.
+        Alternatively, the assignment of port states can be done using
+        @i{External Port Configuration}, which is used when
+        @t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG} is selected.
+        In such case, the states are defined by
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_*}).
+        When set, each port can be forced to always stay either in
+        the slave, master or passive state.
+
+@item   CONFIG_PTP_OPT_PTP_VERSION_OVERWRITE
+        Enables the possibility to overwrite the default PTP version used in
+        the transmitted PTP messages.
+        The actual setting can be done with per instance granularity.
+        For more details please check the description of
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_OVERWRITE}
+
+@item   CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES
+        When this option is selected it is possible to overwrite the default
+        values of the global PTP attributes used by a selected @i{timing mode}.
+
+        Please note when the option @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}
+        is selected, the configuration tool (like @t{wrs_menuconfig}) allows
+        the change of an configuration option
+        (like @t{CONFIG_PTP_OPT_CLOCK_ACCURACY}).
+
+        To change the WRS configuration (@t{dot-config}), it is highly
+        recommended to use @t{wrs_menuconfig} (or similar tool) rather
+        than directly editing @t{dot-config} which is very error-prone.
 
 @item   CONFIG_PTP_OPT_DOMAIN_NUMBER
         A domain consists of one or more PTP devices communicating with each
         other as defined by the PTP protocol. A domain defines the scope of
         PTP message communication, state, operations, data sets, and
         timescale. PTP devices may participate in multiple domains.
-        For more details please refer to the IEEE 1588-2008 standard.
+        For more details please refer to the IEEE 1588-2008 (or later) standard.
+
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item   CONFIG_PTP_OPT_PRIORITY1
         A user configurable designation that a clock belongs to an ordered
         set of PTP devices from which a PTP Master is selected.
-        For more details please refer to the IEEE 1588-2008 standard.
+        For more details please refer to the IEEE 1588-2008 (or later) standard.
+
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item CONFIG_PTP_OPT_PRIORITY2
         A user configurable designation that provides finer grained ordering
         among otherwise equivalent PTP devices.
-        For more details please refer to the IEEE 1588-2008 standard.
+        For more details please refer to the IEEE 1588-2008 (or later) standard.
+
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item CONFIG_PTP_OPT_CLOCK_CLASS
 
@@ -1446,7 +1731,10 @@ instances of the WR switch.
         @item  CONFIG_TIME_BC @tab 248
         @end multitable
 
-        For more details please refer to the IEEE 1588-2008 standard.
+        For more details please refer to the IEEE 1588-2008 (or later) standard.
+
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item CONFIG_PTP_OPT_CLOCK_ACCURACY
 
@@ -1469,8 +1757,10 @@ instances of the WR switch.
 
         For more details please refer to the IEEE 1588-2008 standard.
 
-@item   CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
+@item   CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
         An attribute defining the stability of the Local Clock of a
         Boundary Clock or Ordinary Clock.
         Its value is set automatically according to the timing mode
@@ -1488,11 +1778,12 @@ instances of the WR switch.
         @item  CONFIG_TIME_BC @tab 65535
         @end multitable
 
-        For more details please refer to the IEEE 1588-2008 standard.
+        For more details please refer to the IEEE 1588-2008 (or later) standard.
 
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item   CONFIG_PTP_OPT_TIME_SOURCE
-
         This information-only attribute indicates the source of time used
         by the grandmaster or free-running master. In case the timing mode is
         set to ``@t{CONFIG_TIME_BC}`` this configuration option is not used and
@@ -1507,6 +1798,9 @@ instances of the WR switch.
         @item  CONFIG_TIME_FM @tab 160 (INTERNAL_OSCILLATOR)
         @item  CONFIG_TIME_BC @tab --
         @end multitable
+
+        To be able to change the default value please set
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item   CONFIG_N_SFP_ENTRIES
 @itemx  CONFIG_SFP00_PARAMS
@@ -1640,19 +1934,13 @@ The @i{xx} value in the parameter name represents the port number.
         Each physical @sc{wrs} port can be configured to run several PPSi
         instances.
         However, only one instance per-port can be active at any given moment.
-        This functionality is required to support several PTP extensions
-        (e.g. @sc{wr}, @sc{HA} - High Accuracy profile).
-        The active instance will dependent then of the profile used by the peer
-        on the other side of the link.
 
-        WR switch firmware version @value{release_version} implements only a
-        single, @sc{WR} extension, therefore the possibility of running several
-        instances on a single port is disabled.
-        The number of port instances must be set to either 1
-        (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1=yes}) or
+        Running several instances on a single port is disabled.
+        The number of port instances must be set to either
+        1 (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1=yes}) or
         0 (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_0=yes})
-        if the port is not used.
-        @i{xx} represents the port number in the range 01 to 18.
+        if the port is not used. @i{xx} represents the port number in
+        the range 01 to 18.
 
 @end table
 
@@ -1683,6 +1971,16 @@ CONFIG_PORT@i{xx}_INST@i{yy}_@i{pp}, where @i{xx} represents the port number,
 @i{yy} the instance number (01 to 02) and @i{pp} a key describing the
 parameter itself.
 
+Some of the configuration options
+(e.g., @t{CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL})
+described in this subsection have associated configuration options with
+suffixes @t{_OVERWRITE}
+(e.g., @t{CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL_OVERWRITE}).
+An item with an @t{_OVERWRITE} suffix allows a change of the default value.
+An item without an @t{_OVERWRITE} suffix is a value that will be used.
+
+It is advised to keep the default values for these options.
+
 @table @code
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_RAW
@@ -1691,17 +1989,49 @@ parameter itself.
         Network transport layer selection, either raw Ethernet or UDP over IPv4
         can be used.
 
-@item   CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_CUSTOM
+        Selection of an instance specific profile may set allowed and default
+        values of instance's attributes.
+        The option @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL}
+        selects the same profile for an instance as selected option
+        for global profile (one of @t{CONFIG_GLOBAL_PROFILE_*}.
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} must be set for
+        the Default PTP Profile,
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR} must
+        be set to use the @i{White Rabbit} or @i{High Accuracy} profile.
+        @i{White Rabbit} and @i{High Accuracy} profiles use the same
+        configuration option because they share the same default values and
+        their allowed ranges for all attributes except the used extension.
+        Custom (@t{CONFIG_GLOBAL_PROFILE_CUSTOM}) is an experimental profile
+        with relaxed constraints about allowed values for attributes.
+        This profile can be used when it is necessary to set attributes'
+        values outside the allowed values defined by a other profiles.
 
-        Profile selection. @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR} must be
-        set to use the White Rabbit profile and
-        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} for pure PTP profile.
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_NONE
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_WR
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR
+        Configuration items that selects the extension to be used by an
+        instance.
+        Select @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_WR} to use
+        @i{White Rabbit} extension,
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_WR} to use @i{L1Sync}
+        extension,
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} to use autonegotiation
+        between @i{White Rabbit} and @i{L1Sync} extensions.
+        Autonegotiation mechanism is described in details in
+        @ref{Autonegotiation of extension}.
+
+        Please note that some profiles (e.g. standard PTP) may limit choice of
+        an extension.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P
 
-        TP delay mechanism, either 'end-to-end' (E2E) or 'peer-to-peer' (P2P)
+        Delay mechanism, either 'end-to-end' (E2E) or 'peer-to-peer' (P2P)
         can be used.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER
@@ -1724,14 +2054,13 @@ parameter itself.
         It is used to force the servo to integrate on its calculation
         the computation of the delay asymmetry.
 
-@item   CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_AUTO
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY
-
-        Indicates the BMCA mode to be used. The choice is available only when
-        @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is disabled.
-        Either the regular PTP BMCA (@t{BMODE_AUTO}) or PTP masterOnly feature
-        (@t{BMODE_MASTER_ONLY}) can be used.
-        For more details please refer to the IEEE 1588-2020 (clause 9.2.2.2)
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY
+        This option prevents PTP Port entering the SLAVE state.
+        The choice is available only if other choice for BMCA than
+        @i{External Port Configuration}
+        (@t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG})
+        is selected.
+        For more details please refer to the IEEE 1588-2019 (clause 9.2.2.2).
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY
@@ -1740,39 +2069,52 @@ parameter itself.
         and transmission (@t{CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY})
         constant delays expressed in picoseconds.
 
-@item   CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_OVERWRITE
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_2_0
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_2_1
+        Overwrite the default PTP version.
 
+        The default PTP version is selected based on the used extension.
+        If no extension or @i{L1Sync} is used, PTP version is set to
+        v2.1 (IEEE1588-2019).
+        If @i{White Rabbit} extension is used then PTP version is set to
+        v2.0 (IEEE1588-2008) as defined in the WR protocol specification.
+
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL_OVERWRITE
         The mean time interval between transmissions of successive
         PTP Announce messages. The value expressed as base 2 logarithm.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT
-
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT_OVERWRITE
         The number of announceIntervals that must pass without receipt of an
-        Announce message before the occurrence of
-        the PTP event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+        Announce message before the occurrence of the PTP event
+        @i{ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES}.
         The value expressed as base 2 logarithm.
-        For more details please refer to IEEE 1588-2020 standard.
+        For more details please refer to IEEE 1588-2019 standard.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL
-
-        The mean time interval between transmission of successive
-        PTP Sync messages, i.e., the sync-interval, when transmitted
-        as multicast messages. The value expressed as base 2 logarithm.
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL_OVERWRITE
+        The mean time interval between transmission of successive PTP Sync
+        messages, i.e., the sync-interval, when transmitted as multicast
+        messages.
+        The value expressed as base 2 logarithm.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL
-
-        The minDelayRequestInterval specifies the minimum permitted
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL_OVERWRITE
+        The logMinDelayReqInterval specifies the minimum permitted
         mean time interval between successive Delay_Req messages.
         The value expressed as base 2 logarithm.
-        This option is available when 'end-to-end' delay mechanism is selected
+        This option is available when @i{end-to-end} delay mechanism is selected
         (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E}).
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL
-
-        The minPDelayRequestInterval specifies the minimum permitted
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL_OVERWRITE
+        The logMinPDelayReqInterval specifies the minimum permitted
         mean time interval between successive Pdelay_Req messages.
         The value expressed as base 2 logarithm.
-        This option is only available when 'peer-to-peer' delay mechanism is
+        This option is only available when @i{peer-to-peer} delay mechanism is
         selected (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P}).
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_MONITOR
@@ -1781,16 +2123,65 @@ parameter itself.
         reported through SNMP.
 
 @c  --------------------------
-@c Option that will be available whe HA will be deployed
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENCY_IS_REQUIRED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENCY_IS_REQUIRED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENCY_IS_REQUIRED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+@c Options related to HA
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED_OVERWRITE
+        If a custom profile is selected for this port
+        (by using @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_CUSTOM} or
+        @t{CONFIG_GLOBAL_PROFILE_CUSTOM} and
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL})
+        this value specifies whether the L1Sync option is enabled on the PTP
+        Port.
+        For more details please refer to the IEEE 1588-2019 standard.
 
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL_OVERWRITE
+        This value specifies the mean time interval between successive periodic
+        messages sent by the L1Sync port and carrying the L1 SYNC TLV.
+        For more details please refer to the IEEE 1588-2019 standard.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE
+        This value specifies the number of elapsed L1SyncIntervals that must
+        pass without reception of the L1 SYNC TLV before the L1 SYNC TLV
+        reception timeout occurs.
+        For more details please refer to the IEEE 1588-2019 standard.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENT_IS_REQUIRED
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE
+        This value specifies the expected configuration of the peer L1Sync port.
+        This configuration indicates whether the peer L1Sync port is required to
+        be a transmit coherent port.
+        For more details please refer to the IEEE 1588-2019 standard.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENT_IS_REQUIRED
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE
+        This value specifies the expected configuration of the peer L1Sync port.
+        This configuration indicates whether the peer L1Sync port is required to
+        be a receive coherent port.
+        For more details please refer to the IEEE 1588-2019 standard.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENT_IS_REQUIRED
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE
+        This value specifies the expected configuration of the peer L1Sync port.
+        This configuration indicates whether the peer L1Sync port is required to
+        be a transmit congruent port.
+        For more details please refer to the IEEE 1588-2019 standard.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE
+        This value specifies whether the L1Sync port transmitting
+        the L1 SYNC TLV extends this TLV with the information about the optional
+        parameters.
+        For more details please refer to the IEEE 1588-2019 standard.
+        Currently the functionality that can be enabled by this option is
+        not fully supported/implemented.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE
+        The value specifies if the L1Sync port shall correct the transmitted
+        egress timestamps with the known value of the phase offset.
+        For more details please refer to the IEEE 1588-2019 standard.
 
 @end table
 
@@ -1899,7 +2290,6 @@ parameter itself.
 	For more details about VLANs configuration please refer to the
 	@ref{VLANs Configuration}
 
-	
 @end table
 
 @c ==========================================================================
@@ -1908,24 +2298,29 @@ parameter itself.
 
 This section describes how timing configuration works in the switch.
 Please note that, comparing to previous firmware releases, the timing configuration
-has considerably evolved in version @value{release_version}.
- 
+has considerably evolved in version v6.0 with later changes in v7.0
+(@t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR} was replaced with
+@t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR} and
+introduced selection of an extension
+@t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_*}).
+
 Timing configuration now depends on four sets of @t{dot-config}
-variables: common port information, per-port information, sfp information and fiber
-description.
+variables: common all-ports information, per-port information, sfp information
+and fiber description.
 
 This is, for explanation's sake, an example of such items:
 
 @smallexample
 # common port information
-PTP_OPT_EXT_PORT_CONFIG_ENABLED=yes
+CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG=yes
 ...
 # per-port information
 CONFIG_PORT09_IFACE="wri9"
 CONFIG_PORT09_FIBER=2
 CONFIG_PORT09_INSTANCE_COUNT_1=yes
 CONFIG_PORT09_INST01_PROTOCOL_RAW=yes
-CONFIG_PORT09_INST01_PROFILE_WR=yes
+CONFIG_PORT09_INST01_PROFILE_HA_WR=yes
+CONFIG_PORT09_INST01_EXTENSION_WR=y
 CONFIG_PORT09_INST01_DESIRADE_STATE_SLAVE=yes
 CONFIG_PORT09_INST01_EGRESS_LATENCY=226214
 CONFIG_PORT09_INST01_INGRESS_LATENCY=226758
@@ -1937,6 +2332,10 @@ CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
 
+NOTE: To change the WRS configuration (@t{dot-config}),
+it is highly recommended to use @t{wrs_menuconfig} (or similar tool) rather
+than directly editing @t{dot-config}.
+
 When making timing calculation for port @t{wri9}, assuming the
 auto-detected @sc{sfp} model is``AXGE-1254-0531'', the software
 uses configuration in the following way:
@@ -1947,12 +2346,15 @@ uses configuration in the following way:
 rx (@t{CONFIG_PORT09_INST01_INGRESS_LATENCY}) delays (around 226ns); the
 values depend on trace length and other hardware-specific details
 and are determined by the @sc{wr}  calibration procedure.  These values are
-used by the @sc{WR} PTP daemon for accurate estimation of the transmission
+used by the PTP daemon (PPSi) for accurate estimation of the transmission
 link asymmetry.
 
-@item The port is configured as WR slave (@t{CONFIG_PORT09_INST01_DESIRADE_STATE_SLAVE}) 
-using raw Ethernet (@t{CONFIG_PORT09_INST01_PROTOCOL_RAW}) to synchronize using the
-White-Rabbit protocol (@t{CONFIG_PORT09_INST01_PROFILE_WR}) and is deployed using
+@item The port is configured as WR slave (@t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG}
+and @t{CONFIG_PORT09_INST01_DESIRADE_STATE_SLAVE})
+using raw Ethernet (@t{CONFIG_PORT09_INST01_PROTOCOL_RAW}) to synchronize using
+the White-Rabbit/High Accuracy profile (@t{CONFIG_PORT09_INST01_PROFILE_HA_WR}),
+the White-Rabbit extension (@t{CONFIG_PORT09_INST01_EXTENSION_WR})
+and is deployed using
 fiber type 2 (@t{CONFIG_PORT09_FIBER}) -- this number
 is just a local enumeration of fiber types corresponding to an entry in
 the @i{fiber information} section of the configuration. Most typical @sc{wr}
@@ -1976,6 +2378,64 @@ Please note that only one alpha value has to be provided for each fiber type.
 The @i{alpha} in the opposite direction (@t{alpha_1490_1310}) is calculated
 by the software.
 
+@c =-------------------------------------------------------------------------
+@node Relation between profile and extension
+@subsection Relation between @i{profile} and @i{extension}
+
+The documentation of the past releases did not clearly explained what
+is the difference between a profile and an extension.
+In some places these terms were even used interchangeably.
+To complicate even more the term @i{White Rabbit} was and still is used to
+refer to both the profile's and the extension's name depending on the context.
+
+A PTP extension refers to an enhancement or addition to the core PTP protocol
+(e.g. @i{L1Sync} extension), developed to address specific use cases or
+requirements that are not covered by the base protocol (L1Sync is described in
+Annex L of @sc{ieee} 1588-2019).
+PTP extensions are typically introduced to add features or capabilities that go
+beyond the functionality provided by standard PTP.
+
+PTP profiles are designed to meet the specific synchronization requirements of
+different types of networks or systems.
+A PTP profile defines a set of rules and configurations that specify how PTP
+should be configured and/or implemented in a particular application or
+environment.
+A PTP profile can define a set of parameters with their allowed ranges and which
+extensions can be used with it.
+
+For example, in White Rabbit Switch a user can select the standard PTP protocol
+or a combination of profiles and extensions, such as:
+@c The code base includes following profiles and extensions:
+@itemize @bullet
+@item @i{PTP} profile with no extension -- The Default PTP Profile implemented
+      according to the @sc{ieee} 1588-2019 standard with no extensions.
+@item @i{White Rabbit profile} with @i{White Rabbit extension} -- Specified in
+      "@i{White Rabbit Specification}", v2.0:
+      @url{http://white-rabbit.web.cern.ch/documents/WhiteRabbitSpec.v2.0.pdf},
+@item @i{High Accuracy} (HA) profile with @i{Layer 1 Syntonization} (L1Sync)
+      extension -- The implementation of the mechanism specified in Annex L of
+      the @sc{ieee} 1588-2019 standard.
+@item @i{Custom} profile -- An experimental profile that allows free access to
+      all options and set wider range of attributes than allowed by
+      the @sc{ieee} 1588-2019 standard.
+@end itemize
+
+@i{High Accuracy} and @i{White Rabbit} profiles define the same set of
+attributes' values and their allowed ranges.
+To avoid code and configuration duplication they use the common profile
+@i{HA/WR}.
+The used extension (@i{L1Sync} or @i{White Rabbit extension}) is configured
+separately.
+The implementation of White Rabbit Switch allows to set a PTP profile separately
+for attributes that are global for a device and specific for port/instance.
+
+The selection of the used extension (@i{L1Sync} or @i{White Rabbit extension})
+is done by a proper configuration or can be done automatically if
+WR/L1Sync extension autonegotiation mechanism is enabled
+(more in @ref{Autonegotiation of extension}).
+
+@c =-------------------------------------------------------------------------
+@node SFP name matching
 @subsection SFP name matching
 
 Each time you plug an SFP transceiver into any of the @sc{wrs} ports, it has to be matched
@@ -2028,6 +2488,9 @@ To understand better the operation of SFP matching algorithm, please see below s
 
 @end itemize
 
+
+@c =-------------------------------------------------------------------------
+@node Other Deployments
 @subsection Other Deployments
 
 All examples from previous sections match typical @sc{wr} networks we setup at
@@ -2058,6 +2521,9 @@ of the fiber link.  For a 10km fiber (100us round-trip) you need to know
 alpha up to 1e-7 if you want the related uncertainty to be
 less than 10ps.
 
+
+@c =-------------------------------------------------------------------------
+@node Calibration
 @subsection Calibration
 
 Calibration of per-port and per-@sc{sfp} delays as well as alpha is described in the
@@ -2284,13 +2750,15 @@ Such generated @t{dot-config} file will contain the following config options
 (and much more, of course):
 
 @smallexample
-PTP_OPT_EXT_PORT_CONFIG_ENABLED=yes
+CONFIG_GLOBAL_PROFILE_HA_WR=yes
+CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG=yes
 # Port 1 configuration
 CONFIG_PORT01_IFACE="wri1"
 CONFIG_PORT01_FIBER=0
 CONFIG_PORT01_INSTANCE_COUNT_1=yes
 CONFIG_PORT01_INST01_PROTOCOL_RAW=yes
-CONFIG_PORT01_INST01_PROFILE_WR=yes
+CONFIG_PORT01_INST01_PROFILE_HA_WR=yes
+CONFIG_PORT01_INST01_EXTENSION_WR=yes
 CONFIG_PORT01_INST01_DESIRADE_STATE_SLAVE=yes
 CONFIG_PORT01_INST01_EGRESS_LATENCY=0
 CONFIG_PORT01_INST01_INGRESS_LATENCY=0
@@ -2300,7 +2768,8 @@ CONFIG_PORT02_IFACE="wri2"
 CONFIG_PORT02_FIBER=0
 CONFIG_PORT02_INSTANCE_COUNT_1=yes
 CONFIG_PORT02_INST01_PROTOCOL_RAW=yes
-CONFIG_PORT02_INST01_PROFILE_WR=yes
+CONFIG_PORT02_INST01_PROFILE_HA_WR=yes
+CONFIG_PORT02_INST01_EXTENSION_WR=yes
 CONFIG_PORT02_INST01_DESIRADE_STATE_MASTER=yes
 CONFIG_PORT02_INST01_EGRESS_LATENCY=0
 CONFIG_PORT02_INST01_INGRESS_LATENCY=0
@@ -2310,7 +2779,8 @@ CONFIG_PORT03_IFACE="wri3"
 CONFIG_PORT03_FIBER=0
 CONFIG_PORT03_INSTANCE_COUNT_1=yes
 CONFIG_PORT03_INST01_PROTOCOL_RAW=yes
-CONFIG_PORT03_INST01_PROFILE_WR=yes
+CONFIG_PORT03_INST01_PROFILE_HA_WR=yes
+CONFIG_PORT03_INST01_EXTENSION_WR=yes
 CONFIG_PORT03_INST01_DESIRADE_STATE_MASTER=yes
 CONFIG_PORT03_INST01_EGRESS_LATENCY=0
 CONFIG_PORT03_INST01_INGRESS_LATENCY=0
@@ -2398,7 +2868,7 @@ NOTE: The @t{ppsi.conf} in /etc/ folder is automatically generated from the
 @t{dot-config} file on startup, thus you will loose your changes if you
 update directly @t{ppsi.conf} in /etc/. To use custom @t{ppsi.conf}, you
 need to specify its path in dot-config using the parameter:
-CONFIG_PTP_CUSTOM.
+@t{CONFIG_PTP_CUSTOM}.
 
 @c ==========================================================================
 @node Front panel's LEDs
@@ -2447,6 +2917,113 @@ The right LED is green when a particular port is synchronized to the master.
 When a packet is transmitted or received on a port the right LED blinks orange.
 If a port is also synced then it blinks yellow instead.
 
+@c ==========================================================================
+@node Autonegotiation of extension
+@section Autonegotiation of extension (L1Sync/WR)
+
+Even though @i{White Rabbit} and @i{L1Sync} extensions are meant to achieve
+the same synchronization result and performance, on-the-wire they are not
+compatible.
+The exchange and content of the used messages are different.
+
+To avoid a need of manual re-configuration of an instance when a peer device
+changes the used extension
+(or a device with different extension support is connected),
+was introduced a mechanism for autonegotiation and discovery of
+the extension used by a peer.
+It is intended to detect and automatically select the extension for
+a particular instance based on the configuration of peer's port.
+
+If an extension is configured (@i{L1Sync}, @i{White Rabbit extension} or
+autonegotiation) it can be degraded to use standard PTP if a peer does not
+support the configured extension.
+
+In the @i{dot-config}, the autonegotiation is configured as if it were another
+extension.
+To enable it set @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} to @t{y}.
+All other @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_*} shall be disabled for
+the port/instance.
+With the autonegotiation enabled, the @i{L1Sync} will be used after the link up,
+but can be changed later depending which extension is used by a peer.
+Make sure that autonegotiation is supported by a selected profile.
+
+Configuration option @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} set to
+@t{y} enables the extension autonegotiation for instance, similar to
+the selection of extension. With this option enabled the L1Sync will be used
+after the link up, but can be changed later depending which extension is used
+by a peer.
+
+In the current release @i{HA_WR} and @i{CUSTOM} profiles support L1Sync/WR
+extension autonegotiation.
+
+@c ##########################################################################
+@node Details on extension autonegotiation
+@subsection Details on extension autonegotiation
+
+When @i{L1Sync} extension is selected then the following events can trigger
+the switch to @i{WR} extension:
+@itemize @bullet
+@item no @i{L1Sync} message received within reception of
+      N x @i{Announce} messages with WR TLV [W1]
+@item receive @i{SLAVE_PRESENT signaling} message if the link is degraded to
+      the standard PTP [W2]
+@end itemize
+
+When @i{WR} extension is selected then the following events can trigger
+the switch to @i{L1Sync} extension:
+@itemize @bullet
+@item received @i{L1Sync} signaling message [H1]
+@item reception of N x @i{Announce} messages without WR TLV
+      (degradation to standard PTP) [P1]
+@end itemize
+
+The transitions described above are summarized in the following graph.
+
+@center @image{images/dot/autonegotiation_simple, 14cm,, Simple graph of autonegotiation state transitions}
+
+By design, if both peers supports both extensions, the preference is to
+@i{L1Sync}.
+
+When it is detected that a peer uses none of the @i{WR}/@i{L1Sync} extensions,
+then the @i{L1Sync} extension is selected, but the link is degraded to the
+standard PTP.
+
+After the link-down, link-up sequence the link will start with the @i{L1Sync}
+extension.
+
+NOTE:
+It was decided that an instance with autonegotiated WR will not send
+@i{signaling} messages to its peer to notify that it supports also @i{L1Sync}
+extension.
+Such decision was taken to limit the number of messages being sent between
+peers.
+It can happen that two peers previously autonegotiated to use
+WR are connected together without a link down (e.g., as a result of a change of
+a configuration of an optical switch).
+In such case both devices will continue to use WR and think that the other does
+not support @i{L1Sync} extension.
+Fortunately, such scenario is very sophisticated and is very unlikely to happen
+in real operation.
+Even more, for such links, even before the introduction of autonegotiation,
+the WR extension will use the wrong RX/TX deltas (for an old peer) causing an
+constant time offset.
+
+@c ==========================================================================
+@node BMCA Configuration
+@section BMCA Configuration
+
+As today the WRS supports two ways how a role of a port/instance can be chosen:
+@itemize
+@item @i{External Port Configuration} -- the assignment of a role is static,
+      the role is configured in the @i{dot-config}
+@item @i{Best Master Clock Algorithm} -- automatic selection based on
+      the content of announce messages (as defined in IEEE1588-2019 standard)
+@end itemize
+
+The configuration is done by the selection of one of the options
+@t{CONFIG_PTP_OPT_BMCA_*} in @i{dot-config}.
+
+The currently selected BMCA configuration can be displayed in @t{wr_mon}.
 
 @c ############################################################################
 @node Booting with Barebox
@@ -2736,7 +3313,7 @@ The following tools and scripts are provided:
 	examples since 1998.
 
 @item ppsi_conf
-	The tool that can be used to change some of PPSi's parameters in
+        The tool that can be used to change some of PPSi's attributes in
 	runtime.
 	Some parameters that can be changed are global (e.g. @t{priority1},
 	@t{servo tracking}), other are specific for PPSi instance
@@ -2748,7 +3325,11 @@ The following tools and scripts are provided:
 	(verbosity) of PPSi, global and per instance.
 
 	For more information about supported parameters please refer to
-	PPSi's documentation or tool's help (@t{--help} parameter).
+        PPSi's documentation, tool's help (@t{--help} parameter) or
+        @ref{ppsi_conf}.
+
+        NOTE: This tool does not change @i{dot-config}!
+        All changes using this tool are lost after the reboot!
 
 @item ptpdump
 	This is a sniffer for @sc{ptp} frames. It reports all Ethernet frames
@@ -2814,9 +3395,10 @@ The following tools and scripts are provided:
 
 @item wr_mon
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
-	using the standard escape sequences for color output. Please check
-	@t{wr_mon}'s help (@t{--help} parameter) for further information.
-	(This is probably the most important diagnostic tool on the switch.)
+        using the standard escape sequences for color output.
+        For further information please check @t{wr_mon}'s help
+        (@t{--help} parameter) or @ref{wr_mon}.
+        This is probably the most important diagnostic tool on the switch.
 
 @item wr_phytool
 	A tool to read and write PHY registers in the switch.
@@ -2878,18 +3460,20 @@ The following tools and scripts are provided:
 	For details please refer to the @ref{wrs_pstats}.
 
 @item wrs_sfp_dump
-	Dump the content of SFPs internal memory. This tool can read SFP info
-	from HAL's shmem or directly from SFPs via i2c bus. Please note that
-	reading directly via i2c can cause race condition on i2c bus. The tool is not
-	recommended to be used in production.
-	The race condition can cause errors while reading SFPs memory,
-	wrong notification of LEDs, the false insert/remove SFP notifications.
+        Dump the content of SFP's internal memory and SFP monitoring parameters.
+        This tool can read SFP's information
+        from HAL's shmem or directly from SFP via i2c bus. Please note that
+        reading directly via i2c can cause race condition on i2c bus.
+        The race condition can cause SFP's memory corruption (even while only
+        reads are done to SFP's memory),
+        wrong notification of LEDs, a false insert/remove SFP notifications.
 
-	This tool can also write SFPs internal memory. This functionality can
-	be used to fix SFPs reporting i.e. wrong checksum. Use this option with
-	care.
-	
-	This tool can be used to disable TX of SFP.
+        This tool can write SFP's internal memory (EEPROM).
+        This functionality can be used to fix SFPs reporting i.e. wrong
+        checksum.
+        Use this option with care.
+
+	This tool can be used to disable TX (laser) of SFP.
 
 	For more details please refer to the tool's help.
 
@@ -2922,8 +3506,27 @@ The following tools and scripts are provided:
 	@t{-g} parameter and is also reported via SNMP in
 	@t{WR-SWITCH-MIB.txt::wrsGwWatchdogTimeouts}.
 
+@item wrsw_hal_conf
+
+        The tool that can be used to change some of HAL's attributes in
+        runtime.
+
+        For more information about supported parameters please refer to
+        tool's help (@t{--help} parameter) or @ref{wrsw_hal_conf}.
+
+        NOTE: This tool does not change @i{dot-config}!
+        All changes using this tool are lost after the reboot!
+
 @c FIXME: document rtu_stat spll_dbg_proxy
 @end table
+
+@c --------------------------------------------------------------------------
+@node ppsi_conf
+@section ppsi_conf
+@include ../userspace/ppsi/doc/ppsi_conf-manual.in
+
+        NOTE: This tool does not change @i{dot-config}!
+        All changes using this tool are lost after the reboot!
 
 @c --------------------------------------------------------------------------
 @node sdb-read
@@ -2998,6 +3601,366 @@ The following option flags are supported:
         @i{read} is used automatically, irrespective of @t{-r}.
 
 @end table
+
+@c --------------------------------------------------------------------------
+@node wr_mon
+@section wr_mon
+
+@t{wr_mon} is probably the most important diagnostic tool available on
+the White Rabbit switch.
+It is a simple monitor of the basic White Rabbit status and configuration.
+
+The tools prints every second to @i{stdout} using the standard escape sequences
+for color output.
+@t{wr_mon} reacts accordingly to the following key presses:
+@itemize 
+@item @t{c} -- Show additional information in the output
+               (marked with grey boxes in the picture representing @t{wr_mon});
+               by default some information is not displayed to reduce
+               the output size and make @t{wr_mon} to better fit the screen
+@item @t{f} -- Freezes the output, press second time to unfreeze
+@item @t{q} -- Quit @t{wr_mon}
+@item @t{r} -- Refresh the output
+@item @t{t} -- Disable/enable servo tracking, useful for hot air-gun demo
+
+@end itemize
+@center @image{images/wr_mon, 16cm,, Example wr_mon view}
+
+The list below contains the description of the different fields shown
+in @t{wr_mon}.
+Numbers in brackets (like "(1)") corresponds to the numbers in circles shown
+in @t{wr_mon} snapshot presented in this chapter.
+
+
+@itemize
+
+@item General information (1):
+      @itemize
+      @item @t{WR Switch Sync Monitor} -- Name of the tool followed with
+      the version and available actions associated with listed key presses
+      (@t{c}, @t{f}, @t{q}, @t{r}, @t{t}).
+      The version should be identical with the firmware version reported
+      by @t{wrs_version} tool.
+
+      @item @t{WR time (TAI)} -- Current TAI time used as time reference for WR
+      @item @t{Leap seconds} -- Current number of @i{Leap Seconds}
+      @item @t{Switch time (UTC)} -- Local time on WR Switch.
+            Usually differs from TAI with a number of @i{Leap seconds}
+      @item @t{TAI-UTC} -- Difference of TAI and UTC time.
+            Usually almost equal to WR (TAI) time
+      @end itemize
+@item Global PTP parameters (2):
+      @itemize
+      @item @t{PLL mode} -- Indicates the current timing mode of the Soft PLL,
+            it is not the intended @i{Timing Mode} configured in
+            the @t{dot-config} file.
+            As a consequence, a GM or BC switch will show the @t{Timing Mode}
+            to be @t{FR} (free running) until it locks to the source of time,
+            i.e. input 10MHz & 1PPS or Slave port, respectively.
+      @item @t{PLL locking state} -- Indicates the lock status of the Soft PLL.
+      @item @t{BMCA} -- Shows the used @i{Best Master Clock Algorithm} (BMCA) or
+            configured @i{external port configuration}.
+      @item @t{domain} -- Shows the used PTP @i{domain}.
+      @end itemize
+@item Additional global PTP parameters, showed after @t{c} is pressed.
+      Marked with the top grey box (3):
+      @itemize
+      @item @t{local clockId} -- @i{clockId} used by this WR switch;
+            if @t{wr_mon} is run on a Grand Master switch, other devices will
+            show this value as @i{Grand Maser Id}
+      @item @t{clockClass} -- @i{clockClass} of a local clock
+      @item @t{clockAccuracy} -- @i{clockAccuracy} of a local clock
+      @item @t{logVar} -- @i{offsetScaledLogVariance} of a local clock
+      @item @t{prio1} -- @i{priority1} of a local clock
+      @item @t{prio2} -- @i{priority2} of a local clock
+      @end itemize
+@item Detailed information about the used @i{Grand Master} (4).
+      This table contains information about the local clock if no better
+      remote clock is available (in such case @t{stepsRemoved} is equal to
+      @t{0th hop}).
+      @itemize
+      @item @t{Grand Master Id} -- @i{clockId} of the best clock currently
+            available (remote or local)
+      @item @t{stepsRemoved} -- number of hops to the used best clock
+            (0 if the local clock is used)
+      @item @t{clockClass} -- @i{clockClass} of the best clock currently
+            available (remote or local)
+      @item @t{timeSource} -- @i{timeSource} of the best clock currently
+            available (remote or local)
+      @item @t{accuracy} -- @i{clockAccuracy} of the best clock currently
+            available (remote or local)
+      @item @t{logVar} -- @i{offsetScaledLogVariance} of the best clock
+            currently available (remote or local)
+      @end itemize
+@end itemize
+The next discussed table contains the detailed information for each instance.
+Please note that there can be none or more than one instance on a port:
+@itemize
+@item @b{HAL} -- Information related to @t{wrsw_hal}
+      (marked with yellow box (5))
+      @itemize
+      @item @t{Iface} -- Contains the details about the interface/port.
+            If the terminal supports colors, ports that have established
+            connection are displayed with a green font, otherwise with red.
+            @itemize
+            @item @t{+}/@t{-} -- Indicates if the plugged SFP to a particular
+                  port is matched to the SFPs database entry
+            @item @t{*} -- To provide the same information for terminals that
+                  do not support colors, ports that don't have an established
+                  link have a star in front of interface's name.
+            @item @t{wri@i{XX}} -- Name of the interface used by an instance
+            @end itemize
+      @item @t{Freq} -- Value @t{Lock} indicates that PLL is locked to this
+            port.
+      @end itemize
+@item @b{PPSI} -- Information related to the configuration and status of PTP
+      (marked with two purple boxes (6))
+      @itemize
+      @item @t{Inst} -- PTP instance number, there can be more than one instance
+            running on a port.
+      @item @t{Name} -- PTP instance name, mostly for monitoring purposes
+      @item @t{Config} -- Configured role of a port. Can have values: @i{auto},
+            @i{masterOnly} or a desired role if an
+            @i{external port configuration} is used
+      @item @t{MAC of peer port} -- MAC address of a peer port
+      @item @t{PTP/EXT/PDETECT states} Provides runtime status information about
+            an instance.
+            It contains three main parts separated with slash character (@t{/}):
+            @itemize
+            @item @t{PTP} -- Indicates the PTP state of a given port
+                  (@i{master}/@i{slave}/@i{disabled} etc.), as established by
+                  Best Master Clock Algorithm, or configured via
+                  @i{external port configuration}.
+                  Note that ports which are down (not connected) are always
+                  placed in @i{DISABLED} state.
+            @item @t{EXT} -- Indicates the currently used extension
+                  (@t{WR} for @i{White Rabbit} or @t{L1} for @i{L1sync}) and
+                  its state.
+            @item @t{PDETECT} -- Indicates the state of a state machine that
+                  governs the detection of extensions.
+                  It is @t{WA_MSG} when a e.g. WR link is being established;
+                  @t{EXT_ON} when it is successfully established;
+                  @t{EXT_OFF} when failed to use configured extension.
+            @end itemize
+      @item @t{PrConf} -- This heavily packed field contains information about
+            the configuration of an instance. It contains several subfields:
+            @itemize 
+            @item The first letter reflects the configured protocol for PTP.
+                  It can be one of:
+                  @itemize
+                  @item @t{R} -- Ethernet
+                  @item @t{U} -- UDP
+                  @item @t{V} -- Ethernet over VLAN
+                  @end itemize
+            @item The second and the third letter inform about the configured
+                  extension:
+                  @itemize
+                  @item @t{l-} -- @i{L1Sync} extension is configured
+                  @item @t{-w} -- @i{White Rabbit} extension is configured.
+                  @item @t{lw} -- Both @i{L1Sync} and @i{White Rabbit}
+                        extensions are configured. In this configuration
+                        the currently used extension is selected with
+                        the autonegotiation feature
+                        (more in @ref{Autonegotiation of extension})
+                        and its corresponding letter is highlighted with green
+                        color.
+                        Additionally, the selected extension is reflected in
+                        the @t{EXT} part of the previous column.
+                  @end itemize
+            @end itemize
+      @item @t{VLANs} -- VLAN ID used by a PTP instance
+      @end itemize
+@item Additionally in the @b{PPSI} part there are extra PTP parameters specific
+      for port/instance that are showed after @t{c} is pressed
+      (grey box (7), in the right part of the picture showing @t{wr_mon}):
+      @itemize
+      @item @t{annI} -- Configured mean time interval between successive
+            send of PTP @i{Announce} messages (@i{logAnnounceInterval}).
+            The value is represented as the logarithm to the base 2.
+            Used by a port in @i{master} state.
+      @item @t{syncI} -- Configured mean time interval between successive
+            send of PTP @i{Sync} messages (@i{logSyncInterval}).
+            The value is represented as the logarithm to the base 2.
+            Used by a port in @i{master} state.
+      @item @t{delReqI} -- Configured mean time interval between successive
+            send of PTP @i{Delay_Req} messages (@i{logMinDelayReqInterval}).
+            Please note that according to the IEEE1588-2019 standard this value
+            on slave ports is updated with the value received in
+            @i{logMessageInterval} field of the @i{Delay_Resp} messages.
+
+            The value is represented as the logarithm to the base 2.
+      @item @t{pdelReqI} -- Configured mean time interval between successive
+            send of PTP @i{Pdelay_Req} messages (@i{logMinPDelayReqInterval}).
+            The value is represented as the logarithm to the base 2.
+      @end itemize
+@item Description of the used abbreviations (8).
+      Abbreviations marked with a grey box appear after @t{c} key is pressed.
+@item @t{Synchronization status} (9) -- Servo status and timing parameters.
+      @itemize
+      @item @t{Servo state} -- Includes which port is used as a source of
+            synchronization (e.g., @t{wri1});
+            information if extension is used (@t{White-Rabbit} or @t{L1Sync})
+            or standard PTP;
+            and the state of the servo (e.g., @t{TRACK_PHASE})
+      @end itemize
+@item @t{Timing parameters} (10) -- Timing parameters of the Servo.
+      Some of the parameters are displayed depending if and which extension is
+      used.
+      @itemize
+      @item @t{meanDelay} -- Average of the delay between Master to Slave and
+            Slave to Master (both ways).
+            If @t{delayCoefficient} (alpha) is set to 0 (no link asymmetry),
+            delays in both directions are equal.
+            In such case @t{meanDelay} is equal @t{DelayMS}.
+            @t{meanDelay} reflects the delay only on a part of a link that is
+            affected by @t{delayCoefficient} (alpha).
+            This value does not include @t{ingressLatency} nor
+            @t{egressLatency}.
+      @item @t{DelayMS} -- Delay between Master and Slave (one way).
+            This value does not include @t{ingressLatency} nor
+            @t{egressLatency}.
+      @item @t{DelayMM} -- Delay from Master to Slave and from Slave to Master.
+            (both ways).
+            Also known as @i{round-trip delay}.
+            This value includes @t{ingressLatency} and @t{egressLatency} of
+            both peers.
+      @item @t{delayAsymmetry} -- Difference in @i{ns} between the delay from
+            Master to Slave and Slave to Master.
+      @item @t{delayCoefficient} -- Also known as @i{alpha}.
+            This value is a relative difference between the transmission times
+            in the two directions.
+            This is a unit-less value which depends on the used medium and
+            transceivers (SFPs).
+            It is taken from the database of fibers in dot-config based on the
+            matched SFPs configuration.
+            This value can be calculated as
+            @math{\alpha = (Delay_{MS} - Delay_{SM})/Delay_{SM}}.
+            @math{\alpha} is usually determined during the calibration
+            procedure, then in runtime it is used to find the asymmetry of
+            the used medium (e.g., fiber).
+
+            Please note that, when SFPs are swapped between Master and Slave
+            (i.e., RX and TX wavelengths are swapped), not only the sign of
+            alpha will change (which is expected), but also numerical value
+            will change. In other words: @math{\alpha_{MS} != -\alpha_{SM}}.
+            The correct relation between @math{\alpha_{MS}} and
+            @math{\alpha_{SM}} is:
+            @math{\alpha_{SM} = -\alpha_{MS}/(1+\alpha_{MS})}.
+
+      @item @t{ingressLatency} -- Ingress latency on slave port, i.e.,
+            RX latency introduced by hardware/FPGA delays,
+            see IEEE1588-2019, section 8.2.16.3.
+            This latency includes any correction from the SFP's database and
+            excludes the bitslide (@t{semistaticLatency}).
+      @item @t{egressLatency} --  Egress latency  on slave port, i.e.,
+            TX latency introduced by hardware/FPGA delays,
+            see IEEE1588-2019, section 8.2.16.2.
+            This latency includes any correction from the SFP's database,
+            bitslide is not present on TX.
+      @item @t{semistaticLatency} -- Bitslide value.
+            Thanks to @i{LPDC} on ports 1-12 it is always equal to 0.
+      @item @t{offsetFromMaster} -- Offset between of a local and master clock;
+            if this value is not zero then local servo adjusts the offset.
+      @item @t{Phase setpoint} -- Phase offset between the RX clock recovered
+            from the slave port and the WR clock,
+            i.e., WR clock is syntonized to the RX clock with a programmable
+            phase offset which is the phase setpoint.
+      @item @t{Skew} -- Value calculated by the PTP servo which is
+            the difference between the time of the WR device that is the master
+            and the time of this slave WR device that is synchronized to
+            the master (PTP servo aims at making this value zero).
+      @item @t{Estimated link len} -- The estimated link length between master
+            and slave.
+            @b{Please note this is only an estimation}!
+            This value is intended to give only a general overview of the used
+            fiber.
+            This value proved to be useful especially in the lab to know
+            the estimated length of a fiber that was partly not accessible.
+
+            The calculation of this value uses the fixed speed of light in the
+            medium.
+            The speed of light in the fiber depends on factors like
+            used wavelength and fiber type.
+      @item @t{Update counter} -- Number of servo updates since the link was
+            established.
+      @item @t{Master PHY delays TX} -- This is the peer's Master port
+            @t{egressLatency}
+            (already includes SFPs TX delay used in peer's port).
+      @item @t{Master PHY delays RX} -- This is a sum of the peer's Master port
+            @t{ingressLatency}
+            (already includes SFPs RX delay used in peer's port)
+            and its bitslide (@t{semistaticLatency}).
+      @item @t{Slave PHY delay TX} -- This is @t{egressLatency} on the slave
+            port of this device
+            (already includes SFPs TX delay used in a slave port).
+      @item @t{Slave PHY delay RX} -- This is a sum of @t{ingressLatency}
+            (already includes SFPs RX delay used in a slave port)
+            and the bitslide (@t{semistaticLatency}) on the slave port of this
+            device.
+      @item @t{err state} -- Number of servo executions when servo was not in
+            @t{TRACK_PHASE} state.
+            It is normal that this value increases during
+            synchronization process, but once the devices are synchronized it
+            shall remain constant.
+            This value can be used to check if the link was synchronized
+            continuously between checks.
+      @item @t{err offset} -- Number of servo executions when
+            @t{offsetFromMaster} was not within 500ps.
+            It is normal that this value increases during
+            synchronization process, but once the devices are synchronized it
+            shall remain constant.
+            This value can be used to check if the link was synchronized
+            continuously between checks.
+      @item @t{err delta} -- Number of servo executions when
+            the @t{delayMM} changed more than 1ns form the previous run of servo.
+            It is normal that this value increases during
+            synchronization process, but once the devices are synchronized it
+            shall remain constant.
+            This value can be used to check if the link was synchronized
+            continuously between checks.
+      @end itemize
+@item @t{Temperatures} (11) -- Temperatures reported by installed sensors
+      (in degrees Celsius):
+      @itemize
+      @item @t{FPGA} -- Sensor located under FPGA on the SCB board.
+      @item @t{PLL} -- Sensor located close to the PLL chip on the SCB board.
+      @item @t{PSL} -- Sensor located on the left side of the mini-backplane.
+      @item @t{PSR} -- Sensor located on the right side of the mini-backplane
+            (closer to the power supply).
+      @end itemize
+@end itemize
+
+@c After "c" key is pressed some additional information appears in wr_mon
+@c (marked with grey boxes in the picture above).
+@c This includes:
+@c @itemize
+@c @item Global PTP parameters (in the top part of the picture):
+@c       @itemize
+@c       @item @t{local ClockId}
+@c       @item @t{clockClass}
+@c       @item @t{clockAccuracy}
+@c       @item @t{logVar} -- @i{offsetScaledLogVariance}
+@c       @item @t{prio1} -- @i{priority1}
+@c       @item @t{prio2} -- @i{priority2}
+@c       @end itemize
+@c @item PTP parameters specific for port/instance (in the right part of
+@c       the picture):
+@c       @itemize
+@c       @item @t{annI} -- Configured mean time interval between successive
+@c                         send of PTP @i{Announce} messages
+@c                         (@i{logAnnounceInterval}).
+@c                         Used by a port in @i{master} state.
+@c       @item @t{syncI} -- Configured mean time interval between successive
+@c                         send of PTP @i{Sync} messages (@i{logSyncInterval}).
+@c                         Used by a port in @i{master} state.
+@c       @item @t{delReqI} -- @i{logMinDelayReqInterval}
+@c       @item @t{pdelReqI} -- @i{logMinPDelayReqInterval}
+@c       @end itemize
+@c @item Explanation of the columns' names (in the middle of the picture)
+@c @end itemize
+
+For more detailed list of parameters and their values, please use
+@t{wrs_dump_shmem} tool.
 
 @c --------------------------------------------------------------------------
 @node wrs_auxclk
@@ -3228,6 +4191,22 @@ with these parameters:
 
 @b{Note:} The above operation is not atomic, i.e. the configuration will be
 applied to one port at a time.
+
+@c --------------------------------------------------------------------------
+@node wrsw_hal_conf
+@section wrsw_hal_conf
+The @t{wrsw_hal_conf} tool that can be used to change some of HAL's attributes
+in runtime.
+It uses IPC mechanism to pass change requests to the @t{HAL} daemon.
+@c The tool can take several parameters, but in the current implementation
+@c the changes are not done atomically.
+
+List of supported parameters:
+
+@table @t
+@item --gm-pps-in-out-offset=<offset_ps>
+      set the offset between PPS-in and PPS-out when in GM mode
+@end table
 
 @c ##########################################################################
 @node SNMP Support

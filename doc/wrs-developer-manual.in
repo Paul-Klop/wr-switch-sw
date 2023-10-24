@@ -252,8 +252,8 @@ is installed.
 Similarly, the scripts are likely to fail if spaces are used in directory
 names; that is because not all uses of shell variables are properly quoted.
 
-The supported build environment is Ubuntu 18.04 LTS or Ubuntu 20.04 LTS
-@footnote{It is known that the build fails on Ubuntu 22.04 LTS}.
+The supported build environment is Ubuntu 18.04 LTS, Ubuntu 20.04 LTS and
+Ubuntu 22.04 LTS.
 Success reports about other environments (any other a native GNU/Linux system
 or cygwin) are welcome, possibly with associated patches.
 
@@ -738,8 +738,8 @@ To use the same compiler the scripts use, you need this setting (which is split
 in two lines with a local variable to fit the page with in documentation):
 
 @smallexample
-   BR=${WRS_OUTPUT_DIR}/build/buildroot-2016.02
-   export CROSS_COMPILE=${BR}/output/host/usr/bin/arm-linux-
+   BR=$WRS_OUTPUT_DIR/build/buildroot-2016.02
+   export CROSS_COMPILE=$BR/output/host/usr/bin/arm-linux-
 @end smallexample
 
 @c --------------------------------------------------------------------------

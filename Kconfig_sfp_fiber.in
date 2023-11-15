@@ -5,9 +5,9 @@ config N_SFP_ENTRIES
 	range 0  18
 	default  6
 	help
-	This parameter defines the number of SFP entries
-	that can be set in the configuration database
-	Increase this number to add a new SFP entry.
+	  This parameter defines the number of SFP entries
+	  that can be set in the configuration database
+	  Increase this number to add a new SFP entry.
 
 menu "SFPs configuration DB"
 
@@ -16,378 +16,378 @@ config SFP00_PARAMS
 	depends on  N_SFP_ENTRIES=1 || N_SFP_ENTRIES=2 || N_SFP_ENTRIES=3 || N_SFP_ENTRIES=4 || N_SFP_ENTRIES=5 || N_SFP_ENTRIES=6 || N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default "vn=Axcen Photonics,pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP01_PARAMS
 	string "Parameters for SFP 1"
 	depends on  N_SFP_ENTRIES=2 || N_SFP_ENTRIES=3 || N_SFP_ENTRIES=4 || N_SFP_ENTRIES=5 || N_SFP_ENTRIES=6 || N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default "vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1490+1310"
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP02_PARAMS
 	string "Parameters for SFP 2"
 	depends on  N_SFP_ENTRIES=3 || N_SFP_ENTRIES=4 || N_SFP_ENTRIES=5 || N_SFP_ENTRIES=6 || N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default "vn=APAC Opto,pn=LS38-C3S-TC-N-B9,tx=761,rx=557,wl_txrx=1310+1490"
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP03_PARAMS
 	string "Parameters for SFP 3"
 	depends on  N_SFP_ENTRIES=4 || N_SFP_ENTRIES=5 || N_SFP_ENTRIES=6 || N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default "vn=APAC Opto,pn=LS48-C3S-TC-N-B4,tx=-29,rx=507,wl_txrx=1490+1310"
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP04_PARAMS
 	string "Parameters for SFP 4"
 	depends on  N_SFP_ENTRIES=5 || N_SFP_ENTRIES=6 || N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default "vn=ZyXEL,pn=SFP-BX1490-10-D,tx=0,rx=0,wl_txrx=1490+1310"
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP05_PARAMS
 	string "Parameters for SFP 5"
 	depends on  N_SFP_ENTRIES=6 || N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default "vn=ZyXEL,pn=SFP-BX1310-10-D,tx=0,rx=0,wl_txrx=1310+1490"
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP06_PARAMS
 	string "Parameters for SFP 6"
 	depends on  N_SFP_ENTRIES=7 || N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP07_PARAMS
 	string "Parameters for SFP 7"
 	depends on  N_SFP_ENTRIES=8 || N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP08_PARAMS
 	string "Parameters for SFP 8"
 	depends on  N_SFP_ENTRIES=9 || N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP09_PARAMS
 	string "Parameters for SFP 9"
 	depends on  N_SFP_ENTRIES=10 || N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP10_PARAMS
 	string "Parameters for SFP 10"
 	depends on  N_SFP_ENTRIES=11 || N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP11_PARAMS
 	string "Parameters for SFP 11"
 	depends on  N_SFP_ENTRIES=12 || N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP12_PARAMS
 	string "Parameters for SFP 12"
 	depends on  N_SFP_ENTRIES=13 || N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP13_PARAMS
 	string "Parameters for SFP 13"
 	depends on  N_SFP_ENTRIES=14 || N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP14_PARAMS
 	string "Parameters for SFP 14"
 	depends on  N_SFP_ENTRIES=15 || N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP15_PARAMS
 	string "Parameters for SFP 15"
 	depends on  N_SFP_ENTRIES=16 || N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP16_PARAMS
 	string "Parameters for SFP 16"
 	depends on  N_SFP_ENTRIES=17 || N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 config SFP17_PARAMS
 	string "Parameters for SFP 17"
 	depends on  N_SFP_ENTRIES=18
 	default ""
 	help
-	This parameter, and the following ones, are used to
-	configure the timing parameters of a specific SFP
-	transceiver. The transceiver name is autodected for each port
-	in the White Rabbit Switch, and you need one configuration
-	entry for each transceiver type that is installed in your
-	device.
-	vn (optional) - Vendor Name of an SFP
-	pn - Part Number of an SFP
-	vs (optional) - Vendor Serial (serial number) of an SFP
-	tx - TX delay of an SFP
-	rx - RX delay of an SFP
-	wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
-	for example wl_txrx=1490+1310
-	To set a new SFP entry, increment the parameter 
-	"Number of SFP entries in SFP configuration DB" in the upper menu.
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  transceiver. The transceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each transceiver type that is installed in your
+	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by + with Rx wavelength of an SFP;
+	  for example wl_txrx=1490+1310
+	  To set a new SFP entry, increment the parameter
+	  "Number of SFP entries in SFP configuration DB" in the upper menu.
 
 endmenu
 
@@ -396,9 +396,9 @@ config N_FIBER_ENTRIES
 	range 0  18
 	default  4
 	help
-	This parameter defines the number of fiber entries
-	that can be set in the configuration database
-	Increase this number to add a new fiber entry.
+	  This parameter defines the number of fiber entries
+	  that can be set in the configuration database
+	  Increase this number to add a new fiber entry.
 
 menu "Fibers configuration DB"
 
@@ -407,270 +407,270 @@ string "Parameters for fiber type 0"
 	depends on  N_FIBER_ENTRIES=1 || N_FIBER_ENTRIES=2 || N_FIBER_ENTRIES=3 || N_FIBER_ENTRIES=4 || N_FIBER_ENTRIES=5 || N_FIBER_ENTRIES=6 || N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default "alpha_1310_1490=2.6787e-04"
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER01_PARAMS
 string "Parameters for fiber type 1"
 	depends on  N_FIBER_ENTRIES=2 || N_FIBER_ENTRIES=3 || N_FIBER_ENTRIES=4 || N_FIBER_ENTRIES=5 || N_FIBER_ENTRIES=6 || N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default "alpha_1310_1490=2.6787e-04"
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER02_PARAMS
 string "Parameters for fiber type 2"
 	depends on  N_FIBER_ENTRIES=3 || N_FIBER_ENTRIES=4 || N_FIBER_ENTRIES=5 || N_FIBER_ENTRIES=6 || N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default "alpha_1310_1490=2.6787e-04"
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER03_PARAMS
 string "Parameters for fiber type 3"
 	depends on  N_FIBER_ENTRIES=4 || N_FIBER_ENTRIES=5 || N_FIBER_ENTRIES=6 || N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default "alpha_1310_1490=2.6787e-04"
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER04_PARAMS
 string "Parameters for fiber type 4"
 	depends on  N_FIBER_ENTRIES=5 || N_FIBER_ENTRIES=6 || N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER05_PARAMS
 string "Parameters for fiber type 5"
 	depends on  N_FIBER_ENTRIES=6 || N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER06_PARAMS
 string "Parameters for fiber type 6"
 	depends on  N_FIBER_ENTRIES=7 || N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER07_PARAMS
 string "Parameters for fiber type 7"
 	depends on  N_FIBER_ENTRIES=8 || N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER08_PARAMS
 string "Parameters for fiber type 8"
 	depends on  N_FIBER_ENTRIES=9 || N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER09_PARAMS
 string "Parameters for fiber type 9"
 	depends on  N_FIBER_ENTRIES=10 || N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER10_PARAMS
 string "Parameters for fiber type 10"
 	depends on  N_FIBER_ENTRIES=11 || N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER11_PARAMS
 string "Parameters for fiber type 11"
 	depends on  N_FIBER_ENTRIES=12 || N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER12_PARAMS
 string "Parameters for fiber type 12"
 	depends on  N_FIBER_ENTRIES=13 || N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER13_PARAMS
 string "Parameters for fiber type 13"
 	depends on  N_FIBER_ENTRIES=14 || N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER14_PARAMS
 string "Parameters for fiber type 14"
 	depends on  N_FIBER_ENTRIES=15 || N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER15_PARAMS
 string "Parameters for fiber type 15"
 	depends on  N_FIBER_ENTRIES=16 || N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER16_PARAMS
 string "Parameters for fiber type 16"
 	depends on  N_FIBER_ENTRIES=17 || N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 config FIBER17_PARAMS
 string "Parameters for fiber type 17"
 	depends on  N_FIBER_ENTRIES=18
 	default ""
 	help
-	This parameter specify the physical features of used fiber type.
-	Specify the alpha value for each pair of used wavelengths.
-	This parameter follows a format:
-	alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
-	where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
-	1.23e-04, 4.56e-04 are alpha values to be used for particular
-	wavelengths.
-	To set a new fiber entry, increment the parameter 
-	"Number of fiber entries in fiber configuration DB" in the upper menu.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths.
+	  To set a new fiber entry, increment the parameter
+	  "Number of fiber entries in fiber configuration DB" in the upper menu.
 
 endmenu
 

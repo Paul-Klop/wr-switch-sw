@@ -41,9 +41,9 @@ function print_sfp_header() {
 	echo -e "\trange 0  $maxSfp" >>$OUTPUT_FILE
 	echo -e "\tdefault  $nbSfp" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
-	echo -e "\tThis parameter defines the number of SFP entries" >>$OUTPUT_FILE
-	echo -e "\tthat can be set in the configuration database" >>$OUTPUT_FILE
-	echo -e "\tIncrease this number to add a new SFP entry." >>$OUTPUT_FILE
+	echo -e "\t  This parameter defines the number of SFP entries" >>$OUTPUT_FILE
+	echo -e "\t  that can be set in the configuration database" >>$OUTPUT_FILE
+	echo -e "\t  Increase this number to add a new SFP entry." >>$OUTPUT_FILE
 	
 	echo -e "\nmenu \"SFPs configuration DB\"" >>$OUTPUT_FILE
 
@@ -65,21 +65,21 @@ function print_sfp_entry() {
 	echo -e "\tdepends on $depends" >>$OUTPUT_FILE
 	echo -e "\tdefault \"${sfp_params[$idSfp]}\"" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
-	echo -e "\tThis parameter, and the following ones, are used to" >>$OUTPUT_FILE
-	echo -e "\tconfigure the timing parameters of a specific SFP" >>$OUTPUT_FILE
-	echo -e "\ttransceiver. The transceiver name is autodected for each port" >>$OUTPUT_FILE
-	echo -e "\tin the White Rabbit Switch, and you need one configuration" >>$OUTPUT_FILE
-	echo -e "\tentry for each transceiver type that is installed in your" >>$OUTPUT_FILE
-	echo -e "\tdevice." >>$OUTPUT_FILE
-	echo -e "\tvn (optional) - Vendor Name of an SFP" >>$OUTPUT_FILE
-	echo -e "\tpn - Part Number of an SFP" >>$OUTPUT_FILE
-	echo -e "\tvs (optional) - Vendor Serial (serial number) of an SFP" >>$OUTPUT_FILE
-	echo -e "\ttx - TX delay of an SFP" >>$OUTPUT_FILE
-	echo -e "\trx - RX delay of an SFP" >>$OUTPUT_FILE
-	echo -e "\twl_txrx - Tx wavelength separated by "+" with Rx wavelength of an SFP;" >>$OUTPUT_FILE
-	echo -e "\tfor example wl_txrx=1490+1310" >>$OUTPUT_FILE
-	echo -e "\tTo set a new SFP entry, increment the parameter "  >>$OUTPUT_FILE
-	echo -e "\t\"Number of SFP entries in SFP configuration DB\" in the upper menu."  >>$OUTPUT_FILE	 
+	echo -e "\t  This parameter, and the following ones, are used to" >>$OUTPUT_FILE
+	echo -e "\t  configure the timing parameters of a specific SFP" >>$OUTPUT_FILE
+	echo -e "\t  transceiver. The transceiver name is autodected for each port" >>$OUTPUT_FILE
+	echo -e "\t  in the White Rabbit Switch, and you need one configuration" >>$OUTPUT_FILE
+	echo -e "\t  entry for each transceiver type that is installed in your" >>$OUTPUT_FILE
+	echo -e "\t  device." >>$OUTPUT_FILE
+	echo -e "\t  vn (optional) - Vendor Name of an SFP" >>$OUTPUT_FILE
+	echo -e "\t  pn - Part Number of an SFP" >>$OUTPUT_FILE
+	echo -e "\t  vs (optional) - Vendor Serial (serial number) of an SFP" >>$OUTPUT_FILE
+	echo -e "\t  tx - TX delay of an SFP" >>$OUTPUT_FILE
+	echo -e "\t  rx - RX delay of an SFP" >>$OUTPUT_FILE
+	echo -e "\t  wl_txrx - Tx wavelength separated by "+" with Rx wavelength of an SFP;" >>$OUTPUT_FILE
+	echo -e "\t  for example wl_txrx=1490+1310" >>$OUTPUT_FILE
+	echo -e "\t  To set a new SFP entry, increment the parameter"  >>$OUTPUT_FILE
+	echo -e "\t  \"Number of SFP entries in SFP configuration DB\" in the upper menu."  >>$OUTPUT_FILE
 	 
 } 
 
@@ -97,9 +97,9 @@ function print_fiber_header() {
 	echo -e "\trange 0  $maxFiber" >>$OUTPUT_FILE
 	echo -e "\tdefault  $nbFiber" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
-	echo -e "\tThis parameter defines the number of fiber entries" >>$OUTPUT_FILE
-	echo -e "\tthat can be set in the configuration database" >>$OUTPUT_FILE
-	echo -e "\tIncrease this number to add a new fiber entry." >>$OUTPUT_FILE
+	echo -e "\t  This parameter defines the number of fiber entries" >>$OUTPUT_FILE
+	echo -e "\t  that can be set in the configuration database" >>$OUTPUT_FILE
+	echo -e "\t  Increase this number to add a new fiber entry." >>$OUTPUT_FILE
 	
 
 	echo -e "\nmenu \"Fibers configuration DB\"" >>$OUTPUT_FILE
@@ -122,15 +122,15 @@ function print_fiber_entry() {
 	echo -e "\tdepends on $depends" >>$OUTPUT_FILE
 	echo -e "\tdefault \"${fiber_params[$idFiber]}\"" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
-	echo -e "\tThis parameter specify the physical features of used fiber type."  >>$OUTPUT_FILE
-	echo -e "\tSpecify the alpha value for each pair of used wavelengths."  >>$OUTPUT_FILE
-	echo -e "\tThis parameter follows a format:"  >>$OUTPUT_FILE
-	echo -e "\talpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,..."  >>$OUTPUT_FILE
-	echo -e "\twhere XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,"  >>$OUTPUT_FILE
-	echo -e "\t1.23e-04, 4.56e-04 are alpha values to be used for particular"  >>$OUTPUT_FILE
-	echo -e "\twavelengths."  >>$OUTPUT_FILE	 
-	echo -e "\tTo set a new fiber entry, increment the parameter "  >>$OUTPUT_FILE
-	echo -e "\t\"Number of fiber entries in fiber configuration DB\" in the upper menu."  >>$OUTPUT_FILE	 
+	echo -e "\t  This parameter specify the physical features of used fiber type."  >>$OUTPUT_FILE
+	echo -e "\t  Specify the alpha value for each pair of used wavelengths."  >>$OUTPUT_FILE
+	echo -e "\t  This parameter follows a format:"  >>$OUTPUT_FILE
+	echo -e "\t  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,..."  >>$OUTPUT_FILE
+	echo -e "\t  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,"  >>$OUTPUT_FILE
+	echo -e "\t  1.23e-04, 4.56e-04 are alpha values to be used for particular"  >>$OUTPUT_FILE
+	echo -e "\t  wavelengths."  >>$OUTPUT_FILE
+	echo -e "\t  To set a new fiber entry, increment the parameter"  >>$OUTPUT_FILE
+	echo -e "\t  \"Number of fiber entries in fiber configuration DB\" in the upper menu."  >>$OUTPUT_FILE
 } 
 
 function print_fiber_footer() { 

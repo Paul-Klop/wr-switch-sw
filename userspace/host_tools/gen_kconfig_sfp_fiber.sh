@@ -63,7 +63,7 @@ function print_sfp_entry() {
 		depends="$depends N_SFP_ENTRIES=$i"
 	done
 	echo -e "\tdepends on $depends" >>$OUTPUT_FILE
-	echo -e "\tdefault \"${sfp_params[$idSfp]]}\"" >>$OUTPUT_FILE
+	echo -e "\tdefault \"${sfp_params[$idSfp]}\"" >>$OUTPUT_FILE
 	echo -e "\thelp"  >>$OUTPUT_FILE
 	echo -e "\tThis parameter, and the following ones, are used to" >>$OUTPUT_FILE
 	echo -e "\tconfigure the timing parameters of a specific SFP" >>$OUTPUT_FILE

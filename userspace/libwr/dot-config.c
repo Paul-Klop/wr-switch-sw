@@ -249,7 +249,7 @@ static int libwr_cfg_read_kconfig(struct kc **all_configs,
 			}
 		} else {
 			// In help section
-			if ( indentation>=helpIndentation )
+			if (indentation > helpIndentation)
 				continue; // Still in help section
 			helpIndentation=-1; // Exiting help section
 		}

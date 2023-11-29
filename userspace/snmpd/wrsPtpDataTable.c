@@ -188,7 +188,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					1 + wrh_servo->tracking_enabled;
 
 					/* wrsPtpSyncSource */
-					// TODO
+					tmp_name = (char *) wrs_shm_follow(ppsi_head, ppsi_i->iface_name);
+					strncpy(ptp_a[si].wrsPtpSyncSource, tmp_name, 12);
+					ptp_a[si].wrsPtpSyncSource[31] = '\0';
 
 					/* wrsPtpSkew */
 					ptp_a[si].wrsPtpSkew =

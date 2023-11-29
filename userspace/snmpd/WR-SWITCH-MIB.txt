@@ -33,6 +33,7 @@ wrSwitchMIB MODULE-IDENTITY
          - wrsPtpInstanceExtensionCfg
         Improved description of:
          - wrsPtpRTT
+         - wrsPtpLinkLength
         "
 
     REVISION     "202303260000Z"
@@ -2116,7 +2117,9 @@ wrsPtpLinkLength OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Estimated fiber length, from master-to-slave delay, in meters"
+            "Estimated fiber length, for master-to-slave delay, in meters.
+            Note: this value is only an estimation, it does not take into
+            account the use of different wavelengths."
     ::= { wrsPtpDataEntry 14 }
 
 wrsPtpServoUpdates OBJECT-TYPE

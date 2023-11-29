@@ -158,11 +158,6 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				ptp_a[si].wrsPtpClockOffsetPsHR =
 				int_saturate(ptp_a[si].wrsPtpClockOffsetPs);
 
-				/* wrsPtpLinkLength */
-				ptp_a[si].wrsPtpLinkLength =
-				(uint32_t)(pp_time_to_picos(&ppsi_servo->delayMS)
-				/1e12 * 300e6 / 1.55);
-
 				/* wrsPtpServoUpdates */
 				ptp_a[si].wrsPtpServoUpdates =
 				ppsi_servo->update_count;
@@ -193,6 +188,17 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 						wr_servo   = NULL;
 						wrh_servo  = &l1e_d->servo;
 					}
+
+					/* wrsPtpLinkLength */
+					/* crtt / 2 * c / ri
+					c = 299792458 - speed of light in m/s
+					ri = 1.4682 - refractive index for fiber g.652. However,
+						    experimental measurements using long (~5km) and
+						    short (few m) fibers gave a value 1.4688.
+						    For different wavelengths this value will be different
+						    Please note that this value is just an estimation.
+					*/
+					ptp_a[si].wrsPtpLinkLength = wrh_servo->delayMM_ps / 2 / 1e6 * 299.792458 / 1.4688;
 
 					/* wrsPtpPhaseTracking */
 					ptp_a[si].wrsPtpPhaseTracking =

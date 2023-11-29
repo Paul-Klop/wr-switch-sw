@@ -47,6 +47,7 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	struct pp_instance *ppsi_i;
 	struct pp_servo *ppsi_servo;
 	struct wr_data *wr_d;
+	struct l1e_data *l1e_d;
 	struct wr_servo_ext *wr_servo;
 	struct wrh_servo_t *wrh_servo;
 	char *tmp_name;
@@ -176,12 +177,22 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 				ppsi_i->protocol_extension;
 
 				/******** from extensions-specific ************/
-				if (ppsi_i->protocol_extension == PPSI_EXT_WR) {
-					wr_d       = (struct wr_data *)
-							wrs_shm_follow(ppsi_head,
-							ppsi_i->ext_data);
-					wr_servo   = &wr_d->servo_ext;
-					wrh_servo  = &wr_d->servo;
+				if (ppsi_i->protocol_extension == PPSI_EXT_WR
+				    || ppsi_i->protocol_extension == PPSI_EXT_L1S) {
+					if (ppsi_i->protocol_extension == PPSI_EXT_WR) {
+						wr_d       = (struct wr_data *)
+								wrs_shm_follow(ppsi_head,
+								ppsi_i->ext_data);
+						wr_servo   = &wr_d->servo_ext;
+						wrh_servo  = &wr_d->servo;
+					}
+					if (ppsi_i->protocol_extension == PPSI_EXT_L1S) {
+						l1e_d       = (struct l1e_data *)
+								wrs_shm_follow(ppsi_head,
+								ppsi_i->ext_data);
+						wr_servo   = NULL;
+						wrh_servo  = &l1e_d->servo;
+					}
 
 					/* wrsPtpPhaseTracking */
 					ptp_a[si].wrsPtpPhaseTracking =
@@ -196,21 +207,23 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					ptp_a[si].wrsPtpSkew =
 					int_saturate(wrh_servo->skew_ps);
 
-					/* wrsPtpDeltaTxM */
-					ptp_a[si].wrsPtpDeltaTxM =
-					pp_time_to_picos(&wr_servo->delta_txm);
+					if (wr_servo) {
+						/* wrsPtpDeltaTxM */
+						ptp_a[si].wrsPtpDeltaTxM =
+							pp_time_to_picos(&wr_servo->delta_txm);
 
-					/* wrsPtpDeltaRxM */
-					ptp_a[si].wrsPtpDeltaRxM =
-					pp_time_to_picos(&wr_servo->delta_rxm);
+						/* wrsPtpDeltaRxM */
+						ptp_a[si].wrsPtpDeltaRxM =
+							pp_time_to_picos(&wr_servo->delta_rxm);
 
-					/* wrsPtpDeltaTxS */
-					ptp_a[si].wrsPtpDeltaTxS =
-					pp_time_to_picos(&wr_servo->delta_txs);
+						/* wrsPtpDeltaTxS */
+						ptp_a[si].wrsPtpDeltaTxS =
+							pp_time_to_picos(&wr_servo->delta_txs);
 
-					/* wrsPtpDeltaRxS */
-					ptp_a[si].wrsPtpDeltaRxS =
-					pp_time_to_picos(&wr_servo->delta_rxs);
+						/* wrsPtpDeltaRxS */
+						ptp_a[si].wrsPtpDeltaRxS =
+							pp_time_to_picos(&wr_servo->delta_rxs);
+					}
 
 					/* wrsPtpServoStateErrCnt */
 					ptp_a[si].wrsPtpServoStateErrCnt =
@@ -225,7 +238,8 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					wrh_servo->n_err_delta_rtt;
 
 					/* wrsPtpRTT */
-					ptp_a[si].wrsPtpRTT = pp_time_to_picos(&wr_servo->rawDelayMM);
+					if (wr_servo)
+						ptp_a[si].wrsPtpRTT = pp_time_to_picos(&wr_servo->rawDelayMM);
 
 				} else {
 					memset(ptp_a[si].wrsPtpSyncSource,

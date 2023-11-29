@@ -185,29 +185,33 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 					 pd_a[i].wrsPtpRTTErrCnt - wrsPtpRTTErrCnt_prev[i],
 					 t_delta);
 			}
-			if (pd_a[i].wrsPtpDeltaTxM == 0) {
+
+			/* Check deltas only for WR extension */
+			if (pd_a[i].wrsPtpServoExt == (1 + PPSI_EXT_WR)) {
+				if (pd_a[i].wrsPtpDeltaTxM == 0) {
+					t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						"DeltaTx for Master set to 0\n",
+						slog_obj_name);
+				}
+				if (pd_a[i].wrsPtpDeltaRxM == 0) {
+					t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						"DeltaRx for Master set to 0\n",
+						slog_obj_name);
+				}
+				if (pd_a[i].wrsPtpDeltaTxS == 0) {
+					t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						"DeltaTx for Slave set to 0\n",
+						slog_obj_name);
+				}
+				if (pd_a[i].wrsPtpDeltaRxS == 0) {
 				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "DeltaTx for Master set to 0\n",
-					 slog_obj_name);
-			}
-			if (pd_a[i].wrsPtpDeltaRxM == 0) {
-				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "DeltaRx for Master set to 0\n",
-					 slog_obj_name);
-			}
-			if (pd_a[i].wrsPtpDeltaTxS == 0) {
-				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "DeltaTx for Slave set to 0\n",
-					 slog_obj_name);
-			}
-			if (pd_a[i].wrsPtpDeltaRxS == 0) {
-			t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "DeltaRx for Slave set to 0\n",
-					 slog_obj_name);
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						"DeltaRx for Slave set to 0\n",
+						slog_obj_name);
+				}
 			}
 		}
 	}

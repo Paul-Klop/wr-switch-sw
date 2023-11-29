@@ -31,6 +31,8 @@ wrSwitchMIB MODULE-IDENTITY
         "Updates for v7.0 WRS firmware release
         Added objects:
          - wrsPtpInstanceExtensionCfg
+        Improved description of:
+         - wrsPtpRTT
         "
 
     REVISION     "202303260000Z"
@@ -2105,7 +2107,8 @@ wrsPtpRTT OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "The round-trip-time, from master, in picoseconds"
+            "For WR extension the round-trip-time, from master, in picoseconds
+	    For l1Sync extension 0."
     ::= { wrsPtpDataEntry 13 }
 
 wrsPtpLinkLength OBJECT-TYPE

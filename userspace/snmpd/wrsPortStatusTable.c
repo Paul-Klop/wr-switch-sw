@@ -282,7 +282,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 							ppi->ptp_rx_count;
 
 					/* Update wrsPortStatusConfiguredMode */
-					if ( ppi->protocol_extension==PPSI_EXT_WR ) {
+					if (ppi->protocol_extension == PPSI_EXT_WR || ppi->protocol_extension == PPSI_EXT_L1S) {
 						if ( wrsPortStatusTable->wrsPortStatusMonitor == WRS_PORT_STATUS_MONITOR_DISABLE) {
 							configuredMode=WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR;
 						} else {

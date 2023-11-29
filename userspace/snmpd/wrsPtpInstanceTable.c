@@ -41,6 +41,7 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 	FIELD(wrsPtpInstanceTable_s, ASN_OCTET_STR, wrsPtpInstanceVlanListStr),
 
 	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceStatusError),
+	FIELD(wrsPtpInstanceTable_s, ASN_INTEGER,   wrsPtpInstanceExtensionCfg),
 };
 static char *slog_obj_name;
 static char *wrsPtpInstanceStatusError_str = "wrsPtpInstanceStatusError";
@@ -248,6 +249,11 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 						}
 					}
 				}
+			}
+			if (ppsi_i->cfg.extAutonegEnable == PPSI_EXT_AUTONEG_ENABLE) {
+				pit->wrsPtpInstanceExtensionCfg = WRS_PTP_INSTANCE_EXTENSION_CFG_HAWRAUTONEGOTIATION;
+			} else {
+				pit->wrsPtpInstanceExtensionCfg = ppsi_i->cfg.extension + 1;
 			}
 		}
 

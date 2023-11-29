@@ -26,6 +26,13 @@ wrSwitchMIB MODULE-IDENTITY
     DESCRIPTION  "White Rabbit Switch internal details
                  "
 
+    REVISION     "202311300000Z"
+    DESCRIPTION
+        "Updates for v7.0 WRS firmware release
+        Added objects:
+         - wrsPtpInstanceExtensionCfg
+        "
+
     REVISION     "202303260000Z"
     DESCRIPTION
         "Updates for v6.1 WRS firmware release
@@ -2917,7 +2924,8 @@ WrsPtpInstanceEntry ::=
         wrsPtpInstancePeerVid           INTEGER,
         wrsPtpInstanceVlanNum           INTEGER,
         wrsPtpInstanceVlanListStr       DisplayString,
-        wrsPtpInstanceStatusError       INTEGER
+        wrsPtpInstanceStatusError       INTEGER,
+        wrsPtpInstanceExtensionCfg      INTEGER
     }
 
 wrsPtpInstancePortIndex OBJECT-TYPE
@@ -3198,6 +3206,20 @@ wrsPtpInstanceVlanListStr  OBJECT-TYPE
                          shouldn't happen in normal operation 
              "
     ::= { wrsPtpInstanceEntry 26 }
+
+wrsPtpInstanceExtensionCfg  OBJECT-TYPE
+    SYNTAX         INTEGER {                   --ppsi/include/ppsi/ppsi.h
+                        na(0),
+                        none(1),               -- PPSI_EXT_NONE
+                        whiteRabbit(2),        -- PPSI_EXT_WR
+                        l1Sync(3),             -- PPSI_EXT_L1S
+                        haWrAutonegotiation(4) -- autonegotiation between HA nad WR
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Extension configured on the PTP Instance"
+    ::= { wrsPtpInstanceEntry 27 }
 
 --wrsNetworking
 --Configuration

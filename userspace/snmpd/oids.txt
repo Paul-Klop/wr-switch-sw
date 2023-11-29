@@ -310,6 +310,7 @@
 "wrsPtpInstanceVlanNum"			"1.3.6.1.4.1.96.100.7.8.1.24"
 "wrsPtpInstanceVlanListStr"			"1.3.6.1.4.1.96.100.7.8.1.25"
 "wrsPtpInstanceStatusError"			"1.3.6.1.4.1.96.100.7.8.1.26"
+"wrsPtpInstanceExtensionCfg"			"1.3.6.1.4.1.96.100.7.8.1.27"
 "wrsId"			"1.3.6.1.4.1.96.100.1000"
 "wrsIdUnkn"			"1.3.6.1.4.1.96.100.1000.1"
 "wrsIdUnknUnkn"			"1.3.6.1.4.1.96.100.1000.1.1"

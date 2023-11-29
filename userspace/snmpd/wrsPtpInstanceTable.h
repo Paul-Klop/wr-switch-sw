@@ -15,6 +15,8 @@
 					  * equal to 0 (NA),shouldn't happen in
 					  * normal operation */
 
+#define WRS_PTP_INSTANCE_EXTENSION_CFG_HAWRAUTONEGOTIATION		4
+
 
 struct wrsPtpInstanceTable_s {
 	uint32_t wrsPtpInstancePortIndex;		/* not reported, index fields has t o be marked
@@ -47,6 +49,7 @@ struct wrsPtpInstanceTable_s {
 	 * because SNMP does not allow table within table */
 	char wrsPtpInstanceVlanListStr[WRSPTPINSTANCEVLANLISTSTRLEN];
         int wrsPtpInstanceStatusError;
+	int wrsPtpInstanceExtensionCfg;
 };
 
 extern struct wrsPtpInstanceTable_s wrsPtpInstanceTable_array[PP_MAX_LINKS];

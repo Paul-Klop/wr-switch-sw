@@ -34,6 +34,10 @@ wrSwitchMIB MODULE-IDENTITY
         Improved description of:
          - wrsPtpRTT
          - wrsPtpLinkLength
+         - wrsPtpDeltaTxM
+         - wrsPtpDeltaRxM
+         - wrsPtpDeltaTxS
+         - wrsPtpDeltaRxS
         "
 
     REVISION     "202303260000Z"
@@ -2108,8 +2112,8 @@ wrsPtpRTT OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "For WR extension the round-trip-time, from master, in picoseconds
-	    For l1Sync extension 0."
+            "For WR extension the round-trip-time from master, in picoseconds.
+            For l1Sync, read of this OID returns an error."
     ::= { wrsPtpDataEntry 13 }
 
 wrsPtpLinkLength OBJECT-TYPE
@@ -2135,7 +2139,8 @@ wrsPtpDeltaTxM OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Fixed Tx latency on Master side"
+            "For WR extension, Fixed Tx latency on Master side, in picoseconds.
+            For l1Sync, read of this OID returns an error."
     ::= { wrsPtpDataEntry 16 }
 
 wrsPtpDeltaRxM OBJECT-TYPE
@@ -2143,7 +2148,8 @@ wrsPtpDeltaRxM OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Fixed Rx latency on Master side"
+            "For WR extension, Fixed Rx latency on Master side, in picoseconds.
+            For l1Sync, read of this OID returns an error."
     ::= { wrsPtpDataEntry 17 }
 
 wrsPtpDeltaTxS OBJECT-TYPE
@@ -2151,7 +2157,8 @@ wrsPtpDeltaTxS OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Fixed Tx latency on Slave side"
+            "For WR extension, Fixed Tx latency on Slave side, in picoseconds.
+            For l1Sync, read of this OID returns an error."
     ::= { wrsPtpDataEntry 18 }
 
 wrsPtpDeltaRxS OBJECT-TYPE
@@ -2159,7 +2166,8 @@ wrsPtpDeltaRxS OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Fixed Rx latency on Slave side"
+            "For WR extension, Fixed Rx latency on Slave side, in picoseconds.
+            For l1Sync, read of this OID returns an error."
     ::= { wrsPtpDataEntry 19 }
 
 wrsPtpServoStateErrCnt OBJECT-TYPE

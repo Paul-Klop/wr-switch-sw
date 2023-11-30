@@ -5,6 +5,18 @@
 
 struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
 
+/* Save pointers to the types of some OIDs.
+ * If a type of these OIDs is set to SNMP_NOSUCHINSTANCE, then an OID is not
+ * returned during a query. */
+static int *wrsPtpRTT_type_p = NULL;
+static int *wrsPtpDeltaTxM_type_p = NULL;
+static int *wrsPtpDeltaRxM_type_p = NULL;
+static int *wrsPtpDeltaTxS_type_p = NULL;
+static int *wrsPtpDeltaRxS_type_p = NULL;
+
+#define WRSPTPRTT_ASN_TYPE ASN_COUNTER64
+#define WRSPTPDELTA_ASN_TYPE ASN_INTEGER
+
 static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
 	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpDataIndex), /* not reported */
@@ -19,13 +31,13 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, wrsPtpClockOffsetPs),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpClockOffsetPsHR),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpSkew),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, wrsPtpRTT),
+	FIELD(wrsPtpDataTable_s, WRSPTPRTT_ASN_TYPE, wrsPtpRTT),
 	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpLinkLength),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpServoUpdates),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaTxM),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaRxM),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaTxS),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaRxS),
+	FIELD(wrsPtpDataTable_s, WRSPTPDELTA_ASN_TYPE, wrsPtpDeltaTxM),
+	FIELD(wrsPtpDataTable_s, WRSPTPDELTA_ASN_TYPE, wrsPtpDeltaRxM),
+	FIELD(wrsPtpDataTable_s, WRSPTPDELTA_ASN_TYPE, wrsPtpDeltaTxS),
+	FIELD(wrsPtpDataTable_s, WRSPTPDELTA_ASN_TYPE, wrsPtpDeltaRxS),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpServoStateErrCnt),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpClockOffsetErrCnt),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpRTTErrCnt),
@@ -46,10 +58,10 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	struct wrsPtpDataTable_s *ptp_a;
 	struct pp_instance *ppsi_i;
 	struct pp_servo *ppsi_servo;
-	struct wr_data *wr_d;
-	struct l1e_data *l1e_d;
-	struct wr_servo_ext *wr_servo;
-	struct wrh_servo_t *wrh_servo;
+	struct wr_data *wr_d = NULL;
+	struct l1e_data *l1e_d = NULL;
+	struct wr_servo_ext *wr_servo = NULL;
+	struct wrh_servo_t *wrh_servo = NULL;
 	char *tmp_name;
 	static int servoStateMapping[]={
 			[WRH_UNINITIALIZED]= PTP_SERVO_STATE_N_UNINTIALIZED,
@@ -229,6 +241,17 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 						/* wrsPtpDeltaRxS */
 						ptp_a[si].wrsPtpDeltaRxS =
 							pp_time_to_picos(&wr_servo->delta_rxs);
+
+						*wrsPtpDeltaTxM_type_p = WRSPTPDELTA_ASN_TYPE;
+						*wrsPtpDeltaRxM_type_p = WRSPTPDELTA_ASN_TYPE;
+						*wrsPtpDeltaTxS_type_p = WRSPTPDELTA_ASN_TYPE;
+						*wrsPtpDeltaRxS_type_p = WRSPTPDELTA_ASN_TYPE;
+					} else {
+						/* Deltas are not available */
+						*wrsPtpDeltaTxM_type_p = SNMP_NOSUCHINSTANCE;
+						*wrsPtpDeltaRxM_type_p = SNMP_NOSUCHINSTANCE;
+						*wrsPtpDeltaTxS_type_p = SNMP_NOSUCHINSTANCE;
+						*wrsPtpDeltaRxS_type_p = SNMP_NOSUCHINSTANCE;
 					}
 
 					/* wrsPtpServoStateErrCnt */
@@ -244,9 +267,13 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 					wrh_servo->n_err_delta_rtt;
 
 					/* wrsPtpRTT */
-					if (wr_servo)
+					if (wr_servo) {
+						*wrsPtpRTT_type_p = WRSPTPRTT_ASN_TYPE;
 						ptp_a[si].wrsPtpRTT = pp_time_to_picos(&wr_servo->rawDelayMM);
-
+					} else {
+						/* wrsPtpRTT is not available */
+						*wrsPtpRTT_type_p = SNMP_NOSUCHINSTANCE;
+					}
 				} else {
 					memset(ptp_a[si].wrsPtpSyncSource,
 					0, 32 * sizeof(char));
@@ -284,6 +311,26 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	return time_update;
 }
 
+static void post_init_wrsPtpDataTable(void)
+{
+	int i;
+	struct pickinfo *p_pickinfo = wrsPtpDataTable_pickinfo;
+
+	for (i = 0; i < ARRAY_SIZE(wrsPtpDataTable_pickinfo); i++, p_pickinfo++) {
+		/* Save pointers to OIDs' type fields. */
+		if (p_pickinfo->offset == offsetof(struct wrsPtpDataTable_s, wrsPtpRTT))
+			wrsPtpRTT_type_p = &p_pickinfo->type;
+		if (p_pickinfo->offset == offsetof(struct wrsPtpDataTable_s, wrsPtpDeltaTxM))
+			wrsPtpDeltaTxM_type_p = &p_pickinfo->type;
+		if (p_pickinfo->offset == offsetof(struct wrsPtpDataTable_s, wrsPtpDeltaRxM))
+			wrsPtpDeltaRxM_type_p = &p_pickinfo->type;
+		if (p_pickinfo->offset == offsetof(struct wrsPtpDataTable_s, wrsPtpDeltaTxS))
+			wrsPtpDeltaTxS_type_p = &p_pickinfo->type;
+		if (p_pickinfo->offset == offsetof(struct wrsPtpDataTable_s, wrsPtpDeltaRxS))
+			wrsPtpDeltaRxS_type_p = &p_pickinfo->type;
+	}
+}
+
 #define TT_OID WRSPTPDATATABLE_OID
 #define TT_PICKINFO wrsPtpDataTable_pickinfo
 #define TT_DATA_FILL_FUNC wrsPtpDataTable_data_fill
@@ -291,5 +338,6 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 #define TT_GROUP_NAME "wrsPtpDataTable"
 #define TT_INIT_FUNC init_wrsPtpDataTable
 #define TT_CACHE_TIMEOUT WRSPTPDATATABLE_CACHE_TIMEOUT
+#define TT_POST_INIT_FUNC post_init_wrsPtpDataTable
 
 #include "wrsTableTemplate.h"

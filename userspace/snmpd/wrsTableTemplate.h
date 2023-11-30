@@ -157,4 +157,8 @@ void TT_INIT_FUNC(void)
 						  wrsTT_oid,
 						  OID_LENGTH(wrsTT_oid)));
 
+	/* If the function is defined, run it */
+#ifdef TT_POST_INIT_FUNC
+	TT_POST_INIT_FUNC();
+#endif
 }

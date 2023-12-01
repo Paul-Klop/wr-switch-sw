@@ -457,7 +457,9 @@
     Date and time of the last firmware update. This information may not be
     accurate, due to hard restarts or lack of the proper time during the
     upgrade.}
-
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionFeatures}{
+    \underline{Description:}
+    Lists additional features of a WRS like Low-JitterDaughter board (LJD).}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add expert entries in the order as the appear in the MIB
@@ -491,6 +493,9 @@
     Result of the leap seconds file download. }
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsLeapSecSourceURL}{
   Path to the leap seconds file on a remote server (if local file is not used).}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockDriftUs}{Drift
+    of system clock expressed in microseconds with saturation to min/max integer
+    values}
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsBootStatusGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootCnt}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRebootCnt}{}
@@ -689,7 +694,15 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoUpdateTime.<n>}{
     TAI Nanosecond of the last servo's update.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoExt.<n>}{}
-  
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpMeanDelay.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDelayMS.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDelayMM.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDelayAsymmetryPS.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDelayCoefficientScaledH.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDelayCoefficientScaledL.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDelayCoefficientStr.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpIngressLatency.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpEgressLatency.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{}{wrsPortStatusTable}{Table with a port per row.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusIndex.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPortName.<n>}{}
@@ -745,6 +758,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceVlanNum.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceVlanListStr.<n>.<m>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceStatusError.<n>.<m>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpInstanceTable}{wrsPtpInstanceExtensionCfg.<n>.<m>}{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add entries from other MIBs.

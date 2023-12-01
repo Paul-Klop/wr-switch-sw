@@ -31,6 +31,15 @@ wrSwitchMIB MODULE-IDENTITY
         "Updates for v7.0 WRS firmware release
         Added objects:
          - wrsPtpInstanceExtensionCfg
+         - wrsPtpMeanDelay
+         - wrsPtpDelayMS
+         - wrsPtpDelayMM
+         - wrsPtpDelayAsymmetryPS
+         - wrsPtpDelayCoefficientScaledH
+         - wrsPtpDelayCoefficientScaledL
+         - wrsPtpDelayCoefficientStr
+         - wrsPtpIngressLatency
+         - wrsPtpEgressLatency
         Improved description of:
          - wrsPtpRTT
          - wrsPtpLinkLength
@@ -38,6 +47,9 @@ wrSwitchMIB MODULE-IDENTITY
          - wrsPtpDeltaRxM
          - wrsPtpDeltaTxS
          - wrsPtpDeltaRxS
+         - wrsPtpClockOffsetPsHR
+         - wrsPtpSkew
+         - wrsPortStatusConfiguredMode
         "
 
     REVISION     "202303260000Z"
@@ -1991,7 +2003,16 @@ WrsPtpDataEntry ::=
         wrsPtpClockOffsetErrCnt Counter32,
         wrsPtpRTTErrCnt         Counter32,
         wrsPtpServoUpdateTime   Counter64,
-        wrsPtpServoExt          INTEGER
+        wrsPtpServoExt          INTEGER,
+        wrsPtpMeanDelay         Integer32,
+        wrsPtpDelayMS           Integer32,
+        wrsPtpDelayMM           Integer32,
+        wrsPtpDelayAsymmetryPS  Integer32,
+        wrsPtpDelayCoefficientScaledH Integer32,
+        wrsPtpDelayCoefficientScaledL Unsigned32,
+        wrsPtpDelayCoefficientStr DisplayString,
+        wrsPtpIngressLatency    Integer32,
+        wrsPtpEgressLatency     Integer32
     }
 
 wrsPtpDataIndex OBJECT-TYPE
@@ -2096,7 +2117,8 @@ wrsPtpClockOffsetPsHR OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Human Readable current clock offset from master, in picoseconds with saturation to integer"
+            "Human Readable current clock offset from master, in
+            picoseconds with saturation to MIN/MAX integer value."
     ::= { wrsPtpDataEntry 11 }
 
 wrsPtpSkew OBJECT-TYPE
@@ -2112,7 +2134,8 @@ wrsPtpRTT OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "For WR extension the round-trip-time from master, in picoseconds.
+            "For WR extension, the round-trip-time from master, in picoseconds.
+            No delta subtracted.
             For l1Sync, read of this OID returns an error."
     ::= { wrsPtpDataEntry 13 }
 
@@ -2215,6 +2238,103 @@ wrsPtpServoExt OBJECT-TYPE
             "Extension with which the servo runs."
     ::= { wrsPtpDataEntry 24 }
 
+wrsPtpMeanDelay OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Mean delay between master and slave in picoseconds with
+            saturation to MIN/MAX integer value."
+    ::= { wrsPtpDataEntry 25 }
+
+wrsPtpDelayMS OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Delay from master to slave in picoseconds with saturation
+            to MIN/MAX integer value.
+            Deltas/ingress/egress latencies are already subtracted."
+    ::= { wrsPtpDataEntry 26 }
+
+wrsPtpDelayMM OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Delay from master to slave and slave to master in
+            picoseconds with saturation to MIN/MAX integer value.
+            Deltas/ingress/egress latencies are already subtracted."
+    ::= { wrsPtpDataEntry 27 }
+
+wrsPtpDelayAsymmetryPS  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Constant Asymmetry in picoseconds with saturation to
+            MIN/MAX integer value.
+            This value is similar to wrsPtpInstanceAsymConstAsymPS
+            for the port used as sync source (wrsPtpSyncSource)."
+    ::= { wrsPtpDataEntry 28 }
+
+wrsPtpDelayCoefficientScaledH OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Most (higher) significant part of Scaled Relative Delay
+            Coefficient.
+            Scaled Relative Delay Coefficient.
+            This value is similar to wrsPtpInstanceAsymScDelayCoef
+            for the port used as sync source (wrsPtpSyncSource)."
+    ::= { wrsPtpDataEntry 29 }
+
+
+wrsPtpDelayCoefficientScaledL OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Least (lower) significant part of Scaled Relative Delay
+            Coefficient.
+            Scaled Relative Delay Coefficient.
+            This value is similar to wrsPtpInstanceAsymScDelayCoef
+            for the port used as sync source (wrsPtpSyncSource)."
+    ::= { wrsPtpDataEntry 30 }
+
+wrsPtpDelayCoefficientStr OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Relative Delay Coefficient in a floating form as a string.
+            This value is similar to wrsPtpInstanceAsymScDelayCoefHR
+            for the port used as sync source (wrsPtpSyncSource)."
+    ::= { wrsPtpDataEntry 31 }
+
+wrsPtpIngressLatency OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Ingress Latency (RX Fixed Delay) in picoseconds with
+            saturation to MIN/MAX integer value.
+            This value is similar to wrsPtpInstanceTSCorrEgressLatPS
+            for the port used as sync source (wrsPtpSyncSource)."
+    ::= { wrsPtpDataEntry 32 }
+
+wrsPtpEgressLatency OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Egress Latency (TX Fixed Delay) in picoseconds with
+            saturation to MIN/MAX integer value.
+            This value is similar to wrsPtpInstanceTSCorrEgressLatPS
+            for the port used as sync source (wrsPtpSyncSource)."
+    ::= { wrsPtpDataEntry 33 }
+
 -- wrsPortStatusTable (.7.6)
 wrsPortStatusTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPortStatusEntry
@@ -2300,7 +2420,7 @@ wrsPortStatusConfiguredMode OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Whether the port is configured as master, slave, non-wr or auto"
+            "Whether the port is configured as master, slave, non-wr (PTP) or auto"
     ::= { wrsPortStatusEntry 4 }
 
 wrsPortStatusLocked OBJECT-TYPE

@@ -43,8 +43,44 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpRTTErrCnt),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, wrsPtpServoUpdateTime),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoExt),
-
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoMeanDelay),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoDelayMS),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoDelayMM),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDelayAsymmetryPS),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDelayCoefficientScaledH),
+	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpDelayCoefficientScaledL),
+	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpDelayCoefficientStr),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpIngressLatency),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpEgressLatency),
 };
+
+static char *relativeDifferenceToString(RelativeDifference time, char *buf)
+{
+	char sign;
+	int32_t nsecs;
+	uint64_t sub_yocto = 0;
+	int64_t fraction;
+	uint64_t bitWeight = 500000000000000000;
+	uint64_t mask;
+
+	if (time < 0) {
+		time =- time;
+		sign ='-';
+	} else {
+		sign ='+';
+	}
+
+	nsecs=time >> REL_DIFF_FRACBITS;
+	fraction = time & REL_DIFF_FRACMASK;
+	for (mask = (uint64_t) 1 << (REL_DIFF_FRACBITS - 1); mask != 0; mask >>= 1) {
+		if (mask & fraction)
+			sub_yocto += bitWeight;
+		bitWeight /= 2;
+	}
+
+	sprintf(buf, "%c%" PRId32 ".%018" PRIu64, sign, nsecs, sub_yocto);
+	return buf;
+}
 
 time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 {
@@ -62,6 +98,7 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	struct l1e_data *l1e_d = NULL;
 	struct wr_servo_ext *wr_servo = NULL;
 	struct wrh_servo_t *wrh_servo = NULL;
+	portDS_t *portDS;
 	char *tmp_name;
 	static int servoStateMapping[]={
 			[WRH_UNINITIALIZED]= PTP_SERVO_STATE_N_UNINTIALIZED,
@@ -274,6 +311,34 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 						/* wrsPtpRTT is not available */
 						*wrsPtpRTT_type_p = SNMP_NOSUCHINSTANCE;
 					}
+
+					/* wrsPtpServoMeanDelay */
+					ptp_a[si].wrsPtpServoMeanDelay = int_saturate(pp_time_to_picos(&ppsi_servo->meanDelay));
+
+					/* wrsPtpServoDelayMS */
+					ptp_a[si].wrsPtpServoDelayMS = int_saturate(pp_time_to_picos(&ppsi_servo->delayMS));
+
+					/* wrsPtpServoDelayMM */
+					ptp_a[si].wrsPtpServoDelayMM = int_saturate(pp_time_to_picos(&ppsi_servo->delayMM));
+
+					/* wrsPtpDelayAsymmetryPS */
+					if ((portDS = wrs_shm_follow(ppsi_head, ppsi_i->portDS)))
+						ptp_a[si].wrsPtpDelayAsymmetryPS = int_saturate(interval_to_picos(portDS->delayAsymmetry));
+
+					/* wrsPtpDelayCoefficientScaledH */
+					ptp_a[si].wrsPtpDelayCoefficientScaledH = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient >> 32;
+
+					/* wrsPtpDelayCoefficientScaledL */
+					ptp_a[si].wrsPtpDelayCoefficientScaledL = ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient & 0xFFFFFFFF;
+
+					/* wrsPtpDelayCoefficientStr */
+					relativeDifferenceToString(ppsi_i->asymmetryCorrectionPortDS.scaledDelayCoefficient, ptp_a[si].wrsPtpDelayCoefficientStr);
+
+					/* wrsPtpIngressLatency */
+					ptp_a[si].wrsPtpIngressLatency = int_saturate(interval_to_picos(ppsi_i->timestampCorrectionPortDS.ingressLatency));
+
+					/* wrsPtpEgressLatency */
+					ptp_a[si].wrsPtpEgressLatency = int_saturate(interval_to_picos(ppsi_i->timestampCorrectionPortDS.egressLatency));
 				} else {
 					memset(ptp_a[si].wrsPtpSyncSource,
 					0, 32 * sizeof(char));

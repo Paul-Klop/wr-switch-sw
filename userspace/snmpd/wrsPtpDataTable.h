@@ -43,6 +43,15 @@ struct wrsPtpDataTable_s {
 	uint32_t wrsPtpRTTErrCnt;
 	uint64_t wrsPtpServoUpdateTime;
 	int wrsPtpServoExt;
+	int32_t wrsPtpServoMeanDelay;
+	int32_t wrsPtpServoDelayMS;
+	int32_t wrsPtpServoDelayMM;
+	int32_t wrsPtpDelayAsymmetryPS;
+	int32_t wrsPtpDelayCoefficientScaledH;
+	uint32_t wrsPtpDelayCoefficientScaledL;
+	char wrsPtpDelayCoefficientStr[64];
+	int32_t wrsPtpIngressLatency;
+	int32_t wrsPtpEgressLatency;
 };
 
 extern struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];

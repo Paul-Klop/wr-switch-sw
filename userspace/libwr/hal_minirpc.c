@@ -47,3 +47,13 @@ struct minipc_pd __rpcdef_sfp_tx_cmd = {
 		 MINIPC_ARG_END,
 		 },
 };
+
+//int halexp_gm_pps_in_out_offset_cmd(int offset_ps);
+struct minipc_pd __rpcdef_gm_pps_in_out_offset_cmd = {
+	.name = "gm_pps_io_offset",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		 MINIPC_ARG_END,
+		 },
+};

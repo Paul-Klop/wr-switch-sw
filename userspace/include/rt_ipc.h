@@ -124,6 +124,9 @@ int rts_ptracker_set_average_samples(int channel, int avg_samples);
 /* Debug stuff. Reserved for developers. Deliberately left undocumented. */
 int rts_debug_command(int param, int value);
 
+/* Set offset between PPS-in and PPS-out when in GM mode */
+int rts_gm_pps_in_out_offset_command(int offset_ps);
+
 #ifdef RTIPC_EXPORT_STRUCTURES
 
 static struct minipc_pd rtipc_rts_get_state_struct = {
@@ -193,6 +196,14 @@ static struct minipc_pd rtipc_rts_set_average_samples_struct = {
 	},
 };
 
+static struct minipc_pd rtipc_rts_set_pps_in_out_offset_struct = {
+	.name = "hhhh",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	    MINIPC_ARG_END
+	},
+};
 
 #endif
 

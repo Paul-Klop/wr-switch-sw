@@ -121,10 +121,12 @@ extern struct minipc_pd __rpcdef_lock_cmd;
 extern struct minipc_pd __rpcdef_pps_cmd;
 extern struct minipc_pd __rpcdef_port_info_cmd;
 extern struct minipc_pd __rpcdef_sfp_tx_cmd;
+extern struct minipc_pd __rpcdef_gm_pps_in_out_offset_cmd;
 
 /* Prototypes of functions that call on rpc */
 extern int halexp_lock_cmd(const char *port_name, int command, int priority);
 extern int halexp_pps_cmd(int cmd, hexp_pps_params_t *params);
 extern int halexp_sfp_tx_cmd(int cmd, int port);
+extern int halexp_gm_pps_in_out_offset_cmd(int offset_ps);
 
 #endif

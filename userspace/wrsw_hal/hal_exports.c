@@ -202,6 +202,12 @@ int halexp_sfp_tx_cmd(int cmd, int port)
 }
 
 
+/* Set offset between PPS-in and PPS-out when in GM mode */
+int halexp_gm_pps_in_out_offset_cmd(int offset_ps)
+{
+	return rts_gm_pps_in_out_offset_command(offset_ps);
+}
+
 static void hal_cleanup_wripc(void)
 {
 	minipc_close(hal_ch);
@@ -254,6 +260,15 @@ static int export_sfp_tx_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
+static int export_gm_pps_in_out_offset_cmd(const struct minipc_pd *pd,
+					   uint32_t * args, void *ret)
+{
+	int rval;
+	rval = halexp_gm_pps_in_out_offset_cmd(args[0] /* offset_ps */);
+	*(int *)ret = rval;
+	return 0;
+}
+
 /* Creates a wripc server and exports all public API functions */
 int hal_wripc_init(struct hal_port_state *hal_ports, char *logfilename)
 {
@@ -283,11 +298,13 @@ int hal_wripc_init(struct hal_port_state *hal_ports, char *logfilename)
 	__rpcdef_lock_cmd.f = export_lock_cmd;
 	__rpcdef_port_info_cmd.f = export_port_info_cmd;
 	__rpcdef_sfp_tx_cmd.f = export_sfp_tx_cmd;
+	__rpcdef_gm_pps_in_out_offset_cmd.f = export_gm_pps_in_out_offset_cmd;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
 	minipc_export(hal_ch, &__rpcdef_port_info_cmd);
 	minipc_export(hal_ch, &__rpcdef_sfp_tx_cmd);
+	minipc_export(hal_ch, &__rpcdef_gm_pps_in_out_offset_cmd);
 
 	/* FIXME: pll_cmd is empty anyways???? */
 

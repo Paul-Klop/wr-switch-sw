@@ -142,6 +142,19 @@ int rts_debug_command(int command, int value)
 	return rval;
 }
 
+int rts_gm_pps_in_out_offset_command(int offset_ps)
+{
+	int rval;
+	int ret = minipc_call(client, RTS_TIMEOUT,
+			      &rtipc_rts_set_pps_in_out_offset_struct, &rval,
+			      offset_ps);
+
+	if (ret < 0)
+		return ret;
+
+	return rval;
+}
+
 int rts_connect(char *logfilename)
 {
 	static FILE *f;

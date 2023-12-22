@@ -30,3 +30,4 @@ utc_leap_test
 radiusvlan
 ioctl
 asix_ioctl
+wrsw_hal_conf

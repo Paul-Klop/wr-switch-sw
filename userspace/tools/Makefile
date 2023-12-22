@@ -17,6 +17,7 @@ TOOLS += wrs_throttling
 TOOLS += asix_ioctl
 TOOLS += utc_leap_test
 TOOLS += radiusvlan
+TOOLS += wrsw_hal_conf
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit

@@ -22,10 +22,11 @@
 #include <arpa/inet.h>
 #include <linux/sockios.h>
 #include <stdlib.h>
+#include <ctype.h>
 #if NET_INTERFACE == INTERFACE_SCAN
 #include <ifaddrs.h>
 #endif
-#include "ioctl.h"
+#include "asix_ioctl.h"
 
 /* STATIC VARIABLE DECLARATIONS */
 #define AX88772C_IOCTL_VERSION		"AX88772C/AX88772B/AX88772A/AX88760/AX88772/AX88178 Linux SROM IOCTL Tool version 1.4.0"
@@ -190,8 +191,6 @@ void writeeeprom_func(struct ax_command_info *info)
 	int i;
 	unsigned short *buf;
 	unsigned short wLen;
-	int ret;
-	char c[2] = {'\0'};
 	FILE *pFile;
 	unsigned char retried = 0;
 
@@ -270,10 +269,8 @@ void chgmac_func(struct ax_command_info *info)
 	AX_IOCTL_COMMAND ioctl_cmd;
 	int i;
 	unsigned short *buf;
-	unsigned int tmp;
 	unsigned short wLen;
 	unsigned char retried = 0;
-	char * pch;
 	unsigned int MAC[6] = {0};
 	int ret = 0;
 
@@ -402,7 +399,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		
-		if (strncmp (ioctl_cmd.sig, AX88772B_DRV_NAME, strlen(AX88772B_DRV_NAME)) == 0 ) {
+		if (strncmp ((char *)ioctl_cmd.sig, AX88772B_DRV_NAME, strlen(AX88772B_DRV_NAME)) == 0 ) {
 			dev_exist = 1;
 			break;
 		}			
@@ -428,7 +425,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (strncmp (ioctl_cmd.sig, AX88772B_DRV_NAME, strlen(AX88772B_DRV_NAME)) == 0 ) {
+		if (strncmp ((char *)ioctl_cmd.sig, AX88772B_DRV_NAME, strlen(AX88772B_DRV_NAME)) == 0 ) {
 			break;
 		}
 

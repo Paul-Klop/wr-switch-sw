@@ -2,7 +2,7 @@
 #define ioctl_h
 
 /* INCLUDE FILE DECLARATIONS */
-#include "command.h"
+#include "asix_command.h"
 
 /* CHANGE NETWORK INTERFACE WAY */
 // DEFAULT_SCAN   : scan "eth0" - "eth255"

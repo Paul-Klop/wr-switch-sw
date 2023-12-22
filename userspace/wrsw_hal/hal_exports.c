@@ -170,8 +170,7 @@ int halexp_port_info_cmd(hexp_port_info_params_t * params)
 	return 1;
 }
 
-/* Phase/Clock adjutsment call. Called by the PTPd servo. Controls
- * both the PLLs and the PPS Generator. */
+/* Enable/disable TX laser in SFP for a given port */
 int halexp_sfp_tx_cmd(int cmd, int port)
 {
 	int new_status = 0;

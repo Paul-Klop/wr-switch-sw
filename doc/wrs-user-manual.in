@@ -254,7 +254,7 @@ the behavior of the WR Switch. Here are highlights:
 
 @item @b{IP address of the management port}
 
-  WR switch running the defult configuration file included in the v6.0 release
+  WR switch running the default configuration file included in the v6.0 release
   will try to get dynamic IP address for the management port at boot time.
   In case the DHCP server is not responding, WR switch will use default static
   IP assignment:
@@ -299,7 +299,8 @@ the behavior of the WR Switch. Here are highlights:
   issues related to compliance with IEEE1588-2008 (PTPv2) and we have already
   introduced a number of new features from the IEEE1588-2019 (PTPv2.1) edition.
   This resulted in a substantial increase and reorganization of configuration 
-  parameters for PPSi in @i{menconfig} and @t{dot-config}. In short, the default
+  parameters for PPSi in @i{menuconfig} and @t{dot-config}.
+  In short, the default
   behavior of Grand-Master, Free-Running Master and Boundary Clock are preserved,
   yet with different names for the configuration options which are compliant
   with the  IEEE1588-2019. Here are the highlights of the changes
@@ -334,17 +335,17 @@ the behavior of the WR Switch. Here are highlights:
       that this option is global, i.e. it is not allowed to use it only on some
       ports.
     @item @b{MasterOnly} - MasterOnly is a new concept (optional feature) introduced
-      in the IEEE1588-2019 (PTPv2.1) that legalizes per-port assigment of
+      in the IEEE1588-2019 (PTPv2.1) that legalizes per-port assignment of
       Master role, equivalent of setting role to be Master in the pre-v6.0 firmware.
-      This assigment can be done on per-port basis and it coexists with the
+      This assignment can be done on per-port basis and it coexists with the
       Best Master Clock Algorithm. This option is used when a WR switch is set
       to @b{Grand-Master}, @b{Free-Running Master}, or @b{Arbitrary Grand-Master}.
     @end itemize
   @item @b{PTP options} - it is a new sub-menu that allows to set a number
     of global PTP parameters which previously had to be modified by customizing
-    @t{ppsi.conf} file. Thise include: domain, priority1, priority2, clockClass.
+    @t{ppsi.conf} file. This include: domain, priority1, priority2, clockClass.
     While these parameters are pre-filled automatically depending on the Timing
-    Mode, they can be overriden if need be.
+    Mode, they can be overridden if need be.
   @item @b{Timing Mode} - setting timing mode provides default configuration for
     all the above-mentioned options such that the behavior of the WR switch is
     equivalent to the same Timing Mode in pre-v6.0 firmware versions. There are
@@ -433,7 +434,7 @@ the behavior of the WR Switch. Here are highlights:
         the state of PTP or extension was provided in the @i{PTP state} column.
       @item @b{PDETECT} - indicates the state of a state machine that governs
         the detection of extensions. When a WR link is being established, it 
-        shows @i{WA_MSG}, when it is succesfully established, it shows 
+        shows @i{WA_MSG}, when it is successfully established, it shows
         @i{EXT_ON}
       @end itemize
     @item @b{Synchronization status} - most of the parameter names were replaced
@@ -446,7 +447,8 @@ the behavior of the WR Switch. Here are highlights:
       @item @b{ingressLatency} is the previously @i{Slave PHY delay RX} without the bitslide
       @item @b{egressLatency}  @i{Slave PHY delay TX}
       @item @b{offsetFromMaster} is the previously @i{Clock offset}
-      @item @b{semistaticLatency} is a new parameter that inditactes the bistlide value
+      @item @b{semistaticLatency} is a new parameter that indicates the
+            bitslide value
       @end itemize
     @end itemize
 @end itemize
@@ -648,7 +650,8 @@ The main configuration file for the @sc{wrs} is
 @t{/wr/etc/dot-config}.  You can create this file either by running ``@t{make
 menuconfig}'' within the local clone of @t{wr-switch-sw} repo or directly in the
 shell of your switch (e.g. through @t{ssh}), and making your choices.
-You can also edit the text file using external tools, or run other configurators: @t{make config},
+You can also edit the text file using external tools, or run other
+configurators: @t{make config},
 @t{make xconfig}, @t{make gconfig}, @t{make nconfig}.
 
 The configuration step creates @t{.config}, that you can copy to your
@@ -671,7 +674,7 @@ configuration (@t{dot-config}) file.
 
 @item CONFIG_DOTCONF_INFO
 
-	Free-text item to descibe any additional information about dot-config.
+	Free-text item to describe any additional information about dot-config.
   This field does not affect any functionality of the switch.
 
 @end table
@@ -953,7 +956,7 @@ appropriate way, before the respective service is started.
       syslog messages will be stored in a local filesystem of the @sc{wrs}.
 	The file is rotated when reaching 1MB. The rotation is done through 10
 	indexed files @i{syslog}, @i{syslog.1-9}. By default these files are
-	created in @i{/tmp} filder.
+	created in @i{/tmp} folder.
 	If remote server is specified, the messages go to both, server and local file.
 
 @item CONFIG_WRS_LOG_HAL
@@ -1305,7 +1308,8 @@ appropriate way, before the respective service is started.
   
 	The @t{CONFIG_PPSGEN_PTP_THRESHOLD_MS} option is applied when @sc{wrs} is synchronized to a regular
   (non-@sc{wr}) PTP master. This threshold defines a maximum offset to master
-  (in miliseconds) when the @sc{wrs} is considered synchronized. Once the calculated offset falls
+  (in milliseconds) when the @sc{wrs} is considered synchronized.
+  Once the calculated offset falls
   below the configured threshold, PPS generation starts. To disable PPS, PTP offset must be
   greater than the @t{CONFIG_PPSGEN_PTP_THRESHOLD_MS} + 20%.
 	Setting this parameter to 0 will block any PPS generation for those cases. 
@@ -1470,8 +1474,8 @@ appropriate way, before the respective service is started.
 
 	Networks that would benefit from the LLDP, but have low latency
 	constraints can use option @t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE}. With
-	this option LLPD daemon includes only minimal set of information into
-	LLPD frames.
+	this option LLDP daemon includes only minimal set of information into
+	LLDP frames.
 	
 	The table below contains comparison of LLDP frame fields for standard
 	and minimal frame size (with
@@ -1486,7 +1490,7 @@ appropriate way, before the respective service is started.
 @tab ETH header
 @item 9
 @tab 9
-@tab Chasis ID (with MAC)
+@tab Chassis ID (with MAC)
 @item 9
 @tab 9
 @tab Port ID (with MAC)
@@ -1724,7 +1728,7 @@ CONFIG_PORT09_INST01_INGRESS_LATENCY=226758
 # sfp information
 CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 ...
-# fiber infomation
+# fiber information
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
 
@@ -1829,8 +1833,9 @@ A set of parameters common to all instances running on the same physical port. T
 	@t{CONFIG_FIBER@i{zz}_PARAMS})
 	
 @item  CONFIG_PORT@i{xx}_CONSTANT_ASYMMETRY
-	Defines an additional constant asymmetry (e.g. of a fiber amplifier used in longhaul @sc{wr}
-  networks) that should be compensated by @sc{wr} PTP calculations.
+	Defines an additional constant asymmetry (e.g. of a fiber amplifier used
+	in long-haul @sc{wr} networks) that should be compensated by @sc{wr}
+	PTP calculations.
 
 @end table
   
@@ -1884,7 +1889,8 @@ parameter itself.
 @item  CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY
   Defines the reception (@t{CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY}) and transmission 
-  (@t{CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY}) constant delays expressed in pico-seconds.
+  (@t{CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY}) constant delays expressed in
+  picoseconds.
   
 @item  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL
   The mean time interval between transmissions of successive
@@ -2039,7 +2045,7 @@ VLANs are handled at two levels:
     @item Per-port configuration of the Endpoint. It allows to:
     @itemize
 	@item tag ingress frames with VLAN-tag and specific priority
-	@item specify behaviour depending on whether the frames are tagged or
+	@item specify behavior depending on whether the frames are tagged or
 	      untagged (@t{pmode})
 @c 	@item map priorities into @i{Traffic Class} that are provided to RTU
 	@item override priority before it is mapped into @i{Traffic Class},
@@ -2068,7 +2074,7 @@ the Ethernet Frame header:
                           (1 to 4094)
     @item @i{null}     -- tag that has VID=@t{0xFFF} (4095)
 @end itemize
-The behaviour of each @t{pmode} that can be set per-port depends on the type of
+The behavior of each @t{pmode} that can be set per-port depends on the type of
 VLAN-tag in the received frame.
 
 @itemize
@@ -2132,7 +2138,7 @@ VLAN-tag in the received frame.
     @end itemize
 @end itemize
 
-Modes and their behaviour are summarized in the table below:
+Modes and their behavior are summarized in the table below:
 
 @center @image{VLAN_modes, 14cm,, VLAN_modes}
 
@@ -2227,7 +2233,7 @@ frames with VID=2 are forwarded to PTP daemon and to port 3.
 @node Example VLAN configuration by dot-config
 @subsubsection Example VLAN configuration by dot-config
 
-To configure the switch in the way descibed in the
+To configure the switch in the way described in the
 @ref{Example VLAN configuration}, the @i{wrs_menuconfig} tool should
 be used to generate the @t{dot-config} file. In the @i{wrs_menuconfig} tool,
 VLANs needs to be enabled in the VLANs submenu. Then, the Ports and VLANs
@@ -2625,8 +2631,8 @@ The following tools and scripts are provided:
 	current configuration files.  It is run at boot time before
 	any service is started and by the web interface to apply changes in
 	the local @t{dot-config}.
-	The @t{dot-config} mechanism is documented in @ref{Configuration of the
-	Device}.
+	The @t{dot-config} mechanism is documented in
+	@ref{Configuration of the Device}.
 
 @item assembly_ppsi_conf.sh
 	The script is used to assembly ppsi configuration file based on
@@ -2650,14 +2656,14 @@ The following tools and scripts are provided:
 	The program is a simple program for talking with serial ports.
 
 @item ethtool
-	The standad Linux tool used to query or control network driver and
+	The standard Linux tool used to query or control network driver and
 	hardware settings. In WRS the number of parameters that this tool can
 	change is limited. However, this tool can be used on WRS with the
 	following commands:
 
 	``@t{ethtool -s wriX autoneg off}'' disables (or enable if @t{on})
 	autonegotiation @footnote{WRS does not support other link speeds
-	than 1Gbps, thus when autonegotation is enabled, no other link speed
+	than 1Gbps, thus when autonegotiation is enabled, no other link speed
 	can be actually negotiated}
 
 	``@t{ethtool --set-priv-flags wriX "Unidirectional Enable" on}'' enables
@@ -2702,7 +2708,7 @@ The following tools and scripts are provided:
 	a given port or for all existing instances.
 
 	NOTE: This tool can be used to change in runtime diagnostics level
-	(verbocity) of PPSi, global and per instance.
+	(verbosity) of PPSi, global and per instance.
 
 	For more information about supported parameters please refer to
 	PPSi's documentation or tool's help (@t{--help} parameter).
@@ -3247,7 +3253,7 @@ is an environment variable pointing to this package:
 
 @smallexample
    snmpwalk -c public -v 2c wrs \
-       -m +${WR_SWITCH_SW}/userspace/snmpd/WR-SWITCH-MIB.txt \
+       -m +$WR_SWITCH_SW/userspace/snmpd/WR-SWITCH-MIB.txt \
        1.3.6.1.4.1.96.100
 @end smallexample
 
@@ -3309,8 +3315,8 @@ WR-SWITCH-MIB::wrsPstatsHCRXFrames.2 = Counter64: 544
 Another example is to print all objects exported by the switch.
 @smallexample
 snmpwalk -c public -v 2c wrs -m all \
-        -M ${WRS_OUTPUT_DIR}/build/buildroot-2016.02/output/build/netsnmp-5.7.3/mibs/\
-        :${WR_SWITCH_SW}/userspace/snmpd/ \
+        -M $WRS_OUTPUT_DIR/build/buildroot-2016.02/output/build/netsnmp-5.7.3/mibs/\
+        :$WR_SWITCH_SW/userspace/snmpd/ \
         1
 @end smallexample
 

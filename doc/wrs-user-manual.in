@@ -802,6 +802,26 @@ them in the running switch has no effect:
         not delete the temporary copy of the generated filesystem and
         reports its pathname in the build messages.
 
+@item   CONFIG_OPTIMIZATION_DEBUGGING
+@itemx  CONFIG_OPTIMIZATION_NONE_DEBUGGING
+@itemx  CONFIG_OPTIMIZATION_SIZE_SPEED
+@itemx  CONFIG_OPTIMIZATION_SPEED
+
+        Compilation options. Chose one of these four choices to control the
+        compilation flags.
+
+        @t{CONFIG_OPTIMIZATION_DEBUGGING}: Should be the optimization level
+        choice for the standard edit-compile-debug cycle.
+
+        @t{CONFIG_OPTIMIZATION_NONE_DEBUGGING}: Compile without optimization
+        and with debug information
+
+        @t{CONFIG_OPTIMIZATION_SIZE_SPEED}: Optimize for size.
+        Enables all -O2 optimizations except those that often increase the code
+        size.
+
+        @t{CONFIG_OPTIMIZATION_SPEED}: GCC performs nearly all supported
+        optimizations that do not involve a space-speed trade-off.
 @end table
 
 @c ==========================================================================
@@ -932,6 +952,39 @@ appropriate way, before the respective service is started.
         @t{/etc/wr_date.conf}. An empty string (default) disables
         NTP access at boot time.
 
+@item   CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_UNIT_HOURS
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_UNIT_MINUTES
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
+@itemx  CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
+
+        When @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED} option is set,
+        the local system time is compared to the time acquired from the external
+        NTP server (according to @t{CONFIG_NTP_SERVER}).
+        If the difference of time exceeds a given threshold
+        (defined by @t{CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD})
+        expressed in seconds, an error is reported through SNMP.
+
+        This comparison is done periodically at a rate expressed either in days
+        (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS}),
+        hours (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_HOURS}) or
+        minutes (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_MINUTES}).
+
+        According to the selected unit, the repetition rate will be stored in
+        the appropriate location:
+        @multitable @columnfractions .3 .7
+        @headitem  Unit @tab Storage
+        @item  @t{...UNIT_DAYS} @tab @t{...CHECK_INTERVAL_DAYS}
+        @item  @t{...UNIT_HOURS} @tab @t{...CHECK_INTERVAL_MINUTES}
+        @item  @t{...UNIT_MINUTES} @tab @t{...CHECK_INTERVAL_MINUTES}
+        @end multitable
+
+        The @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED} option is available
+        only if a NTP server has been defined (@t{CONFIG_NTP_SERVER}).
+
 @item CONFIG_DNS_SERVER
 @itemx CONFIG_DNS_DOMAIN
 
@@ -1047,193 +1100,237 @@ appropriate way, before the respective service is started.
 	Please note that unknown facility names will generate a runtime error
 	on the switch.
 
-@item CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED
-@itemx CONFIG_PORT@i{xx}_@i{zz}
-@itemx ...
 
-	These configuration items are used to set up timing parameters of all
-	WR ports. 
-	
-	Items are named according to the format  @t{CONFIG_PORT@i{xx}_@i{zz}} where : 
+@item   CONFIG_RVLAN_ENABLE
+@itemx  CONFIG_RVLAN_PMASK
+@itemx  CONFIG_RVLAN_AUTH_VLAN
+@itemx  CONFIG_RVLAN_NOAUTH_VLAN
+@itemx  CONFIG_RVLAN_OBEY_DOTCONFIG
+@itemx  CONFIG_RVLAN_RADIUS_SERVERS
+@itemx  CONFIG_RVLAN_RADIUS_SECRET
+        Configuration items related to @i{radiusvlans}, which can be used to
+        limit access to WR network for connected devices based on MAC address.
+        For more details please refer to @i{White Rabbit Switch: Radius Vlan}.
 
-	@itemize
-		@item @i{xx} -- represents the port number ('01' to '18')
-		@item @i{zz} -- is the property name for the given port @i{xx} 
-    @end itemize
+@item   CONFIG_SNMP_TRAPSINK_ADDRESS
+@itemx  CONFIG_SNMP_TRAP2SINK_ADDRESS
+@itemx  CONFIG_SNMP_RO_COMMUNITY
+@itemx  CONFIG_SNMP_RW_COMMUNITY
 
-    The default configuration provided with the firmware release will
-    most likely work for the majority of @sc{wr} networks. In case some
-    customization of these parameters is required, please see
-    @ref{Timing Configuration} for details.
+        Configuration for the @sc{snmp} agent. Addresses can be IP addresses
+        or names (if DNS is configured and working), they are unset by
+        default. Community values are strings and they default to
+        @t{public} (@t{RO_COMMUNITY}) and @t{private} (@t{RW_COMMUNITY}).
 
-@item CONFIG_N_SFP_ENTRIES
-@itemx CONFIG_SFP00_PARAMS
-@itemx ...
-@itemx CONFIG_SFP17_PARAMS
+@item   CONFIG_SNMP_TEMP_THOLD_FPGA
+@itemx  CONFIG_SNMP_TEMP_THOLD_PLL
+@itemx  CONFIG_SNMP_TEMP_THOLD_PSL
+@itemx  CONFIG_SNMP_TEMP_THOLD_PSR
+        Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
+        Supply Right (PSR) temperature sensors. When any temperature exceeds
+        threshold level, SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
+        accordingly.
 
-   Configuration for @sc{sfp} models.
-   
-   @t{CONFIG_N_SFP_ENTRIES} indicates the number of SFP entries defined. Up to 18 SFPs
-   can be defined. 
-    
-   @t{CONFIG_SFP@i{xx}_PARAMS} with index @i{xx} in range 00 to 17, contains @sc{sfp} parameters.
-	 All @sc{sfp} models their respective wavelengths you are using in your @sc{wrs}
-   should be entered here.
-	@itemize
-		@item @t{vn} (@i{optional}) -- Vendor Name of an SFP
-		@item @t{pn} -- Part Number of an SFP
-		@item @t{vs} (@i{optional}) -- Vendor Serial (serial number) of
-					       an SFP
-		@item @t{tx} -- TX delay of an SFP in picoseconds
-		@item @t{rx} -- RX delay of an SFP in picoseconds
-		@item @t{wl_txrx} -- Tx wavelength separated by "+" with Rx
-				     wavelength of an SFP;
-				     for example @t{wl_txrx=1490+1310} (for
-				     1490nm Tx wavelength and 1310nm Rx
-				     wavelength)
-        @end itemize
-        See @ref{Timing Configuration} for details.
+@item   CONFIG_SNMP_SWCORESTATUS_DISABLE
 
-@item CONFIG_N_FIBER_ENTRIES
-@item CONFIG_FIBER00_PARAMS
-@itemx ...
-@itemx CONFIG_FIBER17_PARAMS
+        Force SNMP object @t{wrsSwcoreStatus} to be always OK. It can be used
+        to ignore all Ethernet frames switching related issues.
 
-	These parameters specify the characteristics of fiber types used in your @sc{WR} installation.
-	
-	@t{CONFIG_N_FIBER_ENTRIES} indicates the number of fiber types defined. Up to 18 
-	different fiber types can be defined. 
-   
-	@t{CONFIG_FIBER@i{xx}_PARAMS} with index @i{xx} in range 00 to 17, specifies
-  the alpha value for each pair of used wavelengths.
-	This parameter follows the format:
+@c @item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
+@c
+@c	Error via SNMP if the rate of HP frames on any port exceed given value.
+@c	(currently not implemented)
 
-	@t{alpha_@i{xxxx}_@i{yyyy}=1.23e-04,alpha_@i{aaaa}_@i{bbbb}=4.56e-04,...}
+@c@item CONFIG_SNMP_SWCORESTATUS_RX_FRAME_RATE
+@c
+@c	Error via SNMP if rate of RX frames on any port exceed given value.
+@c	(currently not implemented)
 
-	Where:
-	@itemize
-	@item @t{@i{xxxx}_@i{yyyy}} and @t{@i{aaaa}_@i{bbbb}} are pairs of used wavelengths
-	@item @t{1.23e-04} and @t{4.56e-04} are alpha values to be used for
-	      a particular combination of wavelengths.
-	@end itemize
-	The index (@t{00} to @t{17}) is then entered as @t{CONFIG_PORT@i{xx}_FIBER}
-  port parameter to reference the connected fiber type.
-  @xref{Timing Configuration}.
+@c@item CONFIG_SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
+@c
+@c	Error if frame rate of any RX priority exceed given value.
+@c	(currently not implemented)
 
-	You are expected to have no more than 18 fiber types installed in
-	your @sc{WR} network.
+@item   CONFIG_SNMP_SYSCONTACT
 
-@item CONFIG_TIME_GM
-@itemx CONFIG_TIME_ARB_GM
-@itemx CONFIG_TIME_FM
-@itemx CONFIG_TIME_BC
-@itemx CONFIG_TIME_CUSTOM
+        Free text intended to be the textual identification of the contact
+        person for this switch, together with information on how to contact this
+        person. Reported by SNMP as SNMPv2-MIB::sysContact.0
 
-	The type of PTP clock this switch is. Only one of the five first
-        items should be set (e.g. running ``@t{make menuconfig}'' offers
-        them as an exclusive choice). The options select: 
-        @itemize 
-	        @item @t{CONFIG_TIME_GM} a grand-master with external reference, e.g. GPS or Cesium.
-	        @item @t{CONFIG_TIME_ARB_GM} a arbitrary grand-master which designates 
-	        	a clock that is synchronized to an application-specific source of time. 
-	        @item @t{CONFIG_TIME_FM} a free-running master (FM), used for isolated 
-	        	acquisition networks, without an external reference. 
-	        @item @t{CONFIG_TIME_BC} a normal ``boundary-clock'' device that
-	        	is slave on some ports and master on other ports.  
- 	        @item @t{CONFIG_TIME_CUSTOM} an option which leaves the possibility
-            to define freely the PTP clock class.
-        @end itemize
-    
-@item CONFIG_PTP_OPT_DOMAIN_NUMBER
-	A domain consists of one or more PTP devices communicating with each
-	other as defined by the PTP protocol. A domain defines the scope of
-	PTP message communication, state, operations, data sets, and
-	timescale. PTP devices may participate in multiple domains.
-	For more details please refer to the IEEE 1588-2008 standard.
+@item   CONFIG_SNMP_SYSLOCATION
 
-@item CONFIG_PTP_OPT_PRIORITY1
-	A user configurable designation that a clock belongs to an ordered
-	set of PTP devices from which a PTP Master is selected.
-	For more details please refer to the IEEE 1588-2008 standard.
+        Free text intended to be The physical location of this node.
+        Reported by SNMP as SNMPv2-MIB::sysLocation.0
 
-@item CONFIG_PTP_OPT_PRIORITY2
-	A user configurable designation that provides finer grained ordering
-	among otherwise equivalent PTP devices.
-	For more details please refer to the IEEE 1588-2008 standard.
+@item   CONFIG_NIC_THROTTLING_ENABLED
+@itemx  CONFIG_NIC_THROTTLING_VAL
 
-@item CONFIG_PTP_OPT_CLOCK_CLASS
+        Limit the Rx bandwidth of the traffic that goes from WR ports to Linux.
+        Throttling can be enabled to prevent Linux using 100% of the processing
+        power to receive Ethernet frames coming from WR ports to the CPU.
+        To enable the throttling set @t{CONFIG_NIC_THROTTLING_ENABLED}.
+        @t{CONFIG_NIC_THROTTLING_VAL} contains maximum allowed bandwidth
+        in KB/s.
 
-	An attribute defining the TAI traceability, synchronization state and
-	expected performance of the time or frequency distributed by a
-	Boundary Clock or Ordinary Clock.
-	Its value can be set only if @t{CONFIG_TIME_CUSTOM} parameter is selected.
-  The following table shows the default values
-	used depending on the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice:
-		@multitable @columnfractions .3 .4
-		@headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_CLASS 
-		@item  CONFIG_TIME_GM @tab 6
-		@item  CONFIG_TIME_ARB_GM @tab 13
-		@item  CONFIG_TIME_FM @tab 193
-		@item  CONFIG_TIME_BC @tab 248
-		@end multitable
+@item   CONFIG_PPS_IN_TERM_50OHM
 
-	For more details please refer to the IEEE 1588-2008 standard.
+        Enable 50ohm termination for 1-PPS input.
 
-	
-@item CONFIG_PTP_OPT_CLOCK_ACCURACY
+@item   CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
+@itemx  CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
+@itemx  CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
+@itemx  CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
 
-	An attribute defining the accuracy of the Local Clock (e.g. local
-	oscillator) of a Boundary Clock or Ordinary Clock.
-	Its value is set automatically according to the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice.
-	It can be also manually set when either @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES} is set 
-	or the timing mode ``@t{CONFIG_TIME_CUSTOM}`` is selected.
-	The following table gives the default values depending on the timing mode
-  ''@t{CONFIG_TIME_@i{xx}}'' choice :
-		@multitable @columnfractions .3 .4
-		@headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_ACCURACY 
-		@item  CONFIG_TIME_GM @tab 33
-		@item  CONFIG_TIME_ARB_GM @tab 33
-		@item  CONFIG_TIME_FM @tab 32
-		@item  CONFIG_TIME_BC @tab 254
-		@end multitable
+        It is possible to run a custom script at boot time. In this case please
+        set @t{CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED}.
+        To run a script @t{/wr/bin/custom_boot_script.sh} from the local
+        filesystem please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL}.
 
-	For more details please refer to the IEEE 1588-2008 standard.
-	
-@item CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
-	An attribute defining the stability of the Local Clock of a
-	Boundary Clock or Ordinary Clock.
-	Its value is set automatically according to the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice.
-	It can be also manually set either @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES} is set 
-	or the timing mode ``@t{CONFIG_TIME_CUSTOM}`` is selected.
-	The following table gives the default values depending on the timing mode
-  ''@t{CONFIG_TIME_@i{xx}}'' choice :
-		@multitable @columnfractions .3 .4
-		@headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE 
-		@item  CONFIG_TIME_GM @tab 47360
-		@item  CONFIG_TIME_ARB_GM @tab 47360
-		@item  CONFIG_TIME_FM @tab 50973
-		@item  CONFIG_TIME_BC @tab 65535
-		@end multitable
+        As an alternative, you can choose
+        @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE} and specify an URL
+        (@t{http://}, @t{ftp://} or @t{tftp://}) in
+        @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL} whence
+        the switch will download the script to be executed at boot time.
+        The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
+        and/or @t{MACADDR}, so the same configuration string can be used to set
+        up a batch of switches with different configurations (similar to the
+        @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
 
-	For more details please refer to the IEEE 1588-2008 standard.
+@item   CONFIG_LLDPD_DISABLE
+@itemx  CONFIG_LLDPD_TX_INTERVAL
+@itemx  CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE
+@itemx  CONFIG_LLDPD_MINIMUM_FRAME_SIZE
 
+        Set of parameters related to the LLDP daemon (lldpd) configuration.
+        Starting from version 6.0, switch by default sends LLDP frames on all
+        ports (including management). In some installations it may be necessary
+        to disable LLDP traffic on the management port (option
+        @t{CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE}). Additionally, in some cases
+        (e.g. low latency networks) it may be necessary to disable
+        LLDP at all (@t{CONFIG_LLDPD_DISABLE}).
 
-@item CONFIG_PTP_OPT_TIME_SOURCE
-	This information-only attribute indicates the source of time used
-	by the grandmaster or free-running master. In case the timing mode is set to
-  ``@t{CONFIG_TIME_BC}`` this configuration option is not used and thus hidden
-  from options available e.g. through ``@t{make menuconfig}''.
-	
-	The following table gives the default values depending on the timing mode
-  ''@t{CONFIG_TIME_@i{xx}}'' choice :
-		@multitable @columnfractions .3 .4
-		@headitem  Timing mode @tab CONFIG_PTP_OPT_TIME_SOURCE 
-		@item  CONFIG_TIME_GM @tab 32 (GNSS)
-		@item  CONFIG_TIME_ARB_GM @tab 32 (GNSS)
-		@item  CONFIG_TIME_FM @tab 160 (INTERNAL_OSCILLATOR)
-		@item  CONFIG_TIME_BC @tab --
-		@end multitable
-		
+        The transmission frequency of LLDP frames can be changed using option
+        @t{CONFIG_LLDPD_TX_INTERVAL}.
+
+        Networks that would benefit from the LLDP, but have low latency
+        constraints can use option @t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE}. With
+        this option LLDP daemon includes only minimal set of information into
+        LLDP frames.
+
+        The table below contains comparison of LLDP frame fields for standard
+        and minimal frame size (with
+        @t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE} option enabled). Size of some of
+        those fields (like @t{System name} or	@t{System Description}) depends
+        on the network configuration.
+
+        @multitable @columnfractions .25 .25 .35
+        @headitem Standard frame @tab Minimum frame @tab Description
+        @item 14
+        @tab 14
+        @tab ETH header
+        @item 9
+        @tab 9
+        @tab Chassis ID (with MAC)
+        @item 9
+        @tab 9
+        @tab Port ID (with MAC)
+        @item 4
+        @tab 4
+        @tab Time To Live
+        @item 2+len(System name)
+        @tab 2+len(System name)
+        @tab System name
+        @item 2+len(System desc.)
+        @tab 2+len(@t{WR-SWITCH})
+        @tab System description
+        @item 6
+        @tab 0
+        @tab Capabilities
+        @item 14
+        @tab 0
+        @tab Management Address
+        @item 7
+        @tab 7
+        @tab Port description
+        @item 2
+        @tab 2
+        @tab End of LLDP frame
+
+        @item 69
+
+        +len(System name)
+
+        +len(System desc.)
+        @tab 58
+
+        +len(System name)
+        @tab Total length
+
+        @end multitable
+
+@item   CONFIG_HTTPD_DISABLE
+
+        Disable web interface on a switch.
+        Web interface is now disabled by default and considered deprecated.
+        A number of security vulnerabilities were found in the web interface
+        (including CVE-2023-22577).
+        Please note that it is still possible to enable web interface in
+        run-time.
+        @b{Users are strongly discouraged from using the web interface}.
+        In exceptional cases the use of web-interface can be limited to well
+        controlled networks.
+
+@item   CONFIG_MONIT_DISABLE
+
+        Disable monitoring of running processes by @i{Monit}. @i{Monit} by
+        default
+        re-spawns processes that have died. This option should be used only
+        during development.
+
+@item   CONFIG_FAN_HYSTERESIS
+@itemx  CONFIG_FAN_HYSTERESIS_T_DISABLE
+@itemx  CONFIG_FAN_HYSTERESIS_T_ENABLE
+@itemx  CONFIG_FAN_HYSTERESIS_PWM_VAL
+
+        Use hysteresis to control fans. Enable fans with PWM value
+        @t{CONFIG_FAN_HYSTERESIS_PWM_VAL} when PLL's temperature exceeds
+        @t{CONFIG_FAN_HYSTERESIS_T_ENABLE}. Disable fans when temperature drops
+        below @t{CONFIG_FAN_HYSTERESIS_T_DISABLE}. These options are intended to
+        be used during development to reduce noise generated by a switch.
+        Don't use in production as this may affect the synchronization
+        performance.
+
+@item   CONFIG_READ_SFP_DIAG_ENABLE
+
+        Enable readout of additional monitoring information (DOM) like
+        temperature, Tx/Rx power, from SFP transceivers.
+        Please note that not all Gigabit Ethernet SFP transceivers provide
+        the DOM structure.
+
+@item CONFIG_RTU_HP_MASK_ENABLE
+@itemx CONFIG_RTU_HP_MASK_VAL
+
+        Set the mask which VLAN priorities are considered High Priority traffic
+        (this
+        only concerns the traffic which is fast-forwarded).
+        To enable a custom mask please set
+        @t{CONFIG_RTU_HP_MASK_ENABLE}.
+        @t{CONFIG_RTU_HP_MASK_VAL} shall contain the mask to be used.
+
+@end table
+
+@c =-------------------------------------------------------------------------
+@node Timing related configuration items
+@subsection Timing related configuration items
+
+@c =-------------------------------------------------------------------------
+@node Timing related common-port configuration items
+@subsubsection Timing related common-port configuration items
+
+The following table lists the configuration items that are common to all port
+instances of the WR switch.
+
+@table @code
 @item CONFIG_PTP_PORT_PARAMS
 @itemx CONFIG_PTP_CUSTOM
 @itemx CONFIG_PTP_REMOTE_CONF
@@ -1273,6 +1370,202 @@ appropriate way, before the respective service is started.
         and/or @t{MACADDR}, so the same configuration string can be used to set
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
+
+@item   CONFIG_PTP_SLAVE_ONLY
+
+        A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
+        which does not enable transition to MASTER state.
+        This option is only available if @t{PTP_OPT_EXT_PORT_CONFIG_ENABLED}
+        is not used.
+        For more details please refer to the IEEE 1588-2020 (clause 9.2.2.1)
+
+@item   CONFIG_TIME_GM
+@itemx  CONFIG_TIME_ARB_GM
+@itemx  CONFIG_TIME_FM
+@itemx  CONFIG_TIME_BC
+@itemx  CONFIG_TIME_CUSTOM
+
+        The type of PTP clock this switch is. Only one of the five first
+        items should be set (e.g. running ``@t{make menuconfig}'' offers
+        them as an exclusive choice). The options select:
+        @itemize
+        @item @t{CONFIG_TIME_GM} a grand-master with external reference, e.g.
+              GPS or Cesium.
+        @item @t{CONFIG_TIME_ARB_GM} a arbitrary grand-master which designates
+              a clock that is synchronized to an application-specific source of
+              time.
+        @item @t{CONFIG_TIME_FM} a free-running master (FM), used for isolated
+              acquisition networks, without an external reference.
+        @item @t{CONFIG_TIME_BC} a normal ``boundary-clock'' device that
+              is slave on some ports and master on other ports.
+        @item @t{CONFIG_TIME_CUSTOM} an option which leaves the possibility
+              to define freely the PTP clock class.
+        @end itemize
+
+@item   CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED
+
+        This option enables forcing the PTP state for each port instance using
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_*} parameters.
+        When set, each port instance can be forces to always stay either in the
+        slave, master or passive state.
+        The PTP Best Master Clock Algorithm (BMCA) is then disabled.
+        This option is only available for a boundary clock (@t{CONFIG_TIME_BC}).
+        For more details please refer to the IEEE 1588-2020 (clause 17.6.2)
+
+@item   CONFIG_PTP_OPT_DOMAIN_NUMBER
+        A domain consists of one or more PTP devices communicating with each
+        other as defined by the PTP protocol. A domain defines the scope of
+        PTP message communication, state, operations, data sets, and
+        timescale. PTP devices may participate in multiple domains.
+        For more details please refer to the IEEE 1588-2008 standard.
+
+@item   CONFIG_PTP_OPT_PRIORITY1
+        A user configurable designation that a clock belongs to an ordered
+        set of PTP devices from which a PTP Master is selected.
+        For more details please refer to the IEEE 1588-2008 standard.
+
+@item CONFIG_PTP_OPT_PRIORITY2
+        A user configurable designation that provides finer grained ordering
+        among otherwise equivalent PTP devices.
+        For more details please refer to the IEEE 1588-2008 standard.
+
+@item CONFIG_PTP_OPT_CLOCK_CLASS
+
+        An attribute defining the TAI traceability, synchronization state and
+        expected performance of the time or frequency distributed by a
+        Boundary Clock or Ordinary Clock.
+        Its value can be set only if @t{CONFIG_TIME_CUSTOM} parameter is
+        selected.
+        The following table shows the default values
+        used depending on the timing mode ''@t{CONFIG_TIME_@i{xx}}'' choice:
+        @multitable @columnfractions .3 .4
+        @headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_CLASS
+        @item  CONFIG_TIME_GM @tab 6
+        @item  CONFIG_TIME_ARB_GM @tab 13
+        @item  CONFIG_TIME_FM @tab 193
+        @item  CONFIG_TIME_BC @tab 248
+        @end multitable
+
+        For more details please refer to the IEEE 1588-2008 standard.
+
+@item CONFIG_PTP_OPT_CLOCK_ACCURACY
+
+        An attribute defining the accuracy of the Local Clock (e.g. local
+        oscillator) of a Boundary Clock or Ordinary Clock.
+        Its value is set automatically according to the timing mode
+        ''@t{CONFIG_TIME_@i{xx}}'' choice.
+        It can be also manually set when either
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES} is set
+        or the timing mode ``@t{CONFIG_TIME_CUSTOM}`` is selected.
+        The following table gives the default values depending on the timing
+        mode ''@t{CONFIG_TIME_@i{xx}}'' choice:
+        @multitable @columnfractions .3 .4
+        @headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_ACCURACY
+        @item  CONFIG_TIME_GM @tab 33
+        @item  CONFIG_TIME_ARB_GM @tab 33
+        @item  CONFIG_TIME_FM @tab 32
+        @item  CONFIG_TIME_BC @tab 254
+        @end multitable
+
+        For more details please refer to the IEEE 1588-2008 standard.
+
+@item   CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
+
+        An attribute defining the stability of the Local Clock of a
+        Boundary Clock or Ordinary Clock.
+        Its value is set automatically according to the timing mode
+        ''@t{CONFIG_TIME_@i{xx}}'' choice.
+        It can be also manually set either
+        @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES} is set
+        or the timing mode ``@t{CONFIG_TIME_CUSTOM}`` is selected.
+        The following table gives the default values depending on the timing
+        mode ''@t{CONFIG_TIME_@i{xx}}'' choice:
+        @multitable @columnfractions .3 .4
+        @headitem  Timing mode @tab CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE
+        @item  CONFIG_TIME_GM @tab 47360
+        @item  CONFIG_TIME_ARB_GM @tab 47360
+        @item  CONFIG_TIME_FM @tab 50973
+        @item  CONFIG_TIME_BC @tab 65535
+        @end multitable
+
+        For more details please refer to the IEEE 1588-2008 standard.
+
+
+@item   CONFIG_PTP_OPT_TIME_SOURCE
+
+        This information-only attribute indicates the source of time used
+        by the grandmaster or free-running master. In case the timing mode is
+        set to ``@t{CONFIG_TIME_BC}`` this configuration option is not used and
+        thus hidden from options available e.g. through ``@t{make menuconfig}''.
+
+        The following table gives the default values depending on the timing
+        mode ''@t{CONFIG_TIME_@i{xx}}'' choice:
+        @multitable @columnfractions .3 .4
+        @headitem  Timing mode @tab CONFIG_PTP_OPT_TIME_SOURCE
+        @item  CONFIG_TIME_GM @tab 32 (GNSS)
+        @item  CONFIG_TIME_ARB_GM @tab 32 (GNSS)
+        @item  CONFIG_TIME_FM @tab 160 (INTERNAL_OSCILLATOR)
+        @item  CONFIG_TIME_BC @tab --
+        @end multitable
+
+@item   CONFIG_N_SFP_ENTRIES
+@itemx  CONFIG_SFP00_PARAMS
+@itemx  ...
+@itemx  CONFIG_SFP17_PARAMS
+
+        Configuration for @sc{sfp} models.
+
+        @t{CONFIG_N_SFP_ENTRIES} indicates the number of SFP entries defined.
+        Up to 18 SFPs can be defined.
+
+        @t{CONFIG_SFP@i{xx}_PARAMS} with index @i{xx} in range 00 to 17,
+        contains @sc{sfp} parameters.
+        All @sc{sfp} models their respective wavelengths you are using in your
+        @sc{wrs} should be entered here.
+        @itemize
+        @item @t{vn} (@i{optional}) -- Vendor Name of an SFP
+        @item @t{pn} -- Part Number of an SFP
+        @item @t{vs} (@i{optional}) -- Vendor Serial (serial number) of an SFP
+        @item @t{tx} -- TX delay of an SFP in picoseconds
+        @item @t{rx} -- RX delay of an SFP in picoseconds
+        @item @t{wl_txrx} -- Tx wavelength separated by "+" with Rx wavelength
+                             of an SFP;
+                             for example @t{wl_txrx=1490+1310} (for 1490nm Tx
+                             wavelength and 1310nm Rx wavelength)
+        @end itemize
+        See @ref{Timing Configuration} for details.
+
+@item   CONFIG_N_FIBER_ENTRIES
+@item   CONFIG_FIBER00_PARAMS
+@itemx  ...
+@itemx  CONFIG_FIBER17_PARAMS
+
+        These parameters specify the characteristics of fiber types used in your
+        @sc{WR} installation.
+
+        @t{CONFIG_N_FIBER_ENTRIES} indicates the number of fiber types defined.
+        Up to 18 different fiber types can be defined.
+
+        @t{CONFIG_FIBER@i{xx}_PARAMS} with index @i{xx} in range 00 to 17,
+        specifies the alpha value for each pair of used wavelengths.
+        This parameter follows the format:
+
+        @t{alpha_@i{xxxx}_@i{yyyy}=1.23e-04,alpha_@i{aaaa}_@i{bbbb}=4.56e-04,...}
+
+        Where:
+        @itemize
+        @item @t{@i{xxxx}_@i{yyyy}} and @t{@i{aaaa}_@i{bbbb}} are pairs of used
+              wavelengths
+        @item @t{1.23e-04} and @t{4.56e-04} are alpha values to be used for
+              a particular combination of wavelengths.
+        @end itemize
+        The index (@t{00} to @t{17}) is then entered as
+        @t{CONFIG_PORT@i{xx}_FIBER} port parameter to reference the connected
+        fiber type.
+        See @ref{Timing Configuration} for details.
+
+        You are expected to have no more than 18 fiber types installed in
+        your @sc{WR} network.
 
 @item CONFIG_PPSGEN_PTP_FALLBACK
 @itemx CONFIG_PPSGEN_PTP_THRESHOLD_MS
@@ -1316,97 +1609,7 @@ appropriate way, before the respective service is started.
 	  
 	The @t{CONFIG_PPSGEN_PTP_FALLBACK} option, if activated, enables the PPS generation
   when a slave instance programmed to use an extension protocol (WR, L1Sync, ...)
-  is falling back to regular PTP synchronization. 
-
-@item CONFIG_RVLAN_ENABLE
-@itemx CONFIG_RVLAN_PMASK
-@itemx CONFIG_RVLAN_AUTH_VLAN
-@itemx CONFIG_RVLAN_NOAUTH_VLAN
-@itemx CONFIG_RVLAN_OBEY_DOTCONFIG
-@itemx CONFIG_RVLAN_RADIUS_SERVERS
-@itemx CONFIG_RVLAN_RADIUS_SECRET
-	Configuration items related to @i{radiusvlans}, which can be used to
-	limit access to WR network for connected devices based on MAC address.
-	For more details please refer to @i{White Rabbit Switch: Radius Vlan}.
-
-@item CONFIG_SNMP_TRAPSINK_ADDRESS
-@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
-@itemx CONFIG_SNMP_RO_COMMUNITY
-@itemx CONFIG_SNMP_RW_COMMUNITY
-
-	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
-        or names (if DNS is configured and working), they are unset by
-        default. Community values are strings and they default to
-        @t{public} (@t{RO_COMMUNITY}) and @t{private} (@t{RW_COMMUNITY}).
-
-@item CONFIG_SNMP_TEMP_THOLD_FPGA
-@itemx CONFIG_SNMP_TEMP_THOLD_PLL
-@itemx CONFIG_SNMP_TEMP_THOLD_PSL
-@itemx CONFIG_SNMP_TEMP_THOLD_PSR
-	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
-        Supply Right (PSR) temperature sensors. When any temperature exceeds
-        threshold level, SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
-        accordingly.
-
-@item CONFIG_SNMP_SWCORESTATUS_DISABLE
-
-	Force SNMP object @t{wrsSwcoreStatus} to be always OK. It can be used
-	to ignore all Ethernet frames switching related issues.
-
-@c @item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
-@c
-@c	Error via SNMP if the rate of HP frames on any port exceed given value.
-@c	(currently not implemented)
-
-@c@item CONFIG_SNMP_SWCORESTATUS_RX_FRAME_RATE
-@c
-@c	Error via SNMP if rate of RX frames on any port exceed given value.
-@c	(currently not implemented)
-
-@c@item CONFIG_SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
-@c
-@c	Error if frame rate of any RX priority exceed given value.
-@c	(currently not implemented)
-
-@item CONFIG_SNMP_SYSCONTACT
-	Free text intended to be the textual identification of the contact
-	person for this switch, together with information on how to contact this
-	person. Reported by SNMP as SNMPv2-MIB::sysContact.0
-
-@item CONFIG_SNMP_SYSLOCATION
-	Free text intended to be The physical location of this node.
-	Reported by SNMP as SNMPv2-MIB::sysLocation.0
-
-@item CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_HOURS
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_UNIT_MINUTES
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_DAYS
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_HOURS
-@itemx CONFIG_SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES
-
-	When @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED} option is set, 
-  the local system time is compared to the time 
-  acquired from the external NTP server (according to @t{CONFIG_NTP_SERVER}).
-  If the difference of time exceeds a given threshold
-  (defined by @t{CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD})
-  expressed in seconds, an error is reported through SNMP.
-		
-	This comparison is done periodically at a rate expressed either in days 
-	(@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS}), hours (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_HOURS}) or
-	minutes (@t{CONFIG_SNMP_SYSTEM_CLOCK_UNIT_MINUTES}).
-	
-	According to the selected unit, the repetition rate will be stored in the appropriate location:  
-	@multitable @columnfractions .3 .7
-	@headitem  Unit @tab Storage 
-	@item  @t{...UNIT_DAYS} @tab @t{...CHECK_INTERVAL_DAYS}
-	@item  @t{...UNIT_HOURS} @tab @t{...CHECK_INTERVAL_MINUTES}
-	@item  @t{...UNIT_MINUTES} @tab @t{...CHECK_INTERVAL_MINUTES}
-	@end multitable
-	
-	The @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED} option is available only if a
-	NTP server has been defined (@t{CONFIG_NTP_SERVER}).
+  is falling back to regular PTP synchronization.
 
 @item CONFIG_WRSAUXCLK_FREQ
 @itemx CONFIG_WRSAUXCLK_DUTY
@@ -1423,177 +1626,179 @@ appropriate way, before the respective service is started.
 @item CONFIG_EXT_PPS_LATENCY_PS
 	A value in ps to align the 1-PPS input and 1-PPS output.
 
-@item CONFIG_NIC_THROTTLING_ENABLED
-@itemx CONFIG_NIC_THROTTLING_VAL
+@end table
 
-	Limit the Rx bandwidth of the traffic that goes from WR ports to Linux.
-	Throttling can be enabled to prevent Linux using 100% of the processing
-	power to receive Ethernet frames coming from WR ports to the CPU.
-	To enable the throttling set @t{CONFIG_NIC_THROTTLING_ENABLED}.
-	@t{CONFIG_NIC_THROTTLING_VAL} contains maximum allowed bandwidth
-	in KB/s.
+@c =-------------------------------------------------------------------------
+@node Timing related per-port configuration items
+@subsubsection Timing related per-port configuration items
+The @i{xx} value in the parameter name represents the port number.
 
-@item CONFIG_PPS_IN_TERM_50OHM
-	Enable 50ohm termination for 1-PPS input.
+@table @code
+@item   @t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1}
+@item   @t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_0}
 
-@item CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
-@itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
-@itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
-@itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
+        Each physical @sc{wrs} port can be configured to run several PPSi
+        instances.
+        However, only one instance per-port can be active at any given moment.
+        This functionality is required to support several PTP extensions
+        (e.g. @sc{wr}, @sc{HA} - High Accuracy profile).
+        The active instance will dependent then of the profile used by the peer
+        on the other side of the link.
 
-	It is possible to run a custom script at boot time. In this case please
-        set @t{CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED}.
-        To run a script @t{/wr/bin/custom_boot_script.sh} from the local
-        filesystem please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL}.
+        WR switch firmware version @value{release_version} implements only a
+        single, @sc{WR} extension, therefore the possibility of running several
+        instances on a single port is disabled.
+        The number of port instances must be set to either 1
+        (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1=yes}) or
+        0 (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_0=yes})
+        if the port is not used.
+        @i{xx} represents the port number in the range 01 to 18.
 
-	As an alternative, you can choose
-        @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE} and specify an URL
-        (@t{http://}, @t{ftp://} or @t{tftp://}) in
-        @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL} whence
-        the switch will download the script to be executed at boot time.
-        The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
-        and/or @t{MACADDR}, so the same configuration string can be used to set
-        up a batch of switches with different configurations (similar to the
-        @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
+@end table
 
-@item CONFIG_LLDPD_DISABLE
-@itemx CONFIG_LLDPD_TX_INTERVAL
-@itemx CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE
-@itemx CONFIG_LLDPD_MINIMUM_FRAME_SIZE
+@subheading  Common instance configuration
 
-	Set of parameters related to the LLDP daemon (lldpd) configuration.
-	Starting from version 6.0, switch by default sends LLDP frames on all
-	ports (including management). In some installations it may be necessary
-	to disable LLDP traffic on the management port (option
-	@t{CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE}). Additionally, in some cases
-	(e.g. low latency networks) it may be necessary to disable
-	LLDP at all (@t{CONFIG_LLDPD_DISABLE}).
+A set of parameters common to all instances running on the same physical port.
 
-	The transmission frequency of LLDP frames can be changed using option
-	@t{CONFIG_LLDPD_TX_INTERVAL}.
+@table @code
 
-	Networks that would benefit from the LLDP, but have low latency
-	constraints can use option @t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE}. With
-	this option LLDP daemon includes only minimal set of information into
-	LLDP frames.
-	
-	The table below contains comparison of LLDP frame fields for standard
-	and minimal frame size (with
-	@t{CONFIG_LLDPD_MINIMUM_FRAME_SIZE} option enabled). Size of some of
-	those fields (like @t{System name} or	@t{System Description}) depends on
-	the network configuration.
+@item   CONFIG_PORT@i{xx}_IFACE
+        Used to define the physical port interface name: "wri[1-18]"
 
-@multitable @columnfractions .25 .25 .35
-@headitem Standard frame @tab Minimum frame @tab Description
-@item 14
-@tab 14
-@tab ETH header
-@item 9
-@tab 9
-@tab Chassis ID (with MAC)
-@item 9
-@tab 9
-@tab Port ID (with MAC)
-@item 4
-@tab 4
-@tab Time To Live
-@item 2+len(System name)
-@tab 2+len(System name)
-@tab System name
-@item 2+len(System desc.)
-@tab 2+len(@t{WR-SWITCH})
-@tab System description
-@item 6
-@tab 0
-@tab Capabilities
-@item 14
-@tab 0
-@tab Management Address
-@item 7
-@tab 7
-@tab Port description
-@item 2
-@tab 2
-@tab End of LLDP frame
+@item   CONFIG_PORT@i{xx}_FIBER
+        Identify the fiber type. This is a number (@i{zz}) referring to the
+        corresponding @t{CONFIG_FIBER@i{zz}_PARAMS})
 
-@item 69
+@item   CONFIG_PORT@i{xx}_CONSTANT_ASYMMETRY
+        Defines an additional constant asymmetry (e.g. of a fiber amplifier used
+        in long-haul @sc{wr} networks) that should be compensated by @sc{wr}
+        PTP calculations.
 
-+len(System name)
+@end table
 
-+len(System desc.)
-@tab 58
+@subheading  Instance information description
 
-+len(System name)
-@tab Total length
+All port instance parameters shared the following naming scheme:
+CONFIG_PORT@i{xx}_INST@i{yy}_@i{pp}, where @i{xx} represents the port number,
+@i{yy} the instance number (01 to 02) and @i{pp} a key describing the
+parameter itself.
 
-@end multitable
+@table @code
 
-@item CONFIG_HTTPD_DISABLE
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_RAW
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_UDP_IPV4
 
-	Disable web interface on a switch.
-	Web interface is now disabled by default and considered deprecated.
-	A number of security vulnerabilities were found in the web interface
-	(including CVE-2023-22577).
-	Please note that it is still possible to enable web interface in
-	run-time.
-	@b{Users are strongly discouraged from using the web interface}.
-	In exceptional cases the use of web-interface can be limited to well
-	controlled networks.
+        Network transport layer selection, either raw Ethernet or UDP over IPv4
+        can be used.
 
-@item CONFIG_MONIT_DISABLE
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP
 
-	Disable monitoring of running processes by @i{Monit}. @i{Monit} by
-        default
-        re-spawns processes that have died. This option should be used only during
-        development.
+        Profile selection. @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR} must be
+        set to use the White Rabbit profile and
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} for pure PTP profile.
 
-@item CONFIG_FAN_HYSTERESIS
-@itemx CONFIG_FAN_HYSTERESIS_T_DISABLE
-@itemx CONFIG_FAN_HYSTERESIS_T_ENABLE
-@itemx CONFIG_FAN_HYSTERESIS_PWM_VAL
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P
 
-	Use hysteresis to control fans. Enable fans with PWM value
-	@t{CONFIG_FAN_HYSTERESIS_PWM_VAL} when PLL's temperature exceeds
-	@t{CONFIG_FAN_HYSTERESIS_T_ENABLE}. Disable fans when temperature drops
-	below @t{CONFIG_FAN_HYSTERESIS_T_DISABLE}. These options are intended to
-	be used during development to reduce noise generated by a switch.
-	Don't use in production as this may affect the synchronization
-	performance.
+        TP delay mechanism, either 'end-to-end' (E2E) or 'peer-to-peer' (P2P)
+        can be used.
 
-@item CONFIG_READ_SFP_DIAG_ENABLE
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_SLAVE
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_PASSIVE
 
-	Enable readout of additional monitoring information (DOM) like temperature,
-  Tx/Rx power, from SFP transceivers. Please note that not all Gigabit Ethernet
-  SFP transceivers provide the DOM structure.
+        If @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is enabled then
+        the desired PTP state of the instance must be defined as follows:
+        @multitable @columnfractions .2 .8
+        @headitem State @tab Parameter
+        @item MASTER  @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER}
+        @item SLAVE   @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_SLAVE}
+        @item PASSIVE @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_PASSIVE}
+        @end multitable
 
-@item CONFIG_OPTIMIZATION_DEBUGGING
-@itemx CONFIG_OPTIMIZATION_NONE_DEBUGGING
-@itemx CONFIG_OPTIMIZATION_SIZE_SPEED
-@itemx CONFIG_OPTIMIZATION_SPEED
-	
-	Compilation options. Chose one of these four choices to control the 
-	compilation flags.
-	
-	@t{CONFIG_OPTIMIZATION_DEBUGGING}: Should be the optimization level choice 
-	  for the standard edit-compile-debug cycle.
-	
-	@t{CONFIG_OPTIMIZATION_NONE_DEBUGGING}: Compile without optimization and with debug information
-	
-	@t{CONFIG_OPTIMIZATION_SIZE_SPEED}: Optimize for size. Enables all -O2 optimizations except those 
-	  that often increase the code size.
-	
-	@t{CONFIG_OPTIMIZATION_SPEED}: GCC performs nearly all supported optimizations 
-	  that do not involve a space-speed trade-off.
-	 
-@item CONFIG_RTU_HP_MASK_ENABLE
-@itemx CONFIG_RTU_HP_MASK_VAL
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_ASYMMETRY_CORRECTION_ENABLE
 
-	Set the mask which VLAN priorities are considered High Priority traffic
-	(this
-	only concerns the traffic which is fast-forwarded).
-	To enable a custom mask please set
-	@t{CONFIG_RTU_HP_MASK_ENABLE}.
-	@t{CONFIG_RTU_HP_MASK_VAL} shall contain the mask to be used.
+        This option is only accessible when the PTP profile is selected
+        otherwise this option is enabled by default.
+        It is used to force the servo to integrate on its calculation
+        the computation of the delay asymmetry.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_AUTO
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY
+
+        Indicates the BMCA mode to be used. The choice is available only when
+        @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is disabled.
+        Either the regular PTP BMCA (@t{BMODE_AUTO}) or PTP masterOnly feature
+        (@t{BMODE_MASTER_ONLY}) can be used.
+        For more details please refer to the IEEE 1588-2020 (clause 9.2.2.2)
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY
+@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY
+
+        Defines the reception (@t{CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY})
+        and transmission (@t{CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY})
+        constant delays expressed in picoseconds.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL
+
+        The mean time interval between transmissions of successive
+        PTP Announce messages. The value expressed as base 2 logarithm.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT
+
+        The number of announceIntervals that must pass without receipt of an
+        Announce message before the occurrence of
+        the PTP event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
+        The value expressed as base 2 logarithm.
+        For more details please refer to IEEE 1588-2020 standard.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL
+
+        The mean time interval between transmission of successive
+        PTP Sync messages, i.e., the sync-interval, when transmitted
+        as multicast messages. The value expressed as base 2 logarithm.
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL
+
+        The minDelayRequestInterval specifies the minimum permitted
+        mean time interval between successive Delay_Req messages.
+        The value expressed as base 2 logarithm.
+        This option is available when 'end-to-end' delay mechanism is selected
+        (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E}).
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL
+
+        The minPDelayRequestInterval specifies the minimum permitted
+        mean time interval between successive Pdelay_Req messages.
+        The value expressed as base 2 logarithm.
+        This option is only available when 'peer-to-peer' delay mechanism is
+        selected (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P}).
+
+@item   CONFIG_PORT@i{xx}_INST@i{yy}_MONITOR
+
+        Option to decide whether timing-related errors for a given port will be
+        reported through SNMP.
+
+@c  --------------------------
+@c Option that will be available whe HA will be deployed
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENCY_IS_REQUIRED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENCY_IS_REQUIRED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENCY_IS_REQUIRED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED
+@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
+
+
+@end table
+
+@c =-------------------------------------------------------------------------
+@node Vlans related configuration items
+@subsection Vlans related configuration items
+
+@table @code
 
 @item CONFIG_VLANS_ENABLE
 
@@ -1770,174 +1975,6 @@ by the @sc{wr} calibration procedure.
 Please note that only one alpha value has to be provided for each fiber type.
 The @i{alpha} in the opposite direction (@t{alpha_1490_1310}) is calculated
 by the software.
-
-@subsection Common port configuration
-
-The following table lists the configuration items that are common to all port
-instances of the WR switch.
-
-@table @code
-
-@item CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED
-
-	  This option enables forcing the PTP state for each port instance using
-    @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_*} parameters. 
-	  When set, each port instance can be forces to always stay either in the
-    slave, master or passive state.
-	  The PTP Best Master Clock Algorithm (BMCA) is then disabled.
-	  This option is only available for a boundary clock (@t{CONFIG_TIME_BC}).
-	  For more details please refer to the IEEE 1588-2020 (clause 17.6.2)
-	  
-@item CONFIG_PTP_SLAVE_ONLY
-
-	  A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
-	  which does not enable transition to MASTER state.
-	  This option is only available if @t{PTP_OPT_EXT_PORT_CONFIG_ENABLED}
-	  is not used.
-	  For more details please refer to the IEEE 1588-2020 (clause 9.2.2.1)
-	
-@end table
-
-@subsection  Per-port configuration
-
-@table @code
-@item @t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1}
-@item @t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_0}
-
-  Each physical @sc{wrs} port can be configured to run several PPSi instances.
-  However, only one instance per-port can be active at any given moment. This functionality
-  is required to support several PTP extensions (e.g. @sc{wr}, @sc{HA} - High Accuracy
-  profile). The active instance will dependent then of the profile used by the peer on
-  the other side of the link.
-
-  WR switch firmware version @value{release_version} implements only a single,
-  @sc{WR} extension, therefore the possibility of running several instances on a single
-  port is disabled. The number of port instances must be set to either 1
-  (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_1=yes}) or 0 (@t{CONFIG_PORT@i{xx}_INSTANCE_COUNT_0=yes})
-  if the port is not used. @i{xx} represents the port number in the range 01 to 18. 
-
-@end table
-
-@subheading  Common instance configuration
-
-A set of parameters common to all instances running on the same physical port. The 
-@i{xx} value in the parameter name represents the port number.
-
-@table @code
-
-@item  CONFIG_PORT@i{xx}_IFACE
-	 Used to define the physical port interface name: "wri[1-18]"
-	 
-@item  CONFIG_PORT@i{xx}_FIBER
-	Identify the fiber type. This is a number (@i{zz}) referring to the corresponding 
-	@t{CONFIG_FIBER@i{zz}_PARAMS})
-	
-@item  CONFIG_PORT@i{xx}_CONSTANT_ASYMMETRY
-	Defines an additional constant asymmetry (e.g. of a fiber amplifier used
-	in long-haul @sc{wr} networks) that should be compensated by @sc{wr}
-	PTP calculations.
-
-@end table
-  
-@subheading  Instance information description
-
-All port instance parameters shared the following naming scheme:
-CONFIG_PORT@i{xx}_INST@i{yy}_@i{pp}, where @i{xx} represents the port number,
-@i{yy} the instance number (01 to 02) and @i{pp} a key describing the
-parameter itself. 
-
-@table @code
-
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_RAW
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROTOCOL_UDP_IPV4
-  Network transport layer selection, either raw Ethernet or UDP over IPv4 can be used.
- 
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP
-  Profile selection. @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_WR} must be set to use the White Rabbit profile and 
-  @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} for pure PTP profile.
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P
-  PTP delay mechanism, either 'end-to-end' (E2E) or 'peer-to-peer' (P2P) can be used.
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_SLAVE
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_PASSIVE
-  If @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is enabled then the desired PTP state
-  of the instance must be defined as follows:
-  @multitable @columnfractions .2 .8 
-  @headitem State @tab Parameter
-  @item MASTER  @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_MASTER}
-  @item SLAVE   @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_SLAVE}
-  @item PASSIVE @tab @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_PASSIVE}
-  @end multitable
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_ASYMMETRY_CORRECTION_ENABLE
-  This option is only accessible when the PTP profile is selected otherwise this option is enabled by default. 
-  It is used to force the servo to integrate on its calculation the computation of the delay asymmetry. 
-  
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_AUTO
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY
-  Indicates the BMCA mode to be used. The choice is available only when
-  @t{CONFIG_PTP_OPT_EXT_PORT_CONFIG_ENABLED} is disabled. Either the regular PTP BMCA
-  (@t{BMODE_AUTO}) or PTP masterOnly feature (@t{BMODE_MASTER_ONLY})
-  can be used.
-  For more details please refer to the IEEE 1588-2020 (clause 9.2.2.2)
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY
-@itemx  CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY
-  Defines the reception (@t{CONFIG_PORT@i{xx}_INST@i{yy}_INGRESS_LATENCY}) and transmission 
-  (@t{CONFIG_PORT@i{xx}_INST@i{yy}_EGRESS_LATENCY}) constant delays expressed in
-  picoseconds.
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_INTERVAL
-  The mean time interval between transmissions of successive
-	PTP Announce messages. The value expressed as base 2 logarithm.
-  
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_ANNOUNCE_RECEIPT_TIMEOUT
-  The number of announceIntervals that must pass without receipt of an Announce
-  message before the occurrence of the PTP event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES.
-	The value expressed as base 2 logarithm. For more details please refer to
-  IEEE 1588-2020 standard.
-    
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_SYNC_INTERVAL
-	  The mean time interval between transmission of successive
-	  PTP Sync messages, i.e., the sync-interval, when transmitted
-	  as multicast messages. The value expressed as base 2 logarithm.
-
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_MIN_DELAY_REQ_INTERVAL
-	  The minDelayRequestInterval specifies the minimum permitted
-	  mean time interval between successive Delay_Req messages.
-    The value expressed as base 2 logarithm.
-    This option is available when 'end-to-end' delay mechanism is selected 
-    (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_E2E}).
-
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_MIN_PDELAY_REQ_INTERVAL
-	  The minPDelayRequestInterval specifies the minimum permitted
-	  mean time interval between successive Pdelay_Req messages.
-    The value expressed as base 2 logarithm.
-    This option is only available when 'peer-to-peer' delay mechanism is selected
-    (@t{CONFIG_PORT@i{xx}_INST@i{yy}_MECHANISM_P2P}).
-
-@item  CONFIG_PORT@i{xx}_INST@i{yy}_MONITOR
-  Option to decide whether timing-related errors for a given port will be reported
-  through SNMP.
-
-@c  --------------------------
-@c Option that will be available whe HA will be deployed
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_ENABLED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_INTERVAL
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RECEIPT_TIMEOUT
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_TX_COHERENCY_IS_REQUIRED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_RX_COHERENCY_IS_REQUIRED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_CONGRUENCY_IS_REQUIRED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_ENABLED
-@c @item  CONFIG_PORT@i{xx}_INST@i{yy}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED
-
-
-@end table
 
 @subsection SFP name matching
 

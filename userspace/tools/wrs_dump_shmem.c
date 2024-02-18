@@ -32,7 +32,7 @@
 #define FPGA_SPLL_STAT 0x10006800
 #define SPLL_MAGIC 0x5b1157a7
 
-void dump_one_field_ppsi_wrs(int type, int size, void *p, int i);
+int dump_one_field_ppsi_wrs(int type, int size, void *p, int i);
 int dump_one_field_type_ppsi_wrs(int type, int size, void *p);
 
 char *name_id_to_name[WRS_SHM_N_NAMES] = {

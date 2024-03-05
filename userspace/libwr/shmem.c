@@ -191,7 +191,7 @@ int wrs_shm_get_and_check(enum wrs_shm_name shm_name,
 	int ret;
 
 	/* try to open shmem */
-	if (!(*head) && !(*head = wrs_shm_get(shm_name, "",
+	if (!head || !(*head = wrs_shm_get(shm_name, "",
 					WRS_SHM_READ | WRS_SHM_LOCKED))) {
 		return WRS_SHM_OPEN_FAILED;
 	}

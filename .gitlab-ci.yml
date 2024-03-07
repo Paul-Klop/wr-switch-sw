@@ -6,6 +6,9 @@ job_wrs_compile:
   script:
     - apt update && apt upgrade -y && apt install -y git make build-essential m4 gettext bison flex texinfo libncurses-dev libncursesw5-dev bc python unzip wget cpio locales
     - locale-gen en_US.UTF-8
+    # use the user who triggered a job to appear in binaries
+    - echo "[user]" >  ~/.gitconfig
+    - echo "    name = CI ${GITLAB_USER_NAME}" >>  ~/.gitconfig
     - cd ..
     - echo "Using `grep -c ^processor /proc/cpuinfo` parallel jobs" 
     - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt

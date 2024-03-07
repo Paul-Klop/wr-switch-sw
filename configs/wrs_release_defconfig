@@ -2,7 +2,7 @@
 # Automatically generated file; DO NOT EDIT.
 # White Rabbit Switch  configuration
 #
-CONFIG_DOTCONF_FW_VERSION="6.1"
+CONFIG_DOTCONF_FW_VERSION="7.0"
 CONFIG_DOTCONF_HW_VERSION=""
 CONFIG_DOTCONF_INFO=""
 # CONFIG_DOTCONF_SOURCE_LOCAL is not set

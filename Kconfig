@@ -1317,6 +1317,12 @@ config RVLAN_RADIUS_SECRET
 
 endmenu
 
+config READ_SFP_DIAG_ENABLE
+	bool "Read SFPs' Diagnostic Monitoring"
+	default y
+	help
+	  Let HAL to read Diagnostic Monitoring from SFPs' eeprom.
+
 config HTTPD_DISABLE
 	bool "Disable web interface"
 	default n
@@ -1370,12 +1376,6 @@ config FAN_HYSTERESIS_PWM_VAL
 	  PWM value used to drive fans. Range from 4 to 1000.
 
 endmenu # "Fan speed control"
-
-config READ_SFP_DIAG_ENABLE
-	bool "Read SFPs Diagnostic Monitoring"
-	default n
-	help
-	  Let HAL to read Diagnostic Monitoring from SFP's eeprom.
 
 choice
 	prompt "Compilation optimization"

@@ -10,6 +10,10 @@ job_wrs_compile:
     - echo "[user]" >  ~/.gitconfig
     - echo "    name = CI ${GITLAB_USER_NAME}" >>  ~/.gitconfig
     - cd ..
+    - echo "Remove leftovers from the previous build"
+    - rm -rf *.tar
+    - rm -rf *.log
+    - rm -rf build
     - echo "Using `grep -c ^processor /proc/cpuinfo` parallel jobs" 
     - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt
     - cp *.tar ${CI_PROJECT_DIR}

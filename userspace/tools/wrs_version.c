@@ -53,7 +53,6 @@ void help(const char* pgrname)
 				"   -b backplane hardware version (also '-p' for WWW)\n"
 				"   -s scb hardware version (without dot in version number)\n"
 				"   -f FPGA type\n"
-				"   -F FPGA type and init status LED\n"
 				"   -g Gateware version\n"
 				"   -c Compiling time\n"
 				"   -v version (git)\n"
@@ -233,18 +232,6 @@ int main(int argc, char **argv)
 
 	switch(func)
 	{
-	case 'F':
-		/* When the linux has boot the status led
-		 * is unpowered so we set it to yellow
-		 * until the HAL start (LED is orange) and finally
-		 * WR is setup (LED is green) */
-		if(shw_io_read(shw_io_led_state_g)==0)
-		{
-			shw_io_write(shw_io_led_state_o,1);
-			shw_io_write(shw_io_led_state_g,1);
-		}
-		func='f';
-		/* fall through */
 	case 'f': /* Warning: this -p and -f is used by the web interface */
 		printf("%s\n", get_fpga());
 		break;

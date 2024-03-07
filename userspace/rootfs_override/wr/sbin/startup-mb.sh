@@ -28,8 +28,15 @@ if [ -f "$MONIT_RR_FLASH" ]; then
     mv -f "$MONIT_RR_FLASH" "$MONIT_RR_TMP"
 fi
 
+# Turn on yellow LED
+# When the linux has boot the status led
+# is unpowered so set it to yellow
+# until the HAL start (LED is orange) and finally
+# WR is setup (LED is green)
+$WR_HOME/bin/wrs_status_led -y
+
 # Obtain the type of FPGA (LX130XT or LX240XT)
-tfpga=$($WR_HOME/bin/wrs_version -F)
+tfpga=$($WR_HOME/bin/wrs_version -f)
 if [ "$tfpga" = "UNKNOWN" ]; then
     tfpga="LX240T"
 fi

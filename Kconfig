@@ -224,7 +224,7 @@ config ROOT_ACCESS_DISABLE
 
 config LDAP_ENABLE
 	bool "Enable LDAP authorization"
-	default false
+	default n
 	help
 	  Enable LDAP authorization. Used by ssh.
 
@@ -993,7 +993,7 @@ config SNMP_TEMP_THOLD_PSR
 
 config SNMP_SWCORESTATUS_DISABLE
 	bool "Force SNMP object wrsSwcoreStatus to be always OK"
-	default false
+	default n
 	help
 	  Disable checking SNMP object wrsSwcoreStatus"
 

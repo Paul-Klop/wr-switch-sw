@@ -148,15 +148,15 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				if (port_state->has_sfp_diag) {
 					wrsPortStatusTable->wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_ENABLE;
 					/* temp in C */
-					wrsPortStatusTable->wrsPortStatusSfpTemp = ntohs(*port_state->calib.sfp_dom_raw.temp)/256;
+					wrsPortStatusTable->wrsPortStatusSfpTemp = ntohs(port_state->calib.sfp_dom_raw.temp)/25.6;
 					/* vcc in mV */
-					wrsPortStatusTable->wrsPortStatusSfpVcc = ntohs(*port_state->calib.sfp_dom_raw.vcc)/10;
+					wrsPortStatusTable->wrsPortStatusSfpVcc = ntohs(port_state->calib.sfp_dom_raw.vcc);
 					/* tx_bias in uA */
-					wrsPortStatusTable->wrsPortStatusSfpTxBias = ntohs(*port_state->calib.sfp_dom_raw.tx_bias)*2;
+					wrsPortStatusTable->wrsPortStatusSfpTxBias = ntohs(port_state->calib.sfp_dom_raw.tx_bias)*2;
 					/* tx_pow in uW */
-					wrsPortStatusTable->wrsPortStatusSfpTxPower = ntohs(*port_state->calib.sfp_dom_raw.tx_pow)/10;
+					wrsPortStatusTable->wrsPortStatusSfpTxPower = ntohs(port_state->calib.sfp_dom_raw.tx_pow);
 					/* rx_pow in uW */
-					wrsPortStatusTable->wrsPortStatusSfpRxPower = ntohs(*port_state->calib.sfp_dom_raw.rx_pow)/10;
+					wrsPortStatusTable->wrsPortStatusSfpRxPower = ntohs(port_state->calib.sfp_dom_raw.rx_pow);
 				} else {
 					wrsPortStatusTable->wrsPortStatusSfpDom = WRS_PORT_STATUS_SFP_DOM_NOT_SUPPORTED;
 				}

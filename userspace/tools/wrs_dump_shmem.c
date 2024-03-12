@@ -246,17 +246,17 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		printf("\n");
 		break;
 	case dump_type_sfp_dom_temp:
-		printf("%.3f C\n", ntohs(*(short *)p)/(float)256);
+		printf("%.3f C\n", (int16_t)ntohs(*(uint16_t *)p)/(float)256);
 		break;
 	case dump_type_sfp_dom_voltage:
-		printf("%.3f V\n", ntohs(*(short *)p)/(float)10000);
+		printf("%.3f V\n", ntohs(*(uint16_t *)p)/(float)10000);
 		break;
 	case dump_type_sfp_dom_bias_curr:
-		printf("%.3f mA\n", ntohs(*(short *)p)/(float)500);
+		printf("%.3f mA\n", ntohs(*(uint16_t *)p)/(float)500);
 		break;
 	case dump_type_sfp_dom_tx_power:
 	case dump_type_sfp_dom_rx_power:
-		printf("%.3f mW\n", ntohs(*(short *)p)/(float)10000);
+		printf("%.3f mW\n", ntohs(*(uint16_t *)p)/(float)10000);
 		break;
 	case dump_type_port_mode:
 		i = *(uint32_t *)p;

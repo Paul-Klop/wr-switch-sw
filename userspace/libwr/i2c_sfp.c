@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <math.h>
+#include <arpa/inet.h>
 
 #include <libwr/pio.h>
 #include <libwr/wrs-msg.h>
@@ -351,11 +352,11 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 
 void shw_sfp_print_dom(struct shw_sfp_dom * dom)
 {
-	float tx_pow = (dom->tx_pow[0]*256 + dom->tx_pow[1])/(float)10000;
-	float rx_pow = (dom->rx_pow[0]*256 + dom->rx_pow[1])/(float)10000;
-	printf("Temperature: %.3f C\n", (int8_t)dom->temp[0] + dom->temp[1]/(float)256);
-	printf("Voltage: %.3f V\n", (dom->vcc[0]*256 + dom->vcc[1])/(float)10000);
-	printf("Bias Current:  %.3f mA\n", (dom->tx_bias[0]*256+dom->tx_bias[1])/(float)500);
+	float tx_pow = (ntohs(dom->tx_pow))/(float)10000;
+	float rx_pow = (ntohs(dom->rx_pow))/(float)10000;
+	printf("Temperature: %.3f C\n", (int16_t)ntohs(dom->temp)/(float)256);
+	printf("Voltage: %.3f V\n", ntohs(dom->vcc)/(float)10000);
+	printf("Bias Current:  %.3f mA\n", ntohs(dom->tx_bias)/(float)500);
 	printf("TX power: %.4f mW (%.1f dBm)\n", tx_pow, 10 * log10(tx_pow));
 	printf("RX power: %.4f mW (%.1f dBm)\n", rx_pow, 10 * log10(rx_pow));
 }

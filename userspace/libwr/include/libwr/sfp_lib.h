@@ -134,11 +134,12 @@ struct shw_sfp_dom {
 	uint8_t cal_unalloc[3];
 	uint8_t CC_DMI;
 /* Real Time Diagnostics, 96-111 */
-	uint8_t temp[2];
-	uint8_t vcc[2];
-	uint8_t tx_bias[2];
-	uint8_t tx_pow[2];
-	uint8_t rx_pow[2];
+	int16_t temp;		/* signed 16bit twos complement int, units if
+				 * 1/256 C */
+	uint16_t vcc;		/* unsigned 16bit int, units of 0.1mV */
+	uint16_t tx_bias;	/* unsigned 16bit int, units of 2uA */
+	uint16_t tx_pow;	/* unsigned 16bit int, units of 0.1uW */
+	uint16_t rx_pow;	/* unsigned 16bit int, units of 0.1uW */
 	uint8_t rtd_unalloc0[4];
 	uint8_t OSCB;
 	uint8_t rtd_unalloc1;

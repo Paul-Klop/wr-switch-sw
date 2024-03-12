@@ -2546,7 +2546,7 @@ wrsPortStatusSfpTemp   OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Temperature reported by SFP. According to SFF-8472, accuracy of
+            "Temperature in 0.1 C reported by SFP. According to SFF-8472, accuracy of
             this value must be better than 3 degrees Celsius"
     ::= { wrsPortStatusEntry 17 }
 
@@ -2555,7 +2555,7 @@ wrsPortStatusSfpVcc    OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Internally measured transceiver supply voltage reported by SFP.
+            "Internally measured transceiver supply voltage in 0.1 mV reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3%"
     ::= { wrsPortStatusEntry 18 }
 
@@ -2573,7 +2573,7 @@ wrsPortStatusSfpTxPower OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Measured TX output power in uW reported by SFP.
+            "Measured TX output power in 0.1 uW reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3dB%"
     ::= { wrsPortStatusEntry 20 }
 
@@ -2582,7 +2582,7 @@ wrsPortStatusSfpRxPower OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Measured RX output power in uW reported by SFP.
+            "Measured RX output power in 0.1 uW reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3dB%"
     ::= { wrsPortStatusEntry 21 }
 

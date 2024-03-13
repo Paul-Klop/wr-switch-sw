@@ -213,6 +213,26 @@ function print_instance_header() {
 	echo -e "	  Defines the phase transition point for reception timestamps t2/t4 (ps)" >>$OUTPUT_FILE
 
 
+	echo -e "\nconfig PORT${portStr}_INST${instStr}_PTP_VERSION_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"Force PTP version\"" >>$OUTPUT_FILE
+	echo -e "	depends on PTP_OPT_PTP_VERSION_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  Force the PTP version used by this instance." >>$OUTPUT_FILE
+	echo -e "	  If this option is not set, the PTP version is set based on the used" >>$OUTPUT_FILE
+	echo -e "	  extension (not profile!)." >>$OUTPUT_FILE
+	echo -e "	  See help of PTP_OPT_PTP_VERSION_OVERWRITE." >>$OUTPUT_FILE
+
+	echo -e "\nchoice" >>$OUTPUT_FILE
+	echo -e "	prompt \"PTP version\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_PTP_VERSION_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  Define PTP version used by this instance." >>$OUTPUT_FILE
+	echo -e "	config PORT${portStr}_INST${instStr}_PTP_VERSION_2_0" >>$OUTPUT_FILE
+	echo -e "		bool \"v2.0 (IEEE1588-2008)\"" >>$OUTPUT_FILE
+	echo -e "	config PORT${portStr}_INST${instStr}_PTP_VERSION_2_1" >>$OUTPUT_FILE
+	echo -e "		bool \"v2.1 (IEEE1588-2019)\"" >>$OUTPUT_FILE
+	echo -e "endchoice" >>$OUTPUT_FILE
+
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default logAnnounceInterval\"" >>$OUTPUT_FILE
 

@@ -643,6 +643,19 @@ config TIME_CUSTOM
 
 endchoice
 
+config PTP_OPT_PTP_VERSION_OVERWRITE
+	boolean "Allow the overwrite of the default PTP version per instance"
+	default n
+	help
+	  This option is required to overwrite the PTP version used in
+	  the transmitted PTP messages. The actual setting is done in
+	  the per instance configuration menu.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  If no extension or HA/L1Sync is used, PTP version is set to
+	  v2.1 (IEEE1588-2019).
+	  If WR extension is used then PTP version is set to
+	  v2.0 (IEEE1588-2008).
 
 config PTP_OPT_OVERWRITE_ATTRIBUTES
 	boolean "Overwrite default values of PTP attributes"

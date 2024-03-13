@@ -399,6 +399,8 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [EXTENSION_L1S]="extension l1s" \
 [EXTENSION_L1S_WR]="extension autonegotation" \
 [DESIRADE_STATE_MASTER]="desiredState master" [DESIRADE_STATE_SLAVE]="desiredState slave" [DESIRADE_STATE_PASSIVE]="desiredState passive" \
+[PTP_VERSION_2_0]="ptpVersion 2.0" \
+[PTP_VERSION_2_1]="ptpVersion 2.1" \
 [ANNOUNCE_INTERVAL_VAL]="logAnnounceInterval" \
 [ANNOUNCE_RECEIPT_TIMEOUT_VAL]="announceReceiptTimeout" \
 [SYNC_INTERVAL_VAL]="logSyncInterval" \
@@ -572,6 +574,13 @@ for i_port in {01..18}; do # scan all the physical ports
 		# set the extension
 		set_instance_extension $inst_vn
 		v="$inst_vn[extension]"; p_extension=${!v}
+
+		# set the ptpVersion only if the global and per instance overwrite enabled
+		inst_ver_overwrite="CONFIG_PORT${i_port}_INST${j_inst}_PTP_VERSION_OVERWRITE"
+		if [ "$CONFIG_PTP_OPT_PTP_VERSION_OVERWRITE" != 'y' ] || [ "${!inst_ver_overwrite}" != 'y' ] ; then
+			# don't set ptpVersion
+			v="$inst_vn[ptpVersion]"; eval ${v}=""
+		fi
 
 		# define instance name
 		v="$port_vn[iface]"; p_iface=${!v}

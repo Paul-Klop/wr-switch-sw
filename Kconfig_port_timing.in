@@ -154,6 +154,26 @@ config PORT01_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT01_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT01_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT01_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT01_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT01_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -600,6 +620,26 @@ config PORT02_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT02_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT02_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT02_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT02_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT02_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -1048,6 +1088,26 @@ config PORT03_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT03_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT03_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT03_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT03_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT03_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -1494,6 +1554,26 @@ config PORT04_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT04_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT04_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT04_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT04_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT04_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -1942,6 +2022,26 @@ config PORT05_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT05_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT05_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT05_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT05_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT05_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -2388,6 +2488,26 @@ config PORT06_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT06_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT06_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT06_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT06_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT06_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -2836,6 +2956,26 @@ config PORT07_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT07_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT07_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT07_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT07_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT07_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -3282,6 +3422,26 @@ config PORT08_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT08_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT08_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT08_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT08_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT08_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -3730,6 +3890,26 @@ config PORT09_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT09_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT09_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT09_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT09_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT09_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -4176,6 +4356,26 @@ config PORT10_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT10_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT10_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT10_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT10_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT10_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -4624,6 +4824,26 @@ config PORT11_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT11_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT11_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT11_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT11_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT11_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -5070,6 +5290,26 @@ config PORT12_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT12_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT12_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT12_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT12_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT12_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -5518,6 +5758,26 @@ config PORT13_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT13_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT13_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT13_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT13_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT13_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -5964,6 +6224,26 @@ config PORT14_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT14_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT14_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT14_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT14_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT14_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -6412,6 +6692,26 @@ config PORT15_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT15_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT15_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT15_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT15_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT15_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -6858,6 +7158,26 @@ config PORT16_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT16_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT16_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT16_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT16_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT16_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
@@ -7306,6 +7626,26 @@ config PORT17_INST01_T24P_TRANS_POINT
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
 
+config PORT17_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT17_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT17_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT17_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
+
 config PORT17_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"
 
@@ -7752,6 +8092,26 @@ config PORT18_INST01_T24P_TRANS_POINT
 	int "timestampCorrectionPortDS.t24p_trans_point (ps)"
 	help
 	  Defines the phase transition point for reception timestamps t2/t4 (ps)
+
+config PORT18_INST01_PTP_VERSION_OVERWRITE
+	bool "Force PTP version"
+	depends on PTP_OPT_PTP_VERSION_OVERWRITE
+	help
+	  Force the PTP version used by this instance.
+	  If this option is not set, the PTP version is set based on the used
+	  extension (not profile!).
+	  See help of PTP_OPT_PTP_VERSION_OVERWRITE.
+
+choice
+	prompt "PTP version"
+	depends on PORT18_INST01_PTP_VERSION_OVERWRITE
+	help
+	  Define PTP version used by this instance.
+	config PORT18_INST01_PTP_VERSION_2_0
+		bool "v2.0 (IEEE1588-2008)"
+	config PORT18_INST01_PTP_VERSION_2_1
+		bool "v2.1 (IEEE1588-2019)"
+endchoice
 
 config PORT18_INST01_ANNOUNCE_INTERVAL_OVERWRITE
 	bool "Overwrite default logAnnounceInterval"

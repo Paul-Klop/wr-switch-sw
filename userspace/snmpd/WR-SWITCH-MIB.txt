@@ -40,6 +40,8 @@ wrSwitchMIB MODULE-IDENTITY
          - wrsPtpDelayCoefficientStr
          - wrsPtpIngressLatency
          - wrsPtpEgressLatency
+        Change enumeration values of:
+         - wrsPtpInstanceProfile (renamed value 2, removed value 3)
         Improved description of:
          - wrsPtpRTT
          - wrsPtpLinkLength
@@ -3179,14 +3181,15 @@ wrsPtpInstanceProfile  OBJECT-TYPE
     SYNTAX         INTEGER {              -- ppsi/include/ppsi/ppsi.h
                         na(0),
                         defaultPTP(1),    -- PPSI_PROFILE_PTP
-                        whiteRabbit(2),   -- PPSI_PROFILE_WR
-                        highAccuracy(3),  -- PPSI_PROFILE_HA
+                        highAccuracyWhiteRabbit(2),   -- PPSI_PROFILE_HA_WR
+                        highAccuracy(3),  -- obsolete
                         custom(4)         -- PPSI_PROFILE_CUSTOM
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Profile/Extension configured on a PTP Instance"
+            "Profile configured on a PTP Instance. Please note that
+            High Accuracy and White Rabbit use the same profile."
     ::= { wrsPtpInstanceEntry 11 }
 
 wrsPtpInstanceExtension  OBJECT-TYPE

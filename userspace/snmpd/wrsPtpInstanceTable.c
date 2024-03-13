@@ -46,6 +46,20 @@ static struct pickinfo wrsPtpInstanceTable_pickinfo[] = {
 static char *slog_obj_name;
 static char *wrsPtpInstanceStatusError_str = "wrsPtpInstanceStatusError";
 
+static int get_profile_val(int profile)
+{
+	switch(profile) {
+	case PPSI_PROFILE_PTP:
+		return WRS_PTP_INSTANCE_PROFILE_PTP;
+	case PPSI_PROFILE_HA_WR:
+		return WRS_PTP_INSTANCE_PROFILE_HA_WR;
+	case PPSI_PROFILE_CUSTOM:
+		return WRS_PTP_INSTANCE_PROFILE_CUSTOM;
+	default:
+		return WRS_PTP_INSTANCE_PROFILE_NA;
+	}
+}
+
 static inline struct hal_port_state *pp_wrs_lookup_port(char *name)
 {
 	int i;
@@ -155,7 +169,7 @@ time_t wrsPtpInstanceTable_data_fill(unsigned int *n_rows)
 
 			pit->wrsPtpInstanceExtPortCfgDesSt = ppsi_i->externalPortConfigurationPortDS.desiredState;
 			pit->wrsPtpInstanceMechanism = ppsi_i->delayMechanism;
-			pit->wrsPtpInstanceProfile = ppsi_i->cfg.profile + 1;
+			pit->wrsPtpInstanceProfile = get_profile_val(ppsi_i->cfg.profile);
 			pit->wrsPtpInstanceExtension = ppsi_i->protocol_extension+1;
 			pit->wrsPtpInstanceAsymEnabled = ppsi_i->asymmetryCorrectionPortDS.enable + 1;
 			pit->wrsPtpInstanceAsymConstAsymPS = interval_to_picos(ppsi_i->asymmetryCorrectionPortDS.constantAsymmetry);

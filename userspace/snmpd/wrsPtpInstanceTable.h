@@ -17,6 +17,12 @@
 
 #define WRS_PTP_INSTANCE_EXTENSION_CFG_HAWRAUTONEGOTIATION		4
 
+#define WRS_PTP_INSTANCE_PROFILE_NA		0
+#define WRS_PTP_INSTANCE_PROFILE_PTP		1
+#define WRS_PTP_INSTANCE_PROFILE_HA_WR		2
+/* 3 is obsolete */
+#define WRS_PTP_INSTANCE_PROFILE_CUSTOM		4
+
 
 struct wrsPtpInstanceTable_s {
 	uint32_t wrsPtpInstancePortIndex;		/* not reported, index fields has t o be marked

@@ -18,7 +18,7 @@ IMPORTS
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "202005220000Z"
+    LAST-UPDATED "202403260000Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
@@ -26,7 +26,7 @@ wrSwitchMIB MODULE-IDENTITY
     DESCRIPTION  "White Rabbit Switch internal details
                  "
 
-    REVISION     "202311300000Z"
+    REVISION     "202403260000Z"
     DESCRIPTION
         "Updates for v7.0 WRS firmware release
         Added objects:

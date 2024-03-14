@@ -89,7 +89,7 @@ $(SHLIB): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 $(OID_FILE): $(MIBS)
-	snmptranslate -Pu -Tz -M +./ -m ./$(MIBS) >$(OID_FILE)
+	snmptranslate -Pu -Tz -M +./ -m ./$(MIBS) >$(OID_FILE) || true
 
 clean:
 	rm -f $(SHLIB) $(OBJECTS)

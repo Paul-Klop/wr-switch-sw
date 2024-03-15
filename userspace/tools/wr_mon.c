@@ -1351,7 +1351,7 @@ void show_all(void)
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor ");
 		term_cprintf(C_WHITE, "%s", __GIT_VER__);
-		term_cprintf(C_BLUE, " [q = quit, t = toggle servo, c = extra ppsi params]\n\n");
+		term_cprintf(C_BLUE, " [q=quit,r=refresh,f=freeze,t=toggle servo,c=extra ppsi params]\n\n");
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0))
@@ -1403,6 +1403,7 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 1;
+	int gui_freeze = 0; /* freeze the GUI */
 
 	/* try a pps_gen based approach */
 	uint64_t last_seconds = 0;
@@ -1488,8 +1489,21 @@ int main(int argc, char *argv[])
 				last_seconds = 0;
 				break;
 
+			case 'f':
+				gui_freeze = !gui_freeze;
+				if (gui_freeze) {
+					term_cprintf(C_RED, "GUI Frozen!\n");
+					fflush(stdout);
+				}
+				last_seconds = 0;
+				break;
+
 			case 'q':
 				goto quit;
+
+			case 'r': /* force refresh */
+				last_seconds = 0;
+				break;
 
 			case 't' :
 				toggle_tracking();
@@ -1500,7 +1514,7 @@ int main(int argc, char *argv[])
 		}
 
 		shw_pps_gen_read_time(&seconds, &nanoseconds);
-		if (seconds != last_seconds) {
+		if (!gui_freeze && seconds != last_seconds) {
 			read_servo();
 			read_gm_info();
 			read_hal();

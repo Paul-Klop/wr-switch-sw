@@ -256,7 +256,7 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		break;
 	case dump_type_sfp_dom_tx_power:
 	case dump_type_sfp_dom_rx_power:
-		printf("%.3f mW\n", ntohs(*(uint16_t *)p)/(float)10000);
+		printf("%.4f mW\n", ntohs(*(uint16_t *)p)/(float)10000);
 		break;
 	case dump_type_port_mode:
 		i = *(uint32_t *)p;

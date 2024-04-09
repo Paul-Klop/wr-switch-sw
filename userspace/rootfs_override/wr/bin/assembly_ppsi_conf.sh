@@ -401,22 +401,22 @@ declare -A inst_dotc_ppsi_key_mapping='(\
 [DESIRADE_STATE_MASTER]="desiredState master" [DESIRADE_STATE_SLAVE]="desiredState slave" [DESIRADE_STATE_PASSIVE]="desiredState passive" \
 [PTP_VERSION_2_0]="ptpVersion 2.0" \
 [PTP_VERSION_2_1]="ptpVersion 2.1" \
-[ANNOUNCE_INTERVAL_VAL]="logAnnounceInterval" \
-[ANNOUNCE_RECEIPT_TIMEOUT_VAL]="announceReceiptTimeout" \
-[SYNC_INTERVAL_VAL]="logSyncInterval" \
-[MIN_DELAY_REQ_INTERVAL_VAL]="logMinDelayReqInterval" \
-[MIN_PDELAY_REQ_INTERVAL_VAL]="logMinPDelayReqInterval" \
+[ANNOUNCE_INTERVAL]="logAnnounceInterval" \
+[ANNOUNCE_RECEIPT_TIMEOUT]="announceReceiptTimeout" \
+[SYNC_INTERVAL]="logSyncInterval" \
+[MIN_DELAY_REQ_INTERVAL]="logMinDelayReqInterval" \
+[MIN_PDELAY_REQ_INTERVAL]="logMinPDelayReqInterval" \
 [ASYMMETRY_CORRECTION_ENABLE]="asymmetryCorrectionEnable" \
 [BMODE_MASTER_ONLY]="masterOnly" \
 [EGRESS_LATENCY]="egressLatency" [INGRESS_LATENCY]="ingressLatency" \
-[L1SYNC_ENABLED_VAL]="l1SyncEnabled" \
-[L1SYNC_INTERVAL_VAL]="logL1SyncInterval" \
-[L1SYNC_RECEIPT_TIMEOUT_VAL]="l1SyncReceiptTimeout" \
-[L1SYNC_OPT_PARAMS_ENABLED_VAL]="l1SyncOptParamsEnabled" \
-[L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL]="l1SyncTimestampsCorrectedTxEnabled" \
-[L1SYNC_TX_COHERENT_IS_REQUIRED_VAL]="l1SyncTxCoherentIsRequired" \
-[L1SYNC_RX_COHERENT_IS_REQUIRED_VAL]="l1SyncRxCoherentIsRequired" \
-[L1SYNC_CONGRUENT_IS_REQUIRED_VAL]="l1SyncCongruentIsRequired" \
+[L1SYNC_ENABLED]="l1SyncEnabled" \
+[L1SYNC_INTERVAL]="logL1SyncInterval" \
+[L1SYNC_RECEIPT_TIMEOUT]="l1SyncReceiptTimeout" \
+[L1SYNC_OPT_PARAMS_ENABLED]="l1SyncOptParamsEnabled" \
+[L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED]="l1SyncTimestampsCorrectedTxEnabled" \
+[L1SYNC_TX_COHERENT_IS_REQUIRED]="l1SyncTxCoherentIsRequired" \
+[L1SYNC_RX_COHERENT_IS_REQUIRED]="l1SyncRxCoherentIsRequired" \
+[L1SYNC_CONGRUENT_IS_REQUIRED]="l1SyncCongruentIsRequired" \
 [_VLAN]="vlan" \
 [_FAKE1]="extAutonegotiation" \
 )'
@@ -450,8 +450,8 @@ else
 	globals[bmca]="ptp"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS_VAL" ]; then
-	globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS_VAL"
+if [ -n "$CONFIG_PTP_OPT_CLOCK_CLASS" ]; then
+	globals[clock-class]="$CONFIG_PTP_OPT_CLOCK_CLASS"
 else # Use BC as default
 	globals[clock-class]="248" 
 fi
@@ -460,24 +460,24 @@ if [ -n "$CONFIG_PTP_OPT_CLOCK_ACCURACY" ]; then
 	globals[clock-accuracy]="$CONFIG_PTP_OPT_CLOCK_ACCURACY"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE_VAL" ]; then
-	globals[clock-allan-variance]="$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE_VAL"
+if [ -n "$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE" ]; then
+	globals[clock-allan-variance]="$CONFIG_PTP_OPT_CLOCK_ALLAN_VARIANCE"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_TIME_SOURCE_VAL" ]; then
-	globals[time-source]="$CONFIG_PTP_OPT_TIME_SOURCE_VAL"
+if [ -n "$CONFIG_PTP_OPT_TIME_SOURCE" ]; then
+	globals[time-source]="$CONFIG_PTP_OPT_TIME_SOURCE"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER_VAL" ]; then
-	globals[domain-number]="$CONFIG_PTP_OPT_DOMAIN_NUMBER_VAL"
+if [ -n "$CONFIG_PTP_OPT_DOMAIN_NUMBER" ]; then
+	globals[domain-number]="$CONFIG_PTP_OPT_DOMAIN_NUMBER"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_PRIORITY1_VAL" ]; then
-	globals[priority1]="$CONFIG_PTP_OPT_PRIORITY1_VAL"
+if [ -n "$CONFIG_PTP_OPT_PRIORITY1" ]; then
+	globals[priority1]="$CONFIG_PTP_OPT_PRIORITY1"
 fi
 
-if [ -n "$CONFIG_PTP_OPT_PRIORITY2_VAL" ]; then
-	globals[priority2]="$CONFIG_PTP_OPT_PRIORITY2_VAL"
+if [ -n "$CONFIG_PTP_OPT_PRIORITY2" ]; then
+	globals[priority2]="$CONFIG_PTP_OPT_PRIORITY2"
 fi
 
 if [ -n "$CONFIG_PPSGEN_PTP_THRESHOLD_MS" ]; then

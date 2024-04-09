@@ -237,8 +237,7 @@ function print_instance_header() {
 	echo -e "	bool \"Overwrite default logAnnounceInterval\"" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"logAnnounceInterval\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"logAnnounceInterval\" if PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	default 1" >>$OUTPUT_FILE
 	echo -e "	range -6 4 if (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM) \\" >>$OUTPUT_FILE
 	echo -e "		      || PORT${portStr}_INST${instStr}_PROFILE_CUSTOM" >>$OUTPUT_FILE
@@ -248,18 +247,12 @@ function print_instance_header() {
 	echo -e "	  Announce messages. The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 0 to 4." >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL if PORT${portStr}_INST${instStr}_ANNOUNCE_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 1" >>$OUTPUT_FILE
-
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default announceReceiptTimeout\"" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT" >>$OUTPUT_FILE
-	echo -e "	int \"announceReceiptTimeout\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"announceReceiptTimeout\" if PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	default 3" >>$OUTPUT_FILE
 	echo -e "	range 2 255" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -269,18 +262,12 @@ function print_instance_header() {
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 2 to 255" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT if PORT${portStr}_INST${instStr}_ANNOUNCE_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 3" >>$OUTPUT_FILE
-
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default logSyncInterval\"" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_SYNC_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"logSyncInterval\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"logSyncInterval\" if PORT${portStr}_INST${instStr}_SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range -6 1 if (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM) \\" >>$OUTPUT_FILE
 	echo -e "		      || PORT${portStr}_INST${instStr}_PROFILE_CUSTOM" >>$OUTPUT_FILE
@@ -291,19 +278,13 @@ function print_instance_header() {
 	echo -e "	  as multicast messages. The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be -1 to +1" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_SYNC_INTERVAL_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_SYNC_INTERVAL if PORT${portStr}_INST${instStr}_SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 0" >>$OUTPUT_FILE
-
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default minDelayRequestInterval\"" >>$OUTPUT_FILE
 	echo -e "	depends on PORT${portStr}_INST${instStr}_MECHANISM_E2E" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"minDelayRequestInterval\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"minDelayRequestInterval\" if PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range -6 5 if (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM) \\" >>$OUTPUT_FILE
 	echo -e "		      || PORT${portStr}_INST${instStr}_PROFILE_CUSTOM" >>$OUTPUT_FILE
@@ -314,20 +295,13 @@ function print_instance_header() {
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 0 to 5" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_MECHANISM_E2E" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL if PORT${portStr}_INST${instStr}_MIN_DELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 0" >>$OUTPUT_FILE
-
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default minPDelayRequestInterval\"" >>$OUTPUT_FILE
 	echo -e "	depends on PORT${portStr}_INST${instStr}_MECHANISM_P2P" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"minPDelayRequestInterval\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"minPDelayRequestInterval\" if PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range -6 5 if (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM) \\" >>$OUTPUT_FILE
 	echo -e "		      || PORT${portStr}_INST${instStr}_PROFILE_CUSTOM" >>$OUTPUT_FILE
@@ -338,51 +312,35 @@ function print_instance_header() {
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 0 to 5" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_MECHANISM_P2P" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL if PORT${portStr}_INST${instStr}_MIN_PDELAY_REQ_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 0" >>$OUTPUT_FILE
 
 # L1 sync
+	echo -e "# Use following options if L1Sync or extension autonegotiation is enabled" >>$OUTPUT_FILE
+	echo -e "\nif PORT${portStr}_INST${instStr}_EXTENSION_L1S || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
+
 	echo -e "\n# L1SYNC_ENABLED and its dependencies can be changed only for CUSTOM profile" >>$OUTPUT_FILE
 	echo -e "comment \"Options specific to L1Sync\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_EXTENSION_L1S \\" >>$OUTPUT_FILE
-	echo -e "		   || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default value for enabling L1Sync (only for Custom profile)\"" >>$OUTPUT_FILE
-	echo -e "	depends on (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM || (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \\" >>$OUTPUT_FILE
-	echo -e "		   && (PORT${portStr}_INST${instStr}_EXTENSION_L1S || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR)" >>$OUTPUT_FILE
+	echo -e "	depends on (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM || (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM))" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
-	echo -e "	bool \"L1SyncBasicPortDS.L1SyncEnabled\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.L1SyncEnabled\" if PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM || (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM))" >>$OUTPUT_FILE
 	echo -e "	default y" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If" >>$OUTPUT_FILE
 	echo -e "	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled." >>$OUTPUT_FILE
 	echo -e "	  Used only for Custom profile." >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	bool" >>$OUTPUT_FILE
-	echo -e "	depends on (PORT${portStr}_INST${instStr}_PROFILE_CUSTOM || (PORT${portStr}_INST${instStr}_PROFILE_KEEP_GLOBAL && GLOBAL_PROFILE_CUSTOM)) \\" >>$OUTPUT_FILE
-	echo -e "		   && (PORT${portStr}_INST${instStr}_EXTENSION_L1S || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR)" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_ENABLED if PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default y" >>$OUTPUT_FILE
-	echo -e "	help" >>$OUTPUT_FILE
-	echo -e "	  This parameter specifies whether the L1Sync option is enabled on the PTP Port. If" >>$OUTPUT_FILE
-	echo -e "	  L1SyncEnabled is TRUE, then the L1Sync message exchange is supported and enabled" >>$OUTPUT_FILE
-
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.logL1SyncInterval\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_EXTENSION_L1S \\" >>$OUTPUT_FILE
-	echo -e "		   || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
+	echo -e "	depends on !PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE || PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL" >>$OUTPUT_FILE
-	echo -e "	int \"L1SyncBasicPortDS.logL1SyncInterval\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"L1SyncBasicPortDS.logL1SyncInterval\" if PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on !PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE || PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default 0" >>$OUTPUT_FILE
 	echo -e "	range -4 4" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -391,22 +349,14 @@ function print_instance_header() {
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be -4 to 4." >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_EXTENSION_L1S \\" >>$OUTPUT_FILE
-	echo -e "		   || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL if PORT${portStr}_INST${instStr}_L1SYNC_INTERVAL_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 0" >>$OUTPUT_FILE
-
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.L1SyncReceiptTimeout\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_EXTENSION_L1S \\" >>$OUTPUT_FILE
-	echo -e "		   || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
+	echo -e "	depends on !PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE || PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT" >>$OUTPUT_FILE
-	echo -e "	int \"L1SyncBasicPortDS.L1SyncReceiptTimeout\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	int \"L1SyncBasicPortDS.L1SyncReceiptTimeout\" if PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on !PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_OVERWRITE || PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default 3" >>$OUTPUT_FILE
 	echo -e "	range 2 10" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
@@ -416,110 +366,76 @@ function print_instance_header() {
 	echo -e "	  The value is the logarithm to the base 2." >>$OUTPUT_FILE
 	echo -e "	  The configurable range shall be 2 to 10" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT_VAL" >>$OUTPUT_FILE
-	echo -e "	int" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_EXTENSION_L1S \\" >>$OUTPUT_FILE
-	echo -e "		   || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT if PORT${portStr}_INST${instStr}_L1SYNC_RECEIPT_TIMEOUT_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default 3" >>$OUTPUT_FILE
-
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.txCoherentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED" >>$OUTPUT_FILE
-	echo -e "	bool \"L1SyncBasicPortDS.txCoherentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.txCoherentIsRequired\" if PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default y" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	   The Boolean attribute txCoherentIsRequired specifies the configuration of the L1Sync port and the" >>$OUTPUT_FILE
 	echo -e "	   expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is" >>$OUTPUT_FILE
 	echo -e "	   required to be a transmit coherent port." >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED_VAL" >>$OUTPUT_FILE
-	echo -e "	bool" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED if PORT${portStr}_INST${instStr}_L1SYNC_TX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default y" >>$OUTPUT_FILE
-
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.rxCoherentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
  
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED" >>$OUTPUT_FILE
-	echo -e "	bool \"L1SyncBasicPortDS.rxCoherentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.rxCoherentIsRequired\" if PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default y" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  The Boolean attribute rxCoherentIsRequired specifies the configuration of the L1Sync port and the" >>$OUTPUT_FILE
 	echo -e "	  expected configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is" >>$OUTPUT_FILE
 	echo -e "	  required to be a receive coherent port." >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED_VAL" >>$OUTPUT_FILE
-	echo -e "	bool" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED if PORT${portStr}_INST${instStr}_L1SYNC_RX_COHERENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default y" >>$OUTPUT_FILE
-
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.congruentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED" >>$OUTPUT_FILE
-	echo -e "	bool \"L1SyncBasicPortDS.congruentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.congruentIsRequired\" if PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default y" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  The Boolean attribute congruentIsRequired specifies configuration of the L1Sync port and the expected" >>$OUTPUT_FILE
 	echo -e "	  configuration of its peer L1Sync port. This configuration indicates whether the L1Sync port is required to" >>$OUTPUT_FILE
 	echo -e "	  be a congruent port" >>$OUTPUT_FILE
 
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED_VAL" >>$OUTPUT_FILE
-	echo -e "	bool" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED if PORT${portStr}_INST${instStr}_L1SYNC_CONGRUENT_IS_REQUIRED_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default y" >>$OUTPUT_FILE
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.optParamsEnabled\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
  
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED" >>$OUTPUT_FILE
-	echo -e "	bool \"L1SyncBasicPortDS.optParamsEnabled\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.optParamsEnabled\" if PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default n" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  The Boolean attribute optParamsEnabled specifies whether the L1Sync port transmitting the L1_SYNC" >>$OUTPUT_FILE
 	echo -e "	  TLV extends this TLV with the information about the optional parameters." >>$OUTPUT_FILE
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	bool" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED if PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default n" >>$OUTPUT_FILE
 
 
 	echo -e "\n\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE" >>$OUTPUT_FILE
 	echo -e "	bool \"Overwrite default L1SyncBasicPortDS.txCoherentIsRequired\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED" >>$OUTPUT_FILE
 
 	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED" >>$OUTPUT_FILE
-	echo -e "	bool \"L1SyncBasicPortDS.timestampsCorrectedTx\"" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	bool \"L1SyncBasicPortDS.timestampsCorrectedTx\" if PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_ENABLED" >>$OUTPUT_FILE
 	echo -e "	default n" >>$OUTPUT_FILE
 	echo -e "	help" >>$OUTPUT_FILE
 	echo -e "	  When L1SyncOptParamsPortDS.timestampsCorrectedTx is TRUE," >>$OUTPUT_FILE
 	echo -e "	  the L1Sync port shall correct the transmitted egress timestamps with" >>$OUTPUT_FILE
 	echo -e "	  the known value of the phase offset." >>$OUTPUT_FILE
-
-	echo -e "\nconfig PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	bool" >>$OUTPUT_FILE
-	echo -e "	depends on PORT${portStr}_INST${instStr}_L1SYNC_ENABLED_VAL" >>$OUTPUT_FILE
-	echo -e "	default PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED if PORT${portStr}_INST${instStr}_L1SYNC_OPT_PARAMS_TS_CORRECTED_TX_ENABLED_OVERWRITE" >>$OUTPUT_FILE
-	echo -e "	default n" >>$OUTPUT_FILE
-
+	echo -e "\nendif # PORT${portStr}_INST${instStr}_EXTENSION_L1S || PORT${portStr}_INST${instStr}_EXTENSION_L1S_WR" >>$OUTPUT_FILE
+	echo -e "" >>$OUTPUT_FILE
 }
 
 function print_instance_footer() { 

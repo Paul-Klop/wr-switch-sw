@@ -196,13 +196,14 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
     int dot1dBasePortCircuit_len = 2; 
     int *ifIndex_lut; /* Keep ifIndex for all wri ports */
     char *tmp_c;
+    char *end_c;
     int wri_i;
     struct if_nameindex *if_nidxs, *intf;
 
     DEBUGMSGTL(("verbose:dot1dBasePortTable:dot1dBasePortTable_container_load","called\n"));
 
     /* index a table with ifIndexes of interfaces in range 1..18 */
-    ifIndex_lut = calloc(sizeof(int), hal_nports_local + 1);
+    ifIndex_lut = calloc(hal_nports_local + 1, sizeof(int));
 
     if_nidxs = if_nameindex();
     if ( if_nidxs != NULL ) {
@@ -210,7 +211,12 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
             if (!strncmp(intf->if_name, "wri", strlen("wri"))) {
                 /* wri interface found */
                 tmp_c = intf->if_name + strlen("wri");
-                wri_i = atoi(tmp_c);
+                wri_i = strtoll(tmp_c, &end_c, 10);
+                if (*end_c != '\0') {
+                    /* There is something after wriX string, ignore this
+                     * interface since it is VLAN or virtual interface */
+                    continue;
+                }
                 /* save ifIndex for the found interface,
                  * +1 because ifIndex counts from 1 */
                 ifIndex_lut[wri_i] = (intf - if_nidxs) + 1;
@@ -230,6 +236,7 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
         rowreq_ctx = dot1dBasePortTable_allocate_rowreq_ctx(NULL);
         if (NULL == rowreq_ctx) {
             snmp_log(LOG_ERR, "memory allocation failed\n");
+            free(ifIndex_lut);
             return MFD_RESOURCE_UNAVAILABLE;
         }
         if(MFD_SUCCESS != dot1dBasePortTable_indexes_set(rowreq_ctx
@@ -265,6 +272,7 @@ dot1dBasePortTable_container_load(netsnmp_container *container)
         memset(dot1dBasePortCircuit, 0, dot1dBasePortCircuit_len);
         if (NULL == rowreq_ctx->data.dot1dBasePortCircuit) {
             snmp_log(LOG_ERR,"not enough space for value (dot1dBasePortCircuit)\n");
+            free(ifIndex_lut);
             return MFD_ERROR;
         }
         rowreq_ctx->data.dot1dBasePortCircuit_len = dot1dBasePortCircuit_len* sizeof(dot1dBasePortCircuit[0]);

@@ -1,6 +1,7 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
 
+
 /* HAL */
 struct wrs_shm_head *hal_head;
 struct hal_shmem_header *hal_shmem;
@@ -19,9 +20,10 @@ int *ppsi_ppi_nlinks=NULL;
 /* RTUd */
 struct wrs_shm_head *rtud_head;
 
-int shmem_open_hald;
-int shmem_open_ppsi;
-int shmem_open_rtud;
+
+int shmem_open_hald = 0;
+int shmem_open_ppsi = 0;
+int shmem_open_rtud = 0;
 
 static int init_shm_hald(void)
 {
@@ -263,6 +265,9 @@ int shmem_rtu_read_vlans(struct rtu_vlan_table_entry *vlan_tab_local)
 	struct rtu_vlan_table_entry *vlan_tab_shm;
 	struct rtu_shmem_header *rtu_hdr;
 
+	if (!shmem_ready_rtud())
+		return -2;
+
 	rtu_hdr = (void *)rtud_head + rtud_head->data_off;
 	vlan_tab_shm = wrs_shm_follow(rtud_head, rtu_hdr->vlans);
 	if (!vlan_tab_shm)
@@ -291,6 +296,9 @@ int shmem_rtu_read_htab(struct rtu_filtering_entry *rtu_htab_local, int *read_en
 	struct rtu_filtering_entry *htab_shm;
 	struct rtu_shmem_header *rtu_hdr;
 	struct rtu_filtering_entry *empty;
+
+	if (!shmem_ready_rtud())
+		return -2;
 
 	rtu_hdr = (void *)rtud_head + rtud_head->data_off;
 	htab_shm = wrs_shm_follow(rtud_head, rtu_hdr->filters);
@@ -332,6 +340,9 @@ int shmem_rtu_read_ports(struct rtu_port_entry *ports_tab_local, int *nports)
 	struct rtu_port_entry *rtu_ports_shm;
 	struct rtu_shmem_header *rtu_hdr;
 
+	if (!shmem_ready_rtud())
+		return -2;
+
 	rtu_hdr = (void *)rtud_head + rtud_head->data_off;
 	rtu_ports_shm = wrs_shm_follow(rtud_head, rtu_hdr->rtu_ports);
 	if (!rtu_ports_shm)
@@ -355,6 +366,7 @@ int shmem_rtu_read_ports(struct rtu_port_entry *ports_tab_local, int *nports)
 	}
 	return 0;
 }
+
 
 /* Compare entries by by MAC */
 int cmp_rtu_entries_mac(const void *p1, const void *p2)

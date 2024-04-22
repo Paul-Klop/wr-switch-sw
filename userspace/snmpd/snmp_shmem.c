@@ -282,7 +282,7 @@ int shmem_rtu_read_vlans(struct rtu_vlan_table_entry *vlan_tab_local)
 			return -1;
 		if (!wrs_shm_seqretry(rtud_head, ii))
 			break; /* consistent read */
-		usleep(1000);
+		usleep(100);
 	}
 
 	return 0;
@@ -315,7 +315,7 @@ int shmem_rtu_read_htab(struct rtu_filtering_entry *rtu_htab_local, int *read_en
 			return -1;
 		if (!wrs_shm_seqretry(rtud_head, ii))
 			break; /* consistent read */
-		usleep(1000);
+		usleep(100);
 	}
 
 	/* Convert hash table to ordered table. Table will be qsorted later,
@@ -362,7 +362,7 @@ int shmem_rtu_read_ports(struct rtu_port_entry *ports_tab_local, int *nports)
 			}
 		if (!wrs_shm_seqretry(rtud_head, ii))
 			break; /* consistent read */
-		usleep(1000);
+		usleep(100);
 	}
 	return 0;
 }

@@ -50,13 +50,17 @@ struct wrsPortStatusTable_s {
 	unsigned long wrsPortStatusPtpRxFrames;
 	int wrsPortStatusMonitor; /* Ignore errors on this port */
 	int wrsPortStatusSfpDom;
-	int wrsPortStatusSfpTemp;
-	int wrsPortStatusSfpVcc;
-	int wrsPortStatusSfpTxBias;
-	int wrsPortStatusSfpTxPower;
-	int wrsPortStatusSfpRxPower;
+	int wrsPortStatusSfpTemp;	/* units of C */
+	int wrsPortStatusSfpVcc;	/* units of 1mV */
+	int wrsPortStatusSfpTxBias;	/* units of 1uA */
+	int wrsPortStatusSfpTxPower;	/* units of 1uW */
+	int wrsPortStatusSfpRxPower;	/* units of 1uW */
 	int wrsPortStatusT24p;
 	int wrsPortStatusT24pValid;
+	int wrsPortStatusSfpTempF;	/* units of 0.01 C */
+	int wrsPortStatusSfpVccF;	/* units of 0.1mV */
+	int wrsPortStatusSfpTxPowerF;	/* units of 0.1uW */
+	int wrsPortStatusSfpRxPowerF;	/* units of 0.1uW */
 };
 
 

@@ -720,13 +720,26 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPtpRxFrames.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusMonitor.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpDom.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTemp.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpVcc.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxBiax.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxPower.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpRxPower.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTemp.<n>}{
+    Temperature in C reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpVcc.<n>}{
+    Internally measured transceiver supply voltage in mV reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxBias.<n>}{
+    Measured TX bias current in uA reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxPower.<n>}{
+    Measured TX output power in uW reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpRxPower.<n>}{
+    Measured RX output power in uW reported by SFP.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusT24p.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusT24pValid.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTempF.<n>}{
+    Temperature in 0.1 C reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpVccF.<n>}{
+    Internally measured transceiver supply voltage in 0.1 mV reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpTxPowerF.<n>}{
+    Measured TX output power in 0.1 uW reported by SFP.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpRxPowerF.<n>}{
+    Measured RX output power in 0.1 uW reported by SFP.}
 
   \snmpentrye{WR-SWITCH-MIB}{}{wrsPtpInstanceTable}{Table with all PTP instances.
     This table has two indexes. The first one \textit{n}, corresponds to port

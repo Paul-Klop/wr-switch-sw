@@ -29,6 +29,9 @@ wrSwitchMIB MODULE-IDENTITY
     REVISION     "202403260000Z"
     DESCRIPTION
         "Updates for v7.0 WRS firmware release
+        Added textual-conventions:
+         - wrsTenths
+         - wrsHundredths
         Added objects:
          - wrsPtpInstanceExtensionCfg
          - wrsPtpMeanDelay
@@ -40,6 +43,10 @@ wrSwitchMIB MODULE-IDENTITY
          - wrsPtpDelayCoefficientStr
          - wrsPtpIngressLatency
          - wrsPtpEgressLatency
+         - wrsPortStatusSfpTempF
+         - wrsPortStatusSfpVccF
+         - wrsPortStatusSfpTxPowerF
+         - wrsPortStatusSfpRxPowerF
         Change enumeration values of:
          - wrsPtpInstanceProfile (renamed value 2, removed value 3)
         Improved description of:
@@ -52,6 +59,8 @@ wrSwitchMIB MODULE-IDENTITY
          - wrsPtpClockOffsetPsHR
          - wrsPtpSkew
          - wrsPortStatusConfiguredMode
+         - wrsPortStatusSfpTemp
+         - wrsPortStatusSfpVcc
         "
 
     REVISION     "202303260000Z"
@@ -108,6 +117,28 @@ wrSwitchMIB MODULE-IDENTITY
     ::= { cern 100 }
 
 cern OBJECT IDENTIFIER ::= { enterprises 96 }
+
+--=====================================================================
+-- Textual Conventions
+--=====================================================================
+
+wrsTenths ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "d-1"
+    STATUS       current
+    DESCRIPTION
+        "Display tenths (0.1) of Integer32"
+    SYNTAX     Integer32
+
+wrsHundredths ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "d-2"
+    STATUS       current
+    DESCRIPTION
+        "Display hundredths (0.01) of Integer32"
+    SYNTAX     Integer32
+
+--=====================================================================
+-- Data Sets
+--=====================================================================
 
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
@@ -2379,7 +2410,11 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpTxPower  INTEGER,
         wrsPortStatusSfpRxPower  INTEGER,
         wrsPortStatusT24p        INTEGER,
-        wrsPortStatusT24pValid   INTEGER
+        wrsPortStatusT24pValid   INTEGER,
+        wrsPortStatusSfpTempF    INTEGER,
+        wrsPortStatusSfpVccF     INTEGER,
+        wrsPortStatusSfpTxPowerF INTEGER,
+        wrsPortStatusSfpRxPowerF INTEGER
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -2546,7 +2581,7 @@ wrsPortStatusSfpTemp   OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Temperature in 0.1 C reported by SFP. According to SFF-8472, accuracy of
+            "Temperature in C reported by SFP. According to SFF-8472, accuracy of
             this value must be better than 3 degrees Celsius"
     ::= { wrsPortStatusEntry 17 }
 
@@ -2555,7 +2590,7 @@ wrsPortStatusSfpVcc    OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Internally measured transceiver supply voltage in 0.1 mV reported by SFP.
+            "Internally measured transceiver supply voltage in mV reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3%"
     ::= { wrsPortStatusEntry 18 }
 
@@ -2573,7 +2608,7 @@ wrsPortStatusSfpTxPower OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Measured TX output power in 0.1 uW reported by SFP.
+            "Measured TX output power in uW reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3dB%"
     ::= { wrsPortStatusEntry 20 }
 
@@ -2582,7 +2617,7 @@ wrsPortStatusSfpRxPower OBJECT-TYPE
     MAX-ACCESS         read-only
     STATUS             current
     DESCRIPTION
-            "Measured RX output power in 0.1 uW reported by SFP.
+            "Measured RX output power in uW reported by SFP.
             According to SFF-8472, accuracy of this value must be better than 3dB%"
     ::= { wrsPortStatusEntry 21 }
 
@@ -2604,6 +2639,46 @@ wrsPortStatusT24pValid OBJECT-TYPE
     DESCRIPTION
             "Validity of wrsPortStatusT24p"
     ::= { wrsPortStatusEntry 23 }
+
+wrsPortStatusSfpTempF  OBJECT-TYPE
+    SYNTAX             wrsHundredths
+    UNITS              "C"
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Temperature in 0.01 C reported by SFP. According to SFF-8472, accuracy of
+            this value must be better than 3 degrees Celsius"
+    ::= { wrsPortStatusEntry 24 }
+
+wrsPortStatusSfpVccF   OBJECT-TYPE
+    SYNTAX             wrsTenths
+    UNITS              "mV"
+    MAX-ACCESS         read-only
+    STATUS             current
+    DESCRIPTION
+            "Internally measured transceiver supply voltage in 0.1 mV reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 3%"
+    ::= { wrsPortStatusEntry 25 }
+
+wrsPortStatusSfpTxPowerF OBJECT-TYPE
+    SYNTAX               wrsTenths
+    UNITS                "uW"
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION
+            "Measured TX output power in 0.1 uW reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 3dB%"
+    ::= { wrsPortStatusEntry 26 }
+
+wrsPortStatusSfpRxPowerF OBJECT-TYPE
+    SYNTAX               wrsTenths
+    UNITS                "uW"
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION
+            "Measured RX output power in 0.1 uW reported by SFP.
+            According to SFF-8472, accuracy of this value must be better than 3dB%"
+    ::= { wrsPortStatusEntry 27 }
 
 -- wrsPstatsHCTable (.7.7)
 wrsPstatsHCTable OBJECT-TYPE

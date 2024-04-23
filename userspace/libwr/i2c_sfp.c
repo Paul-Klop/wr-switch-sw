@@ -336,7 +336,7 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 		printf("%c", head->vendor_rev[i]);
 	printf("\n");
 	printf("TX Wavelength: %d\n", getSfpTxWaveLength(head));
-	printf("Options: %04X\n", ((uint16_t *) head->options)[0]);
+	printf("Options: 0x%04X\n", head->options[0] << 8 | head->options[1]);
 	printf("Bitrate (MAX): %02X\n", head->br_max);
 	printf("Bitrate (MIN): %02X\n", head->br_min);
 	printf("Vendor Serial: ");

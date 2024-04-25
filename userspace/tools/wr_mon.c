@@ -723,6 +723,7 @@ static struct desired_state_t{
 	char *str_state;
 	int state;
 } desired_states[] = {
+	{ "Unknown", 0},
 	{ "initializing", PPS_INITIALIZING},
 	{ "faulty", PPS_FAULTY},
 	{ "disabled", PPS_DISABLED},

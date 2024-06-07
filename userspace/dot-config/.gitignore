@@ -7,3 +7,4 @@ conf
 mconf
 nconf
 wrs_release_defconfig
+dot-config_converter_6_x_to_7_0_script.sh

@@ -16,8 +16,9 @@ CFLAGS =  -D KBUILD_NO_NLS
 
 # most of this is just copying stuff in
 RFILES = Kconfig_sfp_fiber.in Kconfig_port_timing.in Kconfig Kconfig_vlans.in \
-		dot-config wrs_release_defconfig 
-XFILES = conf mconf nconf
+		dot-config wrs_release_defconfig
+XFILES = conf mconf nconf \
+		dot-config_converter_6_x_to_7_0_script.sh
 FILES = $(RFILES) $(XFILES)
 
 all: $(FILES)
@@ -44,6 +45,9 @@ Kconfig_sfp_fiber.in: $(WRS_BASE_DIR)/../Kconfig_sfp_fiber.in
 	cp $^ $@
 
 Kconfig_vlans.in: $(WRS_BASE_DIR)/../Kconfig_vlans.in
+	cp $^ $@
+
+dot-config_converter_6_x_to_7_0_script.sh: $(WRS_BASE_DIR)/../userspace/host_tools/dot-config_converter_6_x_to_7_0_script.sh
 	cp $^ $@
 
 CONF_LOC=$(WRS_BASE_DIR)/../scripts/kconfig

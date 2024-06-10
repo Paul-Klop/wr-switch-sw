@@ -259,6 +259,9 @@ firmware from v6.x to v@value{release_version}.
 For the exact changes and how to deal with them see
 @ref{Changes in dot-config in v7.0} and
 @ref{Converting dot-config from v6.x to v7.0}.
+There is a tool available that can convert @i{dot-config} compatible with
+firmware v6.1 to @i{dot-config} compatible with firmware v7.0.
+For details see @ref{Converting dot-config from v6.x to v7.0 with a tool}.
 
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -411,6 +414,51 @@ For more information about profiles/extensions please refer to
 
 @b{Firmware v7.0 uses different FPGA GW/bitstream than v6.0.x,
 please use the new calibration values!}
+
+There is a tool available that can convert @i{dot-config} compatible with
+firmware v6.1 to @i{dot-config} compatible with firmware v7.0.
+For details see @ref{Converting dot-config from v6.x to v7.0 with a tool}.
+
+
+@c =-------------------------------------------------------------------------
+@node Converting dot-config from v6.x to v7.0 with a tool
+@subsection Converting dot-config from v6.x to v7.0 with a tool
+
+To help users with the conversion of @i{dot-config} from the version compatible
+with firmware v6.x to a version compatible with firmware 7.0, the tool
+@t{dot-config_converter_6_x_to_7_0.sh} was created. The tool can be run:
+@itemize
+@item on WR Switch -- available as @t{dot-config_converter_6_x_to_7_0.sh}
+      command
+@item from @i{wr-switch-sw} repository -- can be found in
+      @t{userspace/host_tools/dot-config_converter_6_x_to_7_0.sh}
+@item standalone -- run on most x86-64 bit GNU/Linux compatible systems;
+      can be downloaded from the release page
+      @url{https://ohwr.org/project/wr-switch-sw/wikis/Release-v7.0}
+      or can be created by executing @t{make converter_standalone} in
+      the @t{userspace/host_tools} directory of @i{wr-switch-sw} repository;
+      the standalone version will be created in
+      the @t{dot-config_converter_standalone} directory;
+      please note that it might be necessary to run first @t{make listnewconfig}
+      in the root of wr-switch-sw repository
+@end itemize
+
+The @t{dot-config_converter_6_x_to_7_0.sh} converter can take following
+parameters:
+@itemize
+@item @t{-h} -- print help
+@item @t{-i} -- input @i{dot-config} file; compatible with v6.x firmware
+@item @t{-o} -- output @i{dot-config} file; compatible with v7.0 firmware
+@item @t{-v} -- more verbose output
+@end itemize
+
+An example run can look like:
+@example
+./dot-config_converter_6_x_to_7_0.sh -i .config_6_1 -o .config_7_0
+@end example
+
+The output file can be the same as input file, but it is advised to use
+different files and compare them after the use of the tool.
 
 @c ==========================================================================
 @node Upgrade from v6.0.x to v6.1

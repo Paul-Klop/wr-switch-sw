@@ -23,6 +23,7 @@ PDF_DOT=$(SRC_DOT:dot=pdf)
 IMG_PDF=images/wr_mon.pdf
 
 MAKEINFO ?= makeinfo
+DOT ?= dot
 
 RELEASE=$(shell git describe --always --dirty)
 
@@ -45,7 +46,8 @@ RELEASE=$(shell git describe --always --dirty)
 	$(MAKEINFO) --no-headers $< > $@
 
 images/dot/%.pdf: images/dot/%.dot
-	dot $< -Tpdf > $@
+	command -v $(DOT) >/dev/null 2>&1 || { echo "$(DOT) not found. Aborting." >&2; exit 1; }
+	$(DOT) $< -Tpdf > $@
 
 ##############################################
 DIRS=\
@@ -69,7 +71,7 @@ terse:
 	rm -f *~
 
 clean: terse
-	rm -f $(ALL) $(TEXI)
+	rm -f $(ALL) $(TEXI) $(PDF_DOT)
 	for i in $(DIRS); do \
 		$(MAKE) -C $$i clean ; \
 	done

@@ -4594,6 +4594,61 @@ Get again output of ifconfig... Done
 Closing ssh connection... Done
 @end smallexample
 
+
+@c ##########################################################################
+@node Requirements for input signals from reference when in Grandmaster mode
+@appendix Requirements for input signals from reference when in Grandmaster mode
+
+
+The WR switch can operate as a synchronous PTP Grandmaster referenced to
+externally provided 10 MHz and PPS signals.
+The signals must meet following electrical requirements:
+@itemize
+  @item  PPS input: 50 @U{03A9}, LVTTL or TTL levels
+  @item  10 MHz input: 50 @U{03A9}, TTL/LVTTL/sine (1 - 5 V rms)
+  @item t@sub{SETUP} (PPS-to-10MHz) = 10 ns (see figure)
+@end itemize
+WR Grandmasters require both 10 MHz and PPS to work.
+The 10 MHz is used to produce 62.5 MHz WR reference clock and the PPS is used
+only to ensure the alignment of the edges of both clocks at inter-second
+boundary.
+The actual inter-second boundary is the 10 MHz rising edge after the rising edge
+of the PPS pulse (see figure below).
+PPS input is sampled only once (when the PLL is locking).
+
+@center @image{GM_input_signals, 14cm,, GM_input_signals}
+
+Since the WR switch must transfer the PPS signal between two clock domains with
+no metastability, it is essential that t@sub{SETUP} and t@sub{HOLD} values shown
+on the figure above are respected.
+When installing a WR Grandmaster, one should first verify the relationship of
+PPS vs. 10 MHz and compensate it if necessary.
+
+
+@b{Warning 1}: The 10 MHz input must not "jump" (i.e. have temporary period
+different than 100 ns).
+Some GPS receivers were reported to produce 10 MHz with such artifacts - these
+devices cannot be used with WR.
+
+
+@b{Warning 2:} The PPS signal must not change its' phase with respect to
+the 10 MHz input beyond one 10 MHz clock cycle when the switch is locked.
+
+
+@b{Supplying time-of-day information}
+
+WRS retrieves the time-of-day information via NTP, it is expected that reachable
+NTP server name or IP address is configured.
+After getting the time-of-day information at the startup, NTP server is queried
+ONLY to verify offset between the NTP time and the local WR time.
+In case the two times drift apart, an warning is generated (see
+@ref{SNMP Support}).
+
+
+@b{NOTE:} This annex is based on @i{Note on using WR Switch in Grandmaster mode}
+by T.Wlostowski
+(@url{https://ohwr.org/project/white-rabbit/uploads/ae3282acd8f9f6c5a9067b061202277d/wr_external_reference.pdf})
+
 @c ##########################################################################
 @bye
 

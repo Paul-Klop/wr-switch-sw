@@ -4466,6 +4466,7 @@ SNMP table WR-SWITCH-MIB::wrsPstatsHCTable, part 2
 Unfortunately output due to the number of counters is very wide. Number of 
 characters per line can be limited by switch @t{Cw}, in example was set to 80.
 
+@page
 @c ##########################################################################
 @node Bugs and Troubleshooting
 @appendix Bugs and Troubleshooting
@@ -4648,6 +4649,542 @@ In case the two times drift apart, an warning is generated (see
 @b{NOTE:} This annex is based on @i{Note on using WR Switch in Grandmaster mode}
 by T.Wlostowski
 (@url{https://ohwr.org/project/white-rabbit/uploads/ae3282acd8f9f6c5a9067b061202277d/wr_external_reference.pdf})
+
+@c ##########################################################################
+@node Automatization of Calibration Procedure
+@appendix Automatization of Calibration Procedure (Application Note 2)
+
+
+@node Introduction
+@section Introduction
+
+A set of scripts to semi-automate calibration is included in:
+@t{userspace/host_tools/calibration}. These scripts follow the calibration
+procedures described @i{WR Calibration procedure}
+@footnote{White Rabbit Calibration procedure (v1.1):
+@url{https://ohwr.org/project/white-rabbit/-/wikis/Documents/White-Rabbit-calibration-procedure}.}
+and automate all actions that do not require human/manual intervention, e.g,:
+@itemize
+@item configuration of devices,
+@item acquiring operational data and measurement values (e.g., round-trip
+      delay, skew),
+@item calculations.
+@end itemize
+Additionally, the scripts allow automated averaging over reboots or link-down
+events.
+The scripts are meant to be executed on a machine with support for Python 3.8
+along with appropriate libraries (see
+@ref{Description of the Calibration Scripts and their Configuration}).
+The measurement setup assumed by the scripts by default is depicted and
+described in the below.
+
+
+
+@node Calibration Setup
+@section Calibration Setup
+
+The measurement setup includes:
+@itemize
+@item @b{Time/freq reference} - source of reasonably good/stable frequency/time,
+      e.g,. a GPS-disciplined oscillator, Cesium or Rubidium frequency standard.
+@item @b{WR Switch (GM)} - a WR switch connected to the @b{Time/freq reference}.
+      It is configured by the script as the Grandmaster.
+      It acts as the @b{calibrator} when performing calibration of
+      ingress/egress latencies of the @b{WR Switch (BC)} acting as
+      @b{Device Under Calibration}.
+@item @b{WR Switch (BC)} - a WR switch connected to the @b{WR Switch (GM)} via
+      one of its ports.
+      It acts as the @b{Device Under Calibration} when performing calibration of
+      its ingress/egress latencies.
+@item @b{Measurement device} - a device that can measure with sufficient
+      precision the skew (offset) between the PPS output of
+      the @b{WR Switch (GM)} and the PPS output of the @b{WR Switch (BC)}.
+      It can be an oscilloscope, a time-interval counter or time tagger.
+      The script supports Tektronix MSO64B oscilloscope and allows adding
+      interfaces to other types of devices.
+@item @b{PC host} - a machine which is connected via Ethernet link to management
+      ports of the two WR switches and the measurement device.
+      It must support Python 3.8 along with appropriate libraries (see
+      @ref{Description of the Calibration Scripts and their Configuration}).
+@end itemize
+
+@center @image{calibration_setup, 14cm,, calibration_setup}
+
+@node The Supported Calibration Scenarios
+@section The Supported Calibration Scenarios
+
+The scripts support calibration procedures described in sections @i{4.2},
+@i{4.3}, @i{4.4} and @i{4.5} of @i{WR Calibration procedure}
+@footnote{White Rabbit Calibration procedure (v1.1):
+@url{https://ohwr.org/project/white-rabbit/-/wikis/Documents/White-Rabbit-calibration-procedure}.}.
+In particular, the following scenarios are supported
+
+@enumerate
+@item Full calibration:
+      @itemize @bullet
+      @item Applicability: It is typically executed when performing calibration
+            for the first time, starting with new fibers, a pair of WR Switches
+            to become a local calibrator, and the WR Switch to be calibrated.
+            It includes all the steps in the WR Calibration procedure.
+      @item Steps
+            @itemize
+            @item Measure delays of reference fibers - section @i{4.2}
+            @item Calculate delay asymmetry coefficient (alpha) - section @i{4.3}
+            @item Create a new calibrator - section @i{4.4}
+            @item Calibrate against the new calibrator - section @i{4.5}
+            @end itemize
+      @end itemize
+@item Partial calibration:
+      @itemize @bullet
+      @item Applicability: It is typically executed when performing
+            calibration with already characterized fibers, in the case
+            where it is needed to create a local calibrator from scratch,
+            and then calibrate a WR Switch.
+      @item Steps
+            @itemize
+            @item Input the value of short fiber delay (delta1 previously
+                  calculated)
+            @item Create new calibrator using provided delta - section @i{4.4}
+            @item Calibrate against new calibrator - section @i{4.5}
+            @end itemize
+      @end itemize
+@item Normal calibration:
+      @itemize @bullet
+      @item Applicability: It is typically executed when performing calibration
+            of a WR Switch using a setup in which WR calibration had been
+            already executed (known fiber delays, existing calibrator).
+            It is the most often used scenario.
+      @item Steps
+            @itemize
+            @item Input the value of short fiber delay (delta1 previously
+                  calculated)
+            @item Calibrate against already existing calibrator - section
+                  @i{4.5}
+            @end itemize
+      @end itemize
+@end enumerate
+
+
+
+@node Preparation before using Calibration Script
+@section Preparation before using Calibration Script
+
+Before starting the calibration, 2 actions need to be performed:
+
+@enumerate
+@item Ensure that @file{/usr/wr/etc/tx_phase_cal.conf} is the same on all
+      switches under calibration (include the file into firmware tarball or
+      copy it manually).
+
+      The file @file{tx_phase_cal.conf} (@file{/usr/wr/etc/tx_phase_cal.conf})
+      contains values associated with ports 1 to 12 and an MD5 sum of the
+      bitstream.
+      If this MD5 sum does not correspond to the bitstream located in
+      @file{/usr/wr/lib/firmware/18p_mb-LX240T.bin}, then all values are
+      recalculated, and the MD5 sum is also recalculated.
+      It was observed that this file must be the same on all switches under
+      calibration for the calibration to be effective.
+      This means that when generating a new release, this file must be included
+      in the tarball with the correct MD5 sum for the bitstream of this specific
+      release, to avoid the values being recalculated.
+      To generate the file, just install the new release on a switch and let
+      it boot.
+      Then, copy the generated file from @file{/usr/wr/etc/tx_phase_cal.conf}
+      and include it into the tarball in
+      @file{wrs-usr.tar.gz/./wr/etc/tx_phase_cal.conf} of the new release.
+      Checksum of @file{wrs-usr.tar.gz} must be recalculated using the command
+      @command{md5sum} and replaced in the file @file{checksums.md5} in the
+      tarball.
+
+TODO: Add information how to repack tarball (Adam has it)
+
+@item Update @code{t24p}:
+
+      Before starting the calibration, the @code{t24p} value must be
+      recalculated for each port of the WR switch under calibration.
+      The calibration script is able to perform this task for each port using
+      the command @command{wr_phytool <port> t24p} (see below).
+
+@end enumerate
+
+@node Description of the Calibration Scripts and their Configuration
+@section Description of the Calibration Scripts and their Configuration
+
+The scripts run on Python 3.8. It uses the following libraries:
+@itemize @bullet
+@item os
+@item sys
+@item time
+@item argparse
+@item threading
+@item paramiko (SSH client)
+@end itemize
+
+The calibration scripts include the following Python files:
+@itemize
+@item @file{calibration.py} -- The main script to execute the calibration steps.
+@item @file{wrs.py} -- WRS class - provides interface to interact directly with
+      the WR Switch.
+      This include configuration of the WR Switch, reading operational data and
+      controlling it (e.g., reboot, link down and up).
+@item @file{scope.py} -- Scope class - provides a generic and
+      vendor/model-agnostic interface to interact with an oscilloscope acting as
+      the measurement device.
+      This includes configuration of channels, trigger and measurement, as well
+      as acquisition of the measurement data.
+@item @file{mso64b_api.py}, @file{waverunner_8104_api.py} -- API classes -
+      provide mapping of the @i{Scope} class to interface of the Tektronix and
+      LeCroy WaveRunner 8104 scopes respectively.
+      Provision were made to allow adding more such mappings.
+@item @file{logger.py} -- Logger class - stores data into CSV file, this
+      includes configuration, information about the equipment in the measurement
+      setup (e.g., calibrator, device under calibration, oscilloscope, SFPs),
+      the measured values as well as auxiliary information (temperatures),
+      the calculated values.
+@item @file{customthread.py} -- CustomThread class - allows to run logging of
+      data from both WR Switches in the setup in parallel using separate
+      threads.
+@item @file{config.py} -- Config class - provides functions to read
+      configuration file.
+@item @file{conf_pps.cfg} -- configuration file which allows to configure
+      details regarding the measurement setup and scenario to be executed.
+      Some of the parameters in this file can be overwritten with command line
+      commands provided when running the script.
+@end itemize
+
+The configuration contained in the @file{conf_pps.cfg} concerns the following:
+@itemize @bullet
+@item Oscilloscope
+      @itemize @bullet
+      @item Description: Configuration of the oscilloscope according to how it
+            is connected in the setup and some prior experimentation with the
+            settings.
+            Note that the default settings were found best for measuring skew
+            between PPS using Tektronix mso64b.
+      @item Parameters:
+            @itemize @bullet
+            @item @b{name} - name of the device to be used when reporting data
+            @item @b{model} - model of the oscilloscope, used to choose API 
+                  class
+            @item @b{address} - IP address or hostname under which the
+                  oscilloscope is accessible
+            @item @b{ch*_label} - name of the channel to be used when reporting
+                  data
+            @item @b{ch*_vscale} - channel setting: volts per div [V] settings
+                  for each channel
+            @item @b{ch*_termination} - channel setting: termination [Ohm] as
+                  supported by the scope
+            @item @b{ch*_offset} - offset of the mid-scale [V]
+            @item @b{h_scale} - horizontal scale [s]
+            @item @b{trigger_mode} - trigger config: only NORMAL
+            @item @b{trigger_src} - trigger config: trigger on channel (format:
+                  CH1,...)
+            @item @b{trigger_level} - trigger config: trigger level [V]
+            @item @b{trigger_slope} - trigger config: RISE/FALL
+            @item @b{meas1_type} - measurement config: only DELAY supported
+            @item @b{meas1_src1} - measurement config: measure delay from this
+                  channel (format CH1...)
+            @item @b{meas1_src2} - measurement config: measure delay to this
+                  channel (format CH1,...)
+            @item @b{meas1_riseh} - measurement config: high level [V]
+            @item @b{meas1_risem} - measurement config: medium level [V]
+            @item @b{meas1_risel} - measurement config: low level [V]
+            @end itemize
+      @end itemize
+@item WR Switch
+      @itemize @bullet
+      @item Description: Parameters for the GM and the BC WR Switch.
+      @item Parameters:
+            @itemize @bullet
+            @item @b{name} - name of the device to be used when reporting data
+            @item @b{address} - IP address or network name under which the WR
+                  Switch is accessible over network via the management port.
+            @item @b{password} - password for root user, if needed.
+            @item @b{sfp_port} - port over which this WR switch is connected
+                  with the second WR Switch (format: 1, 2, ... for wri1, wri2,
+                  ...).
+            @item @b{golden} - If "true" it is the old golden calibrator (not
+                  compatible with ssh operation), otherwise "false".
+            @item @b{reboot} - If "true" the switch is rebooted between
+                  measurements.
+            @item @b{ifdownup} - If "true" the link down and link up are
+                  performed on @b{sfp_port} between measurements.
+            @end itemize
+      @end itemize
+
+@item Test
+      @itemize @bullet
+      @item Description: Parameters of measurement
+      @item Parameters:
+            @itemize @bullet
+            @item @b{meas_number} - number of repetitions of the measurement for
+                  each step.
+                  If greater than 1, typically averaging over reboots or
+                  link down is requested.
+            @item @b{meas_duration} - Duration of a single measurement [s].
+            @end itemize
+      @end itemize
+@end itemize
+
+When running the script, the following parameters can be provided, some of which
+override the configuration contained in the @file{conf_pps.cfg} configuration
+file.
+
+@table @option
+@item -l FILE or --log FILE
+      Specify the log file name. If not specified, the default name is
+      @file{measures.csv}.
+      All measures performed during the calibration will be recorded to this
+      file.
+@item -c FILE or --config FILE
+      Specify the configuration file to be used.
+      If not specified, default hardcoded values are used for scope
+      configuration.
+      Addresses and ports will be asked to the user.
+@item -a or --alpha
+      This option is used to set the alpha value on one or both switches.
+@item -e WRS_ADDR or --export WRS_ADDR
+      When this option is enabled, the file @file{/usr/wr/etc/tx_phase_cal.conf}
+      will be copied from @code{WRS_ADDR} to the current folder, then the
+      script will ask the user to input WRS addresses to which the file should
+      be copied.
+@item -n or --number
+      This option allows the user to set or override the number of measures to
+      be performed by the scope during the calibration process.
+@item -d or --duration
+      This option allows the user to set or override the duration of measures
+      to be performed by the scope during the calibration process.
+      The value is in seconds.
+@item -r or --reboot
+      This option allows the user to set or override whether the switch being
+      calibrated should be reset between measures.
+@item -t PORT or --t24p PORT
+      This option will enable the measure of T24P parameter, starting from the
+      specified port.
+@end table
+
+
+@node Example of Running the Calibration Scripts
+@section Example of Running the Calibration Scripts
+
+
+With the setup as in described in @ref{Calibration Setup} scenario 3 described
+in @ref{The Supported Calibration Scenarios} is run with the following set of
+commands and manual interventions to calibrate first 5 ports of the WR Switch
+under calibration:
+@enumerate
+@item Connect equipment as depicted in the figure in @ref{Calibration Setup}, in
+      particular connect port 1 of BC to port 1 of GM.
+@item Run script with the following command
+      @smallexample
+python3 calibration.py --config conf.cfg
+INFO: trying to open config file "conf.cfg": OK
+INFO: Found section: scope1
+INFO: Found section: gm
+INFO: Found section: bc
+INFO: Found section: config
+INFO: log file "measures.csv" already exists and will be overwritten. Saving
+copy "measures.csv.old"
+INFO: calib_gm Switch parameters from config file: 
+  - name....: calibrator2023
+  - address.: ctdw-774-calibrator2023
+  - password: 
+  - SFP port: 1
+  - golden..: False
+  - reboot..: False
+  - ifdownup: False
+  - up......: YES
+  - MAC.....: 70:B3:D5:91:E7:59
+INFO: calib_bc Switch parameters from config file: 
+  - name....: cptst5
+  - address.: ctdw-774-cptst5
+  - password: 
+  - SFP port: 1
+  - golden..: False
+  - reboot..: False
+  - ifdownup: False
+  - up......: YES
+  - MAC.....: 7C:BC:84:A0:04:43
+INFO: scope 128.141.162.141 connected
+INFO: set scope config
+INFO: Scope "scope_pps" parameters: 
+  - name...........: scope_pps
+  - model..........: mso64b
+  - address........: 128.141.162.141
+  - up.............: YES
+  - info...........: TEKTRONIX,MSO64B,C064656,CF:91.1CT FV:2.4.4.1152
+  - h scale........: 40e-12
+  - trigger mode...: NORMAL
+  - trigger source.: CH1
+  - trigger level..: 850e-3
+  - trigger slope..: RISE
+  - ref. source....: INTERNAL
+  - channels nb....: 2
+  - CH1 label......: PPS_GM
+  - CH1 v_scale....: 10e-3
+  - CH1 termination: 50
+  - CH1 bw.........: FULL
+  - CH1 offset.....: 850e-3
+  - CH3 label......: PPS_BC
+  - CH3 v_scale....: 10e-3
+  - CH3 termination: 50
+  - CH3 bw.........: FULL
+  - CH3 offset.....: 850e-3
+Calculate delta1/delta2 ? (y/n)n
+Values of rawDelayMM for short, long and combined fibers available ? (y/n)n
+Use default short fiber delta1 value: 4.908814999996663e-08 s ? (y/n)n
+Enter delta1 (short fiber, s) ?4.9086799999986934e-08
+Get rawDelayMM short fiber to turn GM ctdw-774-calibrator2023 into calibrator ?
+(y/n)n
+Update alpha in dot-config of GM ctdw-774-calibrator2023 and BC ctdw-774-cptst5
+? (y/n)n
+INFO: set BC ctdw-774-cptst5 ports as slave and reset all delays: ..............
+....OK
+INFO: applying changes: ...................OK
+INFO: checking WRSes configuration: OK
+INFO: waiting for GM ctdw-774-calibrator2023 PLL lock: OK
+Manually input port 1 egress / ingress to calculate only SFP correction ? (y/n)n
+Plug the short fiber between port 1 of calibrator and port 1 of ctdw-774-cptst5
+then press ENTER to continue...
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: get master PHY delay Tx / Rx from BC ctdw-774-cptst5: OK
+INFO: get rawDelayMM from BC ctdw-774-cptst5: ....................OK
+INFO: BC ctdw-774-cptst5 port 1
+  - master delay Tx: 2.39498e-07 s
+  - master delay Rx: 2.79084e-07 s
+  - rawDelayMM.....: 1.089012e-06 s
+INFO: applying delayTx = 260672 ps and delayRx = 260672 ps on BC ctdw-774-cptst5
+ port 1: ...............................OK
+INFO: first iteration (coarse): measured mean skewPPS = 1.98328657393386e-08 s
+(5 samples)
+INFO: writing BC ctdw-774-cptst5 port 1 delays in dot config:
+  - deltaTx (egress latency) : 240839 ps
+  - deltaRx (ingress latency): 280505 ps
+INFO: applying changes on BC ctdw-774-cptst5: ..............................OK
+INFO: starting second iteration (fine tune), 3 measures of 10 s
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #1 (skewPPS mean = 1.4773184524432e-12 s, 10 samples,
+average: 1.4773184524432e-12 s) --
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #2 (skewPPS mean = 6.63027398693205e-14 s, 10 samples,
+average: 7.718105961562603e-13 s) --
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #3 (skewPPS mean = 3.3802497950311e-12 s, 10 samples,
+average: 1.6412903291145403e-12 s) --
+INFO: 3 measures taken, average skew: 1.6412903291145403e-12 s
+INFO: writing BC ctdw-774-cptst5 dot-config:
+  - deltaTx (egress latency) : 240837 ps
+  - deltaRx (ingress latency): 280507 ps
+Apply values on BC ctdw-774-cptst5 port 1 ? (y/n)n
+      @end smallexample
+
+      where delta1 (short fiber delay) is the value obtained earlier by
+      executing scenario 1 or 2.
+@item Reverse SFPs to calibrate the Tx/RX correction  (blue in GM, orange in
+      BC), keep port 1 of BC connected to port 1 of GM.
+      @smallexample
+Calibrate other SFP config (SFP correction value) ? (y/n)y
+INFO: reset BC ctdw-774-cptst5 port 1 delays: ................... OK
+Plug the SFP on port 1 of BC ctdw-774-cptst5 (match color of SFP on port 1 of GM
+ctdw-774-calibrator2023), then press ENTER
+Plug the short fiber between port 1 of calibrator and port 1 of ctdw-774-cptst5
+then press ENTER to continue...
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: .................OK
+INFO: get master PHY delay Tx / Rx from BC ctdw-774-cptst5: OK
+INFO: get rawDelayMM from BC ctdw-774-cptst5: ....................OK
+INFO: BC ctdw-774-cptst5 port 1
+  - master delay Tx: 2.39423e-07 s
+  - master delay Rx: 2.79015e-07 s
+  - rawDelayMM.....: 1.0889939e-06 s
+INFO: applying delayTx = 260735 ps and delayRx = 260735 ps on BC ctdw-774-cptst5
+port 1: .............................OK
+INFO: first iteration (coarse): measured mean skewPPS = 1.9872894282296e-08 s
+(5 samples)
+INFO: writing BC ctdw-774-cptst5 port 1 delays in dot config:
+  - deltaTx (egress latency) : 240862 ps
+  - deltaRx (ingress latency): 280608 ps
+INFO: applying changes on BC ctdw-774-cptst5: ............................OK
+INFO: starting second iteration (fine tune), 3 measures of 10 s
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #1 (skewPPS mean = 1.0768525056489e-12 s, 10 samples,
+average: 1.0768525056489e-12 s) --
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #2 (skewPPS mean = 4.541533634121e-12 s, 10 samples,
+average: 2.80919306988495e-12 s) --
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #3 (skewPPS mean = 3.7866416711606e-12 s, 10 samples,
+average: 3.1350092703101662e-12 s) --
+INFO: 3 measures taken, average skew: 3.1350092703101662e-12 s
+INFO: writing BC ctdw-774-cptst5 dot-config:
+  - deltaTx (egress latency) : 240859 ps
+  - deltaRx (ingress latency): 280611 ps
+Apply values on BC ctdw-774-cptst5 port 1 ? (y/n)n
+INFO: alternative SFP config, calibration values:
+  - SFP Tx correction: 22 ps
+  - SFP Rx correction: 104 ps
+Auto detect SFP index in database ? (y/n)y
+INFO: BC ctdw-774-cptst5, port 1, SFP PN: BO15C4931620D-WR
+INFO: SFP PN BO15C4931620D-WR found in database, index: 8
+INFO: SFP database line to be updated (SFP index = 8):
+CONFIG_SFP08_PARAMS="vn=BlueOptics,pn=BO15C4931620D-WR,tx=62,rx=70,wl_txrx=1490+
+1310"
+
+INFO: updated line:
+CONFIG_SFP08_PARAMS="vn=BlueOptics,pn=BO15C4931620D-WR,tx=22,rx=104,wl_txrx=1490
++1310"
+
+Apply changes ? (y/n)n
+      @end smallexample
+
+@item Connect port 2 of BC to port 1 of GM, using the normal SFP order (orange
+      in GM, blue in BC).
+      @smallexample
+Calibrate other SFP config (SFP correction value) ? (y/n)n
+Continue calibration for port 2 ? (y/n)y
+Plug the short fiber between port 1 of calibrator and port 2 of ctdw-774-cptst5
+then press ENTER to continue...
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: ...................OK
+INFO: get master PHY delay Tx / Rx from BC ctdw-774-cptst5: OK
+INFO: get rawDelayMM from BC ctdw-774-cptst5: ....................OK
+INFO: BC ctdw-774-cptst5 port 2
+  - master delay Tx: 2.39423e-07 s
+  - master delay Rx: 2.79015e-07 s
+  - rawDelayMM.....: 1.08754065e-06 s
+INFO: applying delayTx = 260008 ps and delayRx = 260008 ps on BC ctdw-774-cptst5
+port 2: .................................OK
+INFO: first iteration (coarse): measured mean skewPPS = 1.97101005667365e-08 s
+(5 samples)
+INFO: writing BC ctdw-774-cptst5 port 2 delays in dot config:
+  - deltaTx (egress latency) : 240298 ps
+  - deltaRx (ingress latency): 279718 ps
+INFO: applying changes on BC ctdw-774-cptst5: ...............................OK
+INFO: starting second iteration (fine tune), 3 measures of 10 s
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #1 (skewPPS mean = 4.2277216404338e-12 s, 10 samples,
+average: 4.2277216404338e-12 s) --
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #2 (skewPPS mean = 2.0102962045235e-12 s, 10 samples,
+average: 3.1190089224786503e-12 s) --
+INFO: waiting for BC ctdw-774-cptst5 PLL lock: OK
+INFO: waiting 10 s
+INFO: -- saving measure #3 (skewPPS mean = 1.6538683034315e-12 s, 10 samples,
+average: 2.6306287161296e-12 s) --
+INFO: 3 measures taken, average skew: 2.6306287161296e-12 s
+INFO: writing BC ctdw-774-cptst5 dot-config:
+  - deltaTx (egress latency) : 240295 ps
+  - deltaRx (ingress latency): 279721 ps
+Apply values on BC ctdw-774-cptst5 port 2 ? (y/n)n
+Continue calibration for port 3 ? (y/n)n
+      @end smallexample
+@end enumerate
 
 @c ##########################################################################
 @bye

@@ -52,7 +52,7 @@ start() {
 	# check if given value is an int
 	case $tx_int in
 	    ''|*[!0-9]*) echo -n "wrong CONFIG_LLDPD_TX_INTERVAL "$tx_int". Using 5 as the default interval. " ;;
-	    *) echo tx_interval=$tx_int ;;
+	    *) tx_interval=$tx_int ;;
 	esac
     fi
     echo "configure lldp tx-interval $tx_interval" >> $LLDPD_CONFIG

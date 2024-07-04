@@ -3273,6 +3273,56 @@ first @i{tar} pipe is less friendly because the @i{initramfs} is a
 compressed @i{cpio} archive, and @i{cpio} as a command lacks automatic
 decompression and the @t{-C} (change directory) option.
 
+@c ==========================================================================
+@node Append files to the firmware archive
+@section Append files to the firmware archive
+
+This appendix includes a short instruction how to add custom files to the WRS
+firmware image (@i{wrs-firmware.tar}). It can be used to e.g. update
+@i{/wr/etc/tx_phase_cal.conf} file or to add a new script/binary.
+
+Unpack the firmware into an empty directory:
+@smallexample
+$ tar xf wr-switch-sw-v7.0-XXXXXXXX_binaries.tar
+@end smallexample
+Ungzip @t{wrs-usr.tar.gz}:
+@smallexample
+$ gunzip wrs-usr.tar.gz
+@end smallexample
+In the same directory as @t{wrs-usr.tar}, copy files to be added to the firmware
+with the full path e.g., @t{wr/etc/tx_phase_cal.conf}
+@smallexample
+$ mkdir wr/etc
+$ cp ../tx_phase_cal.conf .
+@end smallexample
+Add @t{wr/etc/tx_phase_cal.conf} to @t{wrs-usr.tar}.
+@smallexample
+$ tar -rvf wrs-usr.tar wr
+wr/
+wr/etc/
+wr/etc/tx_phase_cal.conf
+@end smallexample
+Gzip @t{wrs-usr.tar} back:
+@smallexample
+$ gzip wrs-usr.tar
+@end smallexample
+Update checksum of @t{wrs-usr.tar.gz}:
+@smallexample
+$ grep -v wrs-usr.tar.gz checksums.md5 > checksums.md5.new
+$ md5sum wrs-usr.tar.gz >> checksums.md5.new
+$ mv checksums.md5.new checksums.md5
+@end smallexample
+Create firmware archive:
+@smallexample
+$ tar cf wr-switch-sw-v7.x-`date +%Y%m%d`_binaries_repack.tar \
+at91bootstrap.bin  barebox.bin  checksums.md5  wrs-initramfs.gz  wrs-usr.tar.gz  zImage
+@end smallexample
+
+Please note that this method appends the desired files at the end of an archive,
+as a consequence if a file is added several times, the archive may be bigger
+than expected to be.
+It is better to always start with a fresh firmware rather than re-using the same
+archive several times.
 
 @c ##########################################################################
 @node WRS Command-Line Tools
@@ -4795,8 +4845,8 @@ Before starting the calibration, 2 actions need to be performed:
       Checksum of @file{wrs-usr.tar.gz} must be recalculated using the command
       @command{md5sum} and replaced in the file @file{checksums.md5} in the
       tarball.
-
-TODO: Add information how to repack tarball (Adam has it)
+      For more information how to add/update files in firmware archive please
+      check @ref{Append files to the firmware archive}.
 
 @item Update @code{t24p}:
 

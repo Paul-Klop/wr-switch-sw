@@ -39,9 +39,22 @@ start() {
     if pidof wrsw_hal > /dev/null; then
 	# wrsw_hal already running
 	echo "Failed (already running?)"
+	exit 1
     else
 	eval /wr/bin/wrsw_hal $LOGPIPE \&
 	echo "OK"
+    fi
+
+    # Set PPS-in-out offset (relevant only for GM)
+    if [ ! -z "$CONFIG_EXT_PPS_LATENCY_PS" ]; then
+	echo -n "Set PPS-in-out offset to $CONFIG_EXT_PPS_LATENCY_PS "
+	/wr/bin/wrsw_hal_conf --gm-pps-in-out-offset="$CONFIG_EXT_PPS_LATENCY_PS"
+	if [ $? -eq 0 ]; then
+	    echo "OK"
+	else
+	    echo "Failed"
+	    exit 1
+	fi
     fi
 }
 
@@ -52,6 +65,7 @@ stop() {
 	echo "OK"
     else
 	echo "Failed"
+	exit 1
     fi
 }
 

@@ -1,5 +1,6 @@
 load-lm32
 load-virtex
+load-urv
 rtu_stat
 wr_mon
 spll_dbg_proxy

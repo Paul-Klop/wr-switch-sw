@@ -2,7 +2,7 @@
 # We are now Kconfig-based
 -include ../../.config
 
-TOOLS = rtu_stat wr_mon wr_phytool wrs_pps_control spll_dbg_proxy load-lm32 load-virtex com
+TOOLS = rtu_stat wr_mon wr_phytool wrs_pps_control spll_dbg_proxy load-lm32 load-virtex load-urv com
 TOOLS += mapper wmapper
 TOOLS += wrs_version wr_date lm32-vuart wrs_pstats wrs_leapsec
 TOOLS += wrs_vlans wrs_dump_shmem

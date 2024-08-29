@@ -25,7 +25,7 @@
 #define RTIPC_EXPORT_STRUCTURES
 #include <rt_ipc.h>
 
-#define RTS_MAILBOX_ADDR "mem:10007000"
+#define RTS_MAILBOX_ADDR "mem:10000000"
 
 #define RTS_TIMEOUT 200 /* ms */
 

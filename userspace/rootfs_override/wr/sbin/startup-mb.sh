@@ -8,7 +8,7 @@ if [ -e /proc/sys/net/ipv4/conf/eth1 ]; then
 fi
 
 LOAD_FPGA_STATUS_FILE="/tmp/load_fpga_status"
-LOAD_LM32_STATUS_FILE="/tmp/load_lm32_status"
+LOAD_URV_STATUS_FILE="/tmp/load_urv_status"
 #files for monit's restart reason
 MONIT_RR_FLASH="/update/monit_restart_reason"
 MONIT_RR_TMP="/tmp/monit_restart_reason"
@@ -49,16 +49,16 @@ if [ "$scb_ver" = "UNKNOWN" ]; then
     echo "Warning: UNKNOWN scb version! default to 3.3" >& 2
     scb_ver=33
 fi
-LM_FILE="$WR_HOME/lib/firmware/rt_cpu.elf"
+SOFT_CPU_FILE="$WR_HOME/lib/firmware/rt_cpu.elf"
 
 if ! [ -f "$FP_FILE" ]; then
     echo "Fatal: can't find \"$FP_FILE\"" >& 2
     echo "load_file_not_found" > $LOAD_FPGA_STATUS_FILE
     exit 1;
 fi
-if ! [ -f "$LM_FILE" ]; then
-    echo "Fatal: can't find \"$LM_FILE\"" >& 2
-    echo "load_file_not_found" > $LOAD_LM32_STATUS_FILE
+if ! [ -f "$SOFT_CPU_FILE" ]; then
+    echo "Fatal: can't find \"$SOFT_CPU_FILE\"" >& 2
+    echo "load_file_not_found" > $LOAD_URV_STATUS_FILE
     exit 1;
 fi
 
@@ -77,13 +77,13 @@ fi
 # before doing anything else. We do not know yet the reson but without
 # the following step the FPGA cannot be access properly
 
-$WR_HOME/bin/load-lm32   $LM_FILE scb_ver=${scb_ver}
+$WR_HOME/bin/load-urv    $SOFT_CPU_FILE scb_ver=${scb_ver}
 if [ $? -eq 0 ];
 then
-    echo "load_ok" > $LOAD_LM32_STATUS_FILE
+    echo "load_ok" > $LOAD_URV_STATUS_FILE
 else
-    echo "Fatal: load LM32 failed" >& 2
-    echo "load_error" > $LOAD_LM32_STATUS_FILE
+    echo "Fatal: load uRV failed" >& 2
+    echo "load_error" > $LOAD_URV_STATUS_FILE
 fi
 # FIXME also this sleep is necessary because the LM32 does some magic
 sleep 1
@@ -95,12 +95,12 @@ CHK_EXP=0xcafebabe
 CHK_VAL=$(devmem $CHK_ADDR | tr '[:upper:]' '[:lower:]')
 if [ $CHK_VAL == $CHK_EXP ]
 then
-    echo "The FPGA and the LM32 are programmed"
+    echo "The FPGA and the uRV are programmed"
 else
     echo "The bitstream $FP_FILE is not correct or there something is not working with the FPGA"
     echo "Expected: [$CHK_ADDR] = $CHK_EXP"
     echo "Current: [$CHK_ADDR] = $CHK_VAL"
-    echo "LM32 program and drivers for the bitstream components will not be loaded"
+    echo "uRV program and drivers for the bitstream components will not be loaded"
     exit
 fi
 

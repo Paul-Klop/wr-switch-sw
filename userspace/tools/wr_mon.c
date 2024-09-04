@@ -339,6 +339,8 @@ static char * getTimeSourceLabel(int ts)
 static char * getClockClassLabel(int cc)
 {
 	if (cc == 6) return "(GM)";
+	if (cc == 13) return "(ARB GM)";
+	if (cc == 187) return "(DEG GM)";
 	if (cc == 193) return "(FR)";
 	if (cc == 248) return "(BC)";
 

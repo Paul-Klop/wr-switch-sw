@@ -295,6 +295,43 @@ int hal_port_shmem_init(char *logfilename)
 	return 0;
 }
 
+int lpdc_writel(struct hal_port_state *ps, uint16_t value, int reg)
+{
+	struct ifreq ifr;
+	uint32_t rv;
+
+	strncpy(ifr.ifr_name, ps->name, sizeof(ifr.ifr_name));
+
+	rv = NIC_WRITE_PHY_CMD(reg, value);
+	ifr.ifr_data = (void *)&rv;
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCLPDCREG, &ifr) < 0) {
+		pr_error("%s: ioctl failed writing at register adress %d\n",
+				__func__,reg);
+		return -1;
+	};
+
+	return 0;
+}
+
+int lpdc_readl(struct hal_port_state * p, int reg, uint32_t *value)
+{
+	struct ifreq ifr;
+
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
+
+	*value = NIC_READ_PHY_CMD(reg);
+	ifr.ifr_data = (void *)value;
+	if (ioctl(halPorts.hal_port_fd, PRIV_IOCLPDCREG, &ifr) < 0) {
+		pr_error("%s: ioctl failed reading register at address %d\n",
+				__func__, reg);
+		return -1;
+	}
+
+	*value = NIC_RESULT_DATA(*value);
+	return 0;
+}
+
+
 int pcs_writel(struct hal_port_state *ps, uint16_t value, int reg)
 {
 	struct ifreq ifr;

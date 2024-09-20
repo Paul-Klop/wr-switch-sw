@@ -182,9 +182,10 @@ static int _hal_port_rx_setup_state_start(fsm_t *fsm, int eventMsk, int isNewSta
 			return 0;
 		}
 		// LPDC support
-		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
-		MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-		MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+			    LPDC_MDIO_CTRL);
 
 		if (_isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 			halPortLpdcRx_t *rxSetup = ps->lpdc.rxSetup;
@@ -220,14 +221,16 @@ static int _hal_port_rx_setup_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNe
 	if( _isHalRxSetupEventEarlyLinkUp(eventMsk)) {
 		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
-		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
-			      MDIO_LPC_CTRL_TX_ENABLE |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-			      MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_RX_SW_RESET
+			    | LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+			    LPDC_MDIO_CTRL);
 		shw_udelay(1);
-		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-			      MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+			    LPDC_MDIO_CTRL);
 
 		rxSetup->attempts++;
 		fsm_fire_state(fsm, HAL_PORT_RX_SETUP_STATE_WAIT_LOCK);
@@ -290,10 +293,11 @@ static int _hal_port_rx_setup_state_validate(fsm_t *fsm, int eventMsk, int isNew
 		int phase = _pll_state.channels[ps->hw_index].phase_loopback;
 		halPortLpdcRx_t *rxSetup=ps->lpdc.rxSetup;
 
-		pcs_writel(ps, MDIO_LPC_CTRL_RX_ENABLE |
-				MDIO_LPC_CTRL_TX_ENABLE |
-				MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-				MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_RX_ENABLE
+			    | LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+			    LPDC_MDIO_CTRL);
 		pcs_writel(ps, BMCR_ANENABLE | BMCR_ANRESTART, MII_BMCR);
 
 		pr_info("wri%d: RX calibration complete at phase %d "
@@ -322,8 +326,10 @@ static int _hal_port_rx_setup_state_restart(fsm_t *fsm, int eventMsk, int isNewS
 	if ( isNewState ) {
 		// This timer is used to leave enough time to the FSM in the other side to detect a link down
 		libwr_tmo_restart(&ps->lpdc.rxSetup->restart_timeout);
-		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE | MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
-		      MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_TXOUTCLK,
+			    LPDC_MDIO_CTRL);
 	} else {
 		if( libwr_tmo_expired( &ps->lpdc.rxSetup->restart_timeout ) ) {
 			fsm_fire_state(fsm,  HAL_PORT_RX_SETUP_STATE_INIT);
@@ -397,10 +403,10 @@ static  int port_rx_setup_fsm_build_events (fsm_t *fsm) {
 	if ( ps->lpdc.isSupported ) {
 		uint32_t mioLpcStat;
 
-		if ( pcs_readl(ps, MDIO_LPC_STAT,&mioLpcStat) >= 0 ) {
-			if (mioLpcStat & MDIO_LPC_STAT_LINK_UP)
+		if (lpdc_readl(ps, LPDC_MDIO_STAT,&mioLpcStat) >= 0 ) {
+			if (mioLpcStat & LPDC_MDIO_STAT_LINK_UP)
 				portEventMask |= HAL_PORT_RX_SETUP_EVENT_EARLY_LINK_UP;
-			if (mioLpcStat & MDIO_LPC_STAT_LINK_ALIGNED)
+			if (mioLpcStat & LPDC_MDIO_STAT_LINK_ALIGNED)
 				portEventMask |= HAL_PORT_RX_SETUP_EVENT_RX_ALIGNED;
 		}
 	}

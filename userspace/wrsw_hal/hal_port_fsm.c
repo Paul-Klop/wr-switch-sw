@@ -158,9 +158,11 @@ static int port_fsm_state_disabled(fsm_t *fsm, int eventMsk, int isNewState) {
 
 		// make sure the PHY calibration circuitry is put in a KNOWN state
 		if( ps->lpdc.isSupported )	{
-			pcs_writel(ps,
-					MDIO_LPC_CTRL_RESET_RX | MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK
-							| MDIO_LPC_CTRL_TX_ENABLE, MDIO_LPC_CTRL);
+			lpdc_writel(ps,
+				    LPDC_MDIO_CTRL_RX_SW_RESET
+				    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK
+				    | LPDC_MDIO_CTRL_TX_ENABLE,
+				    LPDC_MDIO_CTRL);
 
 		}
 		// Disable tracker
@@ -209,14 +211,16 @@ static int port_fsm_state_link_down(fsm_t *fsm, int eventMsk, int isNewState) {
 		led_set_wrmode(ps->hw_index, SFP_LED_WRMODE_OFF);
 		led_set_synched(ps->hw_index, 0);
 
-		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
-			      MDIO_LPC_CTRL_TX_ENABLE |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-			      MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_RX_SW_RESET
+			    | LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+			    LPDC_MDIO_CTRL);
 		shw_udelay(1);
-		pcs_writel(ps, MDIO_LPC_CTRL_TX_ENABLE |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-			      MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_TX_ENABLE
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+			    LPDC_MDIO_CTRL);
 	}
 
 	/* if final state reached for tx setup state machine then
@@ -350,10 +354,10 @@ static  int port_fsm_build_events(fsm_t *fsm) {
 	if ( ps->lpdc.isSupported ) {
 		uint32_t mioLpcStat;
 
-		if ( pcs_readl(ps, MDIO_LPC_STAT,&mioLpcStat) >= 0 ) {
-			if (mioLpcStat & MDIO_LPC_STAT_LINK_UP)
+		if (lpdc_readl(ps, LPDC_MDIO_STAT, &mioLpcStat) >= 0 ) {
+			if (mioLpcStat & LPDC_MDIO_STAT_LINK_UP)
 				portEventMask |= HAL_PORT_EVENT_EARLY_LINK_UP;
-			if (mioLpcStat & MDIO_LPC_STAT_LINK_ALIGNED)
+			if (mioLpcStat & LPDC_MDIO_STAT_LINK_ALIGNED)
 				portEventMask |= HAL_PORT_EVENT_RX_ALIGNED;
 		}
 	}

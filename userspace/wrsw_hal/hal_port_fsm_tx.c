@@ -162,9 +162,10 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
 		rts_enable_ptracker(ps->hw_index, 0);
 		rts_ptracker_set_average_samples(ps->hw_index, HAL_CAL_DMTD_SAMPLES);
 
-		pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
-			      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
-			      MDIO_LPC_CTRL);
+		lpdc_writel(ps,
+			    LPDC_MDIO_CTRL_RX_SW_RESET
+			    | LPDC_MDIO_CTRL_DMTD_SOURCE_TXOUTCLK,
+			    LPDC_MDIO_CTRL);
 
 		/* start indicating LPDC rx calibration. */
 		led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_CALIB);
@@ -180,16 +181,18 @@ static int port_tx_setup_fsm_state_start(fsm_t *fsm, int eventMsk, int isNewStat
  */
 static int port_tx_setup_fsm_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
-
+	
 	rts_enable_ptracker(ps->hw_index, 0);
-	pcs_writel(ps, MDIO_LPC_CTRL_RESET_TX |
-		      MDIO_LPC_CTRL_RESET_RX |
-		      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
-		      MDIO_LPC_CTRL);
+	lpdc_writel(ps,
+		    LPDC_MDIO_CTRL_TX_SW_RESET
+		    | LPDC_MDIO_CTRL_RX_SW_RESET
+		    | LPDC_MDIO_CTRL_DMTD_SOURCE_TXOUTCLK,
+		    LPDC_MDIO_CTRL);
 	shw_udelay(1);
-	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
-		      MDIO_LPC_CTRL_DMTD_SOURCE_TXOUTCLK,
-		      MDIO_LPC_CTRL);
+	lpdc_writel(ps,
+		    LPDC_MDIO_CTRL_RX_SW_RESET
+		    | LPDC_MDIO_CTRL_DMTD_SOURCE_TXOUTCLK,
+		    LPDC_MDIO_CTRL);
 
 	fsm_fire_state(fsm,HAL_PORT_TX_SETUP_STATE_WAIT_LOCK);
 	return 0;
@@ -203,9 +206,8 @@ static int port_tx_setup_fsm_state_reset_pcs(fsm_t *fsm, int eventMsk, int isNew
 static int port_tx_setup_fsm_state_wait_lock(fsm_t *fsm, int eventMsk, int isNewState) {
 	struct hal_port_state * ps = (struct hal_port_state*) fsm->priv;
 	uint32_t value;
-
-	if ( pcs_readl(ps, MDIO_LPC_STAT,&value)>=0 ) {
-		if ( (value & MDIO_LPC_STAT_RESET_TX_DONE)!=0 ) {
+	if (lpdc_readl(ps, LPDC_MDIO_STAT,&value) >= 0 ) {
+		if ( (value & LPDC_MDIO_STAT_TX_RST_DONE)!=0 ) {
 			ps->lpdc.txSetup->attempts++;
 
 			rts_enable_ptracker(ps->hw_index, 1);
@@ -307,10 +309,11 @@ static int port_tx_setup_fsm_state_validate(fsm_t *fsm, int eventMsk, int isNewS
 	rts_enable_ptracker(ps->hw_index, 0);
 
 	// enable the PCS on the port
-	pcs_writel(ps, MDIO_LPC_CTRL_RESET_RX |
-		      MDIO_LPC_CTRL_TX_ENABLE |
-		      MDIO_LPC_CTRL_DMTD_SOURCE_RXRECCLK,
-		      MDIO_LPC_CTRL);
+	lpdc_writel(ps,
+		    LPDC_MDIO_CTRL_RX_SW_RESET
+		    | LPDC_MDIO_CTRL_TX_ENABLE
+		    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+		    LPDC_MDIO_CTRL);
 
 	led_set_wrmode(ps->hw_index,SFP_LED_WRMODE_OFF);
 

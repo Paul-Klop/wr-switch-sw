@@ -295,7 +295,7 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		/* this command allows to read and write a phy register */
 		if (get_user(reg, (u32 *)rq->ifr_data) < 0)
 			return -EFAULT;
-		if (reg & (1<<31)) {
+		if (reg & (1 << 31)) {
 			wrn_phy_write(dev, 0, (reg >> 16) & 0xff,
 				      reg & 0xffff);
 			return 0;
@@ -304,7 +304,19 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		if (put_user(reg, (u32 *)rq->ifr_data) < 0)
 			return -EFAULT;
 		return 0;
-
+	case PRIV_IOCLPDCREG:
+		/* this command allows to read and write a phy lpdc register */
+		if (get_user(reg, (u32 *)rq->ifr_data) < 0)
+			return -EFAULT;
+		if (reg & (1 << 31)) {
+			wrn_lpdc_write(dev, 0, (reg >> 16) & 0xff,
+				      reg & 0xffff);
+			return 0;
+		}
+		reg = wrn_lpdc_read(dev, 0, (reg >> 16) & 0xff);
+		if (put_user(reg, (u32 *)rq->ifr_data) < 0)
+			return -EFAULT;
+		return 0;
 	case PRIV_MEZZANINE_ID:
 	case PRIV_MEZZANINE_CMD:
 		/* Pass this to the mezzanine driver, or use internal weak */

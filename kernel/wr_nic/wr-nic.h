@@ -18,6 +18,8 @@
 #define PRIV_IOCGGETPHASE	(SIOCDEVPRIVATE + 2)
 #define PRIV_IOCREADREG		(SIOCDEVPRIVATE + 3)
 #define PRIV_IOCPHYREG		(SIOCDEVPRIVATE + 4)
+#define PRIV_IOCLPDCREG		(SIOCDEVPRIVATE + 5)
+
 
 /* The last two available are used for mezzanine-private stuff */
 #define PRIV_MEZZANINE_ID	(SIOCDEVPRIVATE + 14)
@@ -232,6 +234,9 @@ extern int wrn_ethtool_init(struct net_device *netdev);
 /* Following functions in endpoint.c */
 extern int wrn_phy_read(struct net_device *dev, int phy_id, int location);
 extern void wrn_phy_write(struct net_device *dev, int phy_id, int loc, int v);
+extern int wrn_lpdc_read(struct net_device *dev, int phy_id, int location);
+extern void wrn_lpdc_write(struct net_device *dev, int phy_id, int loc, int v);
+
 
 extern int wrn_ep_open(struct net_device *dev);
 extern int wrn_ep_close(struct net_device *dev);

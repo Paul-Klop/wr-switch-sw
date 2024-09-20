@@ -47,6 +47,71 @@ __weak int mac_pton(const char *s, u8 *mac)
 }
 
 /*
+ * LPDC access
+ * use extended proxy interface from wrpc-v5.0
+ */
+int wrn_lpdc_read(struct net_device *dev, int phy_id, int location)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+	u32 val;
+
+	if (WR_IS_NODE) {
+		/*
+		 * We cannot access the phy from Linux, because the phy
+		 * is managed by the lm32 core. However, network manager
+		 * insists on doing that, so we'd better not warn about it
+		 */
+		//WARN_ON(1); /* SPEC: no access */
+		return -1;
+	}
+
+	/* First check if there is previous MDIO operation still ongoing */
+	while ( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
+		;
+
+	/* Select lpdc submap */
+	wrn_ep_write(ep, MDIO_ASR, 0x00080000);
+	while ( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
+		;
+
+	val = wrn_phy_read(dev, phy_id, location >> 2);
+
+	/* Deselect lpdc submap */
+	wrn_ep_write(ep, MDIO_ASR, 0x00000000);
+	return val;
+}
+
+void wrn_lpdc_write(struct net_device *dev, int phy_id, int location,
+          int value)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+
+	if (WR_IS_NODE) {
+		/*
+		 * We cannot access the phy from Linux, because the phy
+		 * is managed by the lm32 core. However, network manager
+		 * insists on doing that, so we'd better not warn about it
+		 */
+		//WARN_ON(1); /* SPEC: no access */
+		return;
+	}
+
+	/* First check if there is previous MDIO operation still ongoing */
+	while ( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
+		;
+
+	/* Select lpdc submap */
+	wrn_ep_write(ep, MDIO_ASR, 0x00080000);
+	while ( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
+		;
+
+	wrn_phy_write(dev, phy_id, location >> 2, value);
+
+	/* Deselect lpdc submap */
+	wrn_ep_write(ep, MDIO_ASR, 0x00000000);
+}
+
+/*
  * Phy access: used by link status, enable, calibration ioctl etc.
  * Called with endpoint lock (you'll lock the whole sequence of r/w)
  */

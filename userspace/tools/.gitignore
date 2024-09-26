@@ -1,4 +1,3 @@
-load-lm32
 load-virtex
 load-urv
 rtu_stat

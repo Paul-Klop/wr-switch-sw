@@ -13,7 +13,7 @@
 
 #define HWINFO_FILE "/tmp/hwinfo_read_status"
 #define LOAD_FPGA_STATUS_FILE "/tmp/load_fpga_status"
-#define LOAD_LM32_STATUS_FILE "/tmp/load_lm32_status"
+#define LOAD_URV_STATUS_FILE "/tmp/load_urv_status"
 
 #define MODULES_FILE "/proc/modules"
 /* get process list, output only process' command */
@@ -367,7 +367,7 @@ static void get_boot_scripts_status(void){
 	}
 
 	/* result of loading LM32 */
-	f = fopen(LOAD_LM32_STATUS_FILE, "r");
+	f = fopen(LOAD_URV_STATUS_FILE, "r");
 	if (f) {
 		/* readline without newline */
 		fscanf(f, LINE_READ_LEN(20), buff);

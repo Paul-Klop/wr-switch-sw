@@ -11,7 +11,7 @@ wrs_version
 wr_date
 fix_tai_offset
 wr_management
-lm32-vuart
+urv-vuart
 tru_mon
 wrs_pstats
 wrs_vlans

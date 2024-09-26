@@ -3385,8 +3385,8 @@ The following tools and scripts are provided:
 	``@t{ethtool --set-priv-flags wriX "Accept RX Jumbo Frames" on}''
 	accepts (or drops if @t{off} is used) RX Jumbo Frames
 
-@item lm32-vuart
-	The tool allows connecting to the virtual UART of the LM32 soft-core CPU.
+@item urv-vuart
+	The tool allows connecting to the virtual UART of the uRV soft-core CPU.
 	It can be used to observe log messages from the SoftPLL (the same as
 	@i{FPGA Test}
 	physical UART port available in the back of a WR switch). Use

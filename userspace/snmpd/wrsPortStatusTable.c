@@ -70,7 +70,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		n_rows_local = 0;
 		return time_cur;
 	} else {
-		n_rows_local = WRS_N_PORTS;
+		n_rows_local = hal_nports_local;
 	}
 
 	if (n_rows)

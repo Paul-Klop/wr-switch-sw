@@ -15,6 +15,7 @@
 #include <libwr/rtu_shmem.h>
 #include <libwr/softpll_export.h>
 #include <libwr/util.h>
+#include <libwr/softpll.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
 #include "time_lib.h"
@@ -28,9 +29,6 @@
 #undef ARRAY_SIZE
 
 #include "wrs_dump_shmem.h"
-
-#define FPGA_SPLL_STAT 0x10006800
-#define SPLL_MAGIC 0x5b1157a7
 
 int dump_one_field_ppsi_wrs(int type, int size, void *p, int i);
 int dump_one_field_type_ppsi_wrs(int type, int size, void *p);

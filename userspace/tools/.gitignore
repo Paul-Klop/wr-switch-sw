@@ -31,3 +31,4 @@ radiusvlan
 ioctl
 asix_ioctl
 wrsw_hal_conf
+spll_conf

@@ -127,6 +127,9 @@ int rts_debug_command(int param, int value);
 /* Set offset between PPS-in and PPS-out when in GM mode */
 int rts_gm_pps_in_out_offset_command(int offset_ps);
 
+/* Set spll pi gain terms */
+int rts_set_pi_gain(int loop, int kp, int ki);
+
 #ifdef RTIPC_EXPORT_STRUCTURES
 
 static struct minipc_pd rtipc_rts_get_state_struct = {
@@ -200,6 +203,17 @@ static struct minipc_pd rtipc_rts_set_pps_in_out_offset_struct = {
 	.name = "hhhh",
 	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	    MINIPC_ARG_END
+	},
+};
+
+static struct minipc_pd rtipc_rts_set_pi_gain_struct = {
+	.name = "iiii",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 	    MINIPC_ARG_END
 	},

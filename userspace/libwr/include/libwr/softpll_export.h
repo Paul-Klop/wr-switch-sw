@@ -62,6 +62,8 @@
 
 #define SPLL_STATS_VER 5
 #define SPLL_STATS_MAGIC 0x5b1157a7
+#define SPLL_LOOP_HELPER -1
+#define SPLL_LOOP_MAIN 0
 
 struct spll_build_id {
 	char commit_id[32];

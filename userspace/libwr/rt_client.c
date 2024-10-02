@@ -155,6 +155,19 @@ int rts_gm_pps_in_out_offset_command(int offset_ps)
 	return rval;
 }
 
+int rts_set_pi_gain(int loop, int kp, int ki)
+{
+	int rval;
+	int ret = minipc_call(client, RTS_TIMEOUT,
+			      &rtipc_rts_set_pi_gain_struct, &rval,
+			      loop, kp, ki);
+
+	if (ret < 0)
+		return ret;
+
+	return rval;
+}
+
 int rts_connect(char *logfilename)
 {
 	static FILE *f;

@@ -22,11 +22,14 @@
 #include <libwr/util.h>
 #include <time_lib.h>
 #include <rt_ipc.h>
+#include "nmea/serial.h"
+#include "nmea/wr_nmea.h"
 
 #ifndef MOD_TAI
 #define MOD_TAI 0x80
 #endif
 #define WRDATE_CFG_FILE "/etc/wr_date.conf"
+#define NMEA_SERIAL_PORT "/dev/ttyS2"
 
 /* Address for hardware, from nic-hardware.h */
 #define FPGA_BASE_PPSG  0x10010500
@@ -36,6 +39,10 @@ extern int init_module(void *module, unsigned long len, const char *options);
 extern int delete_module(const char *module, unsigned int flags);
 
 static int opt_verbose, opt_force, opt_not;
+static int opt_nmea_en = 0;
+static int opt_nmea_baud = 9600;
+static char *opt_nmea_fmt = "GPZDA";
+static struct wr_nmea nmea;
 static char *opt_cfgfile = WRDATE_CFG_FILE;
 static char *prgname;
 
@@ -49,6 +56,8 @@ void help(void)
 		"  -c <cfg> configfile to use in place of the default\n"
 		"  -v       verbose: report what the program does\n"
 		"  -n       do not act in practice - dry run\n"
+		"  -g <baud> <format> use nmea/gps input with a given baudrate and format (GPZDA|GPRMC)\n"
+		"                     default: %s, %d\n"
 		"    get             print WR time to stdout\n"
 		"    get tohost      print WR time and set system time\n"
 		"    set <value>     set WR time to scalar seconds\n"
@@ -58,7 +67,7 @@ void help(void)
 		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
 /*		"    set ntp:<ip>    set from specified ntp server\n" */
-		, WRDATE_CFG_FILE);
+		, WRDATE_CFG_FILE, opt_nmea_fmt, opt_nmea_baud);
 	exit(1);
 }
 
@@ -127,6 +136,23 @@ int get_kern_leaps(void)
 	//return t.tai;
 }
 
+static int wrdate_get_nmea(int64_t *t_out)
+{
+	if (nmea_read_tai(&nmea, t_out) < 0) {
+		fprintf(stderr, "wr_date: %s: error reading nmea\n", __func__);
+		return -1;
+	}
+	return 0;
+}
+
+static void wrdate_gettimeofday(struct timeval *tv)
+{
+	if (opt_nmea_en) {
+		wrdate_get_nmea((int64_t *)&tv->tv_sec);
+	} else {
+		gettimeofday(tv, NULL);
+	}
+}
 
 int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 {
@@ -139,9 +165,8 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 	int tai_offset;
 
 	tai_offset = get_kern_leaps();
-
 	if (opt_not) {
-		gettimeofday(&sw, NULL);
+		wrdate_gettimeofday(&sw);
 		taih = 0;
 		tail = sw.tv_sec + tai_offset;
 		nsec = sw.tv_usec * 1000;
@@ -155,14 +180,16 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 			tmp2 = pps->CNTR_UTCLO;
 		} while((tmp1 != taih) || (tmp2 != tail));
 	}
-	gettimeofday(&sw, NULL);
 
-	tai = (uint64_t)(taih) << 32 | tail;
+	wrdate_gettimeofday(&sw);
+	tai = opt_nmea_en ? (sw.tv_sec) : (uint64_t)(taih) << 32 | tail;
 
 	/* Before printing (which takes time), set host time if so asked to */
 	if (tohost) {
-		hw.tv_sec = tai - tai_offset;
-		hw.tv_usec = nsec / 1000;
+
+		hw.tv_sec = opt_nmea_en ? sw.tv_sec : tai - tai_offset;
+		hw.tv_usec = opt_nmea_en ? sw.tv_usec : nsec/1000;
+
 		if (settimeofday(&hw, NULL))
 			fprintf(stderr, "wr_date: settimeofday(): %s\n",
 				strerror(errno));
@@ -210,8 +237,7 @@ int wrdate_diff(volatile struct PPSG_WB *pps)
 	struct timeval ht, wt;
 
 	gettimeof_wr(&wt, pps);
-	gettimeofday(&ht, NULL);
-
+	wrdate_gettimeofday(&ht);
 	return __wrdate_diff(pps,&ht, &wt);
 }
 
@@ -321,7 +347,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 		}
 
 		usleep(100);
-		gettimeofday(&tvh, NULL);
+		wrdate_gettimeofday(&tvh);
 		gettimeof_wr(&tvr, pps);
 
 		/* diff is the expected step to be added, so host - WR */
@@ -389,7 +415,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 	}
 	if (opt_verbose && deep==0) {
 		usleep(100);
-		gettimeofday(&tvh, NULL);
+		wrdate_gettimeofday(&tvh);
 		gettimeof_wr(&tvr, pps);
 
 		printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
@@ -555,7 +581,7 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 			// Get time
 			usleep(100); // Increase stability of measures : less preempted during time measures
 			gettimeof_wr(&tv_tai,pps);
-			gettimeofday(&tv_host, NULL);
+			wrdate_gettimeofday(&tv_host);
 
 			// Calculate difference
 			*udiff_tmp=(tv_host.tv_sec-tv_tai.tv_sec)*1000000;
@@ -594,13 +620,18 @@ int main(int argc, char **argv)
 
 	prgname = argv[0];
 
-	while ( (c = getopt(argc, argv, "fc:vn")) != -1) {
+	while ( (c = getopt(argc, argv, "fcg:vn")) != -1) {
 		switch(c) {
 		case 'f':
 			opt_force = 1;
 			break;
 		case 'c':
 			opt_cfgfile = optarg;
+			break;
+		case 'g':
+			opt_nmea_en = 1;
+			opt_nmea_baud = atoi(optarg);
+			opt_nmea_fmt = argv[optind++];
 			break;
 		case 'v':
 			opt_verbose = 1;
@@ -613,6 +644,7 @@ int main(int argc, char **argv)
 			help();
 		}
 	}
+
 	if (optind > argc - 1)
 		help();
 
@@ -626,6 +658,14 @@ int main(int argc, char **argv)
 	}
 
 	wrdate_cfgfile(opt_cfgfile);
+
+	if (opt_nmea_en) {
+		nmea_init(&nmea, NMEA_SERIAL_PORT, opt_nmea_baud, opt_nmea_fmt);
+	}
+
+	if (cmd == NULL) {
+		return -1;
+	}
 
 	if (!strcmp(cmd, "get")) {
 		/* parse the optional "tohost" argument */

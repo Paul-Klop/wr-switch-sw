@@ -62,8 +62,22 @@ else
 fi
 sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
 
+# For backward compability with pre-v8.0 dot-configs, if NTP server is set,
+# sume should be CONFIG_TOD_SOURCE_NTP=y
+if [ ! -n "$CONFIG_TOD_SOURCE_NONE" ] \
+    && [ ! -n "$CONFIG_TOD_SOURCE_NTP" ] \
+    && [ ! -n "$CONFIG_TOD_SOURCE_NMEA" ]; then
+
+    if [ ! -z "$CONFIG_NTP_SERVER" ]; then
+	echo "NTP server set (CONFIG_NTP_SERVER=\"$CONFIG_NTP_SERVER\"), " \
+	     "but no CONFIG_TOD_SOURCE_*=y  in dot-config! " \
+	     "Assume to use NTP as TOD source." | tee $log_output >& 2
+	CONFIG_TOD_SOURCE_NTP=y
+    fi
+fi
+
 # A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
-if [ ! -z "$CONFIG_NTP_SERVER" ]; then
+if [ "$CONFIG_TOD_SOURCE_NTP" = "y" ] && [ ! -z "$CONFIG_NTP_SERVER" ]; then
     echo "ntpserver $CONFIG_NTP_SERVER" > $T
     mv $T /etc/wr_date.conf
 fi

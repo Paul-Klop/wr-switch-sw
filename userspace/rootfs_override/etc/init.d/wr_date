@@ -69,13 +69,11 @@ ntp_to_hwclk()
 	S=$1
 	ntp_ntries=1
 
-# Get timing mode: Get it from dot-config ad wr_date is started before PPSi
-	TM=`grep -e '^CONFIG_TIME_' /wr/etc/dot-config | sed 's/^CONFIG_TIME_\(.*\)[=].*/\1/'`
-	
-	if [ "$TM" == "GM" ] ; then  
+	# Get timing mode: Get it from dot-config as wr_date is started before PPSi
+	if [ "$CONFIG_TIME_GM" = "y" ] || [ "$CONFIG_TIME_ARB_GM" = "y" ]; then
 		ntp_ntries=10
 	fi
-		
+	
 	#Request NTP server and set time to FPGA is okay
 	if ntp_retries $S ${ntp_ntries}; then
 		eval /wr/bin/wr_date -v set host $LOGPIPE
@@ -83,14 +81,55 @@ ntp_to_hwclk()
 	fi
 }
 
+nmea_to_hwclk()
+{
+	# Get NMEA settings from .config
+	if [ "$CONFIG_NMEA_B9600"   = "y" ]; then NMEA_BAUD=9600;   fi
+	if [ "$CONFIG_NMEA_B19200"  = "y" ]; then NMEA_BAUD=19200;  fi
+	if [ "$CONFIG_NMEA_B38400"  = "y" ]; then NMEA_BAUD=38400;  fi
+	if [ "$CONFIG_NMEA_B57600"  = "y" ]; then NMEA_BAUD=57600;  fi
+	if [ "$CONFIG_NMEA_B115200" = "y" ]; then NMEA_BAUD=115200; fi
+
+	if [ "$CONFIG_NMEA_GPZDA" = "y" ]; then NMEA_FMT=GPZDA; fi
+	if [ "$CONFIG_NMEA_GPRMC" = "y" ]; then NMEA_FMT=GPRMC; fi
+
+	# Use default baud if not found
+	if [ ! -n "$NMEA_BAUD" ]; then
+		NMEA_BAUD=9600
+		eval echo "NMEA baud not found, using default: $NMEA_BAUD" $LOGPIPE
+	fi
+
+	# Use default format if not found
+	if [ ! -n "$NMEA_FMT" ]; then
+		NMEA_FMT=GPZDA
+		eval echo "NMEA format not found, using default: $NMEA_FMT" $LOGPIPE
+	fi
+
+	#set host and time from nmea interface
+	eval echo "Using NMEA with baud=$NMEA_BAUD format=$NMEA_FMT" $LOGPIPE
+	eval /wr/bin/wr_date -v -g $NMEA_BAUD $NMEA_FMT get tohost $LOGPIPE
+	if [ $? -ne 0 ]; then
+		eval echo "Getting time from NMEA failed" $LOGPIPE
+		return
+	fi
+	eval /wr/bin/wr_date -v set host $LOGPIPE
+	date_set=1
+}
+
 date_set=0
-# Check whether there is the config file
-if [ -f $F ]; then
-	# pick the first server, if any
-	S=$(grep 'ntpserver' $F | sed 's/ntpserver//' | head -n 1)
-	# check whether server found
-	if [ -n "$S" ]; then
-		ntp_to_hwclk "$S"
+
+
+if [ "$CONFIG_TOD_SOURCE_NMEA" = "y" ]; then
+	nmea_to_hwclk
+elif [ "$CONFIG_TOD_SOURCE_NTP" = "y" ]; then
+	# Check whether there is the config file
+	if [ -f $F ]; then
+		# pick the first server, if any
+		S=$(grep 'ntpserver' $F | sed 's/ntpserver//' | head -n 1)
+		# check whether server found
+		if [ -n "$S" ]; then
+			ntp_to_hwclk "$S"
+		fi
 	fi
 fi
 
@@ -98,8 +137,9 @@ fi
 # saved before the last reboot
 if [ "$1" != "ppsi" ] && [ $date_set = 0 ] && [ -f /update/saved_date ]; then
 	#date is not accurate but no better idea.
-	eval echo "Restore saved time" $LOGPIPE
-	date -s `cat /update/saved_date`
+	curr_date=`cat /update/saved_date`
+	eval echo "Restore saved time $curr_date" $LOGPIPE
+	date -s $curr_date
 	eval echo "Setting WR time from host time" $LOGPIPE
 	eval /wr/bin/wr_date set host $LOGPIPE
 fi

@@ -127,6 +127,77 @@ config PPSI
 	bool
 	default y
 
+menu "External source of Time of Day at boot"
+
+choice
+	prompt "External source of local Time of Day at boot"
+	default TOD_SOURCE_NTP
+	help
+	  Select the external time source of Time of Day at boot.
+	  If device gets time from other PTP/WR device the time will be
+	  overwritten.
+
+	config TOD_SOURCE_NONE
+		bool "None"
+		help
+		  Don't use external source of local time at startup.
+		  It will use date stored at the last reboot or it will stay
+		  at the beginning of the epoch (1970).
+
+	config TOD_SOURCE_NTP
+		bool "Use NTP"
+		help
+		  Use NTP as external source of local time at startup.
+
+	config TOD_SOURCE_NMEA
+		bool "Enable NMEA Interface to set time in GM"
+		help
+		  Use NMEA (interface via RS-232) as external source of local
+		  time at startup.
+endchoice
+
+config NTP_SERVER
+	string "IP address of NTP server"
+	depends on TOD_SOURCE_NTP
+	help
+	  At boot time, the White Rabbit time can be primed by querying
+	  an NTP server, if CONFIG_TOD_SOURCE_NTP is set.
+	  Please write here the IPV4 address (e.g.: "192.168.16.1");
+	  an empty string disables NTP-based priming.
+
+choice
+	prompt "NMEA Baud Rate"
+	depends on TOD_SOURCE_NMEA
+	default NMEA_B9600
+	help
+	  Set baud rate of NMEA interface
+	config NMEA_B9600
+		bool "9600"
+	config NMEA_B19200
+		bool "19200"
+	config NMEA_B38400
+		bool "38400"
+	config NMEA_B57600
+		bool "57600"
+	config NMEA_B115200
+		bool "115200"
+endchoice
+
+choice
+	prompt "NMEA Format"
+	depends on TOD_SOURCE_NMEA
+	default NMEA_GPZDA
+	help
+	  Set the NMEA sentence to parse
+	config NMEA_GPZDA
+		bool "GPZDA"
+	config NMEA_GPRMC
+		bool "GPRMC"
+endchoice
+
+endmenu # "External Time of Day source at boot"
+
+
 menu "Local Network Configuration"
 
 choice
@@ -335,13 +406,6 @@ endmenu
 
 endmenu # "Authorization and authentication"
 
-config NTP_SERVER
-	string "IP address of local NTP server (empty for none)"
-	help
-	  At boot time, the White Rabbit time is primed by querying
-	  an NTP server, if any is there.  Please write here the
-	  IPV4 address (e.g.: "192.168.16.1"); an empty string
-	  disables NTP-based priming.
 
 config DNS_SERVER
 	string "static IP address of local DNS server (empty for none)"
@@ -642,6 +706,9 @@ config TIME_CUSTOM
 	  This custom mode allows free access to the clock quality parameters.
 
 endchoice
+
+
+
 
 config PTP_OPT_PTP_VERSION_OVERWRITE
 	boolean "Allow the overwrite of the default PTP version per instance"
@@ -983,7 +1050,7 @@ config SNMP_SWCORESTATUS_DISABLE
 menu "System clock monitor"
 
 config SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
-	depends on  NTP_SERVER != ""
+	depends on TOD_SOURCE_NTP || TOD_SOURCE_NMEA
 	bool "Enable system clock monitor"
 	default y
 	help

@@ -193,20 +193,20 @@ static int hal_port_init(struct hal_port_state *ps, int index)
 	sprintf(key,"PORT%02i_INST%02i_MONITOR",port_i,1);
 	if ((retValue = libwr_cfg_get(key)) == NULL ) {
 		ps->monitor = HAL_PORT_MONITOR_DISABLE;
-		pr_info("port %i (%s): monitor=n (%i)\n", port_i,
+		pr_info("Port %i (%s): monitor=n (%i)\n", port_i,
 			ps->name, ps->monitor);
 	} else {
 		if (!strcasecmp(retValue, "n")) {
 			ps->monitor = HAL_PORT_MONITOR_DISABLE;
-			pr_info("port %i (%s): monitor=n (%i)\n", port_i,
+			pr_info("Port %i (%s): monitor=n (%i)\n", port_i,
 				ps->name, ps->monitor);
 		} else if (!strcasecmp(retValue, "y")) {
 			ps->monitor = HAL_PORT_MONITOR_ENABLE;
-			pr_info("port %i (%s): monitor=y (%i)\n", port_i,
+			pr_info("Port %i (%s): monitor=y (%i)\n", port_i,
 				ps->name, ps->monitor);
 		} else {
 			/* error */
-			pr_error("port %i (%s): not supported \"monitor\" "
+			pr_error("Port %i (%s): not supported \"monitor\" "
 				 "value, default to y\n",
 				 port_i, ps->name);
 		}

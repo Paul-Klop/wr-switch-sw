@@ -273,8 +273,8 @@ static int port_tx_setup_fsm_state_measure_phase(fsm_t *fsm, int eventMsk, int i
 //			txSetup->attempts, txSetup->expected_phase, txSetup->tolerance);
 
 	if(_within_range(phase, phase_min, phase_max, 16000)) {
-		pr_info("FIX port %d phase %d after %d attempts "
-				"(temp = %.3f degC)\n", ps->hw_index, txSetup->measured_phase,
+		pr_info("FIX port wri%d phase %d after %d attempts "
+				"(temp = %.3f degC)\n", ps->hw_index + 1, txSetup->measured_phase,
 				txSetup->attempts, hal_get_fpga_temperature() / 256.0);
 		rts_enable_ptracker(ps->hw_index, 0);
 		rts_enable_ptracker(ps->hw_index, 1);
@@ -426,10 +426,10 @@ void hal_port_tx_setup_init_all(struct hal_port_state * ports, halGlobalLPDC_t *
 		globalLpdc->firstLpdcPort = firstLpdcPort;
 		globalLpdc->lastLpdcPort = lastLpdcPort;
 		pr_info("WR switch supports LPDC on %d ports ("
-		        "first port is %d, last port is %d)\n",
+		        "first port is wri%d, last port is wri%d)\n",
 		        globalLpdc->numberOfLpdcPorts,
-		        globalLpdc->firstLpdcPort,
-		        globalLpdc->lastLpdcPort);
+		        globalLpdc->firstLpdcPort + 1,
+		        globalLpdc->lastLpdcPort + 1);
 
 		/* load the calib file*/
 		_load_tx_calibration_file(ports);
@@ -527,7 +527,7 @@ static void _load_tx_calibration_file(struct hal_port_state * ports) {
 	}
 
 
-	pr_info("Loading LPCD config data from %s\n", _calibrationFileName);
+	pr_info("Loading LPDC config data from %s\n", _calibrationFileName);
 
 	for (i = 0; i < HAL_MAX_PORTS; i++){
 		struct hal_port_state *ps = &ports[i];

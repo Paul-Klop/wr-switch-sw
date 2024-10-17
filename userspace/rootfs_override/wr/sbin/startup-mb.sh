@@ -1,5 +1,6 @@
 #!/bin/ash
 export WR_HOME="/wr"
+dotconfig=/wr/etc/dot-config
 
 insmod $WR_HOME/lib/modules/asix.ko
 if [ -e /proc/sys/net/ipv4/conf/eth1 ]; then
@@ -20,6 +21,28 @@ for arg in $(cat /proc/cmdline); do
 		val=$(echo $arg | cut -d= -f2);
 	fi;
 done
+
+if [ -f "$dotconfig" ]; then
+    . "$dotconfig"
+else
+    echo "$0 unable to source dot-config ($dotconfig)!"
+fi
+
+SPLL_SETTINGS=""
+
+if [ -n "$CONFIG_SPLL_MPLL_KP" ]; then
+    SPLL_SETTINGS="$SPLL_SETTINGS main_pll_kp=$CONFIG_SPLL_MPLL_KP"
+fi
+if [ -n "$CONFIG_SPLL_MPLL_KI" ]; then
+    SPLL_SETTINGS="$SPLL_SETTINGS main_pll_ki=$CONFIG_SPLL_MPLL_KI"
+fi
+
+if [ -n "$CONFIG_SPLL_HPLL_KP" ]; then
+    SPLL_SETTINGS="$SPLL_SETTINGS helper_pll_kp=$CONFIG_SPLL_HPLL_KP"
+fi
+if [ -n "$CONFIG_SPLL_HPLL_KI" ]; then
+    SPLL_SETTINGS="$SPLL_SETTINGS helper_pll_ki=$CONFIG_SPLL_HPLL_KI"
+fi
 
 # handle monit's restat reason
 # no need to remove $MONIT_RR_TMP, since tmp is not persistent
@@ -73,11 +96,15 @@ else
 fi
 
 # FIXME
-# Don't try to do **anything** here. The LM32 **must** be programed
+# Don't try to do **anything** here. The SoftCPU (uRV) **must** be programed
 # before doing anything else. We do not know yet the reson but without
 # the following step the FPGA cannot be access properly
 
-$WR_HOME/bin/load-urv    $SOFT_CPU_FILE scb_ver=${scb_ver}
+# NOTE: please make sure that the variable to be changed is in the correct
+# section (e.g. .sdata) of memory!
+echo "SPLL_SETTINGS=$SPLL_SETTINGS"
+$WR_HOME/bin/load-urv    $SOFT_CPU_FILE scb_ver=${scb_ver} $SPLL_SETTINGS
+
 if [ $? -eq 0 ];
 then
     echo "load_ok" > $LOAD_URV_STATUS_FILE

@@ -340,8 +340,8 @@ static int varaction_urv(char *fname, char *action)
 int dump_urv(char *fname, int count)
 {
     FILE *f;
-    int size, i;
-    uint8_t byte;
+    int i;
+    uint32_t v;
 
     f=fopen(fname,"w");
     if (!f) {
@@ -351,12 +351,11 @@ int dump_urv(char *fname, int count)
     }
 
     if (!count)
-        count = URV_RAM_SIZE_WORD * 4;
+        count = URV_RAM_SIZE_WORD;
 
     for(i = 0; i < count; i++) {
-        byte = (urv_read_iram(i / 4) >> (i * 8)) & 0xFF;
-        fwrite(&byte, sizeof(byte), 1, f);
-        size++;
+        v = urv_read_iram(i);
+        fwrite(&v, sizeof(v), 1, f);
     }
 
     fclose(f);

@@ -23,6 +23,7 @@
 #include <rt_ipc.h>
 #include "nmea/serial.h"
 #include "nmea/wr_nmea.h"
+#include "wr_irig.h"
 
 #ifndef MOD_TAI
 #define MOD_TAI 0x80
@@ -33,6 +34,7 @@
 /* Address for hardware, from nic-hardware.h */
 #define FPGA_BASE_PPSG  0x10010500
 #define PPSG_STEP_IN_NS 16 /* we count a 16.5MHz */
+#define FPGA_BASE_IRIG  0x1005c000
 
 extern int init_module(void *module, unsigned long len, const char *options);
 extern int delete_module(const char *module, unsigned int flags);
@@ -41,7 +43,9 @@ static int opt_verbose, opt_force, opt_not;
 static int opt_nmea_en = 0;
 static int opt_nmea_baud = 9600;
 static char *opt_nmea_fmt = "GPZDA";
+static int opt_irig_en = 0;
 static struct wr_nmea nmea;
+static struct wr_irig wr_irig;
 static char *opt_cfgfile = WRDATE_CFG_FILE;
 static char *prgname;
 
@@ -57,6 +61,7 @@ void help(void)
 		"  -n       do not act in practice - dry run\n"
 		"  -g <baud> <format> use nmea/gps input with a given baudrate and format (GPZDA|GPRMC)\n"
 		"                     default: %s, %d\n"
+		"  -i       use IRIG-B\n"
 		"    get             print WR time to stdout\n"
 		"    get tohost      print WR time and set system time\n"
 		"    set <value>     set WR time to scalar seconds\n"
@@ -154,10 +159,22 @@ static int wrdate_get_nmea_utc(int64_t *t_out)
 	return 0;
 }
 
+static int wrdate_get_irig(int64_t *t_out)
+{
+	if(irig_read_tai(&wr_irig, t_out) < 0){
+		fprintf(stderr, "wr_date: %s: error reading irig\n", __func__);
+		return -1;
+	}
+	return 0;
+
+}
+
 static int wrdate_gettimeofday(struct timeval *tv)
 {
 	if (opt_nmea_en) {
 		return wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
+	}else if(opt_irig_en){
+		return wrdate_get_irig((int64_t *)&tv->tv_sec);
 	} else {
 		return gettimeofday(tv, NULL);
 	}
@@ -631,7 +648,7 @@ int main(int argc, char **argv)
 
 	prgname = argv[0];
 
-	while ( (c = getopt(argc, argv, "fcg:vn")) != -1) {
+	while ( (c = getopt(argc, argv, "fcg:ivn")) != -1) {
 		switch(c) {
 		case 'f':
 			opt_force = 1;
@@ -643,6 +660,9 @@ int main(int argc, char **argv)
 			opt_nmea_en = 1;
 			opt_nmea_baud = atoi(optarg);
 			opt_nmea_fmt = argv[optind++];
+			break;
+		case 'i':
+			opt_irig_en = 1;
 			break;
 		case 'v':
 			opt_verbose = 1;
@@ -672,6 +692,18 @@ int main(int argc, char **argv)
 
 	if (opt_nmea_en) {
 		nmea_init(&nmea, NMEA_SERIAL_PORT, opt_nmea_baud, opt_nmea_fmt);
+	}
+
+	if (opt_irig_en) {
+
+		wr_irig.irig = create_map(FPGA_BASE_IRIG,
+					  sizeof(*wr_irig.irig));
+		if (!wr_irig.irig){
+			fprintf(stderr, "%s: mmap: %s\n", prgname,
+				strerror(errno));
+			exit(1);
+		}
+		irig_enable(&wr_irig, 1);
 	}
 
 	if (cmd == NULL) {

@@ -36,7 +36,7 @@ time_t wrsSpllVersion_data_fill(void)
 		return time_update;
 	}
 	/* check magic number in SPLL stat memory */
-	if (spll_stats_p->magic != SPLL_MAGIC) {
+	if (spll_stats_p->magic != SPLL_STATS_MAGIC) {
 		/* wrong magic */
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
 			 "wrsSpllVersionGroup Wrong SPLL magic number\n");
@@ -46,13 +46,13 @@ time_t wrsSpllVersion_data_fill(void)
 	 * version 2 */
 	if (spll_stats_p->ver <= 4) {
 		int len;
-		strncpy_e(wrsSpllVersion_s.wrsSpllVersion, spll_stats_p->commit_id, 32);
+		strncpy(wrsSpllVersion_s.wrsSpllVersion, spll_stats_p->build_id.commit_id, 32);
 		/* concatenate date and time */
-		strncpy_e(wrsSpllVersion_s.wrsSpllBuildDate, spll_stats_p->build_date, 16);
+		strncpy(wrsSpllVersion_s.wrsSpllBuildDate, spll_stats_p->build_id.build_date, 16);
 		len = strnlen(wrsSpllVersion_s.wrsSpllBuildDate, 32);
 		wrsSpllVersion_s.wrsSpllBuildDate[len] = ' '; /* put space instead of null */
 		/* add time after added space at the end of string */
-		strncpy_e(&wrsSpllVersion_s.wrsSpllBuildDate[len + 1], spll_stats_p->build_time, 16 - 1);
+		strncpy(&wrsSpllVersion_s.wrsSpllBuildDate[len + 1], spll_stats_p->build_id.build_time, 16 - 1);
 	}
 	else
 	{
@@ -63,7 +63,7 @@ time_t wrsSpllVersion_data_fill(void)
 	}
 	/* buil_by was introduced in version 3 */
 	if (spll_stats_p->ver >= 3) {
-		strncpy_e(wrsSpllVersion_s.wrsSpllBuildBy, spll_stats_p->build_by, 32);
+		strncpy(wrsSpllVersion_s.wrsSpllBuildBy, spll_stats_p->build_id.build_by, 32);
 	}
 
 	/* there was an update, return current time */

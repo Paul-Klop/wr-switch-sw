@@ -42,14 +42,14 @@ time_t wrsSpllStatus_data_fill(void)
 		return time_update;
 	}
 	/* check magic number in SPLL stat memory */
-	if (spll_stats_p->magic != SPLL_MAGIC) {
+	if (spll_stats_p->magic != SPLL_STATS_MAGIC) {
 		/* wrong magic */
 		snmp_log(LOG_ERR,"SNMP: " SL_ER
 			 "wrsSpllStatusGroup Wrong SPLL magic number\n");
 		return time_update;
 	}
-	/* check version of SPLL's stat structure, versions 1 and 2 are ok */
-	if (spll_stats_p->ver <= 4 ) {
+	/* check version of SPLL's stat structure */
+	if (spll_stats_p->ver == SPLL_STATS_VER ) {
 		wrsSpllStatus_s.wrsSpllMode = spll_stats_p->mode;
 		wrsSpllStatus_s.wrsSpllIrqCnt = spll_stats_p->irq_cnt;
 		wrsSpllStatus_s.wrsSpllSeqState = spll_stats_p->seq_state;

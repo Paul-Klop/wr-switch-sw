@@ -185,7 +185,7 @@ static void wrsw_tagged_versions(void)
 	int feature_ljd;
 
 	printf("software-version: %s\n", __GIT_VER__); /* see Makefile */
-	printf("bult-by: %s\n", __GIT_USR__); /* see Makefile */
+	printf("built-by: %s\n", __GIT_USR__); /* see Makefile */
 	printf("build-date: %s %s\n", __DATE__, __TIME__);
 	printf("backplane-version: %s\n", get_shw_info('p'));
 	printf("fpga-type: %s\n", get_fpga());

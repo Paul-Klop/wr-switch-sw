@@ -803,9 +803,9 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 struct dump_info spll_stats_info[] = {
 	DUMP_FIELD(uint32_t, magic),	/* 0x5b1157a7 = SPLLSTAT ?;)*/
 	DUMP_FIELD(int, ver),
-	DUMP_FIELD(int, sequence),
+	DUMP_FIELD(unsigned, sequence),
 	DUMP_FIELD(spll_mode, mode),
-	DUMP_FIELD(int, irq_cnt),
+	DUMP_FIELD(unsigned, irq_cnt),
 	DUMP_FIELD(spll_seq_state, seq_state),
 	DUMP_FIELD(spll_align_state, align_state),
 	DUMP_FIELD(int, H_lock),
@@ -814,10 +814,10 @@ struct dump_info spll_stats_info[] = {
 	DUMP_FIELD(int, M_y),
 	DUMP_FIELD(int, del_cnt),
 	DUMP_FIELD(int, start_cnt),
-	DUMP_FIELD_SIZE(char_e, commit_id, 32),
-	DUMP_FIELD_SIZE(char_e, build_date, 16),
-	DUMP_FIELD_SIZE(char_e, build_time, 16),
-	DUMP_FIELD_SIZE(char_e, build_by, 32),
+	DUMP_FIELD_SIZE(char, commit_id, 32),
+	DUMP_FIELD_SIZE(char, build_date, 16),
+	DUMP_FIELD_SIZE(char, build_time, 16),
+	DUMP_FIELD_SIZE(char, build_by, 32),
 	DUMP_FIELD(int, ext_pps_latency_ps),
 };
 

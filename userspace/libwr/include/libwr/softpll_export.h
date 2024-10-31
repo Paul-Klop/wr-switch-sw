@@ -17,6 +17,10 @@
 
 /* SoftPLL operating modes, for mode parameter of spll_init(). */
 
+/* Disabled mode: SoftPLL inactive.
+   Previously it was 4, but this was not very intuitive */
+#define SPLL_MODE_DISABLED 0
+
 /* Grand Master - lock to 10 MHz external reference */
 #define SPLL_MODE_GRAND_MASTER 1
 
@@ -25,9 +29,6 @@
 
 /* Slave mode - 125 MHz reference locked to one of the input clocks */
 #define SPLL_MODE_SLAVE 3
-
-/* Disabled mode: SoftPLL inactive */
-#define SPLL_MODE_DISABLED 4
 
 #define SEQ_START_EXT 1
 #define SEQ_WAIT_EXT 2
@@ -43,7 +44,9 @@
 #define AUX_DISABLED 1
 #define AUX_LOCK_PLL 2
 #define AUX_ALIGN_PHASE 3
-#define AUX_READY 4
+#define AUX_SLAVE_READY 4
+#define AUX_WAIT_MONITOR_LOCK 5
+#define AUX_MONITOR_READY 6
 
 #define ALIGN_STATE_EXT_OFF 0
 #define ALIGN_STATE_START 1
@@ -57,7 +60,15 @@
 #define ALIGN_STATE_WAIT_CLKIN 9
 #define ALIGN_STATE_WAIT_PLOCK 10
 
-#define SPLL_STATS_VER 4
+#define SPLL_STATS_VER 5
+#define SPLL_STATS_MAGIC 0x5b1157a7
+
+struct spll_build_id {
+	char commit_id[32];
+	char build_date[16];
+	char build_time[16];
+	char build_by[32];
+};
 
 /* info reported through .stat section */
 /* due to endiannes problem strings has to be 4 bytes alligned */
@@ -74,14 +85,12 @@ struct spll_stats {
 	int H_y, M_y;
 	int del_cnt;
 	int start_cnt;
-	char commit_id[32];
-	char build_date[16];
-	char build_time[16];
-	char build_by[32];
+	struct spll_build_id build_id;
 	int ext_pps_latency_ps;
 };
 
-extern struct spll_stats stats;
+extern struct spll_stats *stats;
+extern const struct spll_build_id build_id;
 
 #endif /* __SOFTPLL_EXPORT_H */
 

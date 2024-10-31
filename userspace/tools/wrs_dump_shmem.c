@@ -814,20 +814,20 @@ struct dump_info spll_stats_info[] = {
 	DUMP_FIELD(int, M_y),
 	DUMP_FIELD(int, del_cnt),
 	DUMP_FIELD(int, start_cnt),
-	DUMP_FIELD_SIZE(char, commit_id, 32),
-	DUMP_FIELD_SIZE(char, build_date, 16),
-	DUMP_FIELD_SIZE(char, build_time, 16),
-	DUMP_FIELD_SIZE(char, build_by, 32),
+	DUMP_FIELD_SIZE(char, build_id.commit_id, 32),
+	DUMP_FIELD_SIZE(char, build_id.build_date, 16),
+	DUMP_FIELD_SIZE(char, build_id.build_time, 16),
+	DUMP_FIELD_SIZE(char, build_id.build_by, 32),
 	DUMP_FIELD(int, ext_pps_latency_ps),
 };
 
 static int dump_spll_mem(struct spll_stats *spll)
 {
 	/* Check magic */
-	if (spll->magic != SPLL_MAGIC) {
+	if (spll->magic != SPLL_STATS_MAGIC) {
 		/* Wrong magic */
 		fprintf(stderr, "dump spll: unknown magic %x (known is %x)\n",
-			spll->magic, SPLL_MAGIC);
+			spll->magic, SPLL_STATS_MAGIC);
 	}
 
 	dump_many_fields(spll, spll_stats_info, ARRAY_SIZE(spll_stats_info),"SoftPll");

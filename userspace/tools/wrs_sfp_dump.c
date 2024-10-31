@@ -185,7 +185,7 @@ static void sfp_eeprom_write(char *eeprom_file, int port)
 	ret = fread(&sfp_header, 1, sizeof(struct shw_sfp_header), fp);
 
 	if (ret != sizeof(struct shw_sfp_header)) {
-		pr_error("Wrong number of bytes read. Expected %d, read %d\n",
+		pr_error("Wrong number of bytes read. Expected %zu, read %d\n",
 			 sizeof(struct shw_sfp_header), ret);
 		exit(1);
 	}

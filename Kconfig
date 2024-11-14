@@ -987,10 +987,10 @@ config SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
 	bool "Enable system clock monitor"
 	default y
 	help
-		When set, the local system time is compared to the time 
-		returned by the NTP server (CONFIG_NTP_SERVER). If the difference
-		of time exceed a given threshold (CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD)
-		then an error will be notified to SNMP.
+	  When set, the local system time is compared to the time
+	  returned by the NTP server (CONFIG_NTP_SERVER). If the difference
+	  of time exceed a given threshold (CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD)
+	  then an error will be notified to SNMP.
 
 config SNMP_SYSTEM_CLOCK_DRIFT_THOLD
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
@@ -998,7 +998,7 @@ config SNMP_SYSTEM_CLOCK_DRIFT_THOLD
 	range 1 65535
 	default 3
 	help
-	  Threshold level for the local system clock drift compared to 
+	  Threshold level for the local system clock drift compared to
 	  a NTP server. The value is expressed in seconds.
 	  When the threshold exceed, warning is notified by SNMP.
 
@@ -1012,15 +1012,15 @@ choice SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT
 	  (e.g. 40 minutes are not possible to set).
 	  Check cron manual for more details.
 
-config SNMP_SYSTEM_CLOCK_UNIT_MINUTES
-	bool "Minutes"
+	config SNMP_SYSTEM_CLOCK_UNIT_MINUTES
+		bool "Minutes"
 
-config SNMP_SYSTEM_CLOCK_UNIT_HOURS
-	bool "Hours"
+	config SNMP_SYSTEM_CLOCK_UNIT_HOURS
+		bool "Hours"
 
-config SNMP_SYSTEM_CLOCK_UNIT_DAYS
-	bool "Days"
-	
+	config SNMP_SYSTEM_CLOCK_UNIT_DAYS
+		bool "Days"
+
 endchoice
 
 config SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_MINUTES

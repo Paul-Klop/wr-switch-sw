@@ -62,6 +62,8 @@ static int hal_nports_local;
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
 
+int cal_ep_timestamper_cal_pulse(int cal_endpoint);
+
 int hal_shm_init(void)
 {
 	int ii;
@@ -1509,7 +1511,7 @@ static void cal_spll_set_phase_shift(int endpoint, int shift )
 	rts_adjust_phase(endpoint, shift);
 }
 
-static int cal_spll_shifter_busy()
+static int cal_spll_shifter_busy(int cal_endpoint)
 {
 	rts_get_state(&cal_pstate);
 	
@@ -1593,7 +1595,7 @@ int rxts_calibration_update(uint32_t *t24p_value)
 	return 0;
 }
 
-int cal_ep_timestamper_cal_pulse()
+int cal_ep_timestamper_cal_pulse(int cal_endpoint)
 {
 	uint32_t tscr = fpga_readl( IDX_TO_EP(cal_endpoint) + EP_REG(TSCR) ); 
 	

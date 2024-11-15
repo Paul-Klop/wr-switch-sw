@@ -18,7 +18,6 @@
 #include <sys/time.h>
 #include <sys/timex.h>
 #include "../../kernel/wbgen-regs/ppsg-regs.h"
-#include <libwr/softpll_export.h>
 #include <libwr/util.h>
 #include <time_lib.h>
 #include <rt_ipc.h>
@@ -537,13 +536,13 @@ int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 		taiOnly=argc>=2 && !strcmp(argv[1], "tai");
 
 		switch (tm) {
-		case SPLL_MODE_GRAND_MASTER:
+		case RTS_MODE_GM_EXTERNAL:
 			return wrdate_internal_set_gm(pps,taiOnly);
-		case SPLL_MODE_FREE_RUNNING_MASTER :
-		case SPLL_MODE_DISABLED :
+		case RTS_MODE_GM_FREERUNNING :
+		case RTS_MODE_DISABLED :
 			return wrdate_internal_set(pps,taiOnly,0);
 			break;
-		case SPLL_MODE_SLAVE :
+		case RTS_MODE_BC :
 			fprintf(stderr, "Slave timing mode: WR time and TAI offset cannot be set!!!\n");
 			return -1;
 		default:

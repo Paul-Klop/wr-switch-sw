@@ -319,7 +319,7 @@ static int varaction_urv(char *fname, char *action)
 
     if (feof(f)) {
 	fprintf(stderr, "%s: no symbol \"%s\" in \"%s\"\n",
-		prgname, sname, fname);
+		prgname, vname, fname);
 	pclose(f);
 	return -1;
     }

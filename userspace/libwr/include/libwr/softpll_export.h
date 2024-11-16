@@ -60,7 +60,7 @@
 #define ALIGN_STATE_WAIT_CLKIN 9
 #define ALIGN_STATE_WAIT_PLOCK 10
 
-#define SPLL_STATS_VER 5
+#define SPLL_STATS_VER 6
 #define SPLL_STATS_MAGIC 0x5b1157a7
 #define SPLL_LOOP_HELPER -1
 #define SPLL_LOOP_MAIN 0
@@ -89,6 +89,10 @@ struct spll_stats {
 	int start_cnt;
 	struct spll_build_id build_id;
 	int ext_pps_latency_ps;
+	int main_pll_kp;
+	int main_pll_ki;
+	int helper_pll_kp;
+	int helper_pll_ki;
 };
 
 extern struct spll_stats *stats;

@@ -19,6 +19,7 @@ int serial_read(char *data, int len);
 int serial_write(char *data, int len);
 void serial_write_byte(unsigned char b);
 unsigned char serial_read_byte(void);
+char serial_read_byte_w_timeout(unsigned int *timeout_s);
 int serial_data_avail(void);
 
 void sys_delay(int msecs);

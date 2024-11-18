@@ -90,6 +90,8 @@ wrs_dump_shmem: wrs_dump_shmem.o wrs_dump_shmem_ppsi.o time_lib.o
 wr_mon: wr_mon.o term.o  time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
+nmea/wr_nmea.o: nmea/serial.h nmea/wr_nmea.h nmea/nmea.h
+nmea/nmea.o: nmea/nmea.h
 wr_date: nmea/wr_nmea.o nmea/nmea.o nmea/serial_linux.o
 wr_date: wr_date.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)

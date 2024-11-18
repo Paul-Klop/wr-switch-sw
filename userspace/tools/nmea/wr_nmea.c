@@ -32,26 +32,71 @@ int nmea_init(struct wr_nmea *nmea, char *dev, int baud, char *fmt)
 	return 0;
 }
 
-static void read_nmea_msg(char *msgbuf, int len)
+static int read_nmea_msg(char *msgbuf, int len)
 {
 	int i = 0;
 	char c;
+	unsigned int nmea_timeout_max = 10;
+	unsigned int nmea_timeout;
 
-	while ((c = serial_read_byte()) != '$') {};
+	while (1) {
+		if (nmea_timeout_max <= 0) {
+			/* Timeout */
+			return -1;
+		}
+
+		nmea_timeout = 1;
+		c = serial_read_byte_w_timeout(&nmea_timeout);
+		if (nmea_timeout == 0) {
+			nmea_timeout_max--;
+			continue;
+		}
+
+		/* Start of message found */
+		if (c == '$')
+		    break;
+	}
+
+	/* Copy start of message ('$') */
+	*msgbuf++ = c;
+
+	while (1) {
+		if (nmea_timeout_max <= 0) {
+			/* Timeout */
+			return -1;
+		}
+
+		nmea_timeout = 1;
+		c = serial_read_byte_w_timeout(&nmea_timeout);
+		if (nmea_timeout == 0) {
+			nmea_timeout_max--;
+			continue;
+		}
+
+		if (c == '\r')
+			break;
+		i++;
+		if (i >= len)
+			break;
 		*msgbuf++ = c;
-	while ((c = serial_read_byte()) != '\r' && (i++) < len - 1)
-		*msgbuf++ = c;
+	}
+
 	*msgbuf++ = '\r';
 	*msgbuf++ = '\n';
 
-	*msgbuf++ = 0 ;
+	*msgbuf++ = 0;
+
+	return 0;
 }
 
-void read_nmea_msg_type(char *msgbuf, int len, const char *msg_type)
+int read_nmea_msg_type(char *msgbuf, int len, const char *msg_type)
 {
 	do {
-		read_nmea_msg(msgbuf, len);
+		if (read_nmea_msg(msgbuf, len) < 0)
+			return -1;
 	} while (strncmp(&msgbuf[1], msg_type, 5) != 0); //ignore starting "$"
+
+	return 0;
 }
 
 int nmea_read_tai(struct wr_nmea *nmea, int64_t *t_out)
@@ -59,11 +104,12 @@ int nmea_read_tai(struct wr_nmea *nmea, int64_t *t_out)
     char buf[1024];
 
     serial_open(nmea->dev, nmea->baud);
-    read_nmea_msg_type(buf, 1024, nmea->fmt);
+    if (read_nmea_msg_type(buf, 1024, nmea->fmt) < 0)
+	return -1;
     serial_close();
 
     if(nmea->parse(buf, strlen(buf), (nmea->utc)) < 0)
-	return -1;
+	return -2;
 
     pr_info("NMEA time: %d/%d/%d %02d:%02d:%02d.%02d\n",
 	    nmea->utc->year+1900,

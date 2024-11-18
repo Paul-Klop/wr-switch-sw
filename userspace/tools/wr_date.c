@@ -138,19 +138,29 @@ int get_kern_leaps(void)
 
 static int wrdate_get_nmea(int64_t *t_out)
 {
-	if (nmea_read_tai(&nmea, t_out) < 0) {
-		fprintf(stderr, "wr_date: %s: error reading nmea\n", __func__);
+	int ret;
+	
+	ret = nmea_read_tai(&nmea, t_out);
+
+	if (ret == -1) {
+		fprintf(stderr, "Timeout on reading nmea\n");
 		return -1;
 	}
+
+	if (ret == -2) {
+		fprintf(stderr, "Error while parsing nmea message\n");
+		return -1;
+	}
+
 	return 0;
 }
 
-static void wrdate_gettimeofday(struct timeval *tv)
+static int wrdate_gettimeofday(struct timeval *tv)
 {
 	if (opt_nmea_en) {
-		wrdate_get_nmea((int64_t *)&tv->tv_sec);
+		return wrdate_get_nmea((int64_t *)&tv->tv_sec);
 	} else {
-		gettimeofday(tv, NULL);
+		return gettimeofday(tv, NULL);
 	}
 }
 
@@ -166,7 +176,8 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 
 	tai_offset = get_kern_leaps();
 	if (opt_not) {
-		wrdate_gettimeofday(&sw);
+		if (wrdate_gettimeofday(&sw) < 0)
+			return 1;
 		taih = 0;
 		tail = sw.tv_sec + tai_offset;
 		nsec = sw.tv_usec * 1000;
@@ -181,7 +192,8 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 		} while((tmp1 != taih) || (tmp2 != tail));
 	}
 
-	wrdate_gettimeofday(&sw);
+	if (wrdate_gettimeofday(&sw) < 0)
+		return 1;
 	tai = opt_nmea_en ? (sw.tv_sec) : (uint64_t)(taih) << 32 | tail;
 
 	/* Before printing (which takes time), set host time if so asked to */

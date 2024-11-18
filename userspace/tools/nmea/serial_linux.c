@@ -96,6 +96,36 @@ int serial_read(char *data, int len)
     return nbytes;
 };
 
+/* serial_read with timeout as seconds */
+int serial_read_w_timeout(char *data, int len, unsigned int *timeout_s)
+{
+    int nbytes = 0;
+    int select_ret;
+    fd_set set;
+    struct timeval tv;
+
+    FD_ZERO(&set);
+    FD_SET(serial_fd, &set);
+
+    while (len) {
+	tv.tv_sec = *timeout_s;
+	tv.tv_usec = 0;
+
+	select_ret = select(serial_fd + 1, &set, NULL, NULL, &tv);
+
+	if (!select_ret) {
+		/* Timeout */
+		*timeout_s = 0;
+		return 0;
+	}
+	if (read(serial_fd, data, 1) == 1) {
+	    len--; data++; nbytes++;
+	}
+    }
+
+    return nbytes;
+};
+
 void serial_write_byte(unsigned char b)
 {
 #ifdef DEBUG
@@ -110,6 +140,20 @@ char serial_read_byte(void)
     char b;
 
     serial_read(&b, 1);
+#ifdef DEBUG
+    printf("%02x ", b);
+#endif /* DEBUG */
+
+    return b;
+
+}
+
+/* serial_read_byte with timeout as seconds */
+char serial_read_byte_w_timeout(unsigned int *timeout_s)
+{
+    char b;
+
+    serial_read_w_timeout(&b, 1, timeout_s);
 #ifdef DEBUG
     printf("%02x ", b);
 #endif /* DEBUG */

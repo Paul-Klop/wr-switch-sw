@@ -48,6 +48,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT01_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT01_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.1"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT01_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT01_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT01_INST01_MECHANISM_E2E
@@ -437,6 +451,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT02_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT02_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.2"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT02_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT02_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT02_INST01_MECHANISM_E2E
@@ -824,6 +852,20 @@ choice
     config PORT03_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT03_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT03_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.3"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT03_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT03_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -1213,6 +1255,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT04_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT04_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.4"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT04_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT04_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT04_INST01_MECHANISM_E2E
@@ -1600,6 +1656,20 @@ choice
     config PORT05_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT05_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT05_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.5"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT05_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT05_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -1989,6 +2059,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT06_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT06_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.6"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT06_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT06_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT06_INST01_MECHANISM_E2E
@@ -2376,6 +2460,20 @@ choice
     config PORT07_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT07_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT07_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.7"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT07_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT07_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -2765,6 +2863,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT08_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT08_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.8"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT08_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT08_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT08_INST01_MECHANISM_E2E
@@ -3152,6 +3264,20 @@ choice
     config PORT09_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT09_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT09_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.9"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT09_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT09_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -3541,6 +3667,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT10_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT10_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.10"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT10_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT10_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT10_INST01_MECHANISM_E2E
@@ -3928,6 +4068,20 @@ choice
     config PORT11_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT11_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT11_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.11"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT11_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT11_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -4317,6 +4471,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT12_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT12_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.12"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT12_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT12_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT12_INST01_MECHANISM_E2E
@@ -4704,6 +4872,20 @@ choice
     config PORT13_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT13_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT13_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.13"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT13_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT13_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -5093,6 +5275,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT14_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT14_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.14"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT14_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT14_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT14_INST01_MECHANISM_E2E
@@ -5480,6 +5676,20 @@ choice
     config PORT15_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT15_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT15_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.15"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT15_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT15_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"
@@ -5869,6 +6079,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT16_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT16_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.16"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT16_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT16_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT16_INST01_MECHANISM_E2E
@@ -6257,6 +6481,20 @@ choice
         bool "UDP/Ipv4"
 endchoice
 
+config PORT17_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT17_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.17"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT17_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT17_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
+
 choice
     prompt "Delay mechanism"
     default PORT17_INST01_MECHANISM_E2E
@@ -6644,6 +6882,20 @@ choice
     config PORT18_INST01_PROTOCOL_UDP_IPV4
         bool "UDP/Ipv4"
 endchoice
+
+config PORT18_INST01_IFACE_IP_ADDR
+	string "IP address"
+	depends on PORT18_INST01_PROTOCOL_UDP_IPV4
+	default "192.168.100.18"
+	help
+	  IP to be set on an interface assigned to this instance
+
+config PORT18_INST01_IFACE_IP_MASK
+	string "Mask"
+	depends on PORT18_INST01_PROTOCOL_UDP_IPV4
+	default "255.255.255.0"
+	help
+	  IP mask to be set on an interface assigned to this instance
 
 choice
     prompt "Delay mechanism"

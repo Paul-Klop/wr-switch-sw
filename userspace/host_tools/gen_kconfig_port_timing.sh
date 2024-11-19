@@ -106,6 +106,20 @@ function print_instance_header() {
 	echo -e "        bool \"UDP/Ipv4\"" >>$OUTPUT_FILE
 	echo -e "endchoice" >>$OUTPUT_FILE
 
+	echo -e "\nconfig PORT${portStr}_INST${instStr}_IFACE_IP_ADDR" >>$OUTPUT_FILE
+	echo -e "	string \"IP address\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_PROTOCOL_UDP_IPV4" >>$OUTPUT_FILE
+	echo -e "	default \"192.168.100.${portIdx}\"" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  IP to be set on an interface assigned to this instance" >>$OUTPUT_FILE
+
+	echo -e "\nconfig PORT${portStr}_INST${instStr}_IFACE_IP_MASK" >>$OUTPUT_FILE
+	echo -e "	string \"Mask\"" >>$OUTPUT_FILE
+	echo -e "	depends on PORT${portStr}_INST${instStr}_PROTOCOL_UDP_IPV4" >>$OUTPUT_FILE
+	echo -e "	default \"255.255.255.0\"" >>$OUTPUT_FILE
+	echo -e "	help" >>$OUTPUT_FILE
+	echo -e "	  IP mask to be set on an interface assigned to this instance" >>$OUTPUT_FILE
+
 	echo -e "\nchoice" >>$OUTPUT_FILE
 	echo -e "    prompt \"Delay mechanism\"" >>$OUTPUT_FILE
 	echo -e "    default PORT${portStr}_INST${instStr}_MECHANISM_E2E" >>$OUTPUT_FILE

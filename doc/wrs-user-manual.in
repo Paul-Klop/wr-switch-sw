@@ -214,6 +214,8 @@ so the calibration values are different.}
 The following configuration items were added to @i{dot-config}:
 @itemize
 @item @t{CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_ADDR}
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_MASK}
 @end itemize
 
 @c ==========================================================================
@@ -2073,6 +2075,12 @@ It is advised to keep the default values for these options.
 
         Network transport layer selection, either raw Ethernet or UDP over IPv4
         can be used.
+
+@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_ADDR}
+@itemx @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_MASK}
+
+        If UDP over IPv4 is selected for transport layer, these fields are used
+        to setup the IP address and mask on an associated interface.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP

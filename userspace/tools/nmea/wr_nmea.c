@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <libwr/wrs-msg.h>
-
 
 #include "serial.h"
 #include "wr_nmea.h"
@@ -27,7 +25,7 @@ int nmea_init(struct wr_nmea *nmea, char *dev, int baud, char *fmt)
 		nmea->parse = nmea_parse_gprmc;
 		nmea->utc = &(nmea_gprmc.utc);
 	} else {
-		pr_error("%s unsupported format\n", __func__);
+		fprintf(stderr, "NMEA: unsupported format %s\n", fmt);
 	}
 	return 0;
 }
@@ -49,6 +47,7 @@ static int read_nmea_msg(char *msgbuf, int len)
 		c = serial_read_byte_w_timeout(&nmea_timeout);
 		if (nmea_timeout == 0) {
 			nmea_timeout_max--;
+			fprintf(stderr, "NMEA: receive timeout\n");
 			continue;
 		}
 
@@ -70,6 +69,7 @@ static int read_nmea_msg(char *msgbuf, int len)
 		c = serial_read_byte_w_timeout(&nmea_timeout);
 		if (nmea_timeout == 0) {
 			nmea_timeout_max--;
+			fprintf(stderr, "NMEA: receive timeout\n");
 			continue;
 		}
 
@@ -112,14 +112,14 @@ int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out)
     if(nmea->parse(buf, strlen(buf), (nmea->utc)) < 0)
 	return -2;
 
-    pr_info("NMEA time: %d/%d/%d %02d:%02d:%02d.%02d\n",
-	    nmea->utc->year+1900,
-	    nmea->utc->mon+1,
-	    nmea->utc->day,
-	    nmea->utc->hour,
-	    nmea->utc->min,
-	    nmea->utc->sec,
-	    nmea->utc->hsec);
+    printf("NMEA time: %d/%d/%d %02d:%02d:%02d.%02d\n",
+	   nmea->utc->year+1900,
+	   nmea->utc->mon+1,
+	   nmea->utc->day,
+	   nmea->utc->hour,
+	   nmea->utc->min,
+	   nmea->utc->sec,
+	   nmea->utc->hsec);
 
     *t_out = utc_time_to_utc_seconds(*(nmea->utc));
 

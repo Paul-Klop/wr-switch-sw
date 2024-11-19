@@ -44,7 +44,7 @@ This document is licensed under the Attribution-ShareAlike 4.0 International (CC
 @set release __RELEASE_GIT_ID__
 
 @comment %**useful declaration used in the document
-@set release_version 7.0
+@set release_version 8.0
 @set release_version_tiny 0
 @set url_docs https://www.ohwr.org/project/wr-switch-sw/wikis/Documents#files
 
@@ -183,8 +183,41 @@ explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
 
 @c ==========================================================================
-@node Upgrade from v6.1 to v@value{release_version}
-@section Upgrade from v6.1 to v@value{release_version}
+@node Upgrade from v7.0 to v@value{release_version}
+@section Upgrade from v7.0 to v@value{release_version}
+
+
+The most important changes introduced in v8.0 are:
+@itemize
+@item Extend mechanism for runtime reconfiguration of PPSi's parameters (PTP
+      datasets) with the @t{ppsi_conf} tool.
+      New parameters that can be configured in runtime:
+      @itemize
+      @end itemize
+      For more details please check @ref{ppsi_conf}.
+@end itemize
+
+@b{NOTE: Other than updating the @i{dot-config}, there is no special action
+needed from the user when upgrading firmware from v6.1 to v7.0.}
+
+
+@b{NOTE: Firmware v8.0 uses different FPGA GW/bitstream than v7.0,
+so the calibration values are different.}
+
+@c =-------------------------------------------------------------------------
+@node Changes in dot-config in v8.0
+@subsection Changes in dot-config in v8.0
+
+@b{NOTE: It is strongly advised to use a dedicated tool to generate the
+@i{dot-config}}.
+
+The following configuration items were added to @i{dot-config}:
+@itemize
+@end itemize
+
+@c ==========================================================================
+@node Upgrade from v6.1 to v7.0
+@section Upgrade from v6.1 to v7.0
 
 
 The most important changes introduced in v7.0 are:
@@ -255,7 +288,7 @@ The most important changes introduced in v7.0 are:
 
 In terms of @i{dot-config} configuration of the @sc{wrs}, there
 are some non backward compatible changes in the @i{dot-config} when upgrading
-firmware from v6.x to v@value{release_version}.
+firmware from v6.x to v7.0.
 For the exact changes and how to deal with them see
 @ref{Changes in dot-config in v7.0} and
 @ref{Converting dot-config from v6.x to v7.0}.

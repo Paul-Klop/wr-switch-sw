@@ -13,5 +13,5 @@ struct wr_nmea {
 };
 
 int nmea_init(struct wr_nmea *nmea, char *dev, int baud, char *fmt);
-int nmea_read_tai(struct wr_nmea *nmea, int64_t *t_out);
+int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out);
 #endif

@@ -99,7 +99,7 @@ int read_nmea_msg_type(char *msgbuf, int len, const char *msg_type)
 	return 0;
 }
 
-int nmea_read_tai(struct wr_nmea *nmea, int64_t *t_out)
+int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out)
 {
     char buf[1024];
 
@@ -108,6 +108,7 @@ int nmea_read_tai(struct wr_nmea *nmea, int64_t *t_out)
 	return -1;
     serial_close();
 
+    /* NMEA time is provided as UTC */
     if(nmea->parse(buf, strlen(buf), (nmea->utc)) < 0)
 	return -2;
 
@@ -120,7 +121,7 @@ int nmea_read_tai(struct wr_nmea *nmea, int64_t *t_out)
 	    nmea->utc->sec,
 	    nmea->utc->hsec);
 
-    *t_out = nmea_time_to_tai(*(nmea->utc));
+    *t_out = utc_time_to_utc_seconds(*(nmea->utc));
 
     return 0;
 }

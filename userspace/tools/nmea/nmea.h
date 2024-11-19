@@ -60,6 +60,6 @@ typedef struct
 
 int nmea_parse_gprmc(const char *buff, int buff_sz, nmea_time_t *utc);
 int nmea_parse_gpzda(const char *buff, int buff_sz, nmea_time_t *utc);
-int64_t nmea_time_to_tai(nmea_time_t t);
+int64_t utc_time_to_utc_seconds(nmea_time_t t);
 
 #endif /* __NMEA_H__ */

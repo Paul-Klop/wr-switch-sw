@@ -356,7 +356,7 @@ int nmea_parse_gpzda(const char *buff, int buff_sz, nmea_time_t *utc)
     return 1;
 }
 
-int64_t nmea_time_to_tai(nmea_time_t t)
+int64_t utc_time_to_utc_seconds(nmea_time_t t)
 {
 	short month, year;
 	int64_t result;
@@ -387,5 +387,5 @@ int64_t nmea_time_to_tai(nmea_time_t t)
 	result *= 60;
 	result += t.sec;
 
-	return(result + 19LL); /* TAI = GPS + 19 s */
+	return(result);
 }

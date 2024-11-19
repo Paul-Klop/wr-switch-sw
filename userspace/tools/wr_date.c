@@ -136,11 +136,11 @@ int get_kern_leaps(void)
 	//return t.tai;
 }
 
-static int wrdate_get_nmea(int64_t *t_out)
+static int wrdate_get_nmea_utc(int64_t *t_out)
 {
 	int ret;
 	
-	ret = nmea_read_tai(&nmea, t_out);
+	ret = nmea_read_utc(&nmea, t_out);
 
 	if (ret == -1) {
 		fprintf(stderr, "Timeout on reading nmea\n");
@@ -158,7 +158,7 @@ static int wrdate_get_nmea(int64_t *t_out)
 static int wrdate_gettimeofday(struct timeval *tv)
 {
 	if (opt_nmea_en) {
-		return wrdate_get_nmea((int64_t *)&tv->tv_sec);
+		return wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
 	} else {
 		return gettimeofday(tv, NULL);
 	}

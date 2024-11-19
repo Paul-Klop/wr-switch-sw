@@ -8,6 +8,12 @@ config PORT01_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT01_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT01_FIBER
 	int  "Fiber type"
 	default 0
@@ -391,6 +397,12 @@ config PORT02_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT02_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT02_FIBER
 	int  "Fiber type"
 	default 0
@@ -772,6 +784,12 @@ config PORT03_IFACE
 	default "wri3"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT03_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT03_FIBER
 	int  "Fiber type"
@@ -1155,6 +1173,12 @@ config PORT04_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT04_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT04_FIBER
 	int  "Fiber type"
 	default 0
@@ -1536,6 +1560,12 @@ config PORT05_IFACE
 	default "wri5"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT05_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT05_FIBER
 	int  "Fiber type"
@@ -1919,6 +1949,12 @@ config PORT06_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT06_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT06_FIBER
 	int  "Fiber type"
 	default 0
@@ -2300,6 +2336,12 @@ config PORT07_IFACE
 	default "wri7"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT07_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT07_FIBER
 	int  "Fiber type"
@@ -2683,6 +2725,12 @@ config PORT08_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT08_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT08_FIBER
 	int  "Fiber type"
 	default 0
@@ -3064,6 +3112,12 @@ config PORT09_IFACE
 	default "wri9"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT09_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT09_FIBER
 	int  "Fiber type"
@@ -3447,6 +3501,12 @@ config PORT10_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT10_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT10_FIBER
 	int  "Fiber type"
 	default 0
@@ -3828,6 +3888,12 @@ config PORT11_IFACE
 	default "wri11"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT11_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT11_FIBER
 	int  "Fiber type"
@@ -4211,6 +4277,12 @@ config PORT12_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT12_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT12_FIBER
 	int  "Fiber type"
 	default 0
@@ -4592,6 +4664,12 @@ config PORT13_IFACE
 	default "wri13"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT13_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT13_FIBER
 	int  "Fiber type"
@@ -4975,6 +5053,12 @@ config PORT14_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT14_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT14_FIBER
 	int  "Fiber type"
 	default 0
@@ -5356,6 +5440,12 @@ config PORT15_IFACE
 	default "wri15"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT15_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT15_FIBER
 	int  "Fiber type"
@@ -5739,6 +5829,12 @@ config PORT16_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT16_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT16_FIBER
 	int  "Fiber type"
 	default 0
@@ -6121,6 +6217,12 @@ config PORT17_IFACE
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
 
+config PORT17_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
+
 config PORT17_FIBER
 	int  "Fiber type"
 	default 0
@@ -6502,6 +6604,12 @@ config PORT18_IFACE
 	default "wri18"
 	help
 	  Used to set the physical port interface name: "wri[1-18]"
+
+config PORT18_IFACE_DOWN_AFTER_BOOT
+	bool "Keep interface down after startup"
+	help
+	  Don't bring up the network interface after startup.
+	  The interface can be brought up later by e.g. ifconfig command.
 
 config PORT18_FIBER
 	int  "Fiber type"

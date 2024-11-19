@@ -42,6 +42,12 @@ function print_port_header() {
 	echo -e "\thelp" >>$OUTPUT_FILE
 	echo -e "\t  Used to set the physical port interface name: \"wri[1-18]\"" >>$OUTPUT_FILE
 
+	echo -e "\nconfig PORT${portStr}_IFACE_DOWN_AFTER_BOOT" >>$OUTPUT_FILE
+	echo -e "\tbool \"Keep interface down after startup\"" >>$OUTPUT_FILE
+	echo -e "\thelp" >>$OUTPUT_FILE
+	echo -e "\t  Don't bring up the network interface after startup." >>$OUTPUT_FILE
+	echo -e "\t  The interface can be brought up later by e.g. ifconfig command." >>$OUTPUT_FILE
+
 	echo -e "\nconfig PORT${portStr}_FIBER" >>$OUTPUT_FILE
 	echo -e "\tint  \"Fiber type\"" >>$OUTPUT_FILE
 	echo -e "\tdefault 0" >>$OUTPUT_FILE

@@ -213,6 +213,7 @@ so the calibration values are different.}
 
 The following configuration items were added to @i{dot-config}:
 @itemize
+@item @t{CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT}
 @end itemize
 
 @c ==========================================================================
@@ -2033,6 +2034,9 @@ A set of parameters common to all instances running on the same physical port.
 
 @item   CONFIG_PORT@i{xx}_IFACE
         Used to define the physical port interface name: "wri[1-18]"
+
+@item   CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT
+        Used to define that a port shall stay down after a boot of WRS.
 
 @item   CONFIG_PORT@i{xx}_FIBER
         Identify the fiber type. This is a number (@i{zz}) referring to the

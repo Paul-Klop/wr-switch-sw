@@ -80,6 +80,28 @@ char *spll_align_state_to_name[SPLL_ALIGN_STATE_MAX_N] = {
 	[ALIGN_STATE_WAIT_PLOCK] = "wait plock",
 };
 
+char *spll_lj_periph_id_to_name[] = {
+	[PERIPH_ID_WRS_LJ_SAFRAN] = "Safran",
+	[PERIPH_ID_WRS_FL_SYNCTECHv1_5] = "SyncTech v1.0",
+	[PERIPH_ID_WRS_FL_SYNCTECHv1_0] = "SyncTech v1.5",
+};
+
+char *spll_lj_osc_freq_type_to_name[] = {
+	[OSC_FREQ_10M]        = "10M",
+	[OSC_FREQ_20M]        = "20M",
+	[OSC_FREQ_25M]        = "25M",
+	[OSC_FREQ_50M]        = "50M",
+	[OSC_FREQ_100M]       = "100M",
+	[OSC_FREQ_WRS_LJ_INT] = "WRS LJ INT",
+};
+
+char *spll_lj_wrs_type_to_name[] = {
+	[PERIPH_WRS_STD_NO_LJ]    = "Standard no LJ",
+	[PERIPH_WRS_STD_WITH_LJD] = "Standard with LJD",
+	[PERIPH_WRS_FL_SYNCTECH]  = "SyncTech FL",
+	[PERIPH_WRS_LJ_SAFRAN]    = "Safran LJ",
+};
+
 /* index of a the greatest number describing the qmode +1 */
 #define RTU_QMODE_MAX 5
 char *rtu_qmode_to_name[RTU_QMODE_MAX] = {
@@ -329,6 +351,46 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 		case ALIGN_STATE_WAIT_CLKIN:
 		case ALIGN_STATE_WAIT_PLOCK:
 			printf("%s(%d)\n", spll_align_state_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
+	case dump_type_spll_lj_periph_id:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case PERIPH_ID_WRS_FL_SYNCTECHv1_0:
+		case PERIPH_ID_WRS_FL_SYNCTECHv1_5:
+		case PERIPH_ID_WRS_LJ_SAFRAN:
+			printf("%s(%d)\n", spll_lj_periph_id_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
+	case dump_type_spll_lj_osc_freq_type:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case OSC_FREQ_10M:
+		case OSC_FREQ_20M:
+		case OSC_FREQ_25M:
+		case OSC_FREQ_50M:
+		case OSC_FREQ_100M:
+		case OSC_FREQ_WRS_LJ_INT:
+			printf("%s(%d)\n", spll_lj_osc_freq_type_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
+	case dump_type_spll_lj_wrs_type:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case PERIPH_WRS_STD_NO_LJ:
+		case PERIPH_WRS_STD_WITH_LJD:
+		case PERIPH_WRS_FL_SYNCTECH:
+		case PERIPH_WRS_LJ_SAFRAN:
+			printf("%s(%d)\n", spll_lj_wrs_type_to_name[i], i);
 			break;
 		default:
 			printf("Unknown(%d)\n", i);
@@ -823,6 +885,10 @@ struct dump_info spll_stats_info[] = {
 	DUMP_FIELD_SIZE(char, build_id.build_time, 16),
 	DUMP_FIELD_SIZE(char, build_id.build_by, 32),
 	DUMP_FIELD(int, ext_pps_latency_ps),
+	DUMP_FIELD(yes_no, ljd_present),	
+	DUMP_FIELD(spll_lj_periph_id, lj_periph_id),
+	DUMP_FIELD(spll_lj_osc_freq_type, lj_osc_freq_type),
+	DUMP_FIELD(spll_lj_wrs_type, lj_wrs_type),
 };
 
 static int dump_spll_mem(struct spll_stats *spll)

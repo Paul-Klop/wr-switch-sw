@@ -64,6 +64,9 @@ enum dump_type {
 	dump_type_spll_mode,
 	dump_type_spll_seq_state,
 	dump_type_spll_align_state,
+	dump_type_spll_lj_periph_id,
+	dump_type_spll_lj_osc_freq_type,
+	dump_type_spll_lj_wrs_type,
 	/* rtu_filtering_entry enumerations */
 	dump_type_rtu_filtering_entry_dynamic,
 	dump_type_rtu_qmode,
@@ -104,6 +107,9 @@ typedef struct timeval timeval;
 typedef int            spll_mode;
 typedef int            spll_seq_state;
 typedef int            spll_align_state;
+typedef int            spll_lj_periph_id;
+typedef int            spll_lj_osc_freq_type;
+typedef int            spll_lj_wrs_type;
 typedef int            shmemState;
 typedef int            hal_mode;
 typedef int            hal_fsm;

@@ -112,6 +112,7 @@ int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out)
     if(nmea->parse(buf, strlen(buf), (nmea->utc)) < 0)
 	return -2;
 
+#if DEBUG
     printf("NMEA time: %d/%d/%d %02d:%02d:%02d.%02d\n",
 	   nmea->utc->year+1900,
 	   nmea->utc->mon+1,
@@ -120,6 +121,7 @@ int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out)
 	   nmea->utc->min,
 	   nmea->utc->sec,
 	   nmea->utc->hsec);
+#endif
 
     *t_out = utc_time_to_utc_seconds(*(nmea->utc));
 

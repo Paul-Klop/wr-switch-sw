@@ -123,7 +123,7 @@ static int irig_get_sbs(struct irig_slave *irig, struct irig_time *t)
     return -1;
 }
 
-static int64_t irig_time_to_tai(struct irig_time *t)
+static int64_t irig_time_to_seconds(struct irig_time *t)
 {
     short month, year;
     int64_t result;
@@ -158,7 +158,7 @@ static int64_t irig_time_to_tai(struct irig_time *t)
     return result;
 }
 
-int irig_read_tai(struct wr_irig *wr_irig, int64_t *t_out)
+int irig_read_utc(struct wr_irig *wr_irig, int64_t *t_out)
 {
     struct irig_time t0;
     struct irig_time t1;
@@ -180,15 +180,17 @@ int irig_read_tai(struct wr_irig *wr_irig, int64_t *t_out)
 	return -1;
     }
 
+#if DEBUG
     printf("IRIG time: %d/%d/%d %02d:%02d:%02d\n",
 	   wr_irig->t.year, wr_irig->t.mon, wr_irig->t.day,
 	   wr_irig->t.hour, wr_irig->t.min, wr_irig->t.sec);
+#endif
 
     t0 = wr_irig->t;
     t0.year -= 1900;
     t0.mon  -= 1;
 
-    *t_out = irig_time_to_tai(&t0);
+    *t_out = irig_time_to_seconds(&t0);
     return 0;
 }
 
@@ -196,4 +198,9 @@ int irig_enable(struct wr_irig *wr_irig, int en) {
 
     wr_irig->irig->CR = (en ? IRIG_SLAVE_CR_ENABLE : 0);
     return 0;
+}
+
+int irig_enable_status(struct wr_irig *wr_irig)
+{
+    return !!(wr_irig->irig->CR & IRIG_SLAVE_CR_ENABLE);
 }

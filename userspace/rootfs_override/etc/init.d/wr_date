@@ -107,12 +107,12 @@ nmea_to_hwclk()
 
 	#set host and time from nmea interface
 	eval echo "Using NMEA with baud=$NMEA_BAUD format=$NMEA_FMT" $LOGPIPE
-	eval /wr/bin/wr_date -v -g $NMEA_BAUD $NMEA_FMT get tohost $LOGPIPE
+	eval /wr/bin/wr_date -b $NMEA_BAUD -m $NMEA_FMT nmea get tohost $LOGPIPE
 	if [ $? -ne 0 ]; then
 		eval echo "Getting time from NMEA failed" $LOGPIPE
 		return
 	fi
-	eval /wr/bin/wr_date -v set host $LOGPIPE
+	eval /wr/bin/wr_date set host $LOGPIPE
 	date_set=1
 }
 

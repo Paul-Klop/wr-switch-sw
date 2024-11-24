@@ -35,14 +35,16 @@
 #define FPGA_BASE_PPSG  0x10010500
 #define PPSG_STEP_IN_NS 16 /* we count a 16.5MHz */
 #define FPGA_BASE_IRIG  0x1005c000
+#define NMEA_DEFAULT_BAUD   9600
+#define NMEA_DEFAULT_FORMAT "GPZDA"
 
 extern int init_module(void *module, unsigned long len, const char *options);
 extern int delete_module(const char *module, unsigned int flags);
 
 static int opt_verbose, opt_force, opt_not;
 static int opt_nmea_en = 0;
-static int opt_nmea_baud = 9600;
-static char *opt_nmea_fmt = "GPZDA";
+static int opt_nmea_baud = NMEA_DEFAULT_BAUD;
+static char *opt_nmea_fmt = NMEA_DEFAULT_FORMAT;
 static int opt_irig_en = 0;
 static struct wr_nmea nmea;
 static struct wr_irig wr_irig;
@@ -51,27 +53,36 @@ static char *prgname;
 
 void help(void)
 {
-	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
+	fprintf(stderr, "%s: Use: \"%s [<options>] [<source>] <cmd> [<args>]\n",
 		prgname, prgname);
 	fprintf(stderr,
 		"  The program uses %s as default config file name\n"
+		"  Supported <options>:\n"
 		"  -f       force: run even if not on a WR switch\n"
 		"  -c <cfg> configfile to use in place of the default\n"
 		"  -v       verbose: report what the program does\n"
 		"  -n       do not act in practice - dry run\n"
-		"  -g <baud> <format> use nmea/gps input with a given baudrate and format (GPZDA|GPRMC)\n"
-		"                     default: %s, %d\n"
-		"  -i       use IRIG-B\n"
-		"    get             print WR time to stdout\n"
-		"    get tohost      print WR time and set system time\n"
+		"  -b <baud>\n"
+		"           baudrate for NMEA (default %d)\n"
+		"  -m <GPZDA|GPRMC>\n"
+		"           format for NMEA (default %s)\n"
+		"  Supported <source> of Time Of Day:\n"
+		"    irigb  use IRIG-B (NOTE: remember to enable it!)\n"
+		"    nmea   use NMEA  \n"
+		"    wr     use WR (default)\n"
+		"  Supported <cmd>:\n"
+		"    get             print WR and (if selected) NMEA/IRIG-B time to stdout\n"
+		"    get tohost      print WR or NMEA or IRIG-B time and set system time according to source\n"
 		"    set <value>     set WR time to scalar seconds\n"
 		"    set host [tai]  set TAI and WR time from current host time.\n"
 		"                    if tai option is set then set only the TAI offset.\n"
-		"    stat            print statistics between TAI (WR time) and linux UTC\n"
+		"    stat            print statistics between TAI (WR time) and linux UTC/NMEA/IRIG-B\n"
 		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
+		"    disable         if used with irigb as <source>, disable IRIG-B\n"
+		"    enable          if used with irigb as <source>, enable IRIG-B\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
 /*		"    set ntp:<ip>    set from specified ntp server\n" */
-		, WRDATE_CFG_FILE, opt_nmea_fmt, opt_nmea_baud);
+		, WRDATE_CFG_FILE, NMEA_DEFAULT_BAUD, NMEA_DEFAULT_FORMAT);
 	exit(1);
 }
 
@@ -159,14 +170,20 @@ static int wrdate_get_nmea_utc(int64_t *t_out)
 	return 0;
 }
 
-static int wrdate_get_irig(int64_t *t_out)
+static int wrdate_get_irig_utc(int64_t *t_out)
 {
-	if(irig_read_tai(&wr_irig, t_out) < 0){
+	if(irig_read_utc(&wr_irig, t_out) < 0){
 		fprintf(stderr, "wr_date: %s: error reading irig\n", __func__);
 		return -1;
 	}
-	return 0;
 
+	/* For IRIG-B it takes an entire second to transfer a message with an
+	 * information about second counter. Due to that the available second
+	 * value is actually for the previous second, not the current one.
+	 * So simply increment it's value by 1. */
+	(*t_out)++;
+
+	return 0;
 }
 
 static int wrdate_gettimeofday(struct timeval *tv)
@@ -174,7 +191,7 @@ static int wrdate_gettimeofday(struct timeval *tv)
 	if (opt_nmea_en) {
 		return wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
 	}else if(opt_irig_en){
-		return wrdate_get_irig((int64_t *)&tv->tv_sec);
+		return wrdate_get_irig_utc((int64_t *)&tv->tv_sec);
 	} else {
 		return gettimeofday(tv, NULL);
 	}
@@ -185,51 +202,70 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 	unsigned long taih, tail, nsec, tmp1, tmp2;
 	uint64_t tai;
 	time_t t;
-	struct timeval hw,sw;
+	struct timeval hw, sw, tv;
 	struct tm tm;
 	char utcs[64], tais[64];
 	int tai_offset;
 
 	tai_offset = get_kern_leaps();
-	if (opt_not) {
-		if (wrdate_gettimeofday(&sw) < 0)
-			return 1;
-		taih = 0;
-		tail = sw.tv_sec + tai_offset;
-		nsec = sw.tv_usec * 1000;
-	} else {
-		taih = pps->CNTR_UTCHI;
 
-		do {
-			tail = pps->CNTR_UTCLO;
-			nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
-			tmp1 = pps->CNTR_UTCHI;
-			tmp2 = pps->CNTR_UTCLO;
-		} while((tmp1 != taih) || (tmp2 != tail));
+	if(opt_verbose)
+		printf("TAI offset %d\n", tai_offset);
+
+	taih = pps->CNTR_UTCHI;
+
+	do {
+		tail = pps->CNTR_UTCLO;
+		nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
+		tmp1 = pps->CNTR_UTCHI;
+		tmp2 = pps->CNTR_UTCLO;
+	} while((tmp1 != taih) || (tmp2 != tail));
+
+	if (opt_nmea_en) {
+		/* Is blocking! */
+		if (wrdate_get_nmea_utc((int64_t *)&tv.tv_sec) < 0)
+			return 1;
+	} else if(opt_irig_en) {
+		if (wrdate_get_irig_utc((int64_t *)&tv.tv_sec) < 0)
+			return 1;
 	}
 
-	if (wrdate_gettimeofday(&sw) < 0)
+	if (gettimeofday(&sw, NULL) < 0)
 		return 1;
-	tai = opt_nmea_en ? (sw.tv_sec) : (uint64_t)(taih) << 32 | tail;
+
+	tai = (uint64_t)(taih) << 32 | tail;
 
 	/* Before printing (which takes time), set host time if so asked to */
 	if (tohost) {
-
-		hw.tv_sec = opt_nmea_en ? sw.tv_sec : tai - tai_offset;
-		hw.tv_usec = opt_nmea_en ? sw.tv_usec : nsec/1000;
+		if (opt_nmea_en || opt_irig_en) {
+			hw.tv_sec = tv.tv_sec;
+			hw.tv_usec = 0;
+		} else {
+			hw.tv_sec = tai - tai_offset;
+			hw.tv_usec = nsec/1000;
+		}
 
 		if (settimeofday(&hw, NULL))
 			fprintf(stderr, "wr_date: settimeofday(): %s\n",
 				strerror(errno));
+		sw = hw;
 	}
+
+	t = tv.tv_sec;
+	gmtime_r(&t, &tm);
+	strftime(tais, sizeof(tais), "%Y-%m-%d %H:%M:%S", &tm);
+	if (opt_nmea_en)
+		printf("NMEA time: %s\n", tais);
+	if (opt_irig_en)
+		printf("IRIG time: %s\n", tais);
 
 	t = tai; gmtime_r(&t, &tm);
 	strftime(tais, sizeof(tais), "%Y-%m-%d %H:%M:%S", &tm);
 	t -= tai_offset; gmtime_r(&t, &tm);
 	strftime(utcs, sizeof(utcs), "%Y-%m-%d %H:%M:%S", &tm);
-	printf("%lli.%09li TAI\n"
-	       "%s.%09li TAI\n"
-	       "%s.%09li UTC\n", tai, nsec, tais, nsec, utcs, nsec);
+	printf("%lli.%09li TAI (WR)\n"
+	       "%s.%09li TAI (WR)\n"
+	       "%s.%09li UTC (WR)\n", tai, nsec, tais, nsec, utcs, nsec);
 	if(opt_verbose)
 	{
 		gmtime_r(&(sw.tv_sec), &tm);
@@ -264,8 +300,9 @@ int wrdate_diff(volatile struct PPSG_WB *pps)
 {
 	struct timeval ht, wt;
 
-	gettimeof_wr(&wt, pps);
+	/* wrdate_gettimeofday has to be first, since NMEA may be blocking */
 	wrdate_gettimeofday(&ht);
+	gettimeof_wr(&wt, pps);
 	return __wrdate_diff(pps,&ht, &wt);
 }
 
@@ -595,6 +632,16 @@ int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 int wrdate_stat(volatile struct PPSG_WB *pps)
 {
 	int udiff_ref=0,udiff_last;
+	int stat_sample_count = STAT_SAMPLE_COUNT;
+
+	if (opt_nmea_en) {
+		/* wrdate_gettimeofday for NMEA is blocking till the boundary
+		 * of a second (+some time) */
+		stat_sample_count = 1;
+	}
+
+	/* First readout is sometimes shifted for NMEA */
+	(void) wrdate_gettimeofday(&tv_host);
 
 	printf("Diff_TAI_UTC[sec] Diff_with_last[usec] Diff_with_ref[usec]\n");
 	while ( 1 ) {
@@ -603,13 +650,13 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 		int i;
 		int64_t udiff_sum=0, udiff;
 
-		for ( i=0; i<STAT_SAMPLE_COUNT; i++ ) {
+		for ( i=0; i<stat_sample_count; i++ ) {
 			int64_t *udiff_tmp=&udiff_arr[i];
 
 			// Get time
 			usleep(100); // Increase stability of measures : less preempted during time measures
-			gettimeof_wr(&tv_tai,pps);
 			wrdate_gettimeofday(&tv_host);
+			gettimeof_wr(&tv_tai,pps);
 
 			// Calculate difference
 			*udiff_tmp=(tv_host.tv_sec-tv_tai.tv_sec)*1000000;
@@ -620,7 +667,7 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 			}
 			udiff_sum+=*udiff_tmp;
 		}
-		udiff=udiff_sum/STAT_SAMPLE_COUNT;
+		udiff=udiff_sum/stat_sample_count;
 		if ( udiff_ref==0) {
 			udiff_ref=udiff_last=udiff;
 		}
@@ -644,11 +691,13 @@ int main(int argc, char **argv)
 {
 	int c, tohost = 0;
 	char *cmd;
+	char *source_tod;
 	volatile struct PPSG_WB *pps;
+	int something_done = 0;
 
 	prgname = argv[0];
 
-	while ( (c = getopt(argc, argv, "fcg:ivn")) != -1) {
+	while ( (c = getopt(argc, argv, "fc:b:m:vn")) != -1) {
 		switch(c) {
 		case 'f':
 			opt_force = 1;
@@ -656,13 +705,11 @@ int main(int argc, char **argv)
 		case 'c':
 			opt_cfgfile = optarg;
 			break;
-		case 'g':
-			opt_nmea_en = 1;
+		case 'b':
 			opt_nmea_baud = atoi(optarg);
-			opt_nmea_fmt = argv[optind++];
 			break;
-		case 'i':
-			opt_irig_en = 1;
+		case 'm':
+			opt_nmea_fmt = optarg;
 			break;
 		case 'v':
 			opt_verbose = 1;
@@ -676,10 +723,20 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/* No command nor source of time */
 	if (optind > argc - 1)
 		help();
 
-	cmd = argv[optind++];
+	source_tod = argv[optind];
+	if (!strcmp(source_tod, "nmea")) {
+		opt_nmea_en = 1;
+		optind++;
+	} else if (!strcmp(source_tod, "irigb")) {
+		opt_irig_en = 1;
+		optind++;
+	} else if (!strcmp(source_tod, "wr")) {
+		optind++;
+	}
 
 	wrdate_check_host();
 	pps = create_map(FPGA_BASE_PPSG, sizeof(*pps));
@@ -695,7 +752,6 @@ int main(int argc, char **argv)
 	}
 
 	if (opt_irig_en) {
-
 		wr_irig.irig = create_map(FPGA_BASE_IRIG,
 					  sizeof(*wr_irig.irig));
 		if (!wr_irig.irig){
@@ -703,11 +759,44 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(1);
 		}
-		irig_enable(&wr_irig, 1);
 	}
 
+	cmd = argv[optind++];
+
 	if (cmd == NULL) {
-		return -1;
+		fprintf(stderr, "No command provided\n");
+		return 1;
+	}
+
+	if (!strcmp(cmd, "enable")) {
+		if (opt_irig_en) {
+			irig_enable(&wr_irig, 1);
+			printf("IRIG-B enabled\n");
+			cmd = argv[optind++];
+			something_done = 1;
+		} else {
+			fprintf(stderr, "\"enable\" command is valid only for IRIG-B\n");
+			return 1;
+		}
+	} else if (!strcmp(cmd, "disable")) {
+		if (opt_irig_en) {
+			irig_enable(&wr_irig, 0);
+			printf("IRIG-B disabled\n");
+			cmd = argv[optind++];
+			something_done = 1;
+		} else {
+			fprintf(stderr, "\"disable\" command is valid only for IRIG-B\n");
+			return 1;
+		}
+	}
+
+	if (cmd == NULL && something_done) {
+		/* No more arguments */
+		return 0;
+	}
+
+	if (opt_irig_en && !irig_enable_status(&wr_irig)) {
+		fprintf(stderr, "Warning IRIG-B is disabled!\n");
 	}
 
 	if (!strcmp(cmd, "get")) {
@@ -724,7 +813,6 @@ int main(int argc, char **argv)
 	}
 
 	if (!strcmp(cmd, "stat")) {
-		/* parse the optional "tohost" argument */
 		return wrdate_stat(pps);
 	}
 

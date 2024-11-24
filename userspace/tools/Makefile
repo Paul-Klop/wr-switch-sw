@@ -93,7 +93,9 @@ wr_mon: wr_mon.o term.o  time_lib.o
 
 nmea/wr_nmea.o: nmea/serial.h nmea/wr_nmea.h nmea/nmea.h
 nmea/nmea.o: nmea/nmea.h
+wr_irig.o: wr_irig.h
 wr_date: nmea/wr_nmea.o nmea/nmea.o nmea/serial_linux.o
+wr_date: wr_irig.o
 wr_date: wr_date.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
 

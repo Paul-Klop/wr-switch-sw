@@ -154,6 +154,13 @@ choice
 		help
 		  Use NMEA (interface via RS-232) as external source of local
 		  time at startup.
+
+	config TOD_SOURCE_IRIGB
+		bool "Enable IRIG-B Interface to set time in GM"
+		help
+		  Use IRIG-B004 (interface via PPS input) as external source of
+		  local time at startup.
+		  PPS input termination will be enabled when IRIG-B is used.
 endchoice
 
 config NTP_SERVER
@@ -1050,7 +1057,7 @@ config SNMP_SWCORESTATUS_DISABLE
 menu "System clock monitor"
 
 config SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
-	depends on TOD_SOURCE_NTP || TOD_SOURCE_NMEA
+	depends on TOD_SOURCE_NTP || TOD_SOURCE_NMEA || TOD_SOURCE_IRIGB
 	bool "Enable system clock monitor"
 	default y
 	help
@@ -1212,6 +1219,7 @@ endmenu
 
 config PPS_IN_TERM_50OHM
 	bool "Enable 50ohm termination for 1-PPS input"
+	depends on !TOD_SOURCE_IRIGB
 	default n
 	help
 	  Enable 50ohm termination for 1-PPS input.

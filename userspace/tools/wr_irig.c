@@ -4,11 +4,80 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
+#include <signal.h>
 
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <libwr/wrs-msg.h>
 #include "wr_irig.h"
+
+#define IRIGB_TIMEOUT_MS	10 * 1000
+
+static int init_alarm_done = 0;
+static volatile int  alarmDetected = 0;
+static timer_t timer_irigb;
+
+static void sched_handler(int sig, siginfo_t *si, void *uc)
+{
+    alarmDetected = 1;
+}
+
+static void init_alarm(timer_t *timerid)
+{
+    struct sigevent sev;
+    struct sigaction sa;
+
+    /* Set the signal handler */
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = sched_handler;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGALRM, &sa, NULL) == -1) {
+	fprintf(stderr, "wr_irigb: cannot set signal handler\n");
+	exit(1);
+    }
+
+    /* Create the timer */
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGALRM;
+    sev.sigev_value.sival_ptr = timerid;
+    if (timer_create(CLOCK_MONOTONIC, &sev, timerid) == -1) {
+	fprintf(stderr, "wr_irig: Cannot create timer\n");
+	exit(1);
+    }
+}
+
+static void start_alarm(timer_t *timerid, unsigned int delay_ms)
+{
+    struct itimerspec its;
+
+    its.it_value.tv_sec = delay_ms/1000;
+    its.it_value.tv_nsec = (delay_ms%1000) * 1000000;
+    its.it_interval.tv_sec = 0;
+    its.it_interval.tv_nsec = 0;
+
+    if (timer_settime(*timerid, 0, &its, NULL) == -1){
+	fprintf(stderr, "wr_irig: Cannot start timer. DelayMs=%u. Errno=%d\n",delay_ms, errno);
+    }
+}
+
+static unsigned int stop_alarm(timer_t *timerid)
+{
+    struct itimerspec its;
+    struct itimerspec ito;
+
+    its.it_value.tv_sec = 0;
+    its.it_value.tv_nsec = 0;
+    its.it_interval.tv_sec = 0;
+    its.it_interval.tv_nsec = 0;
+
+    if (timer_settime(*timerid, 0, &its, &ito) == -1){
+	fprintf(stderr, "wr_irig: Cannot stop timer\n");
+	return 0;
+    }
+    return (int) (ito.it_value.tv_sec*1000+ito.it_value.tv_nsec/1000000);
+}
+
 
 static int irig_get_time(struct irig_slave *irig, struct irig_time *t)
 {
@@ -191,6 +260,49 @@ int irig_read_utc(struct wr_irig *wr_irig, int64_t *t_out)
     t0.mon  -= 1;
 
     *t_out = irig_time_to_seconds(&t0);
+    return 0;
+}
+
+int irig_wait_sec_transition(volatile struct wr_irig *wr_irig)
+{
+    uint32_t new_tod;
+    uint32_t ref_tod = 0;
+
+    uint32_t valid = 0;
+
+    if (!init_alarm_done) {
+	init_alarm(&timer_irigb);
+	init_alarm_done = 1;
+    }
+
+    start_alarm(&timer_irigb, IRIGB_TIMEOUT_MS);
+    /* Wait until get valid TOD */
+    while (!valid && !alarmDetected) {
+        ref_tod = wr_irig->irig->TOD;
+        valid = (ref_tod & IRIG_SLAVE_TOD_VALID);
+    }
+
+    if (alarmDetected) {
+	printf("Timeout on waiting for valid IRIG-B signal\n");
+	return -1;
+    }
+
+    alarmDetected = 0;
+    start_alarm(&timer_irigb, IRIGB_TIMEOUT_MS);
+    valid = 0;
+    new_tod = ref_tod;
+    while (!valid || (new_tod & IRIG_SLAVE_TOD_SECONDS_MASK) == (ref_tod & IRIG_SLAVE_TOD_SECONDS_MASK)) {
+        new_tod = wr_irig->irig->TOD;
+        valid = (new_tod & IRIG_SLAVE_TOD_VALID);
+    }
+
+    stop_alarm(&timer_irigb);
+
+    if (alarmDetected) {
+	printf("Timeout on waiting for new IRIG-B second\n");
+	return -2;
+    }
+
     return 0;
 }
 

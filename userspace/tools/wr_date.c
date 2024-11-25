@@ -172,6 +172,9 @@ static int wrdate_get_nmea_utc(int64_t *t_out)
 
 static int wrdate_get_irig_utc(int64_t *t_out)
 {
+	if (irig_wait_sec_transition(&wr_irig) < 0)
+		return -1;
+
 	if(irig_read_utc(&wr_irig, t_out) < 0){
 		fprintf(stderr, "wr_date: %s: error reading irig\n", __func__);
 		return -1;
@@ -199,6 +202,7 @@ static int wrdate_gettimeofday(struct timeval *tv)
 		tv->tv_usec = 1000000 - (ret - 1)*1000000/opt_nmea_baud;
 		return ret;
 	}else if(opt_irig_en){
+		/* Is blocking! */
 		return wrdate_get_irig_utc((int64_t *)&tv->tv_sec);
 	} else {
 		return gettimeofday(tv, NULL);
@@ -229,7 +233,7 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 		tmp2 = pps->CNTR_UTCLO;
 	} while((tmp1 != taih) || (tmp2 != tail));
 
-	/* Note for NMEA this function is blocking! */
+	/* Note for NMEA and IRIG-B function is blocking! */
 	if (wrdate_gettimeofday(&tv) < 0)
 		return 1;
 
@@ -638,10 +642,11 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 {
 	int udiff_ref=0,udiff_last;
 	int stat_sample_count = STAT_SAMPLE_COUNT;
+	struct timeval tv_tai,tv_host;
 
-	if (opt_nmea_en) {
-		/* wrdate_gettimeofday for NMEA is blocking till the boundary
-		 * of a second (+some time) */
+	if (opt_nmea_en || opt_irig_en) {
+		/* wrdate_gettimeofday for NMEA and IRIG-B is blocking till
+		 * the boundary of a second (+some time) */
 		stat_sample_count = 1;
 	}
 
@@ -651,7 +656,6 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 	printf("Diff_TAI_UTC[sec] Diff_with_last[usec] Diff_with_ref[usec]\n");
 	while ( 1 ) {
 		int64_t udiff_arr[STAT_SAMPLE_COUNT]; // Diff in useconds
-		struct timeval tv_tai,tv_host;
 		int i;
 		int64_t udiff_sum=0, udiff;
 
@@ -685,8 +689,9 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 			   );
 		udiff_last=udiff;
 
-		/* Readout for NMEA will wait till the boundary of a second anyway */
-		if (!opt_nmea_en) {
+		/* Readout for NMEA or IRIG-B will wait till the boundary of
+		 * a second anyway */
+		if (!opt_nmea_en && !opt_irig_en) {
 			sleep(1);
 		}
 	}

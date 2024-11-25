@@ -21,5 +21,6 @@ struct wr_irig{
 int irig_enable(struct wr_irig *wr_irig, int en);
 int irig_enable_status(struct wr_irig *wr_irig);
 int irig_read_utc(struct wr_irig *wr_irig, int64_t *t_out);
+int irig_wait_sec_transition(volatile struct wr_irig *wr_irig);
 
 #endif

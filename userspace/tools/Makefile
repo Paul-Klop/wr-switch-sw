@@ -96,6 +96,7 @@ nmea/nmea.o: nmea/nmea.h
 wr_irig.o: wr_irig.h
 wr_date: nmea/wr_nmea.o nmea/nmea.o nmea/serial_linux.o
 wr_date: wr_irig.o
+wr_date: LDFLAGS+=-lrt
 wr_date: wr_date.o time_lib.o
 	${CC} -o $@ $^ $(LDFLAGS)
 

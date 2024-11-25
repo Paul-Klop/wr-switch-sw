@@ -32,10 +32,13 @@ int nmea_init(struct wr_nmea *nmea, char *dev, int baud, char *fmt)
 
 static int read_nmea_msg(char *msgbuf, int len)
 {
-	int i = 0;
 	char c;
 	unsigned int nmea_timeout_max = 10;
 	unsigned int nmea_timeout;
+	char *msgbuf_start = msgbuf;
+
+	/* Make sure there is enought room for \r, \n \0 at the end */
+	len -= 3;
 
 	while (1) {
 		if (nmea_timeout_max <= 0) {
@@ -43,7 +46,7 @@ static int read_nmea_msg(char *msgbuf, int len)
 			return -1;
 		}
 
-		nmea_timeout = 1;
+		nmea_timeout = 2;
 		c = serial_read_byte_w_timeout(&nmea_timeout);
 		if (nmea_timeout == 0) {
 			nmea_timeout_max--;
@@ -65,7 +68,7 @@ static int read_nmea_msg(char *msgbuf, int len)
 			return -1;
 		}
 
-		nmea_timeout = 1;
+		nmea_timeout = 2;
 		c = serial_read_byte_w_timeout(&nmea_timeout);
 		if (nmea_timeout == 0) {
 			nmea_timeout_max--;
@@ -75,9 +78,10 @@ static int read_nmea_msg(char *msgbuf, int len)
 
 		if (c == '\r')
 			break;
-		i++;
-		if (i >= len)
+
+		if (msgbuf - msgbuf_start >= len)
 			break;
+
 		*msgbuf++ = c;
 	}
 
@@ -86,25 +90,33 @@ static int read_nmea_msg(char *msgbuf, int len)
 
 	*msgbuf++ = 0;
 
-	return 0;
+	/* Return message length, don't count null char at the end */
+	return msgbuf - msgbuf_start - 1;
 }
 
 int read_nmea_msg_type(char *msgbuf, int len, const char *msg_type)
 {
+	int ret;
 	do {
-		if (read_nmea_msg(msgbuf, len) < 0)
+		ret = read_nmea_msg(msgbuf, len);
+		if (ret < 0)
 			return -1;
-	} while (strncmp(&msgbuf[1], msg_type, 5) != 0); //ignore starting "$"
 
-	return 0;
+	/* ignore starting "$" */
+	} while (strncmp(&msgbuf[1], msg_type, strlen(msg_type)) != 0);
+
+	/* Return message length */
+	return ret;
 }
 
 int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out)
 {
+    int ret;
     char buf[1024];
 
     serial_open(nmea->dev, nmea->baud);
-    if (read_nmea_msg_type(buf, 1024, nmea->fmt) < 0)
+    ret = read_nmea_msg_type(buf, 1024, nmea->fmt);
+    if (ret < 0)
 	return -1;
     serial_close();
 
@@ -125,5 +137,6 @@ int nmea_read_utc(struct wr_nmea *nmea, int64_t *t_out)
 
     *t_out = utc_time_to_utc_seconds(*(nmea->utc));
 
-    return 0;
+    /* Return message length */
+    return ret;
 }

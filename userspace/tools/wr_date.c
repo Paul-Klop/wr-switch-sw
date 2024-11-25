@@ -167,7 +167,7 @@ static int wrdate_get_nmea_utc(int64_t *t_out)
 		return -1;
 	}
 
-	return 0;
+	return ret;
 }
 
 static int wrdate_get_irig_utc(int64_t *t_out)
@@ -188,8 +188,16 @@ static int wrdate_get_irig_utc(int64_t *t_out)
 
 static int wrdate_gettimeofday(struct timeval *tv)
 {
+	int ret;
 	if (opt_nmea_en) {
-		return wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
+		/* Is blocking! */
+		ret = wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
+		if (ret < 0)
+			return ret;
+		tv->tv_sec--;
+		/* Subtract message length */
+		tv->tv_usec = 1000000 - (ret - 1)*1000000/opt_nmea_baud;
+		return ret;
 	}else if(opt_irig_en){
 		return wrdate_get_irig_utc((int64_t *)&tv->tv_sec);
 	} else {
@@ -221,14 +229,9 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 		tmp2 = pps->CNTR_UTCLO;
 	} while((tmp1 != taih) || (tmp2 != tail));
 
-	if (opt_nmea_en) {
-		/* Is blocking! */
-		if (wrdate_get_nmea_utc((int64_t *)&tv.tv_sec) < 0)
-			return 1;
-	} else if(opt_irig_en) {
-		if (wrdate_get_irig_utc((int64_t *)&tv.tv_sec) < 0)
-			return 1;
-	}
+	/* Note for NMEA this function is blocking! */
+	if (wrdate_gettimeofday(&tv) < 0)
+		return 1;
 
 	if (gettimeofday(&sw, NULL) < 0)
 		return 1;
@@ -237,7 +240,9 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 
 	/* Before printing (which takes time), set host time if so asked to */
 	if (tohost) {
-		if (opt_nmea_en || opt_irig_en) {
+		if (opt_nmea_en) {
+			hw = tv;
+		} else if (opt_irig_en) {
 			hw.tv_sec = tv.tv_sec;
 			hw.tv_usec = 0;
 		} else {
@@ -680,7 +685,10 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 			   );
 		udiff_last=udiff;
 
-		sleep(1);
+		/* Readout for NMEA will wait till the boundary of a second anyway */
+		if (!opt_nmea_en) {
+			sleep(1);
+		}
 	}
 
 	return 0;

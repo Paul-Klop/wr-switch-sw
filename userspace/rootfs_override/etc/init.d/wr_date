@@ -116,11 +116,26 @@ nmea_to_hwclk()
 	date_set=1
 }
 
+irigb_to_hwclk()
+{
+	#set host and time from IRIB-B interface
+	eval echo "Using IRIG-B" $LOGPIPE
+	eval /wr/bin/wr_date irigb enable get tohost $LOGPIPE
+	if [ $? -ne 0 ]; then
+		eval echo "Getting time from IRIG-B failed" $LOGPIPE
+		return
+	fi
+	eval /wr/bin/wr_date set host $LOGPIPE
+	date_set=1
+}
+
 date_set=0
 
 
 if [ "$CONFIG_TOD_SOURCE_NMEA" = "y" ]; then
 	nmea_to_hwclk
+elif [ "$CONFIG_TOD_SOURCE_IRIGB" = "y" ]; then
+	irigb_to_hwclk
 elif [ "$CONFIG_TOD_SOURCE_NTP" = "y" ]; then
 	# Check whether there is the config file
 	if [ -f $F ]; then

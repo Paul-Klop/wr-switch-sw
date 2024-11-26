@@ -30,10 +30,13 @@ start() {
 		echo "$0 unable to source dot-config ($dotconfig)!"
 	fi
 
+	echo "# Key in this file will be lost at restart!" > /root/.ssh/authorized_keys
+	echo "# Consider storing keys in the permanent location: $permanent_path_ssh/authorized_keys" >> /root/.ssh/authorized_keys
+
  	# copy authorized keys if exists
 	if [ -f /usr/authorized_keys ] ; then
 		mkdir -p /root/.ssh/
-		cp /usr/authorized_keys /root/.ssh/
+		cat /usr/authorized_keys >> /root/.ssh/authorized_keys
 	fi
 
 	# Make sure ssh directory exists

@@ -51,8 +51,10 @@ PermitRootLogin yes
 #PubkeyAuthentication yes
 
 # The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
-# but this is overridden so installations will only check .ssh/authorized_keys
-AuthorizedKeysFile	.ssh/authorized_keys
+# Files /update/permanent/ssh/authorized_keys.%u are per user (%u) and survive
+# WRS firmware updates. .ssh/authorized_keys can be used if provided in
+# /usr/authorized_keys of WRS firmware.
+AuthorizedKeysFile	/update/permanent/ssh/authorized_keys.%u .ssh/authorized_keys
 
 #AuthorizedPrincipalsFile none
 

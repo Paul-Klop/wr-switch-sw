@@ -4,6 +4,7 @@
 #
 
 dotconfig=/wr/etc/dot-config
+permanent_path_ssh=/update/permanent/ssh
 
 # Make sure the ssh-keygen progam exists
 [ -f /usr/bin/ssh-keygen ] || exit 0
@@ -37,7 +38,14 @@ start() {
 
 	# Make sure ssh directory exists
 	mkdir -p /etc/ssh
-	mkdir -p /usr/etc/ssh
+
+	# Copy keys from permanent location if available
+	if [ -d "$permanent_path_ssh" ] ; then
+		cp "$permanent_path_ssh"/ssh_host_*_key* /etc/ssh/
+	fi
+
+	mkdir -p "$permanent_path_ssh"
+
 	# Check for the ssh keys
 	if     [ ! -f /etc/ssh/ssh_host_rsa_key ] \
         || [ ! -f /etc/ssh/ssh_host_dsa_key ] \
@@ -45,7 +53,7 @@ start() {
         || [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
 # 		echo -n "generating ssh keys... "
 		/usr/bin/ssh-keygen -A
-		cp /etc/ssh/ssh_host_*_key* /usr/etc/ssh
+		cp /etc/ssh/ssh_host_*_key* "$permanent_path_ssh"
 	fi
 
 	if [ "$CONFIG_ROOT_ACCESS_DISABLE" = "y" ]; then

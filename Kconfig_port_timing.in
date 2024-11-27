@@ -1,4 +1,3 @@
-menu "Port PTP/Timing configuration"
 
 menu "PORT 1"
 
@@ -7234,7 +7233,5 @@ endmenu # Port 18 Instance 1
 config PORT18_INST01_T24P_TRANS_POINT
 	int
 	default 14900
-
-endmenu
 
 endmenu

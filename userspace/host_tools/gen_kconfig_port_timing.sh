@@ -20,14 +20,11 @@ do
 done
 
 function print_header() { 
-
-	echo -e "menu \"Port PTP/Timing configuration\"" >$OUTPUT_FILE
+	true
 }
 
 function print_footer() {
- 
-	echo -e "\nendmenu" >>$OUTPUT_FILE
- 
+	true
 }
 
 function print_port_header() { 
@@ -496,6 +493,7 @@ declare -A port_t24p=(
 # Generation parameters
 portCount=18
 instCount=1
+rm $OUTPUT_FILE
 print_header
 
 for p in `seq 1 $portCount`; do

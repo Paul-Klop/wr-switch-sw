@@ -797,7 +797,60 @@ config PTP_OPT_CLOCK_CLASS
 
 endmenu #"PPSI options"
 
+menu "Port PTP/Timing configuration"
+
+choice
+	prompt "PTP Port Assignment"
+	default PTP_PORT_PARAMS
+	help
+	  You can choose either to use parameters defined in PORTxx_INSTxx or
+	  your own custom configuration file placed in switch file system
+	  or downloaded at boot time.
+
+config PTP_PORT_PARAMS
+	bool "Generate ppsi.conf based on the PORTxx_INSTyy_z parameters"
+	help
+	  Generate ppsi.conf based on "PORTxx_INSTyy_z parameters" and "role" specified for each
+	  port.
+	  PPSI's global settings can be set in file /wr/etc/ppsi-pre.conf
+
+config PTP_CUSTOM
+	bool "Custom ppsi.conf in the WRS file system"
+	help
+	  Use custom file for ppsi defined by CONFIG_PTP_CUSTOM_FILENAME.
+
+config PTP_REMOTE_CONF
+	bool "Download ppsi.conf from the network at each boot"
+	help
+	  This choice allows to specify an URL so you can download a
+	  custom file using the network. This allows running a bunch
+	  of switches, all with the same configuration but different
+	  configurations that can't just be derived from PORT_PARAMS above.
+
+endchoice
+
+config PTP_CUSTOM_FILENAME
+	string "Pathname for your custom ppsi.conf"
+	depends on PTP_CUSTOM
+	default "/wr/etc/ppsi-custom.conf"
+	help
+	  This is the filename used as ppsi.conf. Please note that the
+	  file is copied to /etc/ppsi.conf when configuration is applied,
+	  and the PTP daemon always picks /etc/ppsi.conf, not this
+	  filename.
+
+config PTP_CONF_URL
+	depends on PTP_REMOTE_CONF
+	string "Download URL (http, ftp, tftp) for custom ppsi.conf"
+	help
+	  Like CONFIG_DOTCONF_URL, this option allows passing HOSTNAME, IPADDR
+	  and MACADDR in the filename, and if a DNS server is configured,
+	  you can use host names.
+	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
+
 source Kconfig_port_timing.in
+
+endmenu # "Port PTP/Timing configuration"
 
 source Kconfig_sfp_fiber.in
 
@@ -866,56 +919,6 @@ config EXT_PPS_LATENCY_PS
 	  The entered value is in ps.
 
 endmenu
-
-choice
-	prompt "PTP Port Assignment"
-	default PTP_PORT_PARAMS
-	help
-	  You can choose either to use parameters defined in PORTxx_INSTxx or
-	  your own custom configuration file placed in switch file system
-	  or downloaded at boot time.
-
-config PTP_PORT_PARAMS
-	bool "Generate ppsi.conf based on the PORTxx_INSTyy_z parameters"
-	help
-	  Generate ppsi.conf based on "PORTxx_INSTyy_z parameters" and "role" specified for each
-	  port.
-	  PPSI's global settings can be set in file /wr/etc/ppsi-pre.conf
-
-config PTP_CUSTOM
-	bool "Custom ppsi.conf in the WRS file system"
-	help
-	  Use custom file for ppsi defined by CONFIG_PTP_CUSTOM_FILENAME.
-
-config PTP_REMOTE_CONF
-	bool "Download ppsi.conf from the network at each boot"
-	help
-	  This choice allows to specify an URL so you can download a
-	  custom file using the network. This allows running a bunch
-	  of switches, all with the same configuration but different
-	  configurations that can't just be derived from PORT_PARAMS above.
-
-endchoice
-
-config PTP_CUSTOM_FILENAME
-	string "Pathname for your custom ppsi.conf"
-	depends on PTP_CUSTOM
-	default "/wr/etc/ppsi-custom.conf"
-	help
-	  This is the filename used as ppsi.conf. Please note that the
-	  file is copied to /etc/ppsi.conf when configuration is applied,
-	  and the PTP daemon always picks /etc/ppsi.conf, not this
-	  filename.
-
-config PTP_CONF_URL
-	depends on PTP_REMOTE_CONF
-	string "Download URL (http, ftp, tftp) for custom ppsi.conf"
-	help
-	  Like CONFIG_DOTCONF_URL, this option allows passing HOSTNAME, IPADDR
-	  and MACADDR in the filename, and if a DNS server is configured,
-	  you can use host names.
-	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
-
 
 menu "Management configuration"
 config SNMP_SYSCONTACT

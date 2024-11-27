@@ -109,20 +109,6 @@ config LEAPSEC_URL
 	  Example:  "tftp://BOOTSERVER/leap-seconds.IPADDR"
 
 
-config BR2_CONFIGFILE
-	string "Configuration file for Buildroot"
-	default "wrs_release_br2_config"
-	help
-	  The configuration file selects which packages are to be
-	  included in the WRS filesystem and which are not.  If
-	  you pass a relative pathname, the build procedure will
-	  look for it in wr-switch-sw/configs/buildroot, while
-	  absolute pathnames are used unchanged.
-
-	  If the string being passed doesn't refer to a file, the
-	  scripts print a warning and use the default file. Incorrect
-	  files lead to unpredicatable results.
-
 config PPSI
 	bool
 	default y
@@ -612,15 +598,6 @@ config WRS_LOG_LEVEL_OTHER
 	  Please note that all messages produced by other programs if syslog is
 	  configured will be passed to the syslog at the same
 	  <facility>.<level>
-
-config KEEP_ROOTFS
-	bool "Keep generated filesystem and related script"
-	help
-	  During development of build scripts, it may be useful
-	  to keep the generated root filesystem as well as the
-	  script used to create it. If selected, the build script
-	  will report the actual file names at each build.
-	  If unsusre, say N.
 
 endmenu
 
@@ -1365,6 +1342,68 @@ config HTTPD_DISABLE
 	  Disable web interface.
 
 menu "Developer options"
+
+menu "Build-time configuration"
+config BR2_CONFIGFILE
+	string "Configuration file for Buildroot"
+	default "wrs_release_br2_config"
+	help
+	  The configuration file selects which packages are to be
+	  included in the WRS filesystem and which are not.  If
+	  you pass a relative pathname, the build procedure will
+	  look for it in wr-switch-sw/configs/buildroot, while
+	  absolute pathnames are used unchanged.
+
+	  If the string being passed doesn't refer to a file, the
+	  scripts print a warning and use the default file. Incorrect
+	  files lead to unpredicatable results.
+
+choice
+	prompt "Compilation optimization"
+
+	config OPTIMIZATION_SPEED
+		bool "Execution time (-O2)"
+		help
+		  GCC performs nearly all supported optimizations that do not
+		  involve a space-speed tradeoff.
+
+	config OPTIMIZATION_SIZE_SPEED
+		bool "Size and execution time (-Os)"
+		help
+		  Optimize for size. Enables all -O2 optimizations except those
+		  that often increase code size.
+
+	config OPTIMIZATION_DEBUGGING
+		bool "Debugging (-Og)"
+		help
+		  Should be the optimization level choice for the standard
+		  edit-compile-debug cycle
+
+	config OPTIMIZATION_NONE_DEBUGGING
+		bool "Debugging without optimization(-ggdb)"
+		help
+		  Compile without optimization and with debug informations
+endchoice #"Compilation optimization"
+
+config OPTIMIZATION
+	string
+	default "-Os -ggdb" if OPTIMIZATION_SIZE_SPEED
+	default "-O2 -ggdb" if OPTIMIZATION_SPEED
+	default "-Og -ggdb" if OPTIMIZATION_DEBUGGING
+	default "-ggdb" if OPTIMIZATION_NONE_DEBUGGING
+	default "-ggdb"
+
+config KEEP_ROOTFS
+	bool "Keep generated filesystem and related script"
+	help
+	  During development of build scripts, it may be useful
+	  to keep the generated root filesystem as well as the
+	  script used to create it. If selected, the build script
+	  will report the actual file names at each build.
+	  If unsusre, say N.
+
+endmenu # "Build-time configuration"
+
 config MONIT_DISABLE
 	bool "Disable monit"
 	default n
@@ -1411,38 +1450,6 @@ config FAN_HYSTERESIS_PWM_VAL
 	  PWM value used to drive fans. Range from 4 to 1000.
 
 endmenu # "Fan speed control"
-
-choice
-	prompt "Compilation optimization"
-    
-    config OPTIMIZATION_SPEED
-        boolean "Execution time (-O2)"
-        help
-           GCC performs nearly all supported optimizations that do not involve a space-speed tradeoff.
-           
-     config OPTIMIZATION_SIZE_SPEED
-        boolean "Size and execution time (-Os)"
-        help
-           Optimize for size. Enables all -O2 optimizations except those that often increase code size.
-           
-     config OPTIMIZATION_DEBUGGING
-        boolean "Debugging (-Og)"
-        help
-           Should be the optimization level choice for the standard edit-compile-debug cycle
-
-     config OPTIMIZATION_NONE_DEBUGGING
-        boolean "Debugging without optimization(-ggdb)"
-        help
-           Compile without optimization and with debug informations 
-endchoice
-
-config OPTIMIZATION
-	string
-	default "-Os -ggdb" if OPTIMIZATION_SIZE_SPEED
-	default "-O2 -ggdb" if OPTIMIZATION_SPEED
-	default "-Og -ggdb" if OPTIMIZATION_DEBUGGING
-	default "-ggdb" if OPTIMIZATION_NONE_DEBUGGING
-	default "-ggdb"
 
 menu "Overwrite SoftPLL Settings"
 

@@ -11,7 +11,6 @@ CONFIG_DOTCONF_SOURCE_TRY_DHCP=y
 CONFIG_LEAPSEC_SOURCE_LOCAL=y
 # CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE is not set
 # CONFIG_LEAPSEC_SOURCE_REMOTE_TRY is not set
-CONFIG_BR2_CONFIGFILE="wrs_release_br2_config"
 CONFIG_PPSI=y
 
 #
@@ -67,7 +66,6 @@ CONFIG_WRS_LOG_SNMPD="Swd"
 CONFIG_WRS_LOG_MONIT="syslog"
 CONFIG_WRS_LOG_OTHER="default_syslog"
 CONFIG_WRS_LOG_LEVEL_OTHER=""
-# CONFIG_KEEP_ROOTFS is not set
 
 #
 # Global PTP configuration (profile, timing mode, BMCA and external port config, ...)
@@ -954,17 +952,23 @@ CONFIG_HTTPD_DISABLE=y
 #
 # Developer options
 #
+
+#
+# Build-time configuration
+#
+CONFIG_BR2_CONFIGFILE="wrs_release_br2_config"
+CONFIG_OPTIMIZATION_SPEED=y
+# CONFIG_OPTIMIZATION_SIZE_SPEED is not set
+# CONFIG_OPTIMIZATION_DEBUGGING is not set
+# CONFIG_OPTIMIZATION_NONE_DEBUGGING is not set
+CONFIG_OPTIMIZATION="-O2 -ggdb"
+# CONFIG_KEEP_ROOTFS is not set
 # CONFIG_MONIT_DISABLE is not set
 
 #
 # Fan speed control
 #
 # CONFIG_FAN_HYSTERESIS is not set
-CONFIG_OPTIMIZATION_SPEED=y
-# CONFIG_OPTIMIZATION_SIZE_SPEED is not set
-# CONFIG_OPTIMIZATION_DEBUGGING is not set
-# CONFIG_OPTIMIZATION_NONE_DEBUGGING is not set
-CONFIG_OPTIMIZATION="-O2 -ggdb"
 
 #
 # Overwrite SoftPLL Settings

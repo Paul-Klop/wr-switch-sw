@@ -3007,7 +3007,7 @@ takes precedence over master (orange). Master takes precedence over other
 states (yellow).
 
 The right LED is green when a particular port is synchronized to the master.
-When a packet is transmitted or received on a port the right LED blinks orange.
+When a frame is transmitted or received on a port the right LED blinks orange.
 If a port is also synced then it blinks yellow instead.
 
 @c ==========================================================================
@@ -3959,16 +3959,18 @@ Please note that there can be none or more than one instance on a port:
             affected by @t{delayCoefficient} (alpha).
             This value does not include @t{ingressLatency} nor
             @t{egressLatency}.
-      @item @t{DelayMS} -- Delay between Master and Slave (one way).
+      @item @t{delayMS} -- Delay between Master and Slave (one way).
             This value does not include @t{ingressLatency} nor
             @t{egressLatency}.
-      @item @t{DelayMM} -- Delay from Master to Slave and from Slave to Master.
+      @item @t{delayMM} -- Delay from Master to Slave and from Slave to Master.
             (both ways).
             Also known as @i{round-trip delay}.
             This value includes @t{ingressLatency} and @t{egressLatency} of
             both peers.
       @item @t{delayAsymmetry} -- Difference in @i{ns} between the delay from
             Master to Slave and Slave to Master.
+            Calculated as
+            @math{constantAsymmetry + \alpha_{MS} / (\alpha_{MS}+2)  * meanDelay }
       @item @t{delayCoefficient} -- Also known as @i{alpha}.
             This value is a relative difference between the transmission times
             in the two directions.
@@ -4008,10 +4010,10 @@ Please note that there can be none or more than one instance on a port:
             from the slave port and the WR clock,
             i.e., WR clock is syntonized to the RX clock with a programmable
             phase offset which is the phase setpoint.
-      @item @t{Skew} -- Value calculated by the PTP servo which is
-            the difference between the time of the WR device that is the master
-            and the time of this slave WR device that is synchronized to
-            the master (PTP servo aims at making this value zero).
+      @item @t{Skew} -- Reflects the changes of @t{delayMS} between PTP servo
+            updates. The value is calculated by the PTP servo as
+            the difference between the current and the previous value of
+            @t{delayMS} (if the @t{delayMS} does not change this value is zero).
       @item @t{Estimated link len} -- The estimated link length between master
             and slave.
             @b{Please note this is only an estimation}!

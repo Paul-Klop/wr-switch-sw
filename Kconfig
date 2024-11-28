@@ -341,7 +341,7 @@ config LDAP_FILTER_CUSTOM_STR
 	  (memberOf=CN=white-rabbit-switch-root,OU=e-groups,OU=Workgroups,DC=cern,DC=ch)
 
 choice
-	prompt "Authorization method"
+	prompt "Authentication method"
 	depends on LDAP_ENABLE
 	default AUTH_KRB5
 

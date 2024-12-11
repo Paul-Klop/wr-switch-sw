@@ -27,6 +27,7 @@
 #include <libwr/hwiu.h>
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/softpll.h>
 #include <fpga_io.h>
 #include "libsdbfs.h"
 
@@ -40,10 +41,27 @@
 #define __GIT_USR__ "?"
 #endif
 
-/* TODO: Should be taken from generated files, but there are not present in
- * WRS repo */
-#define GPIO_LJD_BOARD_DETECT	4
-#define GPIO_REG_PSR 		12
+char *spll_lj_periph_id_to_name[] = {
+	[PERIPH_ID_WRS_LJ_SAFRAN] = "Safran",
+	[PERIPH_ID_WRS_FL_SYNCTECHv1_5] = "SyncTech v1.0",
+	[PERIPH_ID_WRS_FL_SYNCTECHv1_0] = "SyncTech v1.5",
+};
+
+char *spll_lj_osc_freq_type_to_name[] = {
+	[OSC_FREQ_10M]        = "10M",
+	[OSC_FREQ_20M]        = "20M",
+	[OSC_FREQ_25M]        = "25M",
+	[OSC_FREQ_50M]        = "50M",
+	[OSC_FREQ_100M]       = "100M",
+	[OSC_FREQ_WRS_LJ_INT] = "WRS LJ INT",
+};
+
+char *spll_lj_wrs_type_to_name[] = {
+	[PERIPH_WRS_STD_NO_LJ]    = "Standard no LJ",
+	[PERIPH_WRS_STD_WITH_LJD] = "Standard with LJD",
+	[PERIPH_WRS_FL_SYNCTECH]  = "SyncTech FL",
+	[PERIPH_WRS_LJ_SAFRAN]    = "Safran LJ",
+};
 
 
 void help(const char* pgrname)
@@ -179,10 +197,57 @@ static void print_gw_info(void)
 	printf("wr-cores-commit: %07x\n", info.wr_cores_hash);
 }
 
+static char * get_lj_periph_id(int i)
+{
+	switch (i) {
+	case PERIPH_ID_WRS_FL_SYNCTECHv1_0:
+	case PERIPH_ID_WRS_FL_SYNCTECHv1_5:
+	case PERIPH_ID_WRS_LJ_SAFRAN:
+		return spll_lj_periph_id_to_name[i];
+	default:
+		return "Unknown";
+	}
+
+	return NULL;
+}
+
+static char * get_lj_osc_freq_type(int i)
+{
+	switch (i) {
+	case OSC_FREQ_10M:
+	case OSC_FREQ_20M:
+	case OSC_FREQ_25M:
+	case OSC_FREQ_50M:
+	case OSC_FREQ_100M:
+	case OSC_FREQ_WRS_LJ_INT:
+		return spll_lj_osc_freq_type_to_name[i];
+	default:
+		return "Unknown";
+	}
+
+	return NULL;
+}
+
+static char * get_lj_wrs_type(int i)
+{
+	switch (i) {
+	case PERIPH_WRS_STD_NO_LJ:
+	case PERIPH_WRS_STD_WITH_LJD:
+	case PERIPH_WRS_FL_SYNCTECH:
+	case PERIPH_WRS_LJ_SAFRAN:
+		return spll_lj_wrs_type_to_name[i];
+	default:
+		return "Unknown";
+	}
+
+	return NULL;
+}
+
 /* Print everything in tagged format, for snmp parsing etc */
 static void wrsw_tagged_versions(void)
 {
-	int feature_ljd;
+	int feature_ljd = 0;
+	struct spll_stats *spll_stats_p;
 
 	printf("software-version: %s\n", __GIT_VER__); /* see Makefile */
 	printf("built-by: %s\n", __GIT_USR__); /* see Makefile */
@@ -193,9 +258,39 @@ static void wrsw_tagged_versions(void)
 	printf("serial-number: %s\n", sdb_get("hw_info", "scb_serial"));
 	printf("scb-version: %s\n", sdb_get("scb_version", NULL));
 	print_gw_info(); /* This is already tagged */
-	feature_ljd =_fpga_readl(FPGA_BASE_RT_GPIO + GPIO_REG_PSR)
-		     & 1 << GPIO_LJD_BOARD_DETECT;
+
+	spll_stats_p = create_map(FPGA_SPLL_STAT, sizeof(*spll_stats_p));
+	if (!spll_stats_p) {
+		fprintf(stderr, "Unable to map spll stats\n");
+	} else if (spll_stats_p->magic != SPLL_STATS_MAGIC) {
+		/* Wrong magic */
+		fprintf(stderr, "unknown magic %x (known is %x)\n",
+			spll_stats_p->magic, SPLL_STATS_MAGIC);
+	} else {
+		feature_ljd = spll_stats_p->ljd_present;
+		printf("wrpc-sw-commit: %.30s\n",
+		       spll_stats_p->build_id.commit_id);
+		printf("wrpc-sw-build-date: %.30s\n",
+		       spll_stats_p->build_id.build_date);
+		printf("wrpc-sw-build-time: %.30s\n",
+		       spll_stats_p->build_id.build_time);
+		printf("wrpc-sw-build-by: %.30s\n",
+		       spll_stats_p->build_id.build_by);
+	}
+
 	printf("features: %s\n", feature_ljd ? "LJD" : "");
+
+	if (feature_ljd) {
+		printf("lj-periph-id: %s (0x%x)\n",
+		       get_lj_periph_id(spll_stats_p->lj_periph_id),
+		       spll_stats_p->lj_periph_id);
+		printf("lj-osc-freq: %s (0x%x)\n",
+		       get_lj_osc_freq_type(spll_stats_p->lj_osc_freq_type),
+		       spll_stats_p->lj_osc_freq_type);
+		printf("lj-wrs-type: %s (0x%x)\n",
+		       get_lj_wrs_type(spll_stats_p->lj_wrs_type),
+		       spll_stats_p->lj_wrs_type);
+	}
 }
 
 /* remove dots from strings */

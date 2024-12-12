@@ -10,21 +10,28 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 IMPORTS
         OBJECT-TYPE, Integer32, Unsigned32, Counter32, Counter64,
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
-        DisplayString, PhysAddress            FROM SNMPv2-TC;
-
-
+        DisplayString, PhysAddress,
+        TEXTUAL-CONVENTION                    FROM SNMPv2-TC;
 
 -- A brief description and update information about this mib.
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "202403260000Z"
+    LAST-UPDATED "202412120000Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
                  "
     DESCRIPTION  "White Rabbit Switch internal details
                  "
+
+    REVISION     "202412120000Z"
+    DESCRIPTION
+        "Updates for v8.0 WRS firmware release
+        Rename textual-conventions to satisfy smilint:
+         - wrsTenths -> WrsDisplayTenths
+         - wrsHundredths -> WrsDisplayHundredths
+        "
 
     REVISION     "202403260000Z"
     DESCRIPTION
@@ -122,14 +129,14 @@ cern OBJECT IDENTIFIER ::= { enterprises 96 }
 -- Textual Conventions
 --=====================================================================
 
-wrsTenths ::= TEXTUAL-CONVENTION
+WrsDisplayTenths ::= TEXTUAL-CONVENTION
     DISPLAY-HINT "d-1"
     STATUS       current
     DESCRIPTION
         "Display tenths (0.1) of Integer32"
     SYNTAX     Integer32
 
-wrsHundredths ::= TEXTUAL-CONVENTION
+WrsDisplayHundredths ::= TEXTUAL-CONVENTION
     DISPLAY-HINT "d-2"
     STATUS       current
     DESCRIPTION
@@ -2411,10 +2418,10 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpRxPower  INTEGER,
         wrsPortStatusT24p        INTEGER,
         wrsPortStatusT24pValid   INTEGER,
-        wrsPortStatusSfpTempF    INTEGER,
-        wrsPortStatusSfpVccF     INTEGER,
-        wrsPortStatusSfpTxPowerF INTEGER,
-        wrsPortStatusSfpRxPowerF INTEGER
+        wrsPortStatusSfpTempF    WrsDisplayHundredths,
+        wrsPortStatusSfpVccF     WrsDisplayTenths,
+        wrsPortStatusSfpTxPowerF WrsDisplayTenths,
+        wrsPortStatusSfpRxPowerF WrsDisplayTenths
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -2641,7 +2648,7 @@ wrsPortStatusT24pValid OBJECT-TYPE
     ::= { wrsPortStatusEntry 23 }
 
 wrsPortStatusSfpTempF  OBJECT-TYPE
-    SYNTAX             wrsHundredths
+    SYNTAX             WrsDisplayHundredths
     UNITS              "C"
     MAX-ACCESS         read-only
     STATUS             current
@@ -2651,7 +2658,7 @@ wrsPortStatusSfpTempF  OBJECT-TYPE
     ::= { wrsPortStatusEntry 24 }
 
 wrsPortStatusSfpVccF   OBJECT-TYPE
-    SYNTAX             wrsTenths
+    SYNTAX             WrsDisplayTenths
     UNITS              "mV"
     MAX-ACCESS         read-only
     STATUS             current
@@ -2661,7 +2668,7 @@ wrsPortStatusSfpVccF   OBJECT-TYPE
     ::= { wrsPortStatusEntry 25 }
 
 wrsPortStatusSfpTxPowerF OBJECT-TYPE
-    SYNTAX               wrsTenths
+    SYNTAX               WrsDisplayTenths
     UNITS                "uW"
     MAX-ACCESS           read-only
     STATUS               current
@@ -2671,7 +2678,7 @@ wrsPortStatusSfpTxPowerF OBJECT-TYPE
     ::= { wrsPortStatusEntry 26 }
 
 wrsPortStatusSfpRxPowerF OBJECT-TYPE
-    SYNTAX               wrsTenths
+    SYNTAX               WrsDisplayTenths
     UNITS                "uW"
     MAX-ACCESS           read-only
     STATUS               current

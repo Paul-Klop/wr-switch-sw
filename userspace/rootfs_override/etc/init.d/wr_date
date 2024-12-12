@@ -8,6 +8,8 @@
 # The set of time from the /update/saved_date file can happen only at the call
 # of this script from rcS during the bootup.
 
+set -o pipefail
+
 dotConfig="/wr/etc/dot-config"
 if [ -f $dotConfig ]; then
 	# source dot-config
@@ -57,7 +59,7 @@ ntp_retries()
 			eval echo "NTP success" $LOGPIPE
 			return 0
 		else
-			eval echo "Retry $i/$N : NTP query failed, unable to contact server ($S)." $LOGPIPE
+			eval echo "Retry $i/$N : NTP query failed, unable to contact server \($S\)." $LOGPIPE
 		fi
 	done
 	eval echo "ERROR: could not reach NTP server '$S' after $N retries" $LOGPIPE

@@ -809,6 +809,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_WHITE, "%s",getStateAsString(timing_mode_state,((wrs_arch_data_t *)ppg_arch)->timingMode));
 			term_cprintf(C_BLUE, "    PLL locking state: ");
 			term_cprintf(C_WHITE, "%s", getStateAsString(pll_locking_state, ((wrs_arch_data_t *)ppg_arch)->timingModeLockingState));
+			term_cprintf(C_BLUE, " PPS: ");
+			term_cprintf(C_WHITE, "%s", shw_pps_gen_enable_output_read() ? "On ":"Off");
 			term_cprintf(C_BLUE, "    BMCA: ");
 			term_cprintf(C_WHITE, "%-10s", getStateAsString(bmca_type, defaultDS->bmcaType));
 			term_cprintf(C_BLUE, "    Domain: ");

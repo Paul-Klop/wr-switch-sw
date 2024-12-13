@@ -198,12 +198,12 @@ read_ntp_server()
 				eval $__result="0"
 				return
 			fi
-			eval echo "Retry $i/$N : Cannot extract offset from NTP message." $LOGPIPE 
+			eval echo "Retry $i/$retries : Cannot extract offset from NTP message." $LOGPIPE
 		else 
-			eval echo "Retry $i/$N : NTP query failed, unable to contact server ($server)." $LOGPIPE 
+			eval echo "Retry $i/$retries : NTP query failed, unable to contact server ($server)." $LOGPIPE
 		fi
 	done
-	eval echo "ERROR: could not reach NTP server '$S' after $N retries" $LOGPIPE 
+	eval echo "ERROR: could not reach NTP server '$S' after $retries retries" $LOGPIPE
 	eval $__result="1"
 }
 

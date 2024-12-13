@@ -52,17 +52,27 @@ ntp_retries()
 	S=$1
 	N=$2
 
+	server_list=""
+	OIFS=$IFS
+	# support comma, semicolon, space as server delimiter
+	IFS=',; '
+	for i in $S; do
+		# assembly list of servers prefixed with -p
+		server_list="$server_list -p $i"
+	done
+	IFS=$OIFS
+
 	for i in `seq $N` ; do # Manual retries
-		eval ntpd -n -q -p $S -d $LOGPIPE
+		eval ntpd -n -q $server_list -d $LOGPIPE
 		if [ $? -eq 0 ]; then
 			success=1
 			eval echo "NTP success" $LOGPIPE
 			return 0
 		else
-			eval echo "Retry $i/$N : NTP query failed, unable to contact server \($S\)." $LOGPIPE
+			eval echo "Retry $i/$N : NTP query failed, unable to contact server\(s\) \($S\)." $LOGPIPE
 		fi
 	done
-	eval echo "ERROR: could not reach NTP server '$S' after $N retries" $LOGPIPE
+	eval echo "ERROR: could not reach NTP server\(s\) '$S' after $N retries" $LOGPIPE
 	return 1
 }
 
@@ -77,7 +87,7 @@ ntp_to_hwclk()
 	fi
 	
 	#Request NTP server and set time to FPGA is okay
-	if ntp_retries $S ${ntp_ntries}; then
+	if ntp_retries "$S" ${ntp_ntries}; then
 		eval /wr/bin/wr_date -v set host $LOGPIPE
 		date_set=1
 	fi

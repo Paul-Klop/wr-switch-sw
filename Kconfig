@@ -150,13 +150,16 @@ choice
 endchoice
 
 config NTP_SERVER
-	string "IP address of NTP server"
+	string "IP addresses of NTP servers"
 	depends on TOD_SOURCE_NTP
 	help
 	  At boot time, the White Rabbit time can be primed by querying
-	  an NTP server, if CONFIG_TOD_SOURCE_NTP is set.
-	  Please write here the IPV4 address (e.g.: "192.168.16.1");
-	  an empty string disables NTP-based priming.
+	  NTP servers, if CONFIG_TOD_SOURCE_NTP is set.
+	  Please write here the IPV4 address (e.g.: "192.168.16.1") or
+	  the server name to be resolved by an used DNS server.
+	  Multiple servers can be defined, please separate them by comma,
+	  semicolon or space.
+	  An empty string disables NTP-based priming.
 
 choice
 	prompt "NMEA Baud Rate"

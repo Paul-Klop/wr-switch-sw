@@ -1,0 +1,55 @@
+From bbf5aab21a722b0a9cd427ca18e673cdd73998b4 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <dev_public@wujek.eu>
+Date: Fri, 13 Dec 2024 15:49:13 +0100
+Subject: [PATCH] package/busybox: ignore wrong addresses provided to ntpd
+
+Signed-off-by: Adam Wujek <dev_public@wujek.eu>
+---
+ ...etworking-ntpd-Ignore-wrong-adresses.patch | 35 +++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 package/busybox/0005-networking-ntpd-Ignore-wrong-adresses.patch
+
+diff --git a/package/busybox/0005-networking-ntpd-Ignore-wrong-adresses.patch b/package/busybox/0005-networking-ntpd-Ignore-wrong-adresses.patch
+new file mode 100644
+index 0000000..7e67974
+--- /dev/null
++++ b/package/busybox/0005-networking-ntpd-Ignore-wrong-adresses.patch
+@@ -0,0 +1,35 @@
++From 6f342d647aa3e6120cbae62ee6545cd1881f3d9e Mon Sep 17 00:00:00 2001
++From: Adam Wujek <dev_public@wujek.eu>
++Date: Fri, 13 Dec 2024 15:42:11 +0100
++Subject: [PATCH] networking/ntpd: Ignore wrong adresses
++
++By default, if a wrong server address is provided, the ntp exits with an error.
++The new behaviour ignores wrong addresses.
++
++Signed-off-by: Adam Wujek <dev_public@wujek.eu>
++---
++ networking/ntpd.c | 8 +++++++-
++ 1 file changed, 7 insertions(+), 1 deletion(-)
++
++diff --git a/networking/ntpd.c b/networking/ntpd.c
++index 9732c9b..3c6731b 100644
++--- a/networking/ntpd.c
+++++ b/networking/ntpd.c
++@@ -766,7 +766,13 @@ add_peers(const char *s)
++ 	peer_t *p;
++ 
++ 	p = xzalloc(sizeof(*p));
++-	p->p_lsa = xhost2sockaddr(s, 123);
+++	p->p_lsa = host2sockaddr(s, 123);
+++	if (!p->p_lsa) {
+++		/* Ignore wrong address */
+++		bb_error_msg("Exclude address '%s'", s);
+++		return;
+++	}
+++
++ 	p->p_dotted = xmalloc_sockaddr2dotted_noport(&p->p_lsa->u.sa);
++ 	p->p_fd = -1;
++ 	p->p_xmt_msg.m_status = MODE_CLIENT | (NTP_VERSION << 3);
++-- 
++2.25.1
++
+-- 
+2.25.1
+

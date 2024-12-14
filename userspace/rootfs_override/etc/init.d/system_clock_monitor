@@ -45,7 +45,7 @@ writeMsg() {
 #
 debug () {
 	if [[ $verbose == 1 ]]; then
-		echo $1 >&1| tee -a $debugLogFile
+		eval echo $1 >&1| tee -a $debugLogFile
 		eval echo $1 $LOGPIPE 
 	fi
 }
@@ -179,11 +179,21 @@ read_ntp_server()
 	local server=$3
 	local retries=2
 	local offset=-1
-	
-	debug "NTP server=$server"
+
+	server_list=""
+	OIFS=$IFS
+	# support comma, semicolon, space as server delimiter
+	IFS=',; '
+	for i in $server; do
+		# assembly list of servers prefixed with -p
+		server_list="$server_list -p $i"
+	done
+	IFS=$OIFS
+
+	debug "NTP server=$server_list"
 	for i in `seq $retries` ; do # Manual retries
 		killNTPD 10
-		ntpRes=$($ntpTool  -n -w -q -d -p  $server 2>&1)
+		ntpRes=$($ntpTool  -n -w -q -d $server_list 2>&1)
 		if [ -n "$ntpRes" ] ; then
 			decodeOffset offset "$ntpRes"
 			if [ $? -eq 0 ] ; then
@@ -200,10 +210,10 @@ read_ntp_server()
 			fi
 			eval echo "Retry $i/$retries : Cannot extract offset from NTP message." $LOGPIPE
 		else 
-			eval echo "Retry $i/$retries : NTP query failed, unable to contact server ($server)." $LOGPIPE
+			eval echo "Retry $i/$retries : NTP query failed, unable to contact server\(s\) \($server\)." $LOGPIPE
 		fi
 	done
-	eval echo "ERROR: could not reach NTP server '$S' after $retries retries" $LOGPIPE
+	eval echo "ERROR: could not reach NTP server\(s\) \($server\) after $retries retries" $LOGPIPE
 	eval $__result="1"
 }
 
@@ -234,7 +244,7 @@ else
 	eval LOGPIPE=\" 2\>\&1 \| logger -t $prefix -p $WRS_LOG\"
 fi
 
-debug "Script started with options \"$@\""
+debug "Script started with options \\\"$*\\\""
 
 # Read options
 if [ "$#" -eq 1 ] && [ "$1" == "-s" ] ; then
@@ -309,7 +319,7 @@ if [ "$CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED" = "y" ] ; then
 		exit 1
 	fi
 
-	read_ntp_server result $threshold $ntpServer
+	read_ntp_server result $threshold "$ntpServer"
 	if (( result != 0 )) ; then
 		writeMsg "ntp_error" $systemClockMonitoringStatus
 		writeMsg "0" $systemClockMonitoringDrift

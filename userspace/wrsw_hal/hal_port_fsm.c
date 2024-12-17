@@ -211,16 +211,18 @@ static int port_fsm_state_link_down(fsm_t *fsm, int eventMsk, int isNewState) {
 		led_set_wrmode(ps->hw_index, SFP_LED_WRMODE_OFF);
 		led_set_synched(ps->hw_index, 0);
 
-		lpdc_writel(ps,
-			    LPDC_MDIO_CTRL_RX_SW_RESET
-			    | LPDC_MDIO_CTRL_TX_ENABLE
-			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
-			    LPDC_MDIO_CTRL);
-		shw_udelay(1);
-		lpdc_writel(ps,
-			    LPDC_MDIO_CTRL_TX_ENABLE
-			    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
-			    LPDC_MDIO_CTRL);
+		if (ps->lpdc.isSupported) {
+			lpdc_writel(ps,
+				    LPDC_MDIO_CTRL_RX_SW_RESET
+				    | LPDC_MDIO_CTRL_TX_ENABLE
+				    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+				    LPDC_MDIO_CTRL);
+			shw_udelay(1);
+			lpdc_writel(ps,
+				    LPDC_MDIO_CTRL_TX_ENABLE
+				    | LPDC_MDIO_CTRL_DMTD_SOURCE_RXRECCLK,
+				    LPDC_MDIO_CTRL);
+		}
 	}
 
 	/* if final state reached for tx setup state machine then

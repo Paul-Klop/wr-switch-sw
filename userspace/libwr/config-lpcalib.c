@@ -190,7 +190,7 @@ int cfg_get_str(struct config_file *cfg, const char *key, char *value)
 {
 	struct key_value *kv = cfg_find_key(cfg, key, 1);
 
-	if (!kv)
+	if (!kv || !kv->value)
 		return 0;
 
 	strcpy(value, kv->value);

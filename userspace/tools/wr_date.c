@@ -50,6 +50,7 @@ static struct wr_nmea nmea;
 static struct wr_irig wr_irig;
 static char *opt_cfgfile = WRDATE_CFG_FILE;
 static char *prgname;
+static long opt_offset_us = 0;
 
 void help(void)
 {
@@ -66,6 +67,9 @@ void help(void)
 		"           baudrate for NMEA (default %d)\n"
 		"  -m <GPZDA|GPRMC>\n"
 		"           format for NMEA (default %s)\n"
+		"  -o <offset_us>\n"
+		"           for tohost cmd, add an extra offset in us;\n"
+		"           possitive offset means linux time is greater than e.g., WR time\n"
 		"  Supported <source> of Time Of Day:\n"
 		"    irigb  use IRIG-B (NOTE: remember to enable it!)\n"
 		"    nmea   use NMEA  \n"
@@ -253,6 +257,19 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 			hw.tv_sec = tai - tai_offset;
 			hw.tv_usec = nsec/1000;
 		}
+
+		/* Apply provided offset as parameter */
+		while (hw.tv_usec + opt_offset_us > 1000000) {
+			opt_offset_us -= 1000000;
+			hw.tv_sec++;
+		}
+
+		while (hw.tv_usec + opt_offset_us < 0) {
+			opt_offset_us += 1000000;
+			hw.tv_sec--;
+		}
+
+		hw.tv_usec += opt_offset_us;
 
 		if (settimeofday(&hw, NULL))
 			fprintf(stderr, "wr_date: settimeofday(): %s\n",
@@ -710,7 +727,7 @@ int main(int argc, char **argv)
 
 	prgname = argv[0];
 
-	while ( (c = getopt(argc, argv, "fc:b:m:vn")) != -1) {
+	while ( (c = getopt(argc, argv, "fc:b:m:vno:")) != -1) {
 		switch(c) {
 		case 'f':
 			opt_force = 1;
@@ -726,6 +743,9 @@ int main(int argc, char **argv)
 			break;
 		case 'v':
 			opt_verbose = 1;
+			break;
+		case 'o':
+			opt_offset_us = atol(optarg);
 			break;
 		case 'n':
 			opt_not = 1;

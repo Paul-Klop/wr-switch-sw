@@ -37,7 +37,7 @@ LDFLAGS = -L../libwr -L../mini-rpc \
 
 all: $(BINARY)
 
-$(BINARY): $(OBJS)
+$(BINARY): $(OBJS) ../libwr/libwr.a
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 install: all

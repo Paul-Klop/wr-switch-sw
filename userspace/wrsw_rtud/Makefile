@@ -39,7 +39,7 @@ LDFLAGS 	:= -L../libwr -L../mini-rpc\
 
 all: $(PROGRAM)
 
-$(PROGRAM): $(OBJFILES)
+$(PROGRAM): $(OBJFILES) ../libwr/libwr.a
 	$(CC) -o $@ $(OBJFILES) $(LDFLAGS) 
 
 clean:

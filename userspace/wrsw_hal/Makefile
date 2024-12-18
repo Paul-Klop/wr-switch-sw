@@ -42,7 +42,7 @@ LDFLAGS = -L../libwr -L../mini-rpc \
 
 all: $(BINARY)
 
-$(BINARY): $(OBJS)
+$(BINARY): $(OBJS) ../libwr/libwr.a
 	pwd
 	$(CC) -o $@ $^ $(LDFLAGS)
 

@@ -71,6 +71,7 @@ all:
 
 all: 	check $(TOOLS)
 
+$(TOOLS): ../libwr/libwr.a
 check:
 	@if [ ! -f $(PPSI_CONFIG) ]; then echo ""; echo ""; \
 		echo "##### Please configure ppsi before building tools"; \

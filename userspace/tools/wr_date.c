@@ -668,7 +668,7 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 			gettimeof_wr(&tv_tai,pps);
 
 			// Calculate difference
-			*udiff_tmp=(tv_host.tv_sec-tv_tai.tv_sec)*1000000;
+			*udiff_tmp=((int64_t)(tv_host.tv_sec-tv_tai.tv_sec))*1000000;
 			if ( tv_host.tv_usec > tv_tai.tv_usec ) {
 				*udiff_tmp+=tv_host.tv_usec-tv_tai.tv_usec;
 			} else {

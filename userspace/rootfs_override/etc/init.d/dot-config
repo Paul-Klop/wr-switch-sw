@@ -8,6 +8,7 @@
 # First, read dot-config to get the new location, if any.
 dotconfig=/wr/etc/dot-config
 tmpconfig=/tmp/dot-config
+dot_config_overwrite_file=/update/permanent/dot-config/dot-config-overwrite
 tmpdir=/tmp
 log_output=/dev/kmsg
 management_port=eth0
@@ -40,6 +41,44 @@ wait_dhcp_forever()
 			return 1
 		fi
 	done
+}
+
+dot_config_overwrite()
+{
+	dot_config_file=$1
+	tmpconfig_local=/tmp/dot-config_local
+	# Check if overwrite is enabled, grep local or received file
+	DOTCONF_LOCAL_OVERWRITE=`grep -e '^CONFIG_DOTCONF_LOCAL_OVERWRITE' $dot_config_file | sed 's/CONFIG_DOTCONF_LOCAL_OVERWRITE=\(.*\)/\1/'`
+	if [ "$DOTCONF_LOCAL_OVERWRITE" != "y" ]; then
+		echo "CONFIG_DOTCONF_LOCAL_OVERWRITE disabled" | tee $log_output >& 2
+		return
+	fi
+	echo "CONFIG_DOTCONF_LOCAL_OVERWRITE enabled" | tee $log_output >& 2
+	if [ ! -f $dot_config_overwrite_file ]; then
+		echo "Dot-config overwrite: $dot_config_overwrite_file file not found!" | tee $log_output >& 2
+		return
+	fi
+	echo "Dot-config overwrite: Using $dot_config_overwrite_file with content:" | tee $log_output >& 2
+	cat $dot_config_overwrite_file | tee $log_output >& 2
+	cp "$dot_config_file" $tmpconfig_local
+	cat $dot_config_overwrite_file >> $tmpconfig_local
+	save_pwd=$PWD
+	cd /wr/etc/
+	echo "Overwritten/new configuration items:" | tee $log_output >& 2
+	# KCONFIG_OVERWRITECONFIG=y - replace file in place
+	# KCONFIG_CONFIG - dot-config location
+	# -s - silent
+	KCONFIG_OVERWRITECONFIG=y KCONFIG_CONFIG=$tmpconfig_local ./conf --listnewconfig Kconfig 2>&1 | tee $log_output >& 2
+	KCONFIG_OVERWRITECONFIG=y KCONFIG_CONFIG=$tmpconfig_local ./conf -s --olddefconfig Kconfig 2>&1 | tee $log_output >& 2
+	cd $save_pwd
+
+	# Update file in /update only when the content is different (to avoid wear-out of flash)
+	if ! cmp -s $tmpconfig_local $dot_config_file; then
+		echo "Dot-config overwrite: New config is different. Replacing the old one." | tee $log_output >& 2
+		cp $tmpconfig_local $dot_config_file
+	else
+		echo "Dot-config overwrite: New dot-config is the same as the old one." | tee $log_output >& 2
+	fi
 }
 
 rm -f "$tmpdir"/dot-config_source
@@ -101,6 +140,8 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 		       echo "dhcp_error" > "$tmpdir"/dot-config_status
 		       echo "Unable to get dot-config's URL via DHCP, using old dot-config"\
 		            | tee $log_output >& 2
+		       # Error, using local dot-config, but check check if the overwrite is needed
+		       dot_config_overwrite $dotconfig
 		       # apply old dot-config
 		       /wr/bin/apply_dot-config
 		       exit
@@ -117,6 +158,8 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 		else
 		    echo "dhcp_error" > "$tmpdir"/dot-config_status
 		    echo "Unable to get dot-config's URL via DHCP, using old dot-config" | tee $log_output >& 2
+		    # Error, using local dot-config, but check check if the overwrite is needed
+		    dot_config_overwrite $dotconfig
 		    # apply old dot-config
 		    /wr/bin/apply_dot-config
 		    exit
@@ -161,10 +204,15 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 		    /wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig 2>&1| tee $log_output &&
 		    /bin/sh -c ". $tmpconfig"; then
 		    echo "Using newly-downloaded dot-config from $URL" | tee $log_output >& 2
+		    # Using downloaded dot-config, apply overwrite if needed
+		    dot_config_overwrite $tmpconfig
 		    # copy it in place to use the new file (unless it is identical)
 		    cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
 		    # info for SNMP that downloading was successful and checker is happy
 		    echo "config_ok" > "$tmpdir"/dot-config_status
+		    # Finally, apply new dot-config
+		    /wr/bin/apply_dot-config
+		    exit
 		else
 		    echo "check_error" > "$tmpdir"/dot-config_status
 		    echo "Errors found in downloaded dot-config \"$URL\", using old" | tee $log_output >& 2
@@ -179,6 +227,9 @@ elif [ "$CONFIG_DOTCONF_SOURCE_LOCAL" = "y" ]; then
 else
     echo "Unknown dot-config source. Using local dot-config" | tee $log_output >& 2
 fi
+
+# Error or not, using local dot-config, check if the overwrite is needed
+dot_config_overwrite $dotconfig
 
 # Finally, apply what we have, be it old or new
 /wr/bin/apply_dot-config

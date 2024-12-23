@@ -70,6 +70,17 @@ config DOTCONF_URL
 	  MACADDR are substituted before retrieving the file.
 	  Example:  "tftp://morgana/wrs-config-IPADDR"
 
+config DOTCONF_LOCAL_OVERWRITE
+	boolean "Overwrite dot-config with values locally stored in /update"
+	default y
+	help
+	  At boot overwrite dot-config (retrieved from the network or stored
+	  locally) with values locally stored in
+	  /update/permanent/dot-config/dot-config-overwrite.
+	  This functionality can be used to e.g., pre-configure management
+	  port after firmware update or to use custom SoftPLL values after
+	  firmware update, specific for particular WR switch.
+
 #
 # Select source of leap seconds file
 # 

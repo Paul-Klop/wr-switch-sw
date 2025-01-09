@@ -140,8 +140,15 @@ development.
 @node Supported Hardware Versions
 @section Supported Hardware Versions
 
-This document applies to hardware versions 3.3 and 3.4 of the @sc{wrs}
-device.
+This document applies to the following hardware versions the @sc{wrs}
+device:
+@itemize @bullet
+ @item SCB-3.3, SCB-3.4, SCB-3.4.1 with and without the Low Jitter Daughterboard
+  (@sc{wrs}, see @url{https://ohwr.org/project/wrs-low-jitter/-/wikis/home})
+ @item SCB-3.5 (also called FL-SCB-v1.5), fanless with LJD integrated
+ @item SCB-LJ 2.0, with LJD integrated.
+@end itemize
+See for details table in @url{https://ohwr.org/project/wr-switch-sw/-/wikis/home#compatibility-of-the-official-firmware-releases-with-commercially-available-wr-switches}.
 
 Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
 are the owner of one of them, please refer to version 3.3 of the
@@ -193,8 +200,16 @@ The most important changes introduced in v8.0 are:
       datasets) with the @t{ppsi_conf} tool.
       New parameters that can be configured in runtime:
       @itemize
+        @item @t{constantAsymmetry}
+        @item @t{ingress-latency}
+        @item @t{egress-latency}
+        @item @t{bmca}
+        @item @t{externalPortConfiguration-desired-state}
       @end itemize
       For more details please check @ref{ppsi_conf}.
+@item Add support of new timing sources: NMEA and IRIG-B, see
+  @ref{Time Source of Grandmaster} and
+  @ref{Time and frequency source when in Grandmaster mode}
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -2631,6 +2646,28 @@ assigned to the port.  Other transceiver
 types can be calibrated to either positive or negative values, to cope
 with the @i{difference} between them and the default @t{AXGE} devices.
 
+@c =-------------------------------------------------------------------------
+@node Time Source of Grandmaster
+@subsection Time Source of Grandmaster
+
+Up to version v7.0, a @sc{wrs} configured as Grandmaster would assume that it
+receives 1PPS and 10MHz signals on its input connectors and takes @i{Time of Date}
+using @i{NTP}. Release version v8.0 introduces two new sources:
+@i{IRIG B} and @i{NMEA}. Us such, the @sc{wrs} configured as Grandmaster can
+now accept (see details in @ref{Time and frequency source when in Grandmaster mode}):
+
+@itemize
+@item @i{IRIG B} on clk input connector as source of frequency and Time of Day, or
+@item @i{10 MHz} on clk input connector as source of frequency and combination of
+  @i{1 PPS} on input connector and either
+  @itemize
+    @item @i{NTP} client connected to server over management port, or
+    @item @i{NMEA} time code received over back-panel RS-232 connector
+  @end itemize
+@end itemize
+
+@b{To be complemented with description of configuration}
+
 @c ==========================================================================
 @node VLANs Configuration
 @section VLANs Configuration
@@ -4695,12 +4732,22 @@ Closing ssh connection... Done
 
 
 @c ##########################################################################
-@node Requirements for input signals from reference when in Grandmaster mode
-@appendix Requirements for input signals from reference when in Grandmaster mode
+@node Time and frequency source when in Grandmaster mode
+@appendix Time and frequency source when in Grandmaster mode
 
+@node GNSS
+@section GNSS
 
 The WR switch can operate as a synchronous PTP Grandmaster referenced to
-externally provided 10 MHz and PPS signals.
+externally provided 10 MHz and PPS signals. This signals must be supplemented
+with @i{Time of Day} information provided either by NTP client or NMEA input
+(see @ref{NTP} and @ref{NMEA})
+
+
+@node 10MHz and 1 PPS - requirements for input signals
+@subsection 10MHz and 1 PPS - requirements for input signals
+
+
 The signals must meet following electrical requirements:
 @itemize
   @item  PPS input: 50 @U{03A9}, LVTTL or TTL levels
@@ -4747,6 +4794,22 @@ In case the two times drift apart, an warning is generated (see
 @b{NOTE:} This annex is based on @i{Note on using WR Switch in Grandmaster mode}
 by T.Wlostowski
 (@url{https://ohwr.org/project/white-rabbit/uploads/ae3282acd8f9f6c5a9067b061202277d/wr_external_reference.pdf})
+
+@node NTP
+@subsection NTP
+
+TBD
+
+@node NMEA
+@subsection NMEA
+
+TBD
+
+@node IRIG-B
+@section IRIG-B
+
+TBD
+
 
 @c ##########################################################################
 @node Automatization of Calibration Procedure

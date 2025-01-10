@@ -287,14 +287,14 @@ int main(int argc, char *argv[])
 	/* Print HAL's version */
 	pr_info("wrsw_hal. Commit %s, built on " __DATE__ "\n", __GIT_VER__);
 
+	hal_parse_cmdline(argc, argv);
+
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {
 		pr_error("Fatal: There is another WR HAL "
 			"instance running. We can't work together.\n\n");
 		return -1;
 	}
-
-	hal_parse_cmdline(argc, argv);
 
 	if (hal_init())
 		exit(1);

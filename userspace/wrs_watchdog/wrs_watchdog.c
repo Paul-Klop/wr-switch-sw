@@ -73,7 +73,7 @@ int get_nports_from_hal(void)
 			}
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	h = (void *)hal_head + hal_head->data_off;
@@ -94,7 +94,7 @@ int get_nports_from_hal(void)
 			exit(1);
 
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	/* check hal's shm version */

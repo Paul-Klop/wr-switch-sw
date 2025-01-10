@@ -601,7 +601,7 @@ void init_shm(void)
 			/* timeout! */
 			exit(-1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	if (hal_head->version != HAL_SHMEM_VERSION) {
@@ -645,7 +645,7 @@ void init_shm(void)
 			/* timeout! */
 			exit(-1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	/* check hal's shm version */

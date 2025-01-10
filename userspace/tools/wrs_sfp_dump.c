@@ -262,7 +262,7 @@ void hal_init_shm(void)
 			/* timeout! */
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	if (hal_head->version != HAL_SHMEM_VERSION) {

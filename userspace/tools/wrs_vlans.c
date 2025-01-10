@@ -192,11 +192,11 @@ int main(int argc, char *argv[])
 	/* connect to the RTUd mini-rpc */
 	while((rtud_ch = minipc_client_create("rtud", 0)) == 0) {
 		n_wait++;
-		if (n_wait > 10) {
+		if (n_wait > 11) {
 			pr_error("Can't connect to RTUd mini-rpc server\n");
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	n_wait = 0;
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 			}
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	/* check rtu shm version */

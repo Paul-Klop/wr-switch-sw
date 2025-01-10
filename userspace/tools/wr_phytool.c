@@ -89,7 +89,7 @@ int hal_shm_init(void)
 			}
 			return(-1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	/* check hal's shm version */

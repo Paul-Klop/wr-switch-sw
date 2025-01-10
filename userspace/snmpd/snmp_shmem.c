@@ -232,29 +232,29 @@ void init_shm(void){
 			"Using path %s for shmem!\n", shmem_path);
 	}
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 11; i++) {
 		if (shmem_ready_hald()) {
 			/* shmem opened successfully */
 			break;
 		}
-		/* wait 1 second before another try */
-		sleep(1);
+		/* wait 900ms second before another try */
+		usleep(900000);
 	}
 	for (i = 0; i < 10; i++) {
 		if (shmem_ready_ppsi()) {
 			/* shmem opened successfully */
 			break;
 		}
-		/* wait 1 second before another try */
-		sleep(1);
+		/* wait 900ms second before another try */
+		usleep(900000);
 	}
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 11; i++) {
 		if (shmem_ready_rtud()) {
 			/* shmem opened successfully */
 			break;
 		}
-		/* wait 1 second before another try */
-		sleep(1);
+		/* wait 900ms second before another try */
+		usleep(900000);
 	}
 }
 

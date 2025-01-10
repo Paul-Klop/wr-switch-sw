@@ -237,7 +237,7 @@ int get_nports_from_hal(void)
 			}
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	h = (void *)hal_head + hal_head->data_off;
@@ -254,7 +254,7 @@ int get_nports_from_hal(void)
 		if (n_wait > 10) {
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	/* check hal's shm version */
@@ -392,7 +392,7 @@ int open_rtu_shm(void)
 			}
 			exit(1);
 		}
-		sleep(1);
+		usleep(900000);
 	}
 
 	/* check rtu shm version */
@@ -571,7 +571,7 @@ int main(int argc, char **argv)
 			}
 		}
 		n_wait++;
-		sleep(1);
+		usleep(900000);
 	}
 	if (use_static_shmem != SHMEM_STATIC_NO_IPC)
 		minipc_set_logfile(rtud_ch, stdout);

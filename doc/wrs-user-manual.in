@@ -200,16 +200,38 @@ The most important changes introduced in v8.0 are:
       datasets) with the @t{ppsi_conf} tool.
       New parameters that can be configured in runtime:
       @itemize
-        @item @t{constantAsymmetry}
-        @item @t{ingress-latency}
-        @item @t{egress-latency}
-        @item @t{bmca}
-        @item @t{externalPortConfiguration-desired-state}
+      @item @t{bmca}
+      @item @t{constant-asymmetry}
+      @item @t{delay-coefficient} (alias to @t{alpha})
+      @item @t{delta-rxm}
+      @item @t{delta-txm}
+      @item @t{egress-latency}
+      @item @t{externalPortConfiguration-desired-state}/@t{epc-desired-state}
+      @item @t{ingress-latency}
       @end itemize
       For more details please check @ref{ppsi_conf}.
 @item Add support of new timing sources: NMEA and IRIG-B, see
-  @ref{Time Source of Grandmaster} and
-  @ref{Time and frequency source when in Grandmaster mode}
+      @ref{Time Source of Grandmaster} and
+      @ref{Time and frequency source when in Grandmaster mode}.
+@item Support multiple NTP servers.
+@item Use @i{uRV} (RISC-V) instead of @i{LatticeMicro32} (LM32) for soft-CPU
+      that runs @i{SoftPLL}.
+@item Support changing @i{Ki} and @i{Kp} parameters of @i{SoftPLL}
+      (in runtime and from @i{dot-config}, see @ref{SoftPLL}).
+@item Add possibility to keep WR ports down after boot
+      (with @t{CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT}).
+@item Add setting IP and mask of WR ports for the purpose of using it with
+      PTP over UDP.
+@item Add appendix about interoperability with non-WR devices.
+@item Preserve ssh keys over firmware updates (TODO: describe it).
+@item Read authorized_keys also from the permanent storage that is preserved
+      over restarts and firmware update (TODO: describe it).
+@item Display PPS output status in @t{wr_mon}.
+@item Add mechanism to overwrite parameters in the runtime @i{dot-config} with
+      parameters stored in @i{dot-config} in the permanent storage
+      (that is preserved over restarts and firmware update). A subset of all
+      @i{dot-config} parameters is expected to be stored in the permanent storage.
+      This mechanism is enabled by default (in the release firmware).
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -228,9 +250,54 @@ so the calibration values are different.}
 
 The following configuration items were added to @i{dot-config}:
 @itemize
-@item @t{CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT}
-@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_ADDR}
-@item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_MASK}
+
+@item Time of Day related:
+      @itemize
+      @item @t{CONFIG_TOD_SOURCE_IRIGB}
+      @item @t{CONFIG_TOD_SOURCE_NMEA}
+      @item @t{CONFIG_TOD_SOURCE_NONE}
+      @item @t{CONFIG_TOD_SOURCE_NTP}
+      @end itemize
+
+@item NMEA related:
+      @itemize
+      @item @t{CONFIG_NMEA_B115200}
+      @item @t{CONFIG_NMEA_B19200}
+      @item @t{CONFIG_NMEA_B38400}
+      @item @t{CONFIG_NMEA_B57600}
+      @item @t{CONFIG_NMEA_B9600}
+      @item @t{CONFIG_NMEA_GPRMC}
+      @item @t{CONFIG_NMEA_GPZDA}
+      @end itemize
+
+@item SoftPLL related:
+      @itemize
+      @item @t{CONFIG_SPLL_HPLL_KI}
+      @item @t{CONFIG_SPLL_HPLL_KI_OVERWRITE}
+      @item @t{CONFIG_SPLL_HPLL_KP}
+      @item @t{CONFIG_SPLL_HPLL_KP_OVERWRITE}
+      @item @t{CONFIG_SPLL_MPLL_KI}
+      @item @t{CONFIG_SPLL_MPLL_KI_OVERWRITE}
+      @item @t{CONFIG_SPLL_MPLL_KP}
+      @item @t{CONFIG_SPLL_MPLL_KP_OVERWRITE}
+      @end itemize
+
+@item Other (global):
+      @itemize
+      @item @t{CONFIG_DOTCONF_LOCAL_OVERWRITE}
+      @end itemize
+
+@item Other (port related):
+      @itemize
+      @item @t{CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT}
+      @end itemize
+
+@item Other (port and instance related):
+      @itemize
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_ADDR}
+      @item @t{CONFIG_PORT@i{xx}_INST@i{yy}_IFACE_IP_MASK}
+      @end itemize
+
 @end itemize
 
 @c ==========================================================================
@@ -301,7 +368,7 @@ The most important changes introduced in v7.0 are:
       Currently, only changing an offset between PPS-in and PPS-out
       in Grandmaster mode is supported.
       For more details please check @ref{wrsw_hal_conf}.
-@item Support Fan-Less version of WRS manufactured by SyncTechnology.
+@item Support fanless version of WRS manufactured by SyncTechnology.
 @end itemize
 
 In terms of @i{dot-config} configuration of the @sc{wrs}, there
@@ -1280,6 +1347,8 @@ appropriate way, before the respective service is started.
         @t{/etc/wr_date.conf}. An empty string (default) disables
         NTP access at boot time.
 
+        TODO: add about multiple servers
+
 @item   CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
 @itemx  CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
 @itemx  CONFIG_SNMP_SYSTEM_CLOCK_UNIT_DAYS
@@ -1503,6 +1572,12 @@ appropriate way, before the respective service is started.
 @item   CONFIG_PPS_IN_TERM_50OHM
 
         Enable 50ohm termination for 1-PPS input.
+        See @ref{10MHz and 1 PPS - requirements for input signals} for more
+        details.
+
+        If @t{CONFIG_TOD_SOURCE_IRIGB} is used, the 50ohm termination for
+        1-PPS input is enabled.
+        See its description for more details.
 
 @item   CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
 @itemx  CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
@@ -1635,8 +1710,8 @@ appropriate way, before the respective service is started.
         Please note that not all Gigabit Ethernet SFP transceivers provide
         the DOM structure.
 
-@item CONFIG_RTU_HP_MASK_ENABLE
-@itemx CONFIG_RTU_HP_MASK_VAL
+@item   CONFIG_RTU_HP_MASK_ENABLE
+@itemx  CONFIG_RTU_HP_MASK_VAL
 
         Set the mask which VLAN priorities are considered High Priority traffic
         (this
@@ -1644,6 +1719,39 @@ appropriate way, before the respective service is started.
         To enable a custom mask please set
         @t{CONFIG_RTU_HP_MASK_ENABLE}.
         @t{CONFIG_RTU_HP_MASK_VAL} shall contain the mask to be used.
+
+@item   CONFIG_DOTCONF_LOCAL_OVERWRITE
+
+        TODO:
+
+@item   CONFIG_TOD_SOURCE_IRIGB
+@itemx  CONFIG_TOD_SOURCE_NMEA
+@itemx  CONFIG_TOD_SOURCE_NONE
+@itemx  CONFIG_TOD_SOURCE_NTP
+
+        TODO: External source of local Time of Day at boot description.
+        For more information check @ref{NMEA}, @ref{IRIG-B}, @ref{NTP}.
+
+@item   CONFIG_NMEA_B115200
+@itemx  CONFIG_NMEA_B19200
+@itemx  CONFIG_NMEA_B38400
+@itemx  CONFIG_NMEA_B57600
+@itemx  CONFIG_NMEA_B9600
+@itemx  CONFIG_NMEA_GPRMC
+@itemx  CONFIG_NMEA_GPZDA
+
+        TODO: NMEA description. For more information check @ref{NMEA}.
+
+@item   CONFIG_SPLL_HPLL_KI
+@itemx  CONFIG_SPLL_HPLL_KI_OVERWRITE
+@itemx  CONFIG_SPLL_HPLL_KP
+@itemx  CONFIG_SPLL_HPLL_KP_OVERWRITE
+@itemx  CONFIG_SPLL_MPLL_KI
+@itemx  CONFIG_SPLL_MPLL_KI_OVERWRITE
+@itemx  CONFIG_SPLL_MPLL_KP
+@itemx  CONFIG_SPLL_MPLL_KP_OVERWRITE
+
+        TODO: SoftPLL description
 
 @end table
 
@@ -3153,7 +3261,8 @@ As today the WRS supports two ways how a role of a port/instance can be chosen:
 The configuration is done by the selection of one of the options
 @t{CONFIG_PTP_OPT_BMCA_*} in @i{dot-config}.
 
-The currently selected BMCA configuration can be displayed in @t{wr_mon}.
+The currently selected BMCA configuration can be displayed in @t{wr_mon} and
+changed with the @t{ppsi_conf} tool (see @ref{ppsi_conf}).
 
 @c ############################################################################
 @node Booting with Barebox
@@ -3361,7 +3470,8 @@ decompression and the @t{-C} (change directory) option.
 
 This appendix includes a short instruction how to add custom files to the WRS
 firmware image (@i{wrs-firmware.tar}). It can be used to e.g. update
-@i{/wr/etc/tx_phase_cal.conf} file or to add a new script/binary.
+@i{/wr/etc/tx_phase_cal.conf} file, @i{dot-config}
+or to add a new script/binary.
 
 Unpack the firmware into an empty directory:
 @smallexample
@@ -3573,6 +3683,8 @@ The following tools and scripts are provided:
 	by using @t{wr_date get tohost}'' you can set host time from
 	White Rabbit time. This can be useful in slave switches that
 	are not synced to NTP at boot.
+
+      TODO: add about NMEA, and IRIGB, and multiple NTP servers
 
 @item wr_mon
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
@@ -3805,6 +3917,9 @@ for color output.
 @item @t{t} -- Disable/enable servo tracking, useful for hot air-gun demo
 
 @end itemize
+
+TODO: update image with "PPS"
+
 @center @image{images/wr_mon, 16cm,, Example wr_mon view}
 
 The list below contains the description of the different fields shown
@@ -3839,6 +3954,8 @@ in @t{wr_mon} snapshot presented in this chapter.
             to be @t{FR} (free running) until it locks to the source of time,
             i.e. input 10MHz & 1PPS or Slave port, respectively.
       @item @t{PLL locking state} -- Indicates the lock status of the Soft PLL.
+      @item @t{PPS} -- Shows whether the WR switch provides a valid output
+            PPS signal on PPS output connector.
       @item @t{BMCA} -- Shows the used @i{Best Master Clock Algorithm} (BMCA) or
             configured @i{external port configuration}.
       @item @t{domain} -- Shows the used PTP @i{domain}.
@@ -4112,35 +4229,6 @@ Please note that there can be none or more than one instance on a port:
             (closer to the power supply).
       @end itemize
 @end itemize
-
-@c After "c" key is pressed some additional information appears in wr_mon
-@c (marked with grey boxes in the picture above).
-@c This includes:
-@c @itemize
-@c @item Global PTP parameters (in the top part of the picture):
-@c       @itemize
-@c       @item @t{local ClockId}
-@c       @item @t{clockClass}
-@c       @item @t{clockAccuracy}
-@c       @item @t{logVar} -- @i{offsetScaledLogVariance}
-@c       @item @t{prio1} -- @i{priority1}
-@c       @item @t{prio2} -- @i{priority2}
-@c       @end itemize
-@c @item PTP parameters specific for port/instance (in the right part of
-@c       the picture):
-@c       @itemize
-@c       @item @t{annI} -- Configured mean time interval between successive
-@c                         send of PTP @i{Announce} messages
-@c                         (@i{logAnnounceInterval}).
-@c                         Used by a port in @i{master} state.
-@c       @item @t{syncI} -- Configured mean time interval between successive
-@c                         send of PTP @i{Sync} messages (@i{logSyncInterval}).
-@c                         Used by a port in @i{master} state.
-@c       @item @t{delReqI} -- @i{logMinDelayReqInterval}
-@c       @item @t{pdelReqI} -- @i{logMinPDelayReqInterval}
-@c       @end itemize
-@c @item Explanation of the columns' names (in the middle of the picture)
-@c @end itemize
 
 For more detailed list of parameters and their values, please use
 @t{wrs_dump_shmem} tool.
@@ -5408,6 +5496,13 @@ Apply values on BC ctdw-774-cptst5 port 2 ? (y/n)n
 Continue calibration for port 3 ? (y/n)n
       @end smallexample
 @end enumerate
+
+
+@c ##########################################################################
+@node Interoperability with non-WR devices
+@appendix Interoperability with non-WR devices
+
+TODO: provide examples how to configure WRS to work with non-WR devices.
 
 @c ##########################################################################
 @bye

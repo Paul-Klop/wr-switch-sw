@@ -3,7 +3,7 @@ mainmenu "White Rabbit Switch  configuration"
 
 config DOTCONF_FW_VERSION
 	string "Firmware version"
-	default "7.0"
+	default "8.0-rc1"
 	help
 	  Free-text information about switch's firmware version. This field is
 	  for information purpose only. Additionally this field describes

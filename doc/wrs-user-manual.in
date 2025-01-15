@@ -3785,7 +3785,24 @@ The following tools and scripts are provided:
 
 @item wrs_version
 	Print information about the software, gateware, hardware version of the WRS.
-	Please check the help message.
+      The information includes:
+      @itemize
+      @item Information read from software/firmware/gateware:
+            version (git tag/hash from relevant repositories) and build info.
+      @item Information read from EEPROM: scb and backplane version, FPGA type,
+            manufacturer, serial-number.
+      @item Information read from hardware (GPIO) about its features,
+            currently only recognition of Low Jitter (LJ) capabilities is
+            supported:
+            @itemize
+            @item lj-wrs-type:  @sc{wrs} with LJ Daughterboard, one of
+                  the @sc{wrs} with LJ integrated in SCB,
+            @item lj-osc-freq: main oscillator frequency,
+            @item lj-periph-id: currently recognized: SyncTech FL v1.0 and 1.5,
+                  Safran 2.0.
+            @end itemize
+      @end itemize
+      Please check the help message for parameters.
 
 @item wrs_vlans
 	The tool allows to configure VLAN settings

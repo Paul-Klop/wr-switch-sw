@@ -2679,6 +2679,116 @@ is done by a proper configuration or can be done automatically if
 WR/L1Sync extension autonegotiation mechanism is enabled
 (more in @ref{Autonegotiation of extension}).
 
+@c ==========================================================================
+@node Autonegotiation of extension
+@subsection Autonegotiation of extension (L1Sync/WR)
+
+Even though @i{White Rabbit} and @i{L1Sync} extensions are meant to achieve
+the same synchronization result and performance, on-the-wire they are not
+compatible.
+The exchange and content of the used messages are different.
+
+To avoid a need of manual re-configuration of an instance when a peer device
+changes the used extension
+(or a device with different extension support is connected),
+was introduced a mechanism for autonegotiation and discovery of
+the extension used by a peer.
+It is intended to detect and automatically select the extension for
+a particular instance based on the configuration of peer's port.
+
+If an extension is configured (@i{L1Sync}, @i{White Rabbit extension} or
+autonegotiation) it can be degraded to use standard PTP if a peer does not
+support the configured extension.
+
+In the @i{dot-config}, the autonegotiation is configured as if it were another
+extension.
+To enable it set @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} to @t{y}.
+All other @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_*} shall be disabled for
+the port/instance.
+With the autonegotiation enabled, the @i{L1Sync} will be used after the link up,
+but can be changed later depending which extension is used by a peer.
+Make sure that autonegotiation is supported by a selected profile.
+
+Configuration option @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} set to
+@t{y} enables the extension autonegotiation for instance, similar to
+the selection of extension. With this option enabled the L1Sync will be used
+after the link up, but can be changed later depending which extension is used
+by a peer.
+
+In the current release @i{HA_WR} and @i{CUSTOM} profiles support L1Sync/WR
+extension autonegotiation.
+
+@c ##########################################################################
+@node Details on extension autonegotiation
+@subsubsection Details on extension autonegotiation
+
+When @i{L1Sync} extension is selected then the following events can trigger
+the switch to @i{WR} extension:
+@itemize @bullet
+@item no @i{L1Sync} message received within reception of
+      N x @i{Announce} messages with WR TLV [W1]
+@item receive @i{SLAVE_PRESENT signaling} message if the link is degraded to
+      the standard PTP [W2]
+@end itemize
+
+When @i{WR} extension is selected then the following events can trigger
+the switch to @i{L1Sync} extension:
+@itemize @bullet
+@item received @i{L1Sync} signaling message [H1]
+@item reception of N x @i{Announce} messages without WR TLV
+      (degradation to standard PTP) [P1]
+@end itemize
+
+The transitions described above are summarized in the following graph.
+
+@center @image{images/dot/autonegotiation_simple, 14cm,, Simple graph of autonegotiation state transitions}
+
+By design, if both peers supports both extensions, the preference is to
+@i{L1Sync}.
+
+When it is detected that a peer uses none of the @i{WR}/@i{L1Sync} extensions,
+then the @i{L1Sync} extension is selected, but the link is degraded to the
+standard PTP.
+
+After the link-down, link-up sequence the link will start with the @i{L1Sync}
+extension.
+
+NOTE:
+It was decided that an instance with autonegotiated WR will not send
+@i{signaling} messages to its peer to notify that it supports also @i{L1Sync}
+extension.
+Such decision was taken to limit the number of messages being sent between
+peers.
+It can happen that two peers previously autonegotiated to use
+WR are connected together without a link down (e.g., as a result of a change of
+a configuration of an optical switch).
+In such case both devices will continue to use WR and think that the other does
+not support @i{L1Sync} extension.
+Fortunately, such scenario is very sophisticated and is very unlikely to happen
+in real operation.
+Even more, for such links, even before the introduction of autonegotiation,
+the WR extension will use the wrong RX/TX deltas (for an old peer) causing an
+constant time offset.
+
+@c ==========================================================================
+@node BMCA Configuration
+@subsection BMCA Configuration
+
+As today the WRS supports two ways how a role of a port/instance can be chosen:
+@itemize
+@item @i{External Port Configuration} -- the assignment of a role is static,
+      the role is configured in the @i{dot-config}
+@item @i{Best Master Clock Algorithm} -- automatic selection based on
+      the content of announce messages (as defined in IEEE1588-2019 standard)
+@end itemize
+
+The configuration is done by the selection of one of the options
+@t{CONFIG_PTP_OPT_BMCA_*} in @i{dot-config}.
+
+The currently selected BMCA configuration can be displayed in @t{wr_mon} and
+changed with the @t{ppsi_conf} tool (see @ref{ppsi_conf}).
+
+
 @c =-------------------------------------------------------------------------
 @node SFP name matching
 @subsection SFP name matching
@@ -2735,8 +2845,8 @@ To understand better the operation of SFP matching algorithm, please see below s
 
 
 @c =-------------------------------------------------------------------------
-@node Other Deployments
-@subsection Other Deployments
+@node Fiber parameter matching
+@subsection Fiber parameter matching
 
 All examples from previous sections match typical @sc{wr} networks we setup at
 CERN with a single mono-modal fiber and 1310/1490 nm light wavelengths.
@@ -2825,6 +2935,7 @@ to control the local WR clock.
 The proportional and integral gain factors of both PLLs can be configured via
 @i{dot-config} items @t{CONFIG_SPLL_*}, and at runtime using the @i{spll_conf}
 command line tool.
+
 
 
 @c ==========================================================================
@@ -3206,114 +3317,7 @@ The right LED is green when a particular port is synchronized to the master.
 When a frame is transmitted or received on a port the right LED blinks orange.
 If a port is also synced then it blinks yellow instead.
 
-@c ==========================================================================
-@node Autonegotiation of extension
-@section Autonegotiation of extension (L1Sync/WR)
 
-Even though @i{White Rabbit} and @i{L1Sync} extensions are meant to achieve
-the same synchronization result and performance, on-the-wire they are not
-compatible.
-The exchange and content of the used messages are different.
-
-To avoid a need of manual re-configuration of an instance when a peer device
-changes the used extension
-(or a device with different extension support is connected),
-was introduced a mechanism for autonegotiation and discovery of
-the extension used by a peer.
-It is intended to detect and automatically select the extension for
-a particular instance based on the configuration of peer's port.
-
-If an extension is configured (@i{L1Sync}, @i{White Rabbit extension} or
-autonegotiation) it can be degraded to use standard PTP if a peer does not
-support the configured extension.
-
-In the @i{dot-config}, the autonegotiation is configured as if it were another
-extension.
-To enable it set @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} to @t{y}.
-All other @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_*} shall be disabled for
-the port/instance.
-With the autonegotiation enabled, the @i{L1Sync} will be used after the link up,
-but can be changed later depending which extension is used by a peer.
-Make sure that autonegotiation is supported by a selected profile.
-
-Configuration option @t{CONFIG_PORT@i{xx}_INST@i{yy}_EXTENSION_L1S_WR} set to
-@t{y} enables the extension autonegotiation for instance, similar to
-the selection of extension. With this option enabled the L1Sync will be used
-after the link up, but can be changed later depending which extension is used
-by a peer.
-
-In the current release @i{HA_WR} and @i{CUSTOM} profiles support L1Sync/WR
-extension autonegotiation.
-
-@c ##########################################################################
-@node Details on extension autonegotiation
-@subsection Details on extension autonegotiation
-
-When @i{L1Sync} extension is selected then the following events can trigger
-the switch to @i{WR} extension:
-@itemize @bullet
-@item no @i{L1Sync} message received within reception of
-      N x @i{Announce} messages with WR TLV [W1]
-@item receive @i{SLAVE_PRESENT signaling} message if the link is degraded to
-      the standard PTP [W2]
-@end itemize
-
-When @i{WR} extension is selected then the following events can trigger
-the switch to @i{L1Sync} extension:
-@itemize @bullet
-@item received @i{L1Sync} signaling message [H1]
-@item reception of N x @i{Announce} messages without WR TLV
-      (degradation to standard PTP) [P1]
-@end itemize
-
-The transitions described above are summarized in the following graph.
-
-@center @image{images/dot/autonegotiation_simple, 14cm,, Simple graph of autonegotiation state transitions}
-
-By design, if both peers supports both extensions, the preference is to
-@i{L1Sync}.
-
-When it is detected that a peer uses none of the @i{WR}/@i{L1Sync} extensions,
-then the @i{L1Sync} extension is selected, but the link is degraded to the
-standard PTP.
-
-After the link-down, link-up sequence the link will start with the @i{L1Sync}
-extension.
-
-NOTE:
-It was decided that an instance with autonegotiated WR will not send
-@i{signaling} messages to its peer to notify that it supports also @i{L1Sync}
-extension.
-Such decision was taken to limit the number of messages being sent between
-peers.
-It can happen that two peers previously autonegotiated to use
-WR are connected together without a link down (e.g., as a result of a change of
-a configuration of an optical switch).
-In such case both devices will continue to use WR and think that the other does
-not support @i{L1Sync} extension.
-Fortunately, such scenario is very sophisticated and is very unlikely to happen
-in real operation.
-Even more, for such links, even before the introduction of autonegotiation,
-the WR extension will use the wrong RX/TX deltas (for an old peer) causing an
-constant time offset.
-
-@c ==========================================================================
-@node BMCA Configuration
-@section BMCA Configuration
-
-As today the WRS supports two ways how a role of a port/instance can be chosen:
-@itemize
-@item @i{External Port Configuration} -- the assignment of a role is static,
-      the role is configured in the @i{dot-config}
-@item @i{Best Master Clock Algorithm} -- automatic selection based on
-      the content of announce messages (as defined in IEEE1588-2019 standard)
-@end itemize
-
-The configuration is done by the selection of one of the options
-@t{CONFIG_PTP_OPT_BMCA_*} in @i{dot-config}.
-
-The currently selected BMCA configuration can be displayed in @t{wr_mon} and
-changed with the @t{ppsi_conf} tool (see @ref{ppsi_conf}).
 
 @c ############################################################################
 @node Booting with Barebox

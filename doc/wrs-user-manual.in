@@ -1766,7 +1766,8 @@ appropriate way, before the respective service is started.
 @itemx  CONFIG_SPLL_MPLL_KP
 @itemx  CONFIG_SPLL_MPLL_KP_OVERWRITE
 
-        TODO: SoftPLL description
+        Configuration of Ki and Kp parameters the Main and Helper PLL in SoftPLL.
+        For more information, check @ref{SoftPLL}.
 
 @end table
 
@@ -2803,6 +2804,27 @@ now accept:
 @end itemize
 
 See details in @ref{Time and frequency source when in Grandmaster mode}.
+
+@c =-------------------------------------------------------------------------
+@node SoftPLL
+@subsection SoftPLL
+
+The Software Phase-Locked Loop (SoftPLL) used for syntonization and phase
+alignment in WR devices uses Proportional Integral (PI) control.
+Such a solution reduces the error between a target setpoint and a measured
+output value by combining the current error with past errors over time.
+These error components are weighted by two gain factors, named proportional
+gain (Kp) and integral gain (Ki) respectively.
+The values of these gains define the system bandwidth and stability, therefore
+affecting the overall performance of the loop.
+
+WR devices include two such PLLs, called the Main and Helper PLL.
+The Helper PLL is used to generate the DDMTD sampling clock, and the Main PLL
+to control the local WR clock.
+
+The proportional and integral gain factors of both PLLs can be configured via
+@i{dot-config} items @t{CONFIG_SPLL_*}, and at runtime using the @i{spll_conf}
+command line tool.
 
 
 @c ==========================================================================
@@ -3855,6 +3877,13 @@ The following tools and scripts are provided:
 
         NOTE: This tool does not change @i{dot-config}!
         All changes using this tool are lost after the reboot!
+
+@item spll_conf
+      The tool allows to configure in runtime @i{Ki} and @i{Kp} parameters
+      of the Main and Helper PLL. See more information in @ref{SoftPLL}.
+
+      For information about supported parameters please refer to tool's
+      help (@t{--help} parameter).
 
 @c FIXME: document rtu_stat spll_dbg_proxy
 @end table

@@ -211,7 +211,7 @@ The most important changes introduced in v8.0 are:
       @end itemize
       For more details please check @ref{ppsi_conf}.
 @item Add support of new timing sources: NMEA and IRIG-B, see
-      @ref{Time Source of Grandmaster} and
+      @ref{Time and Frequency Source of Grandmaster} and
       @ref{Time and frequency source when in Grandmaster mode}.
 @item Support multiple NTP servers.
 @item Use @i{uRV} (RISC-V) instead of @i{LatticeMicro32} (LM32) for soft-CPU
@@ -1754,7 +1754,8 @@ appropriate way, before the respective service is started.
 @itemx  CONFIG_NMEA_GPRMC
 @itemx  CONFIG_NMEA_GPZDA
 
-        TODO: NMEA description. For more information check @ref{NMEA}.
+        Configuration of the NMEA source of Time of Day.
+        For more information check @ref{NMEA}.
 
 @item   CONFIG_SPLL_HPLL_KI
 @itemx  CONFIG_SPLL_HPLL_KI_OVERWRITE
@@ -2524,6 +2525,17 @@ It is advised to keep the default values for these options.
 
 @end table
 
+@c ##########################################################################
+@node Operation of the Device
+@chapter Operation of the Device
+
+While the previous chapter explained each configuration item in
+the configuration file, this chapter provides more practical information about
+configuration and operation of the @sc{wr}.
+This includes explanation of how information from the configuration file is
+used, how different configuration items are related, how configured mechanism
+work, as well as example configuration and expected behavior of the @sc{wr}.
+
 @c ==========================================================================
 @node Timing Configuration
 @section Timing Configuration
@@ -2771,14 +2783,14 @@ types can be calibrated to either positive or negative values, to cope
 with the @i{difference} between them and the default @t{AXGE} devices.
 
 @c =-------------------------------------------------------------------------
-@node Time Source of Grandmaster
-@subsection Time Source of Grandmaster
+@node Time and Frequency Source of Grandmaster
+@subsection Time and Frequency Source of Grandmaster
 
 Up to version v7.0, a @sc{wrs} configured as Grandmaster would assume that it
-receives 1PPS and 10MHz signals on its input connectors and takes @i{Time of Date}
-using @i{NTP}. Release version v8.0 introduces two new sources:
+receives 1PPS and 10MHz signals on its input connectors and obtains @i{Time of Date}
+from an @i{NTP} server. Release v8.0 introduces two new sources:
 @i{IRIG B} and @i{NMEA}. Us such, the @sc{wrs} configured as Grandmaster can
-now accept (see details in @ref{Time and frequency source when in Grandmaster mode}):
+now accept:
 
 @itemize
 @item @i{IRIG B} on clk input connector as source of frequency and Time of Day, or
@@ -2790,7 +2802,8 @@ now accept (see details in @ref{Time and frequency source when in Grandmaster mo
   @end itemize
 @end itemize
 
-@b{To be complemented with description of configuration}
+See details in @ref{Time and frequency source when in Grandmaster mode}.
+
 
 @c ==========================================================================
 @node VLANs Configuration

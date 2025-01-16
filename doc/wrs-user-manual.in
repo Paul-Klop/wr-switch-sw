@@ -232,6 +232,8 @@ The most important changes introduced in v8.0 are:
       (that is preserved over restarts and firmware update). A subset of all
       @i{dot-config} parameters is expected to be stored in the permanent storage.
       This mechanism is enabled by default (in the release firmware).
+@item Change numbering of ports in  /wr/etc/tx_phase_cal.conf from 0-11 to
+      01-12 for consistency with wriX interfaces numbering.
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -1577,7 +1579,7 @@ appropriate way, before the respective service is started.
 
         If @t{CONFIG_TOD_SOURCE_IRIGB} is used, the 50ohm termination for
         1-PPS input is enabled.
-        See its description for more details.
+        See description in @ref{IRIG-B} for more details.
 
 @item   CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
 @itemx  CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
@@ -1729,7 +1731,19 @@ appropriate way, before the respective service is started.
 @itemx  CONFIG_TOD_SOURCE_NONE
 @itemx  CONFIG_TOD_SOURCE_NTP
 
-        TODO: External source of local Time of Day at boot description.
+        Select external source of Time of Day.
+        It is used to set the local Linux UTC time at boot.
+        For a @sc{WRS} that is the PTP Grandmaster for a WR Network, this time
+        is used to set the WR time that is distributed over WR Network.
+        For a @sc{WRS} that is a Boundary Clock, this time is overwritten by
+        the time obtained via slave port when synchronization is established.
+
+        In both cases, this source of time is used only at boot to set the time.
+        If the selected source is NTP, it can be used during operation for
+        monitoring.
+        If enabled via configuration (@t{SNMP_SYSTEM_CLOCK_MONITOR_ENABLED}),
+        the WR time is compared with the time obtained from NTP.
+
         For more information check @ref{NMEA}, @ref{IRIG-B}, @ref{NTP}.
 
 @item   CONFIG_NMEA_B115200
@@ -2162,6 +2176,7 @@ A set of parameters common to all instances running on the same physical port.
 
 @item   CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT
         Used to define that a port shall stay down after a boot of WRS.
+        Such a port can be brought up by using the @t{ifconfig wriX up} command.
 
 @item   CONFIG_PORT@i{xx}_FIBER
         Identify the fiber type. This is a number (@i{zz}) referring to the
@@ -2204,6 +2219,7 @@ It is advised to keep the default values for these options.
 
         If UDP over IPv4 is selected for transport layer, these fields are used
         to setup the IP address and mask on an associated interface.
+        Predefined values are assigned by default.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP
@@ -4706,7 +4722,7 @@ SNMP table WR-SWITCH-MIB::wrsPstatsHCTable, part 2
 Unfortunately output due to the number of counters is very wide. Number of 
 characters per line can be limited by switch @t{Cw}, in example was set to 80.
 
-@page
+@setchapternewpage on
 @c ##########################################################################
 @node Bugs and Troubleshooting
 @appendix Bugs and Troubleshooting
@@ -4845,7 +4861,7 @@ Closing ssh connection... Done
 
 The WR switch can operate as a synchronous PTP Grandmaster referenced to
 externally provided 10 MHz and PPS signals. This signals must be supplemented
-with @i{Time of Day} information provided either by NTP client or NMEA input
+with @i{Time of Day} information provided by either NTP client or NMEA input
 (see @ref{NTP} and @ref{NMEA})
 
 
@@ -4888,22 +4904,46 @@ the 10 MHz input beyond one 10 MHz clock cycle when the switch is locked.
 
 @b{Supplying time-of-day information}
 
-WRS retrieves the time-of-day information via NTP, it is expected that reachable
-NTP server name or IP address is configured.
-After getting the time-of-day information at the startup, NTP server is queried
-ONLY to verify offset between the NTP time and the local WR time.
-In case the two times drift apart, an warning is generated (see
-@ref{SNMP Support}).
+WRS retrieves the time-of-day information via NTP, IRIG-B or from NMEA input,
+as described in the following sections.
+After getting the time-of-day information at the startup, the NTP server, IRIG-B
+or NMEA input is used ONLY to verify its offset to the local WR time.
+In case the two times drift apart, a warning is generated
+(see @ref{SNMP Support}).
 
 
 @b{NOTE:} This annex is based on @i{Note on using WR Switch in Grandmaster mode}
 by T.Wlostowski
 (@url{https://ohwr.org/project/white-rabbit/uploads/ae3282acd8f9f6c5a9067b061202277d/wr_external_reference.pdf})
 
+
 @node NTP
 @subsection NTP
 
-TBD
+Network Time Protocol (NTP) is a networking protocol which allows
+synchronization over packet-switched, variable-latency networks (LAN and WLAN)
+to within a few milliseconds of Coordinated Universal Time (UTC).
+On the @sc{wrs}, the NTP client is used to obtain Time of Day from NTP
+server(s).
+The NTP client accesses the NTP server via management port, as such the network
+connected to the management needs to have access to at least one NTP server.
+If Internet can be accessed from the management port, any of the readily
+available public NTP servers can be specified.
+Otherwise (no access to Internet), a local NTP server connected to the same LAN
+is required.
+
+Name(s) or IP address(es) of the NTP server(s) is set in via
+@t{CONFIG_NTP_SERVER} parameter.
+As of release v8.0, more than one NTP server can be specified.
+See details in @ref{Configuration Items that Apply at Run Time}.
+
+NTP is used to obtain Time of Day at the boot of the @sc{wrs}.
+During operation of @sc{wrs}, NTP can be used to monitor the offset between
+the WR time and the time obtained from the NTP server, and report it via SNMP.
+This is enabled via setting @t{CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED}
+and respective configuration (e.g., offset threshold to indicate error).
+
+
 
 @node NMEA
 @subsection NMEA
@@ -4929,18 +4969,23 @@ the WR switch as its source of time.
 
 To use @i{IRIG-B} in WR switch select @t{CONFIG_TOD_SOURCE_NMEA} in
 @i{dot-config}.
+The message type to be used is set in @i{dot-config} via @t{CONFIG_NMEA_GPRMC}
+and @t{CONFIG_NMEA_GPZDA}.
+The baud rate of the serial interface is set via @t{CONFIG_NMEA_B*} with
+the baud rate supported values: 9600, 57600, 38400, 19200, 115200.
 
-With an NMEA source connected to the WR switch's RS-232 port, raw data can
-be seen with the command:
+With an NMEA source connected to the WR switch's RS-232 port in the back panel,
+raw data can be seen with the command:
 @smallexample
-$ cat /dev/ttyS2
-TODO: paste an example NMEA output
+# cat /dev/ttyS2
+$ GPZDA,100545,16,01,2025,00,00*4E
+$ GPRMC,100545,V,4615.2648,N,00603.3679,E,,,160125,,,A*63
 @end smallexample
 
 @node IRIG-B
 @section IRIG-B
 
-Inter-Range Instrumentation Group (IRIG) timecodes are a standards for
+Inter-Range Instrumentation Group (IRIG) timecodes are a standard for
 transferring timing information.
 These standards define various bit rates, modulation types, carrier frequencies
 and coded expressions, which are shown by the characters following the hyphen.

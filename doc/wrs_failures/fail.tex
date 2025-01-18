@@ -177,11 +177,11 @@ WR network.
 \subsubsection{\bf \emph{SoftPLL} has crashed/restarted}
 		\label{fail:timing:spll_crash}
 		\begin{pck_descr}
-			\item [] \underline{Status}: TODO \emph{(depends on SoftPLL mem read), (requires changes in lm32 software)}
+			\item [] \underline{Status}: TODO \emph{(depends on SoftPLL mem read), (requires changes in RISC-V software)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
-				If the LM32 software crashes or restarts for some reason, its state may
+				If the RISC-V software crashes or restarts for some reason, its state may
 				be either reset or random (if for some reason variables were overwritten
 				with junk values). In such case, PLL becomes unlocked and switch is not
 				able to provide synchronization to other devices.
@@ -190,8 +190,8 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsSpllIrqCnt}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL} }
 			\item [] \underline{Note}: We have a similar mechanism as in the
-				\emph{wrpc-sw} to detect if the LM32 program has restarted because of
-				the CPU following a NULL pointer. However, LM32 program hangs on
+				\emph{wrpc-sw} to detect if the RISC-V program has restarted because of
+				the CPU following a NULL pointer. However, RISC-V program hangs on
 				re-initialization phase. 
 				In addition to that, we can detect if
 				\emph{SoftPLL} is hanging (but not restarted) based on irq counter.
@@ -688,7 +688,7 @@ list of faults leading to a data error.
 				wrong:
 				\begin{itemize}
 					\item status of reading HW information from dataflash
-					\item status of programming FPGA and LM32
+					\item status of programming FPGA and SoftCPU
 					\item status of loading kernel modules
 					\item status of starting userspace daemons
 					\item status of execution of a custom boot script
@@ -1133,7 +1133,7 @@ diagnostics.
 %
 %\subsection{PPSi/HAL/SNMP/any other userspace daemon has crashed}
 %
-%\subsection{LM32 software has crashed/restarted}
+%\subsection{SoftCPU software has crashed/restarted}
 %
 %\subsection{Cooling fan broken}
 %

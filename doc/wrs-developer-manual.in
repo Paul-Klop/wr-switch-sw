@@ -214,7 +214,7 @@ rebuilding it all from scratch.
 @subsection Other Repositories
 
 Not everything that runs in the switch comes from this package:
-both the @i{gateware} image and the @i{lm32} firmware binary
+both the @i{gateware} image and the @i{RISC-V} firmware binary
 are built from sources external to this package.
 
 The @i{gateware} is being downloaded as a pre-build tar archive
@@ -227,11 +227,11 @@ get the exact version you need. All relevant commit identifiers
 are shown by command @t{wrs_version -t} or in the SNMP version objects
 (for more information please refer to switch's MIB file @t{WR-SWITCH-MIB.txt}).
 
-The LM32 program is provided as a pre-compiled binary in
+The RISC-V program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}. The respective source code is the
 @i{wrpc-sw} package, because all WR installations run the same
 @sc{pll} software code and we chose to avoid duplication. Moreover,
-@i{wr-switch-sw} builds do not require an LM32 development environment.
+@i{wr-switch-sw} builds do not require an RISC-V development environment.
 
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
@@ -854,7 +854,7 @@ The main components are:
 
 @item mini-rpc
 	A remote procedure call library used by most other programs
-        to exchange information among themselves or query the LM32
+        to exchange information among themselves or query the RISC-V
         that is running on the FPGA.
 
 @item libwr
@@ -882,7 +882,7 @@ directory (@code{LINUX=}) and the cross-compiler to use
 
 @c --------------------------------------------------------------------------
 @node VHDL Binaries
-@subsection VHDL and LM32 Binaries
+@subsection VHDL and RISC-V Binaries
 
 The gateware binaries that are needed to run the FPGA are added to the
 target filesystem by the @file{wrs_build_gateware} script. If the
@@ -892,7 +892,7 @@ binaries you just compiled (but the script is not compiling gateware).
 If the variable is not set, the script extracts a tar file downloaded
 from @code{ohwr.org} as part of the initial download step.
 
-The LM32 program is provided as a pre-compiled binary in
+The RISC-V program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}.
 
 More details about the binaries are in @ref{Other Repositories}.

@@ -3438,14 +3438,15 @@ The following tools and scripts are provided:
 	@code{Ctrl+C} escape combination to go back to WR Switch Linux shell.
 
 
-@item load-lm32
+@item load-urv
 @itemx load-virtex
-	They load into the FPGA the gateware and the LM32 application.
-	They are used by the init scripts of the Linux system. The LM32
-	loader can also change variables in the loaded binary, and
+      They load into the FPGA the gateware and the RISC-V application.
+      They are used by the init scripts of the Linux system.
+      The RISC-V loader (@t{load-urv}) can also change variables in
+      the loaded binary, and
 	read or write variables without stopping the running CPU.
 	This is limited to 32-bit integer variables, though. 
-@c FIXME: document better load-lm32 for elf.
+@c FIXME: document better load-urv for elf.
 
 @item mapper
 @itemx wmapper

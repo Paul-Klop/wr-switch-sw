@@ -34,10 +34,10 @@
 #define WRS_BOOT_LOAD_FPGA_ERROR_MINOR 3	/* warning */
 #define WRS_BOOT_LOAD_FPGA_FILE_NOT_FOUND 4	/* error */
 
-#define WRS_BOOT_LOAD_LM32_OK 1			/* ok */
-#define WRS_BOOT_LOAD_LM32_ERROR 2		/* error */
-#define WRS_BOOT_LOAD_LM32_ERROR_MINOR 3	/* warning */
-#define WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND 4	/* error */
+#define WRS_BOOT_LOAD_SOFTCPU_OK 1			/* ok */
+#define WRS_BOOT_LOAD_SOFTCPU_ERROR 2		/* error */
+#define WRS_BOOT_LOAD_SOFTCPU_ERROR_MINOR 3	/* warning */
+#define WRS_BOOT_LOAD_SOFTCPU_FILE_NOT_FOUND 4	/* error */
 
 #define WRS_FW_UPDATE_STATUS_OK 1		/* ok */
 #define WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR 2	/* warning */
@@ -90,7 +90,7 @@ struct wrsBootStatus_s {
 	int32_t wrsBootConfigStatus;
 	int32_t wrsBootHwinfoReadout;
 	int32_t wrsBootLoadFPGA;
-	int32_t wrsBootLoadLM32;
+	int32_t wrsBootLoadSoftCPU;
 	int32_t wrsBootKernelModulesMissing;
 	int32_t wrsBootUserspaceDaemonsMissing;
 	int32_t wrsGwWatchdogTimeouts;

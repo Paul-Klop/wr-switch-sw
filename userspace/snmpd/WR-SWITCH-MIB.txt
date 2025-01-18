@@ -31,6 +31,8 @@ wrSwitchMIB MODULE-IDENTITY
         Rename textual-conventions to satisfy smilint:
          - wrsTenths -> WrsDisplayTenths
          - wrsHundredths -> WrsDisplayHundredths
+        Rename OID:
+         - wrsBootLoadLM32 -> wrsBootLoadSoftCPU
         "
 
     REVISION     "202403260000Z"
@@ -973,7 +975,7 @@ wrsBootLoadFPGA  OBJECT-TYPE
         fileNotFound - file to be loaded not found"
     ::= { wrsBootStatusGroup 11 }
 
-wrsBootLoadLM32  OBJECT-TYPE
+wrsBootLoadSoftCPU  OBJECT-TYPE
     SYNTAX       INTEGER {
                         na(0),
                         ok(1),
@@ -984,8 +986,8 @@ wrsBootLoadLM32  OBJECT-TYPE
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "Result of loading LM32
-        ok - LM32 loaded successfully
+        "Result of loading SoftCPU
+        ok - SoftCPU loaded successfully
         error - loading failed
         errorMinor - cannot read status file, problem is probably somewhere else
         fileNotFound - file to be loaded not found"

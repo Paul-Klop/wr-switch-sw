@@ -4436,7 +4436,7 @@ WR-SWITCH-MIB::wrsConfigSourceUrl.0 = STRING: tftp://192.168.1.1/config-192.168.
 WR-SWITCH-MIB::wrsBootConfigStatus.0 = INTEGER: ok(1)
 WR-SWITCH-MIB::wrsBootHwinfoReadout.0 = INTEGER: ok(1)
 WR-SWITCH-MIB::wrsBootLoadFPGA.0 = INTEGER: ok(1)
-WR-SWITCH-MIB::wrsBootLoadLM32.0 = INTEGER: ok(1)
+WR-SWITCH-MIB::wrsBootLoadSoftCPU.0 = INTEGER: ok(1)
 [...]
 WR-SWITCH-MIB::wrsPtpServoState.1 = STRING: TRACK_PHASE
 WR-SWITCH-MIB::wrsPtpServoStateN.1 = INTEGER: trackPhase(4)

@@ -53,7 +53,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootConfigStatus),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootHwinfoReadout),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadFPGA),
-	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadLM32),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadSoftCPU),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootKernelModulesMissing),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootUserspaceDaemonsMissing),
 	FIELD(wrsBootStatus_s, ASN_COUNTER, wrsGwWatchdogTimeouts),
@@ -288,7 +288,7 @@ static void get_dotconfig_source(void)
 
 /* get status of execution of following scripts:
  * /etc/init.d/hwinfo
- * /wr/sbin/startup-mb.sh (load FPGA and LM32)
+ * /wr/sbin/startup-mb.sh (load FPGA and RISC-V)
  * */
 static void get_boot_scripts_status(void){
 	static int run_once = 0;
@@ -296,7 +296,7 @@ static void get_boot_scripts_status(void){
 	char buff[21]; /* 1 for null char */
 
 	if (run_once) {
-		/* HWinfo, load of FPGA and LM32 is done only at boot */
+		/* HWinfo, load of FPGA and RISC-V is done only at boot */
 		return;
 	}
 	run_once = 1;
@@ -366,24 +366,24 @@ static void get_boot_scripts_status(void){
 		run_once = 0;
 	}
 
-	/* result of loading LM32 */
+	/* result of loading RISC-V */
 	f = fopen(LOAD_URV_STATUS_FILE, "r");
 	if (f) {
 		/* readline without newline */
 		fscanf(f, LINE_READ_LEN(20), buff);
 		fclose(f);
 		if (!strncmp(buff, "load_ok", 20))
-			wrsBootStatus_s.wrsBootLoadLM32 =
-						WRS_BOOT_LOAD_LM32_OK;
+			wrsBootStatus_s.wrsBootLoadSoftCPU =
+						WRS_BOOT_LOAD_SOFTCPU_OK;
 		else if (!strncmp(buff, "load_file_not_found", 20)) {
-			wrsBootStatus_s.wrsBootLoadLM32 =
-					WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND;
+			wrsBootStatus_s.wrsBootLoadSoftCPU =
+					WRS_BOOT_LOAD_SOFTCPU_FILE_NOT_FOUND;
 			/* try again next time */
 			run_once = 0;
 		}
 		else {/*  */
-			wrsBootStatus_s.wrsBootLoadLM32 =
-						WRS_BOOT_LOAD_LM32_ERROR;
+			wrsBootStatus_s.wrsBootLoadSoftCPU =
+						WRS_BOOT_LOAD_SOFTCPU_ERROR;
 			/* try again next time */
 			run_once = 0;
 
@@ -391,9 +391,9 @@ static void get_boot_scripts_status(void){
 	} else {
 		/* status file not found, probably something else caused
 		 * a problem */
-		wrsBootStatus_s.wrsBootLoadLM32 =
-					WRS_BOOT_LOAD_LM32_ERROR_MINOR;
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsBootLoadLM32: failed to "
+		wrsBootStatus_s.wrsBootLoadSoftCPU =
+					WRS_BOOT_LOAD_SOFTCPU_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsBootLoadSoftCPU: failed to "
 			 "open " LOAD_FPGA_STATUS_FILE "\n");
 		/* try again next time */
 		run_once = 0;

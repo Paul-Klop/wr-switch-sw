@@ -144,14 +144,14 @@ time_t wrsOSStatus_data_fill(void)
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: FPGA bitstream not found\n",
 			 slog_obj_name);
 	}
-	if (b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR) {
+	if (b->wrsBootLoadSoftCPU == WRS_BOOT_LOAD_SOFTCPU_ERROR) {
 		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: LM32 load failed\n",
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: RISC-V load failed\n",
 			 slog_obj_name);
 	}
-	if (b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND) {
+	if (b->wrsBootLoadSoftCPU == WRS_BOOT_LOAD_SOFTCPU_FILE_NOT_FOUND) {
 		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: LM32 binary not found\n",
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: RISC-V binary not found\n",
 			 slog_obj_name);
 	}
 	/* check the number of missing modules */
@@ -261,9 +261,9 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: Unable to read status file of wrsBootLoadFPGA\n",
 				slog_obj_name);
 		}
-		if (b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR_MINOR) {
+		if (b->wrsBootLoadSoftCPU == WRS_BOOT_LOAD_SOFTCPU_ERROR_MINOR) {
 			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
-			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: Unable to read status file of wrsBootLoadLM32\n",
+			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: Unable to read status file of wrsBootLoadSoftCPU\n",
 				slog_obj_name);
 		}
 		if (b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR) {
@@ -335,9 +335,9 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: Status of wrsBootLoadFPGA not available\n",
 				slog_obj_name);
 		}
-		if (b->wrsBootLoadLM32 == 0) {
+		if (b->wrsBootLoadSoftCPU == 0) {
 			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
-			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: Status of wrsBootLoadLM32 not available\n",
+			snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: Status of wrsBootLoadSoftCPU not available\n",
 				slog_obj_name);
 		}
 		if (b->wrsFwUpdateStatus == 0) {
@@ -382,7 +382,7 @@ time_t wrsOSStatus_data_fill(void)
 		    || b->wrsConfigSource == WRS_CONFIG_SOURCE_TRY_DHCP)
 		&& b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_OK
 		&& b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_OK
-		&& b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_OK
+		&& b->wrsBootLoadSoftCPU == WRS_BOOT_LOAD_SOFTCPU_OK
 		&& b->wrsBootKernelModulesMissing == 0
 		&& b->wrsBootUserspaceDaemonsMissing == 0
 		&& b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_OK

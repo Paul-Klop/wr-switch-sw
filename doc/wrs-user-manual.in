@@ -184,6 +184,18 @@ When checksums in the @t{wrs-firmware.tar} are not available
 (for example during downgrading to version pre-v5.0) appropriate warning
 message is printed to the console.
 
+Version from v8.0 stores the SSH host keys
+@footnote{SSH keys that identifies the host (WRS).
+          For password-less login mechanism please check
+          @ref{Password-less login}.}
+in @t{/update/permanent/ssh/}.
+When upgrading from this or later version no action is needed to preserve
+SSH host keys.
+When upgrading from version pre-v8.0, the SSH host keys can preserved
+by manual copy before update.
+Please see @ref{Preserving SSH host keys during update to v8.0}
+for exact commands.
+
 If this method of upgrading firmware works for you, you can ignore chapter
 @ref{Upgrading from v3.x}, which
 explains a transition between the initial way we passed MAC addresses
@@ -213,7 +225,7 @@ The most important changes introduced in v8.0 are:
 @item Add support of new timing sources: NMEA and IRIG-B, see
       @ref{Time and Frequency Source of Grandmaster} and
       @ref{Time and frequency source when in Grandmaster mode}.
-@item Support multiple NTP servers.
+@item Support multiple NTP servers defined in @t{CONFIG_NTP_SERVER}.
 @item Use @i{uRV} (RISC-V) instead of @i{LatticeMicro32} (LM32) for soft-CPU
       that runs @i{SoftPLL}.
 @item Support changing @i{Ki} and @i{Kp} parameters of @i{SoftPLL}
@@ -223,14 +235,16 @@ The most important changes introduced in v8.0 are:
 @item Add setting IP and mask of WR ports for the purpose of using it with
       PTP over UDP.
 @item Add appendix about interoperability with non-WR devices.
-@item Preserve ssh keys over firmware updates (TODO: describe it).
-@item Read authorized_keys also from the permanent storage that is preserved
-      over restarts and firmware update (TODO: describe it).
-@item Display PPS output status in @t{wr_mon}.
-@item Add mechanism to overwrite parameters in the runtime @i{dot-config} with
-      parameters stored in @i{dot-config} in the permanent storage
-      (that is preserved over restarts and firmware update). A subset of all
-      @i{dot-config} parameters is expected to be stored in the permanent storage.
+@item Preserve SSH host keys over firmware updates (@ref{Upgrading WRS Software}
+      and @ref{Preserving SSH host keys during update to v8.0}).
+@item Read @t{authorized_keys} also from the permanent storage that is preserved
+      over restarts and firmware update (@ref{Password-less login}).
+@item Display PPS output status in @t{wr_mon} (@ref{wr_mon}).
+@item Add mechanism to overwrite @i{dot-config}'s configuration items in runtime
+      with parameters stored in @i{dot-config} format in the permanent storage
+      (that is preserved over restarts and firmware updates).
+      A subset of all @i{dot-config} parameters is expected to be stored in
+      the permanent storage (@ref{Local Overwrite of dot-config}).
       This mechanism is enabled by default (in the release firmware).
 @item Change numbering of ports in  /wr/etc/tx_phase_cal.conf from 0-11 to
       01-12 for consistency with wriX interfaces numbering.
@@ -301,6 +315,37 @@ The following configuration items were added to @i{dot-config}:
       @end itemize
 
 @end itemize
+
+In v8.0 the only item that can be considered as not compatible is and could
+potentially cause problem is that using @t{CONFIG_NTP_SERVER} requires
+the option @t{CONFIG_TOD_SOURCE_NTP} to be selected.
+However, @t{CONFIG_TOD_SOURCE_NTP} is selected by default anyway.
+So no action is needed.
+
+@c =-------------------------------------------------------------------------
+@node Converting dot-config from v7.0 to v8.0
+@subsection Converting dot-config from v7.0 to v8.0
+
+There is no need to use any conversion of @i{dot-config} from format
+compatible with v7.0 to a version compatible with v8.0.
+
+If upgrading from v6.x to v8.0 the please follow the instruction in
+@ref{Converting dot-config from v6.x to v7.0}.
+Also the tool described in
+@ref{Converting dot-config from v6.x to v7.0 with a tool} can be used.
+
+@c =-------------------------------------------------------------------------
+@node Preserving SSH host keys during update to v8.0
+@subsection Preserving SSH host keys during update to v8.0
+
+To preserve SSH host keys (SSH keys that identifies the WRS when login using
+SSH) during an update procedure from pre-v8.0 firmware, please copy them
+@i{BEFORE the update} from
+@t{/etc/ssh/} to @t{/update/permanent/ssh} with the following commands:
+@smallexample
+mkdir -p /update/permanent/ssh
+cp /etc/ssh/ssh_host_*_key* /update/permanent/ssh
+@end smallexample
 
 @c ==========================================================================
 @node Upgrade from v6.1 to v7.0
@@ -1343,13 +1388,17 @@ appropriate way, before the respective service is started.
 
 @item CONFIG_NTP_SERVER
 
-	The NTP server used to prime White Rabbit time, at system boot.
-        The option can be an IP address or a host name, if DNS is properly
-        configured.  The configuration value is stored in
-        @t{/etc/wr_date.conf}. An empty string (default) disables
-        NTP access at boot time.
+      The NTP servers used to prime local time, at system boot.
+      In GM the seconds time is used for White Rabbit time.
+      The second's boundary is defined by a PPS signal on
+      the external connector.
 
-        TODO: add about multiple servers
+      The option can be an IP address or a host name, if DNS is properly
+      configured.
+      Multiple servers can be defined, please separate them by comma,
+      semicolon or space.
+      An empty string (default) disables NTP access at boot time.
+      The configuration value is stored in @t{/etc/wr_date.conf}.
 
 @item   CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
 @itemx  CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
@@ -1724,7 +1773,13 @@ appropriate way, before the respective service is started.
 
 @item   CONFIG_DOTCONF_LOCAL_OVERWRITE
 
-        TODO:
+        Enable mechanism to overwrite @i{dot-config}'s configuration items
+        in runtime with parameters stored in @i{dot-config} format in
+        the permanent storage in
+        @t{/update/permanent/dot-config/dot-config-overwrite}
+        (that is preserved over restarts and firmware update).
+        This mechanism is enabled by default.
+        For more information see @ref{Local Overwrite of dot-config}.
 
 @item   CONFIG_TOD_SOURCE_IRIGB
 @itemx  CONFIG_TOD_SOURCE_NMEA
@@ -1743,6 +1798,9 @@ appropriate way, before the respective service is started.
         monitoring.
         If enabled via configuration (@t{SNMP_SYSTEM_CLOCK_MONITOR_ENABLED}),
         the WR time is compared with the time obtained from NTP.
+
+        If NMEA or NTP is selected, please check also check their specific
+        configuration items (@t{CONFIG_NMEA_*} and @t{CONFIG_NTP_SERVER}).
 
         For more information check @ref{NMEA}, @ref{IRIG-B}, @ref{NTP}.
 
@@ -2525,6 +2583,116 @@ It is advised to keep the default values for these options.
 	@ref{VLANs Configuration}
 
 @end table
+
+@c ==========================================================================
+@node Local Overwrite of dot-config
+@section Local Overwrite of @i{dot-config}
+
+This mechanism allows to overwrite some of the configuration items defined in
+to-be-used @i{dot-config} with the values stored in
+@t{/update/permanent/dot-config/dot-config-overwrite}.
+
+This mechanism is intended to be used e.g., for management IP configuration,
+SoftPLL settings that are specific for particular unit.
+This mechanism can be used to store entire @i{dot-config} in the permanent
+location, but is strongly discouraged.
+This mechanism takes place at the booting.
+After the target @i{dot-config} is available on the WRS
+(i.e., it is checked if the @i{dot-config} to be used is local or
+the @i{dot-config} is retrieved from the network)
+and the @t{CONFIG_DOTCONF_LOCAL_OVERWRITE} is enabled in this target
+@i{dot-config}
+then content of @t{/update/permanent/dot-config/dot-config-overwrite}
+is amended at the end of the @i{dot-config}.
+Then the normalization of the @i{dot-config} takes place.
+It is equivalent to opening this file with e.g., @t{wrs_menuconfig} and
+saving it; such operation removes doubled items, fixes the dependencies, etc.
+This flow is presented in the below graph.
+
+@center @image{images/dot-config_overwrite_flow, 12cm,, dot-config overwrite flow}
+
+If the new @i{dot-config} is different from the previously stored @i{dot-config}
+in @t{/wr/etc/dot-config}, the new file is copied to replace the old one.
+To avoid flash wear-out the copy operation is skipped,
+if the new and old @i{dot-config}s are the same.
+The skip can happen when e.g., the source of @i{dot-config} is configured to be
+local and overwrite took already place during the previous boot;
+or @i{dot-config} was retrieved from the network and mechanism described in
+this section gives exactly the same @i{dot-config} content as already stored
+in @t{/wr/etc/dot-config}.
+
+Please use this mechanism with caution, it can make WRS unreachable
+(especially in remote locations).
+
+The information of the execution of this mechanism is passed to the @i{syslog}.
+Please aware that some messages may appear twice.
+Example outputs are included below.
+
+In the first example the @t{CONFIG_DOTCONF_LOCAL_OVERWRITE} is enabled but,
+there is no file @t{/update/permanent/dot-config/dot-config-overwrite},
+similar entries to the log below would appear in @i{syslog}.
+@smallexample
+1970-01-01T00:00:33.256198+00:00 wrs.lan kernel: CONFIG_DOTCONF_LOCAL_OVERWRITE enabled
+1970-01-01T00:00:33.256238+00:00 wrs.lan kernel: Dot-config overwrite: /update/permanent
+/dot-config/dot-config-overwrite file not found!
+@end smallexample
+
+In the examples below the timestamps and host name in @i{syslog}'s output are
+skipped.
+
+In another example, @i{dot-config} is configured to try DHCP for management
+port, if not available then use static IP (@t{CONFIG_ETH0_DHCP_ONCE=y}
+and in @t{CONFIG_ETH0_*} IP related configuration in case the DHCP server is not
+available).
+
+The overwrite mechanism is used to force static IP configuration.
+The @t{CONFIG_ETH0_STATIC=y} is added to
+@t{/update/permanent/dot-config/dot-config-overwrite},
+
+In runtime the following log can be seen in the @i{syslog}.
+
+@smallexample
+CONFIG_DOTCONF_LOCAL_OVERWRITE enabled
+Dot-config overwrite: Using /update/permanent/dot-config/dot-config-overwrite with content:
+CONFIG_ETH0_STATIC=y
+Overwritten/new configuration items:
+/tmp/dot-config_local:984:warning: override: reassigning to symbol ETH0_STATIC
+/tmp/dot-config_local:984:warning: override: ETH0_STATIC changes choice state
+/tmp/dot-config_local:984:warning: override: reassigning to symbol ETH0_STATIC
+/tmp/dot-config_local:984:warning: override: ETH0_STATIC changes choice state
+Dot-config overwrite: New config is different. Replacing the old one.
+@end smallexample
+
+The next example below is similar, but it uses @t{CONFIG_ETH0_DHCP} instead
+to wait for DHCP forever.
+In this case options related to the assign of IP on management port
+(@t{CONFIG_ETH0_*}) are not included in the @i{dot-config}.
+
+This time while overwriting the @i{dot-config} with @t{CONFIG_ETH0_STATIC=y},
+it also causes the insertion of new configuration items related to management
+port's IP configuration (@t{CONFIG_ETH0_*}).
+
+Also the below log is similar, but contains new lines respective to
+the new inserted options.
+
+@smallexample
+CONFIG_DOTCONF_LOCAL_OVERWRITE enabled
+Dot-config overwrite: Using /update/permanent/dot-config/dot-config-overwrite with content:
+CONFIG_ETH0_STATIC=y
+
+Overwritten/new configuration items:
+/tmp/dot-config_local:976:warning: override: reassigning to symbol ETH0_STATIC
+/tmp/dot-config_local:976:warning: override: ETH0_STATIC changes choice state
+CONFIG_ETH0_IP
+CONFIG_ETH0_MASK
+CONFIG_ETH0_NETWORK
+CONFIG_ETH0_BROADCAST
+CONFIG_ETH0_GATEWAY
+/tmp/dot-config_local:976:warning: override: reassigning to symbol ETH0_STATIC
+/tmp/dot-config_local:976:warning: override: ETH0_STATIC changes choice state
+Dot-config overwrite: New config is different. Replacing the old one.
+@end smallexample
+
 
 @c ##########################################################################
 @node Operation of the Device
@@ -3317,7 +3485,36 @@ The right LED is green when a particular port is synchronized to the master.
 When a frame is transmitted or received on a port the right LED blinks orange.
 If a port is also synced then it blinks yellow instead.
 
+@c ==========================================================================
+@node Password-less login
+@section Password-less login (with SSH keys)
 
+WRS had always provided functionality to login as root without a password.
+To used it it was necessary to copy a public SSH key to the file
+@t{/root/.ssh/authorized_keys}.
+However, since this file was within root's home directory it was stored only
+in volatile memory, this file was wiped at every reboot of WRS.
+From the version v8.0 of WRS firmware the file with authorized SSH keys,
+can be stored in the permanent location in:
+@t{/update/permanent/ssh/authorized_keys.root}.
+
+To enable password-less login with a use of SSH key please copy it to
+the mentioned @t{/update/permanent/ssh/authorized_keys.root} or use
+@t{ssd-copy-id} command from your host machine.
+E.g.:
+@smallexample
+$ ssd-copy-id root@@wrs-machine
+@end smallexample
+
+Please note that by default the command @t{ssd-copy-id} copies SSH keys to
+the file @t{~/.ssh/authorized_keys}, which is in home directory and is wiped
+at the restart of WRS.
+In such case, please copy the content of
+@t{~/.ssh/authorized_keys} to @t{/update/permanent/ssh/authorized_keys.root}
+with a command on WRS:
+@smallexample
+$ cat ~/.ssh/authorized_keys >> /update/permanent/ssh/authorized_keys.root
+@end smallexample
 
 @c ############################################################################
 @node Booting with Barebox
@@ -3732,14 +3929,17 @@ The following tools and scripts are provided:
 	to set host time as a first step, if @t{/etc/wr_date.conf}
 	exists and includes a line of the form @t{ntpserver 192.168.16.1}.
 	The file @t{/etc/wr_date.conf} is created at boot time by the script
-	@t{apply_dot-config} if a NTP server is defined (@t{CONFIG_NTP_SERVER}).
+	@t{apply_dot-config} if NTP server(s) are defined (@t{CONFIG_NTP_SERVER}).
 
 	With ``@t{wr_date get}'' you can read White Rabbit time, and
 	by using @t{wr_date get tohost}'' you can set host time from
 	White Rabbit time. This can be useful in slave switches that
 	are not synced to NTP at boot.
 
-      TODO: add about NMEA, and IRIGB, and multiple NTP servers
+      From the WRS firmware v8.0 this tool also supports @i{NMEA} and @i{IRIG-B}
+      for @t{get} and @t{stat} parameters.
+      Please check tool's help for usage details, @ref{NMEA} for @i{NMEA}
+      and @ref{IRIG-B} for @i{IRIG-B} details.
 
 @item wr_mon
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
@@ -3996,8 +4196,6 @@ for color output.
 @item @t{t} -- Disable/enable servo tracking, useful for hot air-gun demo
 
 @end itemize
-
-TODO: update image with "PPS"
 
 @center @image{images/wr_mon, 16cm,, Example wr_mon view}
 

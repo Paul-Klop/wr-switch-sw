@@ -20,7 +20,9 @@ SRC_DOT=\
     images/dot/autonegotiation_simple.dot
 PDF_DOT=$(SRC_DOT:dot=pdf)
 
-IMG_PDF=images/wr_mon.pdf
+IMG_PDF=\
+	images/dot-config_overwrite_flow.pdf \
+	images/wr_mon.pdf \
 
 MAKEINFO ?= makeinfo
 DOT ?= dot

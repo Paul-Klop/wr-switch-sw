@@ -1,6 +1,7 @@
 # Author: Adam Wujek 2024
 
 IMG=\
+    dot-config_overwrite_flow.pdf \
     wr_mon.pdf \
 
 all: $(IMG)

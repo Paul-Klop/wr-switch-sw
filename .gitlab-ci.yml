@@ -14,6 +14,7 @@ job_wrs_compile:
     - rm -rf *.tar
     - rm -rf *.log
     - rm -rf build
+    - rm -rf images
     - cd wr-switch-sw ; cd userspace/ppsi ; git fetch -p; cd ../..; git submodule update; cd ..
     - echo "Using `grep -c ^processor /proc/cpuinfo` parallel jobs" 
     - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt

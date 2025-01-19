@@ -1354,7 +1354,7 @@ config READ_SFP_DIAG_ENABLE
 
 config HTTPD_DISABLE
 	bool "Disable web interface"
-	default n
+	default y
 	help
 	  Disable web interface.
 

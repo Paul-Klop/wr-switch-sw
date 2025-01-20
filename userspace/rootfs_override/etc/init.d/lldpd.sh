@@ -67,7 +67,7 @@ start() {
 	echo "configure system description  'WR-SWITCH: $(/wr/bin/wrsw_version)'" >> $LLDPD_CONFIG
     fi
     if [ "$CONFIG_LLDPD_MANAGEMENT_PORT_DISABLE" = "y" ]; then
-	echo "configure system interface pattern '!eth*'" >> $LLDPD_CONFIG
+	echo "configure system interface pattern '*,!eth*'" >> $LLDPD_CONFIG
     fi
     for i_port in $(seq 1 18); do # scan all the physical ports
 	i_port_zero=$(printf "%02d" $i_port)

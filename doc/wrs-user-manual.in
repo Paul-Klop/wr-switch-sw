@@ -301,6 +301,7 @@ The following configuration items were added to @i{dot-config}:
 @item Other (global):
       @itemize
       @item @t{CONFIG_DOTCONF_LOCAL_OVERWRITE}
+      @item @t{CONFIG_SNMP_SWCORESTATUS_TX_FORWARD_DELTA}
       @end itemize
 
 @item Other (port related):
@@ -1583,6 +1584,12 @@ appropriate way, before the respective service is started.
 
         Force SNMP object @t{wrsSwcoreStatus} to be always OK. It can be used
         to ignore all Ethernet frames switching related issues.
+
+@item   CONFIG_SNMP_SWCORESTATUS_TX_FORWARD_DELTA
+
+        Error via SNMP with @t{wrsSwcoreStatus} if endpoint TX frames number
+        differ more than a given number from forwarded frames from other ports
+        and NIC.
 
 @c @item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
 @c

@@ -1025,6 +1025,14 @@ config SNMP_SWCORESTATUS_DISABLE
 	help
 	  Disable checking SNMP object wrsSwcoreStatus"
 
+config SNMP_SWCORESTATUS_TX_FORWARD_DELTA
+	int "Maximum allowed difference in TX and forwarded frames rate"
+	depends on !SNMP_SWCORESTATUS_DISABLE
+	default 10
+	help
+	  Error via SNMP if endpoint TX frames number differ more than a given
+	  number from forwarded frames from other ports and NIC.
+
 # config items below are not implemented in the SNMP
 #config SNMP_SWCORESTATUS_HP_FRAME_RATE
 #	int "Maximum allowed rate of HP frames on a port"

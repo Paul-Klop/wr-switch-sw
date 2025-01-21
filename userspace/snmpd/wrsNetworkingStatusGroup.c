@@ -108,14 +108,15 @@ static int get_swcore_status(struct ns_pstats *old,
 	for (i = 0; i < rows; i++) {
 		/* TXFrames and Forwarded described in 2.2.3 "Problem with the
 		 * SwCore or Endpoint HDL module" in wrs_failures document
-		 * shouldn't differ more than FORWARD_DELTA in total */
+		 * shouldn't differ more than ns_dotconfig.tx_forward_delta
+		 * in total */
 		total_fwd_delta_ports = new[i].wrsPstatsHCForwarded - old[i].wrsPstatsHCForwarded;
 		total_fwd_delta_nic = new[i].wrsPstatsHCNICTXFrames - old[i].wrsPstatsHCNICTXFrames;
 		total_fwd_delta = total_fwd_delta_ports + total_fwd_delta_nic;
 		tx_delta = new[i].wrsPstatsHCTXFrames - old[i].wrsPstatsHCTXFrames;
 
-		if ( /* shouldn't differ more than FORWARD_DELTA */
-		    delta_uint64(tx_delta, total_fwd_delta) > FORWARD_DELTA
+		if ( /* Shouldn't differ more than ns_dotconfig.tx_forward_delta */
+		    delta_uint64(tx_delta, total_fwd_delta) > ns_dotconfig.tx_forward_delta
 		) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
@@ -123,10 +124,12 @@ static int get_swcore_status(struct ns_pstats *old,
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
 				 "Endpoint TX frames number (%lld) on port %d (wri %d) does not match "
 				 "the number of frames forwarded from other ports (%lld) and NIC (%lld), "
-				 "some frames got lost... Difference is more than %d, since last check (%ds)",
+				 "some frames got lost... The difference (%lld) since last check (%ds) "
+				 "is more than configured limit (%lld)",
 				 slog_obj_name, tx_delta, i + 1, i + 1,
 				 total_fwd_delta_ports, total_fwd_delta_nic,
-				 FORWARD_DELTA, (int)t_delta);
+				 delta_uint64(tx_delta, total_fwd_delta),
+				 (int)t_delta, ns_dotconfig.tx_forward_delta);
 		}
 
 #if 0
@@ -206,6 +209,18 @@ static void load_dot_config(void)
 	tmp = libwr_cfg_get("SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE");
 	if (tmp)
 		ns_dotconfig.rx_prio_frame_rate = atoi(tmp);
+
+	tmp = libwr_cfg_get("SNMP_SWCORESTATUS_TX_FORWARD_DELTA");
+	if (tmp) {
+		ns_dotconfig.tx_forward_delta = atoi(tmp);
+	} else {
+		slog_obj_name = wrsSwcoreStatus_str;
+		snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: Unable to read "
+			 "CONFIG_SNMP_SWCORESTATUS_TX_FORWARD_DELTA from "
+			 "dot-config file, use default value %d\n",
+			 slog_obj_name, TX_FORWARD_DELTA);
+		ns_dotconfig.tx_forward_delta = TX_FORWARD_DELTA;
+	}
 }
 
 time_t wrsNetworkingStatus_data_fill(void)

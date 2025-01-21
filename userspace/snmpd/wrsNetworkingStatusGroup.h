@@ -3,7 +3,7 @@
 
 #define WRSNETWORKINGSTATUS_OID WRS_OID, 6, 2, 3
 
-#define FORWARD_DELTA 5
+#define TX_FORWARD_DELTA 10
 
 #define WRS_SFPS_STATUS_OK 1			/* ok */
 #define WRS_SFPS_STATUS_ERROR 2			/* error */
@@ -71,6 +71,7 @@ struct wrsNetworkingStatus_config {
 	float hp_frame_rate;
 	float rx_frame_rate;
 	float rx_prio_frame_rate;
+	uint64_t tx_forward_delta;
 };
 
 #endif /* WRS_NETWORKING_STATUS_GROUP_H */

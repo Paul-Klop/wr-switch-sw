@@ -158,13 +158,13 @@ config PORT01_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT01_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 239564
+	default 239579
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT01_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 277858
+	default 277745
 	help
 	  Defines the reception constant delay (ps)
 
@@ -398,7 +398,7 @@ endmenu # Port 1 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT01_INST01_T24P_TRANS_POINT
 	int
-	default 12450
+	default 10450
 
 endmenu
 
@@ -560,13 +560,13 @@ config PORT02_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT02_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 238929
+	default 238982
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT02_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278313
+	default 279046
 	help
 	  Defines the reception constant delay (ps)
 
@@ -800,7 +800,7 @@ endmenu # Port 2 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT02_INST01_T24P_TRANS_POINT
 	int
-	default 12350
+	default 12200
 
 endmenu
 
@@ -962,13 +962,13 @@ config PORT03_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT03_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 239982
+	default 239995
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT03_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278560
+	default 277215
 	help
 	  Defines the reception constant delay (ps)
 
@@ -1202,7 +1202,7 @@ endmenu # Port 3 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT03_INST01_T24P_TRANS_POINT
 	int
-	default 11350
+	default 13850
 
 endmenu
 
@@ -1364,13 +1364,13 @@ config PORT04_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT04_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 240135
+	default 240160
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT04_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 277727
+	default 277402
 	help
 	  Defines the reception constant delay (ps)
 
@@ -1604,7 +1604,7 @@ endmenu # Port 4 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT04_INST01_T24P_TRANS_POINT
 	int
-	default 12750
+	default 14650
 
 endmenu
 
@@ -1766,13 +1766,13 @@ config PORT05_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT05_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 240271
+	default 241133
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT05_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 277033
+	default 277359
 	help
 	  Defines the reception constant delay (ps)
 
@@ -2006,7 +2006,7 @@ endmenu # Port 5 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT05_INST01_T24P_TRANS_POINT
 	int
-	default 13100
+	default 14500
 
 endmenu
 
@@ -2168,13 +2168,13 @@ config PORT06_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT06_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 241176
+	default 241257
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT06_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278892
+	default 278033
 	help
 	  Defines the reception constant delay (ps)
 
@@ -2408,7 +2408,7 @@ endmenu # Port 6 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT06_INST01_T24P_TRANS_POINT
 	int
-	default 13850
+	default 14150
 
 endmenu
 
@@ -2570,13 +2570,13 @@ config PORT07_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT07_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 239797
+	default 240788
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT07_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278953
+	default 277898
 	help
 	  Defines the reception constant delay (ps)
 
@@ -2810,7 +2810,7 @@ endmenu # Port 7 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT07_INST01_T24P_TRANS_POINT
 	int
-	default 12900
+	default 15600
 
 endmenu
 
@@ -2972,13 +2972,13 @@ config PORT08_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT08_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 241538
+	default 241714
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT08_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278434
+	default 278198
 	help
 	  Defines the reception constant delay (ps)
 
@@ -3212,7 +3212,7 @@ endmenu # Port 8 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT08_INST01_T24P_TRANS_POINT
 	int
-	default 14800
+	default 15250
 
 endmenu
 
@@ -3374,13 +3374,13 @@ config PORT09_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT09_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 241717
+	default 241885
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT09_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278761
+	default 278817
 	help
 	  Defines the reception constant delay (ps)
 
@@ -3614,7 +3614,7 @@ endmenu # Port 9 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT09_INST01_T24P_TRANS_POINT
 	int
-	default 14350
+	default 14800
 
 endmenu
 
@@ -3776,13 +3776,13 @@ config PORT10_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT10_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 242723
+	default 241295
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT10_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278071
+	default 278243
 	help
 	  Defines the reception constant delay (ps)
 
@@ -4016,7 +4016,7 @@ endmenu # Port 10 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT10_INST01_T24P_TRANS_POINT
 	int
-	default 13450
+	default 12550
 
 endmenu
 
@@ -4178,13 +4178,13 @@ config PORT11_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT11_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 244471
+	default 243784
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT11_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 279723
+	default 278862
 	help
 	  Defines the reception constant delay (ps)
 
@@ -4418,7 +4418,7 @@ endmenu # Port 11 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT11_INST01_T24P_TRANS_POINT
 	int
-	default 12900
+	default 11650
 
 endmenu
 
@@ -4580,13 +4580,13 @@ config PORT12_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT12_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 243881
+	default 245528
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT12_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 278925
+	default 279478
 	help
 	  Defines the reception constant delay (ps)
 
@@ -4820,7 +4820,7 @@ endmenu # Port 12 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT12_INST01_T24P_TRANS_POINT
 	int
-	default 10550
+	default 10050
 
 endmenu
 
@@ -4982,13 +4982,13 @@ config PORT13_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT13_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 227977
+	default 228007
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT13_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 230719
+	default 230497
 	help
 	  Defines the reception constant delay (ps)
 
@@ -5222,7 +5222,7 @@ endmenu # Port 13 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT13_INST01_T24P_TRANS_POINT
 	int
-	default 15000
+	default 15250
 
 endmenu
 
@@ -5384,13 +5384,13 @@ config PORT14_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT14_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 228169
+	default 228236
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT14_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 231215
+	default 231476
 	help
 	  Defines the reception constant delay (ps)
 
@@ -5624,7 +5624,7 @@ endmenu # Port 14 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT14_INST01_T24P_TRANS_POINT
 	int
-	default 14700
+	default 14500
 
 endmenu
 
@@ -5786,13 +5786,13 @@ config PORT15_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT15_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 228405
+	default 228443
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT15_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 231145
+	default 231551
 	help
 	  Defines the reception constant delay (ps)
 
@@ -6026,7 +6026,7 @@ endmenu # Port 15 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT15_INST01_T24P_TRANS_POINT
 	int
-	default 15200
+	default 14800
 
 endmenu
 
@@ -6188,13 +6188,13 @@ config PORT16_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT16_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 228603
+	default 228598
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT16_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 231379
+	default 231200
 	help
 	  Defines the reception constant delay (ps)
 
@@ -6428,7 +6428,7 @@ endmenu # Port 16 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT16_INST01_T24P_TRANS_POINT
 	int
-	default 15100
+	default 15300
 
 endmenu
 
@@ -6590,13 +6590,13 @@ config PORT17_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT17_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 228753
+	default 228802
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT17_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 230527
+	default 230848
 	help
 	  Defines the reception constant delay (ps)
 
@@ -6830,7 +6830,7 @@ endmenu # Port 17 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT17_INST01_T24P_TRANS_POINT
 	int
-	default 14450
+	default 14250
 
 endmenu
 
@@ -6992,13 +6992,13 @@ config PORT18_INST01_ASYMMETRY_CORRECTION_ENABLE
 
 config PORT18_INST01_EGRESS_LATENCY
 	int "timestampCorrectionPortDS.egressLatency (ps)"
-	default 228966
+	default 228988
 	help
 	  Defines the transmission constant delay (ps)
 
 config PORT18_INST01_INGRESS_LATENCY
 	int "timestampCorrectionPortDS.ingressLatency (ps)"
-	default 231090
+	default 230874
 	help
 	  Defines the reception constant delay (ps)
 
@@ -7232,6 +7232,6 @@ endmenu # Port 18 Instance 1
 # Keep T24P_TRANS_POINT also for ports without instances
 config PORT18_INST01_T24P_TRANS_POINT
 	int
-	default 14100
+	default 14550
 
 endmenu

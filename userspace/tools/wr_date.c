@@ -217,12 +217,29 @@ static int wrdate_gettimeofday(struct timeval *tv)
 	}
 }
 
+static int gettimeofday_tod(struct timeval *tv)
+{
+	int ret;
+	if (opt_nmea_en) {
+		/* Is blocking! */
+		ret = wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
+		if (ret < 0)
+			return ret;
+		tv->tv_usec = (ret - 1)*1000000/opt_nmea_baud;
+		return ret;
+	} else if(opt_irig_en){
+		/* Is blocking! */
+		return wrdate_get_irig_utc((int64_t *)&tv->tv_sec);
+	}
+
+	return -1;
+}
+
 int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 {
-	unsigned long taih, tail, nsec, tmp1, tmp2;
-	uint64_t tai;
+	uint64_t wr_nsec;
 	time_t t;
-	struct timeval hw, sw, tv;
+	struct timeval time_hw, time_sw, time_tod;
 	struct tm tm;
 	char utcs[64], tais[64];
 	int tai_offset;
@@ -232,76 +249,69 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 	if(opt_verbose)
 		printf("TAI offset %d\n", tai_offset);
 
-	taih = pps->CNTR_UTCHI;
-
-	do {
-		taih = pps->CNTR_UTCHI;
-		tail = pps->CNTR_UTCLO;
-		nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
-		tmp1 = pps->CNTR_UTCHI;
-		tmp2 = pps->CNTR_UTCLO;
-	} while((tmp1 != taih) || (tmp2 != tail));
-
 	/* Note for NMEA and IRIG-B function is blocking! */
-	if (wrdate_gettimeofday(&tv) < 0)
-		return 1;
+	gettimeofday_tod(&time_tod);
 
-	if (gettimeofday(&sw, NULL) < 0)
-		return 1;
+	gettimeof_wr(&time_hw, pps, &wr_nsec);
 
-	tai = (uint64_t)(taih) << 32 | tail;
+	if (gettimeofday(&time_sw, NULL) < 0)
+		return 1;
 
 	/* Before printing (which takes time), set host time if so asked to */
 	if (tohost) {
 		if (opt_nmea_en) {
-			hw = tv;
+			time_hw = time_tod;
 		} else if (opt_irig_en) {
-			hw.tv_sec = tv.tv_sec;
-			hw.tv_usec = 0;
-		} else {
-			hw.tv_sec = tai - tai_offset;
-			hw.tv_usec = nsec/1000;
+			time_hw.tv_sec = time_tod.tv_sec;
+			time_hw.tv_usec = 0;
 		}
 
 		/* Apply provided offset as parameter */
-		while (hw.tv_usec + opt_offset_us > 1000000) {
+		while (time_hw.tv_usec + opt_offset_us > 1000000) {
 			opt_offset_us -= 1000000;
-			hw.tv_sec++;
+			time_hw.tv_sec++;
 		}
 
-		while (hw.tv_usec + opt_offset_us < 0) {
+		while (time_hw.tv_usec + opt_offset_us < 0) {
 			opt_offset_us += 1000000;
-			hw.tv_sec--;
+			time_hw.tv_sec--;
 		}
 
-		hw.tv_usec += opt_offset_us;
+		time_hw.tv_usec += opt_offset_us;
 
-		if (settimeofday(&hw, NULL))
-			fprintf(stderr, "wr_date: settimeofday(): %s\n",
-				strerror(errno));
-		sw = hw;
+		if (!opt_not) {
+			if (settimeofday(&time_hw, NULL)) {
+				fprintf(stderr, "wr_date: settimeofday(): %s\n",
+					strerror(errno));
+			}
+		}
+
+		time_sw = time_hw;
 	}
 
-	t = tv.tv_sec;
+	t = time_tod.tv_sec;
 	gmtime_r(&t, &tm);
 	strftime(tais, sizeof(tais), "%Y-%m-%d %H:%M:%S", &tm);
 	if (opt_nmea_en)
-		printf("NMEA time: %s\n", tais);
+		printf("NMEA time: %s.%09li\n", tais, time_tod.tv_usec * 1000);
 	if (opt_irig_en)
-		printf("IRIG time: %s\n", tais);
+		printf("IRIG time: %s.%09li\n", tais, time_tod.tv_usec * 1000);
 
-	t = tai; gmtime_r(&t, &tm);
+	t = time_hw.tv_sec; gmtime_r(&t, &tm);
 	strftime(tais, sizeof(tais), "%Y-%m-%d %H:%M:%S", &tm);
 	t -= tai_offset; gmtime_r(&t, &tm);
 	strftime(utcs, sizeof(utcs), "%Y-%m-%d %H:%M:%S", &tm);
-	printf("%lli.%09li TAI (WR)\n"
-	       "%s.%09li TAI (WR)\n"
-	       "%s.%09li UTC (WR)\n", tai, nsec, tais, nsec, utcs, nsec);
+	printf("%"PRIu64".%09"PRIu64" TAI (WR)\n"
+	       "%s.%09"PRIu64" TAI (WR)\n"
+	       "%s.%09"PRIu64" UTC (WR)\n",
+	       (uint64_t) time_hw.tv_sec, wr_nsec,
+	       tais, wr_nsec,
+	       utcs, wr_nsec);
 	if(opt_verbose)
 	{
-		gmtime_r(&(sw.tv_sec), &tm);
+		gmtime_r(&(time_sw.tv_sec), &tm);
 		strftime(utcs, sizeof(utcs), "%Y-%m-%d %H:%M:%S", &tm);
-		printf("%s.%09li UTC (linux)\n", utcs, sw.tv_usec*1000);
+		printf("%s.%09li UTC (linux)\n", utcs, time_sw.tv_usec*1000);
 	}
 
 	return 0;

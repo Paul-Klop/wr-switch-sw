@@ -251,6 +251,8 @@ int irig_wait_sec_transition(volatile struct wr_irig *wr_irig)
 
     uint32_t valid = 0;
 
+    alarmDetected = 0;
+
     if (!init_alarm_done) {
 	init_alarm(&timer_irigb);
 	init_alarm_done = 1;

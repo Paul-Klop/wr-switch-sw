@@ -118,14 +118,14 @@ int wrdate_cfgfile(char *fname)
 
 
 /* This returns wr time, used for syncing to a second transition */
-uint64_t gettimeof_wr(struct timeval *tv, volatile struct PPSG_WB *pps)
+uint64_t gettimeof_wr(struct timeval *tv, volatile struct PPSG_WB *pps,
+		      uint64_t *ret_nsec)
 {
-	uint32_t tai_h,tai_l,nsec, tmp1, tmp2;
-	uint64_t tai;
-
-	tai_h = pps->CNTR_UTCHI;
+	uint32_t tai_h,tai_l,tmp1, tmp2;
+	uint64_t tai, nsec;
 
 	do {
+		tai_h = pps->CNTR_UTCHI;
 		tai_l = pps->CNTR_UTCLO;
 		nsec = pps->CNTR_NSEC * PPSG_STEP_IN_NS;
 		tmp1 = pps->CNTR_UTCHI;
@@ -136,6 +136,10 @@ uint64_t gettimeof_wr(struct timeval *tv, volatile struct PPSG_WB *pps)
 
 	tv->tv_sec = tai;
 	tv->tv_usec = nsec / 1000;
+
+	/* If ret_nsec not null return value of nsec */
+	if (ret_nsec)
+		*ret_nsec = nsec;
 
 	return tai;
 }
@@ -231,6 +235,7 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 	taih = pps->CNTR_UTCHI;
 
 	do {
+		taih = pps->CNTR_UTCHI;
 		tail = pps->CNTR_UTCLO;
 		nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
 		tmp1 = pps->CNTR_UTCHI;
@@ -328,7 +333,7 @@ int wrdate_diff(volatile struct PPSG_WB *pps)
 
 	/* wrdate_gettimeofday has to be first, since NMEA may be blocking */
 	wrdate_gettimeofday(&ht);
-	gettimeof_wr(&wt, pps);
+	gettimeof_wr(&wt, pps, NULL);
 	return __wrdate_diff(pps,&ht, &wt);
 }
 
@@ -439,7 +444,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 
 		usleep(100);
 		wrdate_gettimeofday(&tvh);
-		gettimeof_wr(&tvr, pps);
+		gettimeof_wr(&tvr, pps, NULL);
 
 		/* diff is the expected step to be added, so host - WR */
 		diff = tvh.tv_usec - tvr.tv_usec;
@@ -507,7 +512,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 	if (opt_verbose && deep==0) {
 		usleep(100);
 		wrdate_gettimeofday(&tvh);
-		gettimeof_wr(&tvr, pps);
+		gettimeof_wr(&tvr, pps, NULL);
 
 		printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
 		       (long)(tvh.tv_usec));
@@ -571,7 +576,7 @@ int wrdate_internal_set_gm(volatile struct PPSG_WB *pps, int taiOnly) {
 	while (1==1) {
 		struct timeval wt;
 
-		gettimeof_wr(&wt, pps);
+		gettimeof_wr(&wt, pps, NULL);
 		if ( wt.tv_usec>LOW_LIMIT_HALF_SEC && wt.tv_usec<HIGH_LIMIT_HALF_SEC ) {
 			wrdate_internal_set(pps,taiOnly,1);
 			return 0;
@@ -682,7 +687,7 @@ int wrdate_stat(volatile struct PPSG_WB *pps)
 			// Get time
 			usleep(100); // Increase stability of measures : less preempted during time measures
 			wrdate_gettimeofday(&tv_host);
-			gettimeof_wr(&tv_tai,pps);
+			gettimeof_wr(&tv_tai, pps, NULL);
 
 			// Calculate difference
 			*udiff_tmp=((int64_t)(tv_host.tv_sec-tv_tai.tv_sec))*1000000;

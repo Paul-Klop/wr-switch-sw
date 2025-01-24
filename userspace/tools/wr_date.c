@@ -80,7 +80,10 @@ void help(void)
 		"    set <value>     set WR time to scalar seconds\n"
 		"    set host [tai]  set TAI and WR time from current host time.\n"
 		"                    if tai option is set then set only the TAI offset.\n"
-		"    stat            print statistics between TAI (WR time) and linux UTC/NMEA/IRIG-B\n"
+		"    stat            print statistics between Linux (UTC) and WR (TAI) time,\n"
+		"                    if configured NMEA/IRIGB: TOD (UTC) and WR (TAI) time,\n"
+		"                    Linux (UTC) and TOD (UTC);\n"
+		"                    similar to diff, but prints statistics periodically\n"
 		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
 		"    disable         if used with irigb as <source>, disable IRIG-B\n"
 		"    enable          if used with irigb as <source>, enable IRIG-B\n"
@@ -197,35 +200,17 @@ static int wrdate_get_irig_utc(int64_t *t_out)
 	return 0;
 }
 
-static int wrdate_gettimeofday(struct timeval *tv)
-{
-	int ret;
-	if (opt_nmea_en) {
-		/* Is blocking! */
-		ret = wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
-		if (ret < 0)
-			return ret;
-		tv->tv_sec--;
-		/* Subtract message length */
-		tv->tv_usec = 1000000 - (ret - 1)*1000000/opt_nmea_baud;
-		return ret;
-	}else if(opt_irig_en){
-		/* Is blocking! */
-		return wrdate_get_irig_utc((int64_t *)&tv->tv_sec);
-	} else {
-		return gettimeofday(tv, NULL);
-	}
-}
-
 static int gettimeofday_tod(struct timeval *tv)
 {
 	int ret;
+
+	memset(tv, 0, sizeof(struct timeval));
 	if (opt_nmea_en) {
 		/* Is blocking! */
 		ret = wrdate_get_nmea_utc((int64_t *)&tv->tv_sec);
 		if (ret < 0)
 			return ret;
-		tv->tv_usec = (ret - 1)*1000000/opt_nmea_baud;
+		tv->tv_usec = (ret - 1) * 1000000 / opt_nmea_baud;
 		return ret;
 	} else if(opt_irig_en){
 		/* Is blocking! */
@@ -341,9 +326,10 @@ int wrdate_diff(volatile struct PPSG_WB *pps)
 {
 	struct timeval ht, wt;
 
-	/* wrdate_gettimeofday has to be first, since NMEA may be blocking */
-	wrdate_gettimeofday(&ht);
+	/* wrdate_gettimeofday has to be first, since NMEA and IRIG-B
+	 * may be blocking */
 	gettimeof_wr(&wt, pps, NULL);
+	gettimeofday(&ht, NULL);
 	return __wrdate_diff(pps,&ht, &wt);
 }
 
@@ -453,7 +439,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 		}
 
 		usleep(100);
-		wrdate_gettimeofday(&tvh);
+		gettimeofday(&tvh, NULL);
 		gettimeof_wr(&tvr, pps, NULL);
 
 		/* diff is the expected step to be added, so host - WR */
@@ -521,7 +507,7 @@ int __wrdate_internal_set(volatile struct PPSG_WB *pps, int adjSecOnly, int tai_
 	}
 	if (opt_verbose && deep==0) {
 		usleep(100);
-		wrdate_gettimeofday(&tvh);
+		gettimeofday(&tvh, NULL);
 		gettimeof_wr(&tvr, pps, NULL);
 
 		printf("Host time: %9li.%06li\n", (long)(tvh.tv_sec),
@@ -672,55 +658,112 @@ int wrdate_set(volatile struct PPSG_WB *pps, int argc, char **argv)
 
 int wrdate_stat(volatile struct PPSG_WB *pps)
 {
-	int udiff_ref=0,udiff_last;
+	enum {
+		diff_lin_wr,
+		diff_tod_wr,
+		diff_lin_tod,
+		diff_n_size,
+	};
+
+	int udiff_ref[diff_n_size] = {0,0,0};
+	int udiff_last[diff_n_size];
+
 	int stat_sample_count = STAT_SAMPLE_COUNT;
-	struct timeval tv_tai,tv_host;
+	struct timeval tv_wr_tai, tv_host, tv_tod;
+	int tod_en = 0;
+	char *tod_str = "";
 
 	if (opt_nmea_en || opt_irig_en) {
-		/* wrdate_gettimeofday for NMEA and IRIG-B is blocking till
+		/* gettimeofday_tod for NMEA and IRIG-B is blocking till
 		 * the boundary of a second (+some time) */
 		stat_sample_count = 1;
 	}
 
 	/* First readout is sometimes shifted for NMEA */
-	(void) wrdate_gettimeofday(&tv_host);
+	(void) gettimeofday_tod(&tv_tod);
 
-	printf("Diff_TAI_UTC[sec] Diff_with_last[usec] Diff_with_ref[usec]\n");
+	if (opt_nmea_en) {
+		tod_str = "NMEA";
+		tod_en = 1;
+	}
+
+	if (opt_irig_en) {
+		tod_str = "IRIGB";
+		tod_en = 1;
+	}
+
+	if (!tod_en) {
+		printf("          Diff WR(TAI)-SW(UTC)   |\n");
+		printf("        Diff Diff_last  Diff_ref |\n");
+		printf("       [sec]    [usec]    [usec] |\n");
+		printf("---------------------------------+\n");
+	} else {
+		printf("          Diff WR(TAI)-SW(UTC)   |         Diff WR(TAI)-%s(UTC)%*s |         Diff SW(UTC)-%s(UTC)%*s |\n",
+		       tod_str, 5 - strlen(tod_str), "", tod_str, 5 - strlen(tod_str), "");
+		printf("        Diff Diff_last  Diff_ref |        Diff Diff_last  Diff_ref |        Diff Diff_last  Diff_ref |\n");
+		printf("       [sec]    [usec]    [usec] |       [sec]    [usec]    [usec] |       [sec]    [usec]    [usec] |\n");
+		printf("---------------------------------+---------------------------------+---------------------------------+\n");
+	}
+
 	while ( 1 ) {
-		int64_t udiff_arr[STAT_SAMPLE_COUNT]; // Diff in useconds
 		int i;
-		int64_t udiff_sum=0, udiff;
+		int64_t udiff = 0;
+		int64_t udiff_sum[diff_n_size] = {0,0,0};
 
 		for ( i=0; i<stat_sample_count; i++ ) {
-			int64_t *udiff_tmp=&udiff_arr[i];
+			int64_t udiff_tmp;
 
 			// Get time
 			usleep(100); // Increase stability of measures : less preempted during time measures
-			wrdate_gettimeofday(&tv_host);
-			gettimeof_wr(&tv_tai, pps, NULL);
+			gettimeofday_tod(&tv_tod);
+			gettimeofday(&tv_host, NULL);
+			gettimeof_wr(&tv_wr_tai, pps, NULL);
 
-			// Calculate difference
-			*udiff_tmp=((int64_t)(tv_host.tv_sec-tv_tai.tv_sec))*1000000;
-			if ( tv_host.tv_usec > tv_tai.tv_usec ) {
-				*udiff_tmp+=tv_host.tv_usec-tv_tai.tv_usec;
+			/* Calculate difference WR(TAI)-Linux(UTC) */
+			udiff_tmp = ((int64_t)(tv_wr_tai.tv_sec - tv_host.tv_sec)) * 1000000;
+			if (tv_wr_tai.tv_usec > tv_host.tv_usec) {
+				udiff_tmp += tv_wr_tai.tv_usec - tv_host.tv_usec;
 			} else {
-				*udiff_tmp-=tv_tai.tv_usec-tv_host.tv_usec;
+				udiff_tmp -= tv_host.tv_usec - tv_wr_tai.tv_usec;
 			}
-			udiff_sum+=*udiff_tmp;
-		}
-		udiff=udiff_sum/stat_sample_count;
-		if ( udiff_ref==0) {
-			udiff_ref=udiff_last=udiff;
+			udiff_sum[diff_lin_wr] += udiff_tmp;
+
+			/* Calculate difference WR(TAI)-TOD(UTC) */
+			udiff_tmp = ((int64_t)(tv_wr_tai.tv_sec - tv_tod.tv_sec)) * 1000000;
+			if (tv_wr_tai.tv_usec > tv_tod.tv_usec) {
+				udiff_tmp += tv_wr_tai.tv_usec - tv_tod.tv_usec;
+			} else {
+				udiff_tmp -= tv_tod.tv_usec - tv_wr_tai.tv_usec;
+			}
+			udiff_sum[diff_tod_wr] += udiff_tmp;
+
+			/* Calculate difference SW(UTC)-TOD(UTC) */
+			udiff_tmp = ((int64_t)(tv_host.tv_sec - tv_tod.tv_sec)) * 1000000;
+			if (tv_host.tv_usec > tv_tod.tv_usec) {
+				udiff_tmp += tv_host.tv_usec - tv_tod.tv_usec;
+			} else {
+				udiff_tmp -= tv_tod.tv_usec - tv_host.tv_usec;
+			}
+			udiff_sum[diff_lin_tod] += udiff_tmp;
 		}
 
-		printf("%03d.%06d %6li %6li\n",
-			   (int)(udiff/1000000),
-			   abs(udiff%1000000),
-			   (long) (udiff_last-udiff),
-			   (long) (udiff_ref-udiff)
-			   );
-		udiff_last=udiff;
+		for (i = 0; i < (tod_en ? diff_n_size : 1); i++) {
+			udiff = udiff_sum[i] / stat_sample_count;
+			if (udiff_ref[i] == 0) {
+				udiff_ref[i] = udiff_last[i] = udiff;
+			}
 
+			/*  Display diffs */
+			printf("%5d.%06d %9li %9li |",
+				(int)(udiff / 1000000),
+				abs(udiff % 1000000),
+				(long) (udiff_last[i] - udiff),
+				(long) (udiff_ref[i] - udiff)
+				);
+
+			udiff_last[i] = udiff;
+		}
+		printf("\n");
 		/* Readout for NMEA or IRIG-B will wait till the boundary of
 		 * a second anyway */
 		if (!opt_nmea_en && !opt_irig_en) {

@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 # This script measure the drift between the local system clock and 
-# a NTP server
+# a Time of Day source (NTP, NMEA, IRIG-B)
 
 tmpdir="/tmp"
 cronFile="/etc/cron.d/root"
@@ -14,6 +14,8 @@ systemClockMonitoringDrift="$tmpdir/${prefix}_drift"
 dotConfig="/wr/etc/dot-config"
 fileNtpServerConfig="/etc/wr_date.conf"
 ntpTool="/usr/sbin/ntpd"
+wr_dateTool="/wr/bin/wr_date"
+
 suspendKillDaemon=0
 pidKillDaemon=0
 verbose=0
@@ -217,6 +219,64 @@ read_ntp_server()
 	eval $__result="1"
 }
 
+decodeOffset_wr_date ()
+{
+	local __resultvar=$1
+	local __str=$2
+	local __tod_type=$3
+	local __offset=$(echo $__str | sed -n "s/.*SW(UTC)-${__tod_type}(UTC): \?\([+-][0-9]*\)\.\?\([0-9]*\).*/\1.\2/p")
+	
+	if [[ -z "$__offset" ]] ; then
+		# Empty string
+		debug "Invalid Offset !!!"
+		debug "$__tod_type msg=\"$__str\""
+		return 1
+	else
+		debug "$__tod_type offset=$__offset s"
+		eval $__resultvar="'$__offset'"
+		return 0
+	fi
+}
+
+#
+# Read the TOD source to get the offset between TOD and local system time
+#
+read_tod()
+{
+	local __result=$1
+	local ltThreshold=$2
+	local todName=$3
+	local todNameNoDash=${todName//-/}
+	local todNameNoDashLowerCase=${todNameNoDash,,}
+	local retries=2
+	local offset=-1
+
+	debug "read ${todName} \(${todNameNoDash}, ${todNameNoDashLowerCase}\)"
+	for i in `seq $retries` ; do # Manual retries
+		wr_date_res=$($wr_dateTool $todNameNoDashLowerCase diff -v)
+		if [ -n "$wr_date_res" ] ; then
+			decodeOffset_wr_date offset "$wr_date_res" "$todNameNoDash"
+			if [ $? -eq 0 ] ; then
+				compareToThreshold alarmState ${offset%.*} $ltThreshold
+				if (( $alarmState == 1 )) ; then
+					# Exceeded Threshold
+					writeMsg "exceeded_threshold" $systemClockMonitoringStatus
+				else
+					writeMsg "no_error"  $systemClockMonitoringStatus				
+				fi
+				writeMsg  $offset $systemClockMonitoringDrift
+				eval $__result="0"
+				return
+			fi
+			eval echo "Retry $i/$retries : Cannot extract offset from ${todName}." $LOGPIPE
+		else
+			eval echo "Retry $i/$retries : ${todName} query failed, unable to get Time of Day." $LOGPIPE
+		fi
+	done
+	eval echo "ERROR: could not get Time of day via ${todName} after $retries retries" $LOGPIPE
+	eval $__result="1"
+}
+
 #
 # Apply dot-config configuration
 #
@@ -293,25 +353,30 @@ if [ "$#" -eq 1 ] && [ "$1" == "-s" ] ; then
  	exit 0
 fi
 
-if [ "$CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED" = "y" ] ; then
-    
-    
-    threshold=$CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
-	ntpServer=""
+if [ "$CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED" != "y" ] ; then
+	exit 1
+fi
+
+
+threshold=$CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD
+
 	
+if [ -z  "$threshold" ] ; then
+	eval echo "System clock drift threshold not set." $LOGPIPE
+	writeMsg "config_error" $systemClockMonitoringStatus
+	writeMsg "0" $systemClockMonitoringDrift
+	exit 1
+fi
+
+if [ "$CONFIG_TOD_SOURCE_NTP" = "y" ] ; then
+
+	ntpServer=""
 	# Get the NTP server
 	if [ -f $fileNtpServerConfig ]; then
 		# pick the first server, if any
 		ntpServer=$(grep 'ntpserver' $fileNtpServerConfig | sed 's/ntpserver//' | head -n 1)
 	fi
-		
-	if [ -z  "$threshold" ] ; then 
-		eval echo "System clock drift threshold not set." $LOGPIPE
-		writeMsg "config_error" $systemClockMonitoringStatus
-		writeMsg "0" $systemClockMonitoringDrift
-		exit 1
-	fi
-	
+
 	if [ -z "$ntpServer" ]; then
 		eval echo "Empty NTP server name" $LOGPIPE
 		writeMsg "config_error" $systemClockMonitoringStatus
@@ -325,5 +390,23 @@ if [ "$CONFIG_SNMP_SYSTEM_CLOCK_MONITOR_ENABLED" = "y" ] ; then
 		writeMsg "0" $systemClockMonitoringDrift
 		exit 1
 	fi
+
+elif [ "$CONFIG_TOD_SOURCE_NMEA" = "y" ] ; then
+	read_tod result $threshold "NMEA"
+	if (( result != 0 )) ; then
+		writeMsg "nmea_error" $systemClockMonitoringStatus
+		writeMsg "0" $systemClockMonitoringDrift
+		exit 1
+	fi
+
+elif [ "$CONFIG_TOD_SOURCE_IRIGB" = "y" ] ; then
+	read_tod result $threshold "IRIG-B"
+	if (( result != 0 )) ; then
+		writeMsg "irigb_error" $systemClockMonitoringStatus
+		writeMsg "0" $systemClockMonitoringDrift
+		exit 1
+	fi
+
 fi
+
 exit 0

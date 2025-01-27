@@ -84,7 +84,10 @@ void help(void)
 		"                    if configured NMEA/IRIGB: TOD (UTC) and WR (TAI) time,\n"
 		"                    Linux (UTC) and TOD (UTC);\n"
 		"                    similar to diff, but prints statistics periodically\n"
-		"    diff            show the difference between WR FPGA time (HW) and linux time (SW)\n"
+		"    diff            show the difference between Linux (UTC) and WR (TAI) time,\n"
+		"                    if configured NMEA/IRIGB: TOD (UTC) and WR (TAI) time,\n"
+		"                    Linux (UTC) and TOD (UTC)\n"
+		"                    use -v for details\n"
 		"    disable         if used with irigb as <source>, disable IRIG-B\n"
 		"    enable          if used with irigb as <source>, enable IRIG-B\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
@@ -303,34 +306,81 @@ int wrdate_get(volatile struct PPSG_WB *pps, int tohost)
 }
 
 
-int __wrdate_diff(volatile struct PPSG_WB *pps,struct timeval *ht, struct timeval *wt) {
+int __wrdate_diff(volatile struct PPSG_WB *pps, struct timeval *time_sw,
+		  struct timeval *time_wr)
+{
 	struct timeval diff;
 	int neg=0;
+	struct timeval time_wr_local = *time_wr;
 
-	neg=timeval_subtract(&diff, wt, ht);
+	neg=timeval_subtract(&diff, &time_wr_local, time_sw);
 
-	printf("%s%c%li.%06li\n",opt_verbose?("TAI(HW)-UTC(SW): "):(""),neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+	printf("%s%c%li.%06li\n",opt_verbose?("WR(TAI)-SW(UTC): "):(""),neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
 	if(opt_verbose)
 	{
 
-		wt->tv_sec-=get_kern_leaps(); //Convert HW clock from TAI to UTC
+		time_wr_local.tv_sec -= get_kern_leaps(); //Convert HW clock from TAI to UTC
 
-		neg=timeval_subtract(&diff, wt, ht);
-		printf("UTC(HW)-UTC(SW): %c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
+		neg=timeval_subtract(&diff, &time_wr_local, time_sw);
+		printf("WR(UTC)-SW(UTC): %c%li.%06li\n",neg?'-':'+',labs(diff.tv_sec),labs(diff.tv_usec));
 	}
 	return 0;
 
 }
 
+void __toddate_diff(struct timeval *time_sw, struct timeval *time_wr,
+		   struct timeval *time_tod)
+{
+	struct timeval diff;
+	int neg = 0;
+	char *tod_str;
+
+
+	if (opt_nmea_en) {
+		tod_str = "NMEA";
+	} else if (opt_irig_en) {
+		tod_str = "IRIGB";
+	} else {
+		/* No need to display extra info about TOD */
+		return;
+	}
+
+	neg = timeval_subtract(&diff, time_wr, time_tod);
+	printf("%s%s%s%c%li.%06li\n",
+	       opt_verbose ? "WR(TAI)-" : "",
+	       opt_verbose ? tod_str : "",
+	       opt_verbose ? "(UTC): " : "",
+	       neg?'-':'+',
+	       labs(diff.tv_sec),
+	       labs(diff.tv_usec));
+
+	neg = timeval_subtract(&diff, time_sw, time_tod);
+	printf("%s%s%s%c%li.%06li\n",
+	       opt_verbose ? "SW(UTC)-" : "",
+	       opt_verbose ? tod_str : "",
+	       opt_verbose ? "(UTC): " : "",
+	       neg?'-':'+',
+	       labs(diff.tv_sec),
+	       labs(diff.tv_usec));
+
+	return;
+
+}
+
 int wrdate_diff(volatile struct PPSG_WB *pps)
 {
-	struct timeval ht, wt;
+	struct timeval time_sw, time_wr, time_tod;
 
 	/* wrdate_gettimeofday has to be first, since NMEA and IRIG-B
 	 * may be blocking */
-	gettimeof_wr(&wt, pps, NULL);
-	gettimeofday(&ht, NULL);
-	return __wrdate_diff(pps,&ht, &wt);
+	gettimeofday_tod(&time_tod);
+	gettimeof_wr(&time_wr, pps, NULL);
+	gettimeofday(&time_sw, NULL);
+
+	__wrdate_diff(pps, &time_sw, &time_wr);
+	__toddate_diff(&time_sw, &time_wr, &time_tod);
+
+	return 0;
 }
 
 #define ADJ_SEC_ITER 10

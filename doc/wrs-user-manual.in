@@ -246,8 +246,12 @@ The most important changes introduced in v8.0 are:
       A subset of all @i{dot-config} parameters is expected to be stored in
       the permanent storage (@ref{Local Overwrite of dot-config}).
       This mechanism is enabled by default (in the release firmware).
-@item Change numbering of ports in  /wr/etc/tx_phase_cal.conf from 0-11 to
-      01-12 for consistency with wriX interfaces numbering.
+@item Change numbering of ports in @t{/wr/etc/tx_phase_cal.conf} from @i{0-11}
+      to @i{01-12} for consistency with @i{wriX} interfaces numbering.
+@item Few minor changes in the MIB file (@t{WR-SWITCH-MIB}).
+      Check @t{WR-SWITCH-MIB}'s header for details.
+      Please note that some changes are not backward compatible, check
+      @ref{Non backward-compatible changes in v8.0} for details.
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -257,6 +261,23 @@ needed from the user when upgrading firmware from v6.1 to v7.0.}
 @b{NOTE: Firmware v8.0 uses different FPGA GW/bitstream than v7.0,
 so the calibration values are different.}
 
+@c =-------------------------------------------------------------------------
+@node Non backward-compatible changes in v8.0
+@subsection Non backward-compatible changes in v8.0
+
+In v8.0 there were introduced non backward-compatible changes in the MIB file
+(@t{WR-SWITCH-MIB}).
+The changes include:
+@itemize
+@item Rename following @i{textual-conventions} to satisfy @i{smilint}:
+      @itemize
+      @item @t{wrsTenths} -> @t{WrsDisplayTenths}
+      @item @t{wrsHundredths} -> @t{WrsDisplayHundredths}
+      @end itemize
+@item Rename OID @t{wrsBootLoadLM32} to @t{wrsBootLoadSoftCPU}.
+      Please note that this changes only text representation of OID,
+      the numerical representation remains the same.
+@end itemize
 @c =-------------------------------------------------------------------------
 @node Changes in dot-config in v8.0
 @subsection Changes in dot-config in v8.0

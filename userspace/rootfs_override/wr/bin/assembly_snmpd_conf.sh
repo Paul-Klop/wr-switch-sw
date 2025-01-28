@@ -46,7 +46,7 @@ case ${MANUFACTURER} in
 esac
 
 case ${SCB_MINOR} in
-    3|4|5)
+    3|4|5|6)
 	SCB_MINOR_N=${SCB_MINOR}
 	;;
     *)

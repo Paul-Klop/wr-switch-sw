@@ -542,6 +542,8 @@
          |  +--wrsId3Unkn4(4)
          |  |
          |  +--wrsId3UnknFL(5)
+         |  |
+         |  +--wrsId3Unkn6(6)
          |
          +--wrsId3Ssol(2)
          |  |
@@ -550,6 +552,8 @@
          |  +--wrsId3Ssol3(3)
          |  |
          |  +--wrsId3Ssol4(4)
+         |  |
+         |  +--wrsId3Ssol6(6)
          |
          +--wrsId3Cti(3)
          |  |

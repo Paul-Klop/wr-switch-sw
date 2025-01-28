@@ -28,6 +28,9 @@ wrSwitchMIB MODULE-IDENTITY
     REVISION     "202501240000Z"
     DESCRIPTION
         "Updates for v8.0 WRS firmware release
+        Add OIDs:
+         - wrsId3Unkn6
+         - wrsId3Ssol6
         Rename textual-conventions to satisfy smilint:
          - wrsTenths -> WrsDisplayTenths
          - wrsHundredths -> WrsDisplayHundredths
@@ -3474,11 +3477,13 @@ wrsId3UnknUnkn            OBJECT IDENTIFIER ::= { wrsId3Unkn 1 }
 wrsId3Unkn3               OBJECT IDENTIFIER ::= { wrsId3Unkn 3 }
 wrsId3Unkn4               OBJECT IDENTIFIER ::= { wrsId3Unkn 4 }
 wrsId3UnknFL              OBJECT IDENTIFIER ::= { wrsId3Unkn 5 }
+wrsId3Unkn6               OBJECT IDENTIFIER ::= { wrsId3Unkn 6 }
 
 -- wrsId3Ssol (.1000.3.2)
 wrsId3SsolUnkn            OBJECT IDENTIFIER ::= { wrsId3Ssol 1 }
 wrsId3Ssol3               OBJECT IDENTIFIER ::= { wrsId3Ssol 3 }
 wrsId3Ssol4               OBJECT IDENTIFIER ::= { wrsId3Ssol 4 }
+wrsId3Ssol6               OBJECT IDENTIFIER ::= { wrsId3Ssol 6 }
 
 -- wrsId3Cti (.1000.3.3)
 wrsId3CtiUnkn             OBJECT IDENTIFIER ::= { wrsId3Cti 1 }

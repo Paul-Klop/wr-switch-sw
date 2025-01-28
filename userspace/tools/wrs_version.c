@@ -293,19 +293,20 @@ static void wrsw_tagged_versions(void)
 	}
 }
 
-/* remove dots from strings */
-static char *remove_dots(char *str)
+/* Convert string "a.b[.c.d]" into hex 0xaabbccdd */
+static int convert_version_to_hex(char *str)
 {
-	char *src, *dst;
+	unsigned int a = 0, b = 0, c = 0, d = 0;
 
-	for (src = dst = str; *src != '\0'; src++) {
-		*dst = *src;
-		if (*dst != '.')
-			dst++;
+	sscanf(str, "%u.%u.%u.%u", &a, &b, &c, &d);
+
+	if (a > 255 || b > 255 || c > 255 || d > 255) {
+		printf("Invalid input: values must be in the range 0–255\n");
+		return 0;
 	}
-	*dst = '\0';
 
-	return str;
+	return (a << 24) | (b << 16) | (c << 8) | d;
+
 }
 
 int main(int argc, char **argv)
@@ -363,7 +364,8 @@ int main(int argc, char **argv)
 		       get_fpga(),__GIT_VER__, __GIT_USR__, __DATE__, __TIME__);
 		break;
 	case 's':
-		printf("%s\n", remove_dots(sdb_get("scb_version", NULL)));
+		printf("0x%08x\n",
+		       convert_version_to_hex(sdb_get("scb_version", NULL)));
 		break;
 	case 'h':
 	default:

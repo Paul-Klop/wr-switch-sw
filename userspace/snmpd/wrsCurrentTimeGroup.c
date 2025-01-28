@@ -55,6 +55,7 @@ static struct pickinfo wrsCurrentTime_pickinfo[] = {
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsLeapSecSourceStatusDetails),
 	FIELD(wrsCurrentTime_s, ASN_OCTET_STR, wrsLeapSecSourceUrl),
 	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsSystemClockDriftUs),
+	FIELD(wrsCurrentTime_s, ASN_INTEGER, wrsTimeOfDaySource),
 };
 
 static service_exp_t services[]={
@@ -76,6 +77,7 @@ static char *wrsLeapSecStatusDetails_str = "wrsLeapSecStatus";
 static char *wrsLeapSecSourceStatusDetails_str = "wrsLeapSecSourceStatusDetails";
 static char *wrsLeapSecSource_str = "wrsLeapSecSource";
 static char *wrsLeapSecSourceUrl_str = "wrsLeapSecSourceUrl";
+static char *wrsTimeOfDaySource_str = "wrsTimeOfDaySource";
 
 static void get_TAI(void);
 static void update_expected_services(void);
@@ -183,6 +185,7 @@ static void get_wrsSystemClockStatusDetails(void){
 	int drift = 0;
 	int drift_us = 0;
 	static int 	threshold=0, unit=0, checkInterval=0;
+	static int time_of_day_source = 0;
 
 	update_expected_services();
 
@@ -267,6 +270,27 @@ static void get_wrsSystemClockStatusDetails(void){
 					 "read SNMP_SYSTEM_CLOCK_CHECK_INTERVAL_XXXX key in dot-config file\n",slog_obj_name);
 			}
 
+			/* Check Time of Day source */
+			slog_obj_name  = wrsTimeOfDaySource_str;
+			if ( (config_item =
+					libwr_cfg_get("TOD_SOURCE_NONE")) != NULL) {
+				time_of_day_source = WRS_TIME_OF_DAY_SOURCE_NONE;
+			} else if ( (config_item =
+					libwr_cfg_get("TOD_SOURCE_NTP")) != NULL) {
+				time_of_day_source = WRS_TIME_OF_DAY_SOURCE_NTP;
+			} else if ( (config_item =
+					libwr_cfg_get("TOD_SOURCE_NMEA")) != NULL) {
+				time_of_day_source = WRS_TIME_OF_DAY_SOURCE_NMEA;
+			} else if ( (config_item =
+					libwr_cfg_get("TOD_SOURCE_IRIGB")) != NULL) {
+				time_of_day_source = WRS_TIME_OF_DAY_SOURCE_IRIGB;
+			} else {
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: failed to "
+					 "read TOD_SOURCE_XXXX key in dot-config file\n",
+					 slog_obj_name);
+				time_of_day_source = WRS_TIME_OF_DAY_SOURCE_ERROR;
+			}
+
 			first_run = 0;
 		}
 
@@ -280,6 +304,7 @@ static void get_wrsSystemClockStatusDetails(void){
 	wrsCurrentTime_s.wrsSystemClockDriftThreshold=threshold;
 	wrsCurrentTime_s.wrsSystemClockCheckInterval=checkInterval;
 	wrsCurrentTime_s.wrsSystemClockCheckIntervalUnit=unit;
+	wrsCurrentTime_s.wrsTimeOfDaySource = time_of_day_source;
 }
 
 

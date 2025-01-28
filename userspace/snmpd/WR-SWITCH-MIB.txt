@@ -31,6 +31,7 @@ wrSwitchMIB MODULE-IDENTITY
         Add OIDs:
          - wrsId3Unkn6
          - wrsId3Ssol6
+         - wrsTimeOfDaySource
         Rename textual-conventions to satisfy smilint:
          - wrsTenths -> WrsDisplayTenths
          - wrsHundredths -> WrsDisplayHundredths
@@ -818,6 +819,26 @@ wrsSystemClockDriftUs OBJECT-TYPE
             "Drift of system clock expressed in microseconds with saturation to
             min/max integer values"
     ::= { wrsCurrentTimeGroup 12 }
+
+wrsTimeOfDaySource OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        error(1),
+                        none(2),
+                        ntp(3),
+                        nmea(4),
+                        irigb(5)
+                    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Source of Time of Day configuration
+             none - No Time of Day source configured
+             ntp - NTP configured as source of Time of Day
+             nmea - NMEA configured as source of Time of Day
+             irigb - IRIG-B configured as source of Time of Day
+             "
+    ::= { wrsCurrentTimeGroup 13 }
 
 --wrsBootStatusGroup (.7.1.2)
 wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }

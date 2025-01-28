@@ -289,15 +289,18 @@
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecStatusDetails}} ,\\
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSource}} ,\\
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsLeapSecSourceURL}}.\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimeOfDaySource}}.\\
      to find out which subsystem causes the problem and to verify your configuration.\\ 
     \underline{On error:}
     \begin{pck_proc}
       \item Check Syslog message to find one of the messages similar to:\\
-        \texttt{SNMP: wrsSystemClockStatusDetails failed} \\
-        \texttt{SNMP: wrsLeapSecStatus failed} \\
-        \texttt{SNMP: wrsLeapSecStatusDetails failed} \\
-        \texttt{SNMP: wrsLeapSecSourceStatus failed}  \\
-        \texttt{SNMP: wrsLeapSecSourceStatusDetails failed} \\
+        \texttt{SNMP: Error wrsSystemClockStatusDetails} \\
+        \texttt{SNMP: Error wrsLeapSecStatus} \\
+        \texttt{SNMP: Error wrsLeapSecStatusDetails} \\
+        \texttt{SNMP: Error wrsLeapSecSourceStatus}  \\
+        \texttt{SNMP: Error wrsLeapSecSourceStatusDetails} \\
+        \texttt{SNMP: Error wrsTimeOfDaySource} \\
+        Check also messages with \textit{Warning} instead of \textit{Error}.
         It may help you to retrieve the configuration problem.
       \item If \textit{Time of Day} source is configured as NTP, check that your
         configured NTP server is reachable using the \texttt{ping} command in
@@ -504,6 +507,8 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockDriftUs}{Drift
     of system clock expressed in microseconds with saturation to min/max integer
     values}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsTimeOfDaySource}{
+    Configured source of \textit{Time of Day}.}
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsBootStatusGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootCnt}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRebootCnt}{}

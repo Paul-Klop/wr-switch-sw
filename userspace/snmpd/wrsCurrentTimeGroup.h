@@ -45,6 +45,12 @@
 #define WRS_LEAP_SEC_SRC_STATUS_DETAILS_INVALID_FILE       7        /* The download file is invalid */
 #define WRS_LEAP_SEC_SRC_STATUS_DETAILS_DOWNLOAD_ERROR     8        /* Error detected during the download */
 
+#define WRS_TIME_OF_DAY_SOURCE_ERROR				1
+#define WRS_TIME_OF_DAY_SOURCE_NONE				2
+#define WRS_TIME_OF_DAY_SOURCE_NTP				3
+#define WRS_TIME_OF_DAY_SOURCE_NMEA				4
+#define WRS_TIME_OF_DAY_SOURCE_IRIGB				5
+
 struct wrsCurrentTime_s {
 	uint64_t wrsDateTAI;		/* current time in TAI */
 	char wrsDateTAIString[32];	/* current time in TAI as string */
@@ -58,6 +64,7 @@ struct wrsCurrentTime_s {
 	int wrsLeapSecSource;       /* Source of the leap seconds file */
 	char wrsLeapSecSourceUrl[WRS_LEAP_SECOND_SOURCE_URL_LEN + 1]; /* URL to download leap second file */
 	int wrsSystemClockDriftUs;    /* Current system clock drift value in us */
+	int wrsTimeOfDaySource;		/* Configured source of Time of Day */
 };
 
 extern struct wrsCurrentTime_s wrsCurrentTime_s;

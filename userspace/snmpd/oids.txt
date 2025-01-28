@@ -67,6 +67,7 @@
 "wrsLeapSecSourceStatusDetails"			"1.3.6.1.4.1.96.100.7.1.1.10"
 "wrsLeapSecSourceURL"			"1.3.6.1.4.1.96.100.7.1.1.11"
 "wrsSystemClockDriftUs"			"1.3.6.1.4.1.96.100.7.1.1.12"
+"wrsTimeOfDaySource"			"1.3.6.1.4.1.96.100.7.1.1.13"
 "wrsBootStatusGroup"			"1.3.6.1.4.1.96.100.7.1.2"
 "wrsBootCnt"			"1.3.6.1.4.1.96.100.7.1.2.1"
 "wrsRebootCnt"			"1.3.6.1.4.1.96.100.7.1.2.2"

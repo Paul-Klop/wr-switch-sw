@@ -131,6 +131,8 @@
    |  |  |  |        Textual Convention: DisplayString
    |  |  |  |        Size: 0..128
    |  |  |  +-- -R-- Integer32 wrsSystemClockDriftUs(12)
+   |  |  |  +-- -R-- EnumVal   wrsTimeOfDaySource(13)
+   |  |  |           Values: na(0), error(1), none(2), ntp(3), nmea(4), irigb(5)
    |  |  |
    |  |  +--wrsBootStatusGroup(2)
    |  |  |  |

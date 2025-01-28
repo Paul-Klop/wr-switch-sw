@@ -171,6 +171,8 @@ static text_status_mapping_t mapping_system_clock_monitor_status[]={
 		{ "no_error", WRS_SYSTEM_CLOCK_STATUS_DETAILS_OK},
 		{ "exceeded_threshold",WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED},
 		{ "ntp_error",WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR},
+		{ "nmea_error", WRS_SYSTEM_CLOCK_STATUS_DETAILS_NMEA_ERROR},
+		{ "irigb_error", WRS_SYSTEM_CLOCK_STATUS_DETAILS_IRIGB_ERROR},
 };
 
 static void get_wrsSystemClockStatusDetails(void){

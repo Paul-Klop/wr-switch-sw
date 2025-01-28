@@ -19,6 +19,8 @@
 #define WRS_SYSTEM_CLOCK_STATUS_DETAILS_ERROR           4       /* Generic error */
 #define WRS_SYSTEM_CLOCK_STATUS_DETAILS_IO_ERROR        5		/* Error: Status file is missing */
 #define WRS_SYSTEM_CLOCK_STATUS_DETAILS_UNKNOWN    		6		/* Error: Unknown status */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_NMEA_ERROR		7		/* Error getting NMEA data */
+#define WRS_SYSTEM_CLOCK_STATUS_DETAILS_IRIGB_ERROR		8		/* Error getting IRIG-B data */
 
 #define WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_ERROR      1		/* ok */
 #define WRS_SYSTEM_CLOCK_CHECK_INTERVAL_UNIT_MINUTES    2		/* Minutes */

@@ -273,7 +273,8 @@
   \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSystemClockStatus}{
     \underline{Description:}
     Reports the status of system time. \texttt{Error} when either the system
-    clock diverged from the reference NTP time more than the configured
+    clock diverged from the configured reference \textit{Time of Day} more than
+    the configured
     threshold or incorrect leap seconds file was provided to the switch. The
     \texttt{Error} is also generated when any of the related services failed.
     Please refer to related SNMP detailed objects for more information on the
@@ -298,8 +299,14 @@
         \texttt{SNMP: wrsLeapSecSourceStatus failed}  \\
         \texttt{SNMP: wrsLeapSecSourceStatusDetails failed} \\
         It may help you to retrieve the configuration problem.
-      \item Check that your configured NTP server is reachable using the 
-        'ping' command in the switch.
+      \item If \textit{Time of Day} source is configured as NTP, check that your
+        configured NTP server is reachable using the \texttt{ping} command in
+        the switch.
+      \item If \textit{Time of Day} source is configured as NMEA or IRIG-B,
+        check that proper cable is connected
+        (for NMEA to serial port in the back,
+        for IRIG-B to PPS-in connector in the front)
+        and verify with \texttt{wr\_date} console tool available on WRS.
       \item Check that your configuration of leap seconds file points to the
 	local file and that it has not expired. In case you configured the
 	switch to fetch the leap seconds file from remote server, verify the URL
@@ -400,7 +407,7 @@
   \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwVersion}{
     \underline{Description:}
     Software version in the form of release version and eventually git commit
-    from the repository (information provided from \emph{git describe} command
+    from the repository (information provided from \texttt{git describe} command
     at build time).}
 
   \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwBuildBy}{
@@ -471,7 +478,8 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsDateTAI}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsDateTAIString}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockStatusDetails}{
-  Result of the comparison of system clock and the NTP time to detect a drift.}
+  Result of the comparison of system clock and the Time of Day source
+  (NTP, NMEA, IRIG-B) to detect a drift.}
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockDrift}{
   Last measured drift value.}
   \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsSystemClockDriftThreshold}{

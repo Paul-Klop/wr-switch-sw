@@ -349,7 +349,7 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 		\end{pck_descr}
 
-\subsubsection{\bf System/WR time has diverged from the reference NTP time}
+\subsubsection{\bf System/WR time has diverged from the reference time (NTP, NMEA, IRIG-B)}
 		\label{fail:timing:systime}
 		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
@@ -359,7 +359,8 @@ WR network.
 				System clock monitoring periodically checks
 				whether the system (and thus White Rabbit time)
 				have not diverged above the configured
-				thresholde from the reference NTP time.
+				threshold from the reference Time of Day acquired via
+				NTP, NMEA or IRIG-B.
 			\item [] \underline{SNMP objects}:\\
 				{\footnotesize
     				\snmpadd{WR-SWITCH-MIB::wrsSystemClockStatus}\\

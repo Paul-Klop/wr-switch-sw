@@ -382,6 +382,8 @@ static void get_wrsSystemClockStatus(void){
 	/* ERROR */
 	else if (
 	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_NTP_ERROR ||
+	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_NMEA_ERROR ||
+	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_IRIGB_ERROR ||
 	     t->wrsSystemClockStatusDetails == WRS_SYSTEM_CLOCK_STATUS_DETAILS_THRESHOLD_EXCEEDED ||
 	     t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_INTERNAL_ERROR    ||
 	     t->wrsLeapSecStatusDetails == WRS_LEAP_SEC_STATUS_DETAILS_TAI_READ_ERROR    ||

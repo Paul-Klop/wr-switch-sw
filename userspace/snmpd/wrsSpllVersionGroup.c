@@ -44,7 +44,7 @@ time_t wrsSpllVersion_data_fill(void)
 	}
 	/* check version of SPLL's stat structure, version fields are from
 	 * version 2 */
-	if (spll_stats_p->ver <= 4) {
+	if (spll_stats_p->ver == SPLL_STATS_VER) {
 		int len;
 		strncpy(wrsSpllVersion_s.wrsSpllVersion, spll_stats_p->build_id.commit_id, 32);
 		/* concatenate date and time */
@@ -53,17 +53,14 @@ time_t wrsSpllVersion_data_fill(void)
 		wrsSpllVersion_s.wrsSpllBuildDate[len] = ' '; /* put space instead of null */
 		/* add time after added space at the end of string */
 		strncpy(&wrsSpllVersion_s.wrsSpllBuildDate[len + 1], spll_stats_p->build_id.build_time, 16 - 1);
+		strncpy(wrsSpllVersion_s.wrsSpllBuildBy, spll_stats_p->build_id.build_by, 32);
 	}
 	else
 	{
 		snmp_log(LOG_ERR, "SNMP: " SL_ER 
 			"wrsSpllVersionGroup unsupported version of spll_stats "
-			"registers (reading ver %d, supported 2 and 3) \n",
-			spll_stats_p->ver);
-	}
-	/* buil_by was introduced in version 3 */
-	if (spll_stats_p->ver >= 3) {
-		strncpy(wrsSpllVersion_s.wrsSpllBuildBy, spll_stats_p->build_id.build_by, 32);
+			"registers (reading ver %d, supported %d) \n",
+			spll_stats_p->ver, SPLL_STATS_VER);
 	}
 
 	/* there was an update, return current time */

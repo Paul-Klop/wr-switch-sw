@@ -64,8 +64,8 @@ time_t wrsSpllStatus_data_fill(void)
 	{
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
 			"wrsSpllStatusGroup unsupported version of spll_stats "
-			"registers (reading ver %d, supported 1, 2 and 3) \n",
-			spll_stats_p->ver);
+			"registers (reading ver %d, supported %d) \n",
+			spll_stats_p->ver, SPLL_STATS_VER);
 	}
 	/* there was an update, return current time */
 	return time_update;

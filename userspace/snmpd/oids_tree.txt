@@ -1,0 +1,578 @@
++--wrSwitchMIB(100)
+   |
+   +--wrsScalar(1)
+   |  |
+   |  +-- -RW- Integer32 wrsScalarOne(1)
+   |
+   +--wrsStatus(6)
+   |  |
+   |  +--wrsGeneralStatusGroup(1)
+   |  |  |
+   |  |  +-- -R-- EnumVal   wrsMainSystemStatus(1)
+   |  |  |        Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |  +-- -R-- EnumVal   wrsOSStatus(2)
+   |  |  |        Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |  +-- -R-- EnumVal   wrsTimingStatus(3)
+   |  |  |        Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |  +-- -R-- EnumVal   wrsNetworkingStatus(4)
+   |  |           Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |
+   |  +--wrsDetailedStatusesGroup(2)
+   |  |  |
+   |  |  +--wrsOSStatusGroup(1)
+   |  |  |  |
+   |  |  |  +-- -R-- EnumVal   wrsBootSuccessful(1)
+   |  |  |  |        Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |  |  +-- -R-- EnumVal   wrsTemperatureWarning(2)
+   |  |  |  |        Values: na(0), thresholdNotSet(1), temperatureOK(2), temperatureTooHigh(3)
+   |  |  |  +-- -R-- EnumVal   wrsMemoryFreeLow(3)
+   |  |  |  |        Values: na(0), ok(1), error(2), warning(3), warningNA(4)
+   |  |  |  +-- -R-- EnumVal   wrsCpuLoadHigh(4)
+   |  |  |  |        Values: na(0), ok(1), error(2), warning(3)
+   |  |  |  +-- -R-- EnumVal   wrsDiskSpaceLow(5)
+   |  |  |           Values: na(0), ok(1), error(2), warning(3), warningNA(4)
+   |  |  |
+   |  |  +--wrsTimingStatusGroup(2)
+   |  |  |  |
+   |  |  |  +-- -R-- EnumVal   wrsPTPStatus(1)
+   |  |  |  |        Values: na(0), ok(1), error(2), firstRead(6)
+   |  |  |  +-- -R-- EnumVal   wrsSoftPLLStatus(2)
+   |  |  |  |        Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |  |  +-- -R-- EnumVal   wrsSlaveLinksStatus(3)
+   |  |  |  |        Values: na(0), ok(1), error(2), warningNA(4)
+   |  |  |  +-- -R-- EnumVal   wrsPTPFramesFlowing(4)
+   |  |  |  |        Values: na(0), ok(1), error(2), warningNA(4), firstRead(6)
+   |  |  |  +-- -R-- EnumVal   wrsSystemClockStatus(5)
+   |  |  |           Values: na(0), ok(1), error(2), warning(3), warningNA(4)
+   |  |  |
+   |  |  +--wrsNetworkingStatusGroup(3)
+   |  |     |
+   |  |     +-- -R-- EnumVal   wrsSFPsStatus(1)
+   |  |     |        Values: na(0), ok(1), error(2), warning(3), warningNA(4), bug(5)
+   |  |     +-- -R-- EnumVal   wrsEndpointStatus(2)
+   |  |     |        Values: na(0), ok(1), error(2), firstRead(6)
+   |  |     +-- -R-- EnumVal   wrsSwcoreStatus(3)
+   |  |     |        Values: na(0), ok(1), error(2), firstRead(6)
+   |  |     +-- -R-- EnumVal   wrsRTUStatus(4)
+   |  |              Values: na(0), ok(1), error(2), firstRead(6)
+   |  |
+   |  +--wrsVersionGroup(3)
+   |     |
+   |     +-- -R-- String    wrsVersionSwVersion(1)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionSwBuildBy(2)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionSwBuildDate(3)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionBackplaneVersion(4)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionFpgaType(5)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionManufacturer(6)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionSwitchSerialNumber(7)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionScbVersion(8)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionGwVersion(9)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionGwBuild(10)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionSwitchHdlCommitId(11)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionGeneralCoresCommitId(12)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionWrCoresCommitId(13)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionLastUpdateDate(14)
+   |     |        Textual Convention: DisplayString
+   |     |        Size: 0..32
+   |     +-- -R-- String    wrsVersionFeatures(15)
+   |              Textual Convention: DisplayString
+   |              Size: 0..255
+   |
+   +--wrsExpertStatus(7)
+   |  |
+   |  +--wrsOperationStatus(1)
+   |  |  |
+   |  |  +--wrsCurrentTimeGroup(1)
+   |  |  |  |
+   |  |  |  +-- -R-- Counter64 wrsDateTAI(1)
+   |  |  |  +-- -R-- String    wrsDateTAIString(2)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..32
+   |  |  |  +-- -R-- EnumVal   wrsSystemClockStatusDetails(3)
+   |  |  |  |        Values: na(0), ok(1), thresholdExceeded(2), ntpError(3), ioError(5), unknownStatus(6), nmeaError(7), irigbError(8)
+   |  |  |  +-- -R-- Integer32 wrsSystemClockDrift(4)
+   |  |  |  +-- -R-- Integer32 wrsSystemClockDriftThreshold(5)
+   |  |  |  +-- -R-- Integer32 wrsSystemClockCheckInterval(6)
+   |  |  |  +-- -R-- EnumVal   wrsSystemClockCheckIntervalUnit(7)
+   |  |  |  |        Values: na(0), error(1), minutes(2), hours(3), days(4)
+   |  |  |  +-- -R-- EnumVal   wrsLeapSecSource(8)
+   |  |  |  |        Values: na(0), error(1), errorMinor(2), local(3), tryRemote(4), forceRemote(5)
+   |  |  |  +-- -R-- EnumVal   wrsLeapSecStatusDetails(9)
+   |  |  |  |        Values: na(0), ok(1), statusFileMissing(2), unknownStatus(3), leapSecFileExpired(4), internalErrorDetected(5), taiReadError(6), leaSecInserted(7), leapSecDeleted(8)
+   |  |  |  +-- -R-- EnumVal   wrsLeapSecSourceStatusDetails(10)
+   |  |  |  |        Values: na(0), ok(1), statusFileMissing(2), unknownStatus(3), updated(4), dhcpError(5), invalidUrl(6), invalidFile(7), downloadError(8)
+   |  |  |  +-- -R-- String    wrsLeapSecSourceURL(11)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..128
+   |  |  |  +-- -R-- Integer32 wrsSystemClockDriftUs(12)
+   |  |  |
+   |  |  +--wrsBootStatusGroup(2)
+   |  |  |  |
+   |  |  |  +-- -R-- Counter   wrsBootCnt(1)
+   |  |  |  +-- -R-- Counter   wrsRebootCnt(2)
+   |  |  |  +-- -R-- EnumVal   wrsRestartReason(3)
+   |  |  |  |        Values: na(0), error(1), generalReset(2), wakeUpReset(3), watchdogReset(4), softwareReset(5), userReset(6), restartByMonit(7)
+   |  |  |  +-- -R-- String    wrsFaultIP(4)
+   |  |  |  |        Size: 4
+   |  |  |  +-- -R-- String    wrsFaultLR(5)
+   |  |  |  |        Size: 4
+   |  |  |  +-- -R-- EnumVal   wrsConfigSource(6)
+   |  |  |  |        Values: na(0), error(1), errorMinor(2), local(3), remote(4), tryDhcp(5), forceDhcp(6)
+   |  |  |  +-- -R-- String    wrsConfigSourceUrl(7)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..128
+   |  |  |  +-- -R-- String    wrsRestartReasonMonit(8)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..32
+   |  |  |  +-- -R-- EnumVal   wrsBootConfigStatus(9)
+   |  |  |  |        Values: na(0), ok(1), error(2), downloadError(3), checkError(4), errorMinor(5), dhcpError(6)
+   |  |  |  +-- -R-- EnumVal   wrsBootHwinfoReadout(10)
+   |  |  |  |        Values: na(0), ok(1), error(2), errorMinor(3), warning(4)
+   |  |  |  +-- -R-- EnumVal   wrsBootLoadFPGA(11)
+   |  |  |  |        Values: na(0), ok(1), error(2), errorMinor(3), fileNotFound(4)
+   |  |  |  +-- -R-- EnumVal   wrsBootLoadSoftCPU(12)
+   |  |  |  |        Values: na(0), ok(1), error(2), errorMinor(3), fileNotFound(4)
+   |  |  |  +-- -R-- EnumVal   wrsBootKernelModulesMissing(13)
+   |  |  |  |        Values: allKernelModulesPresent(0)
+   |  |  |  +-- -R-- EnumVal   wrsBootUserspaceDaemonsMissing(14)
+   |  |  |  |        Values: allDaemonsPresent(0)
+   |  |  |  +-- -R-- Counter   wrsGwWatchdogTimeouts(15)
+   |  |  |  +-- -R-- EnumVal   wrsFwUpdateStatus(16)
+   |  |  |  |        Values: na(0), ok(1), checksumError(2)
+   |  |  |  +-- -R-- EnumVal   wrsCustomBootScriptSource(17)
+   |  |  |  |        Values: na(0), error(1), errorMinor(2), local(3), remote(4), disabled(5)
+   |  |  |  +-- -R-- String    wrsCustomBootScriptSourceUrl(18)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..128
+   |  |  |  +-- -R-- EnumVal   wrsCustomBootScriptStatus(19)
+   |  |  |  |        Values: na(0), ok(1), failed(2), wrongSrc(3), downloadError(4), disabled(5), error(6), errorMinor(7)
+   |  |  |  +-- -R-- EnumVal   wrsAuxClkSetStatus(20)
+   |  |  |  |        Values: na(0), ok(1), failed(2), disabled(3), error(4), errorMinor(5)
+   |  |  |  +-- -R-- EnumVal   wrsThrottlingSetStatus(21)
+   |  |  |  |        Values: na(0), ok(1), failed(2), disabled(3), error(4), errorMinor(5)
+   |  |  |  +-- -R-- EnumVal   wrsVlansSetStatus(22)
+   |  |  |           Values: na(0), ok(1), failed(2), disabled(3), error(4), errorMinor(5)
+   |  |  |
+   |  |  +--wrsTemperatureGroup(3)
+   |  |  |  |
+   |  |  |  +-- -R-- Integer32 wrsTempFPGA(1)
+   |  |  |  +-- -R-- Integer32 wrsTempPLL(2)
+   |  |  |  +-- -R-- Integer32 wrsTempPSL(3)
+   |  |  |  +-- -R-- Integer32 wrsTempPSR(4)
+   |  |  |  +-- -R-- Integer32 wrsTempThresholdFPGA(5)
+   |  |  |  +-- -R-- Integer32 wrsTempThresholdPLL(6)
+   |  |  |  +-- -R-- Integer32 wrsTempThresholdPSL(7)
+   |  |  |  +-- -R-- Integer32 wrsTempThresholdPSR(8)
+   |  |  |
+   |  |  +--wrsMemoryGroup(4)
+   |  |  |  |
+   |  |  |  +-- -R-- Integer32 wrsMemoryTotal(1)
+   |  |  |  +-- -R-- Integer32 wrsMemoryUsed(2)
+   |  |  |  +-- -R-- Integer32 wrsMemoryUsedPerc(3)
+   |  |  |  +-- -R-- Integer32 wrsMemoryFree(4)
+   |  |  |
+   |  |  +--wrsCpuLoadGroup(5)
+   |  |  |  |
+   |  |  |  +-- -R-- Integer32 wrsCPULoadAvg1min(1)
+   |  |  |  +-- -R-- Integer32 wrsCPULoadAvg5min(2)
+   |  |  |  +-- -R-- Integer32 wrsCPULoadAvg15min(3)
+   |  |  |
+   |  |  +--wrsDiskTable(6)
+   |  |     |
+   |  |     +--wrsDiskEntry(1)
+   |  |        |  Index: wrsDiskIndex
+   |  |        |
+   |  |        +-- ---- Unsigned  wrsDiskIndex(1)
+   |  |        +-- -R-- String    wrsDiskMountPath(2)
+   |  |        |        Textual Convention: DisplayString
+   |  |        |        Size: 0..32
+   |  |        +-- -R-- Integer32 wrsDiskSize(3)
+   |  |        +-- -R-- Integer32 wrsDiskUsed(4)
+   |  |        +-- -R-- Integer32 wrsDiskFree(5)
+   |  |        +-- -R-- Integer32 wrsDiskUseRate(6)
+   |  |        +-- -R-- String    wrsDiskFilesystem(7)
+   |  |                 Textual Convention: DisplayString
+   |  |                 Size: 0..64
+   |  |
+   |  +--wrsStartCntGroup(2)
+   |  |  |
+   |  |  +-- -R-- Counter   wrsStartCntHAL(1)
+   |  |  +-- -R-- Counter   wrsStartCntPTP(2)
+   |  |  +-- -R-- Counter   wrsStartCntRTUd(3)
+   |  |  +-- -R-- Counter   wrsStartCntSshd(4)
+   |  |  +-- -R-- Counter   wrsStartCntHttpd(5)
+   |  |  +-- -R-- Counter   wrsStartCntSnmpd(6)
+   |  |  +-- -R-- Counter   wrsStartCntSyslogd(7)
+   |  |  +-- -R-- Counter   wrsStartCntWrsWatchdog(8)
+   |  |  +-- -R-- Counter   wrsStartCntLldpd(9)
+   |  |  +-- -R-- Counter   wrsStartCntLdap(10)
+   |  |  +-- -R-- Counter   wrsStartCntRvlan(11)
+   |  |
+   |  +--wrsSpllState(3)
+   |  |  |
+   |  |  +--wrsSpllVersionGroup(1)
+   |  |  |  |
+   |  |  |  +-- -R-- String    wrsSpllVersion(1)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..32
+   |  |  |  +-- -R-- String    wrsSpllBuildDate(2)
+   |  |  |  |        Textual Convention: DisplayString
+   |  |  |  |        Size: 0..32
+   |  |  |  +-- -R-- String    wrsSpllBuildBy(3)
+   |  |  |           Textual Convention: DisplayString
+   |  |  |           Size: 0..32
+   |  |  |
+   |  |  +--wrsSpllStatusGroup(2)
+   |  |     |
+   |  |     +-- -R-- EnumVal   wrsSpllMode(1)
+   |  |     |        Values: na(0), grandmaster(1), master(2), slave(3), disabled(4)
+   |  |     +-- -R-- Counter   wrsSpllIrqCnt(2)
+   |  |     +-- -R-- EnumVal   wrsSpllSeqState(3)
+   |  |     |        Values: startExt(1), waitExt(2), startHelper(3), waitHelper(4), startMain(5), waitMain(6), disabled(7), ready(8), clearDacs(9), waitClearDacs(10)
+   |  |     +-- -R-- EnumVal   wrsSpllAlignState(4)
+   |  |     |        Values: extOff(0), start(1), initCsync(2), waitCsync(3), waitSample(4), compensateDelay(5), locked(6), startAlignment(7), startMain(8), waitClkIn(9), waitPlock(10)
+   |  |     +-- -R-- Counter   wrsSpllHlock(5)
+   |  |     +-- -R-- Counter   wrsSpllMlock(6)
+   |  |     +-- -R-- Integer32 wrsSpllHY(7)
+   |  |     +-- -R-- Integer32 wrsSpllMY(8)
+   |  |     +-- -R-- Counter   wrsSpllDelCnt(9)
+   |  |
+   |  +--wrsPstatsTable(4)
+   |  |  |
+   |  |  +--wrsPstatsEntry(1)
+   |  |     |  Index: wrsPstatsIndex
+   |  |     |
+   |  |     +-- ---- Unsigned  wrsPstatsIndex(1)
+   |  |     +-- -R-- String    wrsPstatsPortName(2)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..12
+   |  |     +-- -R-- Counter   wrsPstatsTXUnderrun(3)
+   |  |     +-- -R-- Counter   wrsPstatsRXOverrun(4)
+   |  |     +-- -R-- Counter   wrsPstatsRXInvalidCode(5)
+   |  |     +-- -R-- Counter   wrsPstatsRXSyncLost(6)
+   |  |     +-- -R-- Counter   wrsPstatsRXPauseFrames(7)
+   |  |     +-- -R-- Counter   wrsPstatsRXPfilterDropped(8)
+   |  |     +-- -R-- Counter   wrsPstatsRXPCSErrors(9)
+   |  |     +-- -R-- Counter   wrsPstatsRXGiantFrames(10)
+   |  |     +-- -R-- Counter   wrsPstatsRXRuntFrames(11)
+   |  |     +-- -R-- Counter   wrsPstatsRXCRCErrors(12)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass0(13)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass1(14)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass2(15)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass3(16)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass4(17)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass5(18)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass6(19)
+   |  |     +-- -R-- Counter   wrsPstatsRXPclass7(20)
+   |  |     +-- -R-- Counter   wrsPstatsTXFrames(21)
+   |  |     +-- -R-- Counter   wrsPstatsRXFrames(22)
+   |  |     +-- -R-- Counter   wrsPstatsRXDropRTUFull(23)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio0(24)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio1(25)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio2(26)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio3(27)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio4(28)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio5(29)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio6(30)
+   |  |     +-- -R-- Counter   wrsPstatsRXPrio7(31)
+   |  |     +-- -R-- Counter   wrsPstatsRTUValid(32)
+   |  |     +-- -R-- Counter   wrsPstatsRTUResponses(33)
+   |  |     +-- -R-- Counter   wrsPstatsRTUDropped(34)
+   |  |     +-- -R-- Counter   wrsPstatsFastMatchPriority(35)
+   |  |     +-- -R-- Counter   wrsPstatsFastMatchFastForward(36)
+   |  |     +-- -R-- Counter   wrsPstatsFastMatchNonForward(37)
+   |  |     +-- -R-- Counter   wrsPstatsFastMatchRespValid(38)
+   |  |     +-- -R-- Counter   wrsPstatsFullMatchRespValid(39)
+   |  |     +-- -R-- Counter   wrsPstatsForwarded(40)
+   |  |     +-- -R-- Counter   wrsPstatsTRURespValid(41)
+   |  |
+   |  +--wrsPtpDataTable(5)
+   |  |  |
+   |  |  +--wrsPtpDataEntry(1)
+   |  |     |  Index: wrsPtpDataIndex
+   |  |     |
+   |  |     +-- ---- Unsigned  wrsPtpDataIndex(1)
+   |  |     +-- -R-- String    wrsPtpPortName(2)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..12
+   |  |     +-- -R-- String    wrsPtpGrandmasterID(3)
+   |  |     |        Size: 8
+   |  |     +-- -R-- String    wrsPtpOwnID(4)
+   |  |     |        Size: 8
+   |  |     +-- -R-- EnumVal   wrsPtpMode(5)
+   |  |     |        Values: unknown(0), grandmaster(1), master(2), slave(3)
+   |  |     +-- -R-- String    wrsPtpServoState(6)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..32
+   |  |     +-- -R-- EnumVal   wrsPtpServoStateN(7)
+   |  |     |        Values: uninitialized(0), syncNsec(1), syncSec(2), syncPhase(3), trackPhase(4), waitOffsetStable(5), standardPTP(99)
+   |  |     +-- -R-- EnumVal   wrsPtpPhaseTracking(8)
+   |  |     |        Values: na(0), notTracking(1), tracking(2)
+   |  |     +-- -R-- String    wrsPtpSyncSource(9)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..32
+   |  |     +-- -R-- Counter64 wrsPtpClockOffsetPs(10)
+   |  |     +-- -R-- Integer32 wrsPtpClockOffsetPsHR(11)
+   |  |     +-- -R-- Integer32 wrsPtpSkew(12)
+   |  |     +-- -R-- Counter64 wrsPtpRTT(13)
+   |  |     +-- -R-- Unsigned  wrsPtpLinkLength(14)
+   |  |     +-- -R-- Counter   wrsPtpServoUpdates(15)
+   |  |     +-- -R-- Integer32 wrsPtpDeltaTxM(16)
+   |  |     +-- -R-- Integer32 wrsPtpDeltaRxM(17)
+   |  |     +-- -R-- Integer32 wrsPtpDeltaTxS(18)
+   |  |     +-- -R-- Integer32 wrsPtpDeltaRxS(19)
+   |  |     +-- -R-- Counter   wrsPtpServoStateErrCnt(20)
+   |  |     +-- -R-- Counter   wrsPtpClockOffsetErrCnt(21)
+   |  |     +-- -R-- Counter   wrsPtpRTTErrCnt(22)
+   |  |     +-- -R-- Counter64 wrsPtpServoUpdateTime(23)
+   |  |     +-- -R-- EnumVal   wrsPtpServoExt(24)
+   |  |     |        Values: na(0), none(1), wr(2), l1Sync(3)
+   |  |     +-- -R-- Integer32 wrsPtpMeanDelay(25)
+   |  |     +-- -R-- Integer32 wrsPtpDelayMS(26)
+   |  |     +-- -R-- Integer32 wrsPtpDelayMM(27)
+   |  |     +-- -R-- Integer32 wrsPtpDelayAsymmetryPS(28)
+   |  |     +-- -R-- Integer32 wrsPtpDelayCoefficientScaledH(29)
+   |  |     +-- -R-- Unsigned  wrsPtpDelayCoefficientScaledL(30)
+   |  |     +-- -R-- String    wrsPtpDelayCoefficientStr(31)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..64
+   |  |     +-- -R-- Integer32 wrsPtpIngressLatency(32)
+   |  |     +-- -R-- Integer32 wrsPtpEgressLatency(33)
+   |  |
+   |  +--wrsPortStatusTable(6)
+   |  |  |
+   |  |  +--wrsPortStatusEntry(1)
+   |  |     |  Index: wrsPortStatusIndex
+   |  |     |
+   |  |     +-- ---- Unsigned  wrsPortStatusIndex(1)
+   |  |     +-- -R-- String    wrsPortStatusPortName(2)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..12
+   |  |     +-- -R-- EnumVal   wrsPortStatusLink(3)
+   |  |     |        Values: na(0), down(1), up(2)
+   |  |     +-- -R-- EnumVal   wrsPortStatusConfiguredMode(4)
+   |  |     |        Values: unknown(0), master(1), slave(2), nonWr(3), auto(4), none(5)
+   |  |     +-- -R-- EnumVal   wrsPortStatusLocked(5)
+   |  |     |        Values: na(0), notLocked(1), locked(2)
+   |  |     +-- -R-- String    wrsPortStatusPeer(6)
+   |  |     |        Size: 8
+   |  |     +-- -R-- String    wrsPortStatusSfpVN(7)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..32
+   |  |     +-- -R-- String    wrsPortStatusSfpPN(8)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..32
+   |  |     +-- -R-- String    wrsPortStatusSfpVS(9)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..32
+   |  |     +-- -R-- EnumVal   wrsPortStatusSfpInDB(10)
+   |  |     |        Values: na(0), notInDataBase(1), inDataBase(2)
+   |  |     +-- -R-- EnumVal   wrsPortStatusSfpGbE(11)
+   |  |     |        Values: na(0), linkNotGbE(1), linkGbE(2)
+   |  |     +-- -R-- EnumVal   wrsPortStatusSfpError(12)
+   |  |     |        Values: na(0), sfpOk(1), sfpError(2), portDown(3)
+   |  |     +-- -R-- Counter   wrsPortStatusPtpTxFrames(13)
+   |  |     +-- -R-- Counter   wrsPortStatusPtpRxFrames(14)
+   |  |     +-- -R-- EnumVal   wrsPortStatusMonitor(15)
+   |  |     |        Values: na(0), enable(1), disable(2)
+   |  |     +-- -R-- EnumVal   wrsPortStatusSfpDom(16)
+   |  |     |        Values: na(0), enable(1), disable(2), domNotSupported(3)
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpTemp(17)
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpVcc(18)
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpTxBias(19)
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpTxPower(20)
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpRxPower(21)
+   |  |     +-- -R-- Integer32 wrsPortStatusT24p(22)
+   |  |     +-- -R-- EnumVal   wrsPortStatusT24pValid(23)
+   |  |     |        Values: invalid(0), readFromConfig(1)
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpTempF(24)
+   |  |     |        Textual Convention: WrsDisplayHundredths
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpVccF(25)
+   |  |     |        Textual Convention: WrsDisplayTenths
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpTxPowerF(26)
+   |  |     |        Textual Convention: WrsDisplayTenths
+   |  |     +-- -R-- Integer32 wrsPortStatusSfpRxPowerF(27)
+   |  |              Textual Convention: WrsDisplayTenths
+   |  |
+   |  +--wrsPstatsHCTable(7)
+   |  |  |
+   |  |  +--wrsPstatsHCEntry(1)
+   |  |     |  Index: wrsPstatsHCIndex
+   |  |     |
+   |  |     +-- ---- Unsigned  wrsPstatsHCIndex(1)
+   |  |     +-- -R-- String    wrsPstatsHCPortName(2)
+   |  |     |        Textual Convention: DisplayString
+   |  |     |        Size: 0..12
+   |  |     +-- -R-- Counter64 wrsPstatsHCTXUnderrun(3)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXOverrun(4)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXInvalidCode(5)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXSyncLost(6)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPauseFrames(7)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPfilterDropped(8)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPCSErrors(9)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXGiantFrames(10)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXRuntFrames(11)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXCRCErrors(12)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass0(13)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass1(14)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass2(15)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass3(16)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass4(17)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass5(18)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass6(19)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPclass7(20)
+   |  |     +-- -R-- Counter64 wrsPstatsHCTXFrames(21)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXFrames(22)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXDropRTUFull(23)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio0(24)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio1(25)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio2(26)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio3(27)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio4(28)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio5(29)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio6(30)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRXPrio7(31)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRTUValid(32)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRTUResponses(33)
+   |  |     +-- -R-- Counter64 wrsPstatsHCRTUDropped(34)
+   |  |     +-- -R-- Counter64 wrsPstatsHCFastMatchPriority(35)
+   |  |     +-- -R-- Counter64 wrsPstatsHCFastMatchFastForward(36)
+   |  |     +-- -R-- Counter64 wrsPstatsHCFastMatchNonForward(37)
+   |  |     +-- -R-- Counter64 wrsPstatsHCFastMatchRespValid(38)
+   |  |     +-- -R-- Counter64 wrsPstatsHCFullMatchRespValid(39)
+   |  |     +-- -R-- Counter64 wrsPstatsHCForwarded(40)
+   |  |     +-- -R-- Counter64 wrsPstatsHCTRURespValid(41)
+   |  |     +-- -R-- Counter64 wrsPstatsHCNICTXFrames(42)
+   |  |
+   |  +--wrsPtpInstanceTable(8)
+   |     |
+   |     +--wrsPtpInstanceEntry(1)
+   |        |  Index: wrsPtpInstancePortIndex, wrsPtpInstanceOnPortIndex
+   |        |
+   |        +-- ---- Unsigned  wrsPtpInstancePortIndex(1)
+   |        +-- ---- Unsigned  wrsPtpInstanceOnPortIndex(2)
+   |        +-- -R-- String    wrsPtpInstanceName(3)
+   |        |        Textual Convention: DisplayString
+   |        |        Size: 0..12
+   |        +-- -R-- Integer32 wrsPtpInstancePort(4)
+   |        +-- -R-- Integer32 wrsPtpInstancePortInstance(5)
+   |        +-- -R-- String    wrsPtpInstancePortName(6)
+   |        |        Textual Convention: DisplayString
+   |        |        Size: 0..12
+   |        +-- -R-- EnumVal   wrsPtpInstanceState(7)
+   |        |        Values: na(0), initializing(1), faulty(2), disabled(3), listening(4), preMaster(5), master(6), passive(7), uncalibrated(8), slave(9)
+   |        +-- -R-- EnumVal   wrsPtpInstanceMasterOnly(8)
+   |        |        Values: na(0), disabled(1), enabled(2)
+   |        +-- -R-- EnumVal   wrsPtpInstanceExtPortCfgDesSt(9)
+   |        |        Values: na(0), initializing(1), faulty(2), disabled(3), listening(4), preMaster(5), master(6), passive(7), uncalibrated(8), slave(9)
+   |        +-- -R-- EnumVal   wrsPtpInstanceMechanism(10)
+   |        |        Values: na(0), e2e(1), p2p(2), commonP2P(3), special(4), noMechanism(254)
+   |        +-- -R-- EnumVal   wrsPtpInstanceProfile(11)
+   |        |        Values: na(0), defaultPTP(1), highAccuracyWhiteRabbit(2), highAccuracy(3), custom(4)
+   |        +-- -R-- EnumVal   wrsPtpInstanceExtension(12)
+   |        |        Values: na(0), none(1), whiteRabbit(2), l1Sync(3)
+   |        +-- -R-- EnumVal   wrsPtpInstanceAsymEnabled(13)
+   |        |        Values: na(0), disabled(1), enabled(2)
+   |        +-- -R-- Counter64 wrsPtpInstanceAsymConstAsymPS(14)
+   |        +-- -R-- Counter64 wrsPtpInstanceAsymScDelayCoef(15)
+   |        +-- -R-- String    wrsPtpInstanceAsymScDelayCoefHR(16)
+   |        |        Textual Convention: DisplayString
+   |        |        Size: 0..64
+   |        +-- -R-- Counter64 wrsPtpInstanceTSCorrEgressLatPS(17)
+   |        +-- -R-- Counter64 wrsPtpInstanceTSCorrIngLatPS(18)
+   |        +-- -R-- Counter64 wrsPtpInstanceTSCorrSemistLatPS(19)
+   |        +-- -R-- EnumVal   wrsPtpInstanceProtoDetectState(20)
+   |        |        Values: na(0), none(1), pWaitMsg(2), pDetection(3), pDetected(4), pFailure(5)
+   |        +-- -R-- EnumVal   wrsPtpInstanceExtState(21)
+   |        |        Values: na(0), disabled(1), active(2), ptp(3)
+   |        +-- -R-- String    wrsPtpInstancePeerMac(22)
+   |        |        Textual Convention: PhysAddress
+   |        +-- -R-- Integer32 wrsPtpInstancePeerVid(23)
+   |        +-- -R-- Integer32 wrsPtpInstanceVlanNum(24)
+   |        +-- -R-- String    wrsPtpInstanceVlanListStr(25)
+   |        |        Textual Convention: DisplayString
+   |        |        Size: 0..160
+   |        +-- -R-- EnumVal   wrsPtpInstanceStatusError(26)
+   |        |        Values: na(0), ok(1), error(2), warningNA(3)
+   |        +-- -R-- EnumVal   wrsPtpInstanceExtensionCfg(27)
+   |                 Values: na(0), none(1), whiteRabbit(2), l1Sync(3), haWrAutonegotiation(4)
+   |
+   +--wrsId(1000)
+      |
+      +--wrsIdUnkn(1)
+      |  |
+      |  +--wrsIdUnknUnkn(1)
+      |
+      +--wrsIdOther(2)
+      |
+      +--wrsId3(3)
+         |
+         +--wrsId3Unkn(1)
+         |  |
+         |  +--wrsId3UnknUnkn(1)
+         |  |
+         |  +--wrsId3Unkn3(3)
+         |  |
+         |  +--wrsId3Unkn4(4)
+         |  |
+         |  +--wrsId3UnknFL(5)
+         |
+         +--wrsId3Ssol(2)
+         |  |
+         |  +--wrsId3SsolUnkn(1)
+         |  |
+         |  +--wrsId3Ssol3(3)
+         |  |
+         |  +--wrsId3Ssol4(4)
+         |
+         +--wrsId3Cti(3)
+         |  |
+         |  +--wrsId3CtiUnkn(1)
+         |  |
+         |  +--wrsId3Cti3(3)
+         |  |
+         |  +--wrsId3Cti4(4)
+         |
+         +--wrsId3St(4)
+         |  |
+         |  +--wrsId3StUnkn(1)
+         |  |
+         |  +--wrsId3St3(3)
+         |  |
+         |  +--wrsId3St4(4)
+         |  |
+         |  +--wrsId3StFL(5)
+         |
+         +--wrsId3Opnt(5)
+            |
+            +--wrsId3OpntUnkn(1)
+            |
+            +--wrsId3Opnt3(3)
+            |
+            +--wrsId3Opnt4(4)

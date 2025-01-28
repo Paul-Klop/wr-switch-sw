@@ -82,14 +82,18 @@ MIBS = WR-SWITCH-MIB.txt
 OBJECTS = $(SOURCES:.c=.o)
 
 OID_FILE = oids.txt
+OID_TREE_FILE = oids_tree.txt
 
-all: $(SHLIB) $(OID_FILE)
+all: $(SHLIB) $(OID_FILE) $(OID_TREE_FILE)
 
 $(SHLIB): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 $(OID_FILE): $(MIBS)
 	snmptranslate -Pu -Tz -M +./ -m ./$(MIBS) >$(OID_FILE) || true
+
+$(OID_TREE_FILE): $(MIBS)
+	snmptranslate  -Tp -On -M +./ -m ./$(MIBS) 1.3.6.1.4.1.96.100 >$(OID_TREE_FILE) || true
 
 clean:
 	rm -f $(SHLIB) $(OBJECTS)

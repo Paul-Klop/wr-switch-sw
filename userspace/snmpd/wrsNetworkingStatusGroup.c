@@ -210,16 +210,18 @@ static void load_dot_config(void)
 	if (tmp)
 		ns_dotconfig.rx_prio_frame_rate = atoi(tmp);
 
-	tmp = libwr_cfg_get("SNMP_SWCORESTATUS_TX_FORWARD_DELTA");
-	if (tmp) {
-		ns_dotconfig.tx_forward_delta = atoi(tmp);
-	} else {
-		slog_obj_name = wrsSwcoreStatus_str;
-		snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: Unable to read "
-			 "CONFIG_SNMP_SWCORESTATUS_TX_FORWARD_DELTA from "
-			 "dot-config file, use default value %d\n",
-			 slog_obj_name, TX_FORWARD_DELTA);
-		ns_dotconfig.tx_forward_delta = TX_FORWARD_DELTA;
+	if (!ns_dotconfig.disable_wrsSwcoreStatus) {
+		tmp = libwr_cfg_get("SNMP_SWCORESTATUS_TX_FORWARD_DELTA");
+		if (tmp) {
+			ns_dotconfig.tx_forward_delta = atoi(tmp);
+		} else {
+			slog_obj_name = wrsSwcoreStatus_str;
+			snmp_log(LOG_WARNING, "SNMP: " SL_W " %s: Unable to read "
+				"CONFIG_SNMP_SWCORESTATUS_TX_FORWARD_DELTA from "
+				"dot-config file, use default value %d\n",
+				slog_obj_name, TX_FORWARD_DELTA);
+			ns_dotconfig.tx_forward_delta = TX_FORWARD_DELTA;
+		}
 	}
 }
 

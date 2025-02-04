@@ -2149,6 +2149,7 @@ instances of the WR switch.
                              wavelength and 1310nm Rx wavelength)
         @end itemize
         See @ref{Timing Configuration} for details.
+        For details about SFP matching please see @ref{SFP name matching}.
 
 @item   CONFIG_N_FIBER_ENTRIES
 @item   CONFIG_FIBER00_PARAMS
@@ -3001,12 +3002,20 @@ changed with the @t{ppsi_conf} tool (see @ref{ppsi_conf}).
 @node SFP name matching
 @subsection SFP name matching
 
-Each time you plug an SFP transceiver into any of the @sc{wrs} ports, it has to be matched
+Each time an SFP transceiver is plugged into any of the @sc{wrs} ports,
+it has to be matched
 against @t{dot-config} entries specifying the timing parameters and wavelength for the
 supported transceivers.
 The matching algorithm reads from the SFP its vendor name (@i{vn}), part number (@i{pn}), vendor
-serial (@i{vs}) and TX wavelength in @t{nm}. Note that it only reads the integer part (i.e. rounded down)
-of the TX wavelength, as shown by @t{wrs_sfp_dump}. Then, these SFP parameters are compared
+serial (@i{vs}) and TX wavelength in @t{nm}.
+Note that it only reads the integer part of the TX wavelength
+@footnote{The @i{SFF-8472} standard defines fields only for integer part of
+the TX wavelength.
+Please note that it was observed that two DWDM SFPs from the same manufacturer,
+but from different batches, one had this value rounded up, second rounded
+down.},
+as shown by @t{wrs_sfp_dump}.
+Then, these SFP parameters are compared
  with the values stored in the @t{CONFIG_SFP@i{xx}_PARAMS} @t{dot-config} entries:
 @itemize
 @item

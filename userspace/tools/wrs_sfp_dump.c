@@ -33,7 +33,7 @@ void print_info(char *prgname)
 	printf("usage: %s <-I|-L> [parameters]\n", prgname);
 	printf(""
 		"Select the source of SFP eeprom data:\n"
-		"   -L                 Use eeprom data read by HAL at SFP insertion time\n"
+		"   -L                 Use eeprom data read by HAL at SFP insertion time (default)\n"
 		"   -I                 Use read eeprom data directly from SFP via I2C\n"
 		"                      (Use with caution! May corrupt SFPs EEPROM if HAL is running!)\n"
 		"Optional parameters:\n"
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 	int dump_sfp_dom = 0;
 	int operation = 0;
 	char *eeprom_file = NULL;
-	int sfp_data_source = 0;
+	int sfp_data_source = READ_HAL;
 	int sfp_tx_update = 0;
 	int sfp_tx_enable = 0;
 	/* local copy of sfp eeprom */

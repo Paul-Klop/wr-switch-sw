@@ -4060,7 +4060,8 @@ The following tools and scripts are provided:
 @item wrs_sfp_dump
         Dump the content of SFP's internal memory and SFP monitoring parameters.
         This tool can read SFP's information
-        from HAL's shmem or directly from SFP via i2c bus. Please note that
+        from HAL's shmem (default) or directly from SFP via i2c bus.
+        Please note that
         reading directly via i2c can cause race condition on i2c bus.
         The race condition can cause SFP's memory corruption (even while only
         reads are done to SFP's memory),

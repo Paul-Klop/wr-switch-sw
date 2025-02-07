@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include <time.h>
+#include <errno.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -114,6 +115,32 @@ static int hal_shutdown(void)
 
 static void hal_daemonize(void);
 
+void *sfp_db_alloc(size_t alloc_size)
+{
+	return wrs_shm_alloc(hal_shmem_hdr, alloc_size);
+}
+
+int hal_shmem_init(char *logfilename)
+{
+	/* Allocate the ports in shared memory, so wr_mon etc can see them
+	   Use lock since some (like rtud) wait for hal to be available */
+	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
+				WRS_SHM_WRITE | WRS_SHM_LOCKED);
+	if (!hal_shmem_hdr) {
+		pr_error("Can't join shmem: %s\n", strerror(errno));
+		return -1;
+	}
+	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
+	if (!hal_shmem) {
+		pr_error("Can't allocate in shmem for hal_shmem\n");
+		return -1;
+	}
+
+	hal_shmem->shmemState = HAL_SHMEM_STATE_NOT_INITITALIZED;
+
+	return 0;
+}
+
 /* Main initialization function */
 static int hal_init(void)
 {
@@ -134,7 +161,12 @@ static int hal_init(void)
 		pr_error("Error in dot-config file %s, error in line %d\n",
 			 dotconfigname, -line);
 
-	shw_sfp_read_db();
+
+	/* Initialize HAL's shmem */
+	assert_init(hal_shmem_init(logfilename));
+
+	shw_sfp_read_db(sfp_db_alloc);
+	hal_shmem->shw_sfp_cal_list = shw_sfp_cal_list;
 
 	/* Set up trap for some signals - the main purpose is to
 	   prevent the hardware from working when the HAL is shut down

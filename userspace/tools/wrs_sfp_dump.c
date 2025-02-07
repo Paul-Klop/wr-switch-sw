@@ -26,6 +26,7 @@
 
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
+static struct shw_sfp_caldata *shw_sfp_cal_list_local;
 static int hal_nports_local;
 
 void print_info(char *prgname)
@@ -45,6 +46,7 @@ void print_info(char *prgname)
 		"   -H <dir>           Open shmem dumps from the given directory; works only with <-L>\n"
 		"   -d                 Dump sfp DOM data page\n"
 		"   -x                 Dump sfp/DOM header also in hex\n"
+		"   -b                 Dump SFP database from HAL\n"
 		"   -t <on|off|0|1|s>  Enable(1), disable(1) or check status of SFP's TX pin; Use with -L or -I\n"
 		"   -q                 Decrease verbosity\n"
 		"   -v                 Increase verbosity\n"
@@ -287,6 +289,34 @@ void hal_init_shm(void)
 			 "shmem\n");
 		exit(1);
 	}
+
+	/* Get the pointer to the SFP database */
+	shw_sfp_cal_list_local = wrs_shm_follow(hal_head, h->shw_sfp_cal_list);
+	/* shw_sfp_cal_list may be NULL if SFP database is empty */
+}
+
+static void dump_sfp_database_from_hal(void)
+{
+	int i = 1;
+	struct shw_sfp_caldata *sfp_db_entry = shw_sfp_cal_list_local;
+
+	printf(" # |    Vendor Name   |    Part Number   |   Vendor Serial  | TX WL | RX WL | delta TX | delta RX\n");
+	printf("---+------------------+------------------+------------------+-------+-------+----------+---------\n");
+
+	while (sfp_db_entry) {
+		printf("%2d", i);
+		printf(" | %16.16s", sfp_db_entry->vendor_name);
+		printf(" | %16.16s", sfp_db_entry->part_num);
+		printf(" | %16.16s", sfp_db_entry->vendor_serial);
+		printf(" | %5d", sfp_db_entry->tx_wl);
+		printf(" | %5d", sfp_db_entry->rx_wl);
+		printf(" | %8d", sfp_db_entry->delta_tx_ps);
+		printf(" | %8d", sfp_db_entry->delta_rx_ps);
+		printf("\n");
+
+		sfp_db_entry = wrs_shm_follow(hal_head, sfp_db_entry->next);
+		i++;
+	};
 }
 
 int main(int argc, char **argv)
@@ -307,6 +337,7 @@ int main(int argc, char **argv)
 	int sfp_data_source = READ_HAL;
 	int sfp_tx_update = 0;
 	int sfp_tx_enable = 0;
+	int dump_sfp_database = 0;
 	/* local copy of sfp eeprom */
 	struct shw_sfp_header hal_sfp_raw_header_lc[HAL_MAX_PORTS];
 	struct shw_sfp_dom hal_sfp_raw_dom_lc[HAL_MAX_PORTS];
@@ -316,7 +347,7 @@ int main(int argc, char **argv)
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:b")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -356,6 +387,9 @@ int main(int argc, char **argv)
 				pr_error("File error!\n");
 				exit(1);
 			}
+			break;
+		case 'b':
+			dump_sfp_database = 1;
 			break;
 		case 'L':
 			/* HAL mode */
@@ -399,7 +433,19 @@ int main(int argc, char **argv)
 			 "  -I for direct access to SFPs via i2c\n");
 		exit(1);
 	}
-	
+
+	if (dump_sfp_database) {
+		if (sfp_data_source != READ_HAL) {
+			printf("Reading SFP database can be done only from HAL "
+			       "(use -L parameter).\n");
+			exit(1);
+		}
+
+		hal_init_shm();
+		dump_sfp_database_from_hal();
+		exit(0);
+	}
+
 	if (sfp_tx_update && sfp_data_source == READ_HAL) {
 		char *msg;
 		int ret;

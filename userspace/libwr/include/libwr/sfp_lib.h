@@ -157,6 +157,9 @@ struct shw_sfp_dom {
 
 /* Public API */
 
+/* Pointer to SFP database */
+extern struct shw_sfp_caldata *shw_sfp_cal_list;
+
 /*
  * Scan all ports for plugged in SFP's. The return value is a bitmask
  * of all the ports with detected SFP's (bits 0-17 are valid).
@@ -179,7 +182,7 @@ static inline void shw_sfp_set_generic(int num, int status, int type)
 }
 
 /* Load the db from dot-config to internal structures */
-int shw_sfp_read_db(void);
+int shw_sfp_read_db(void *(*sfp_db_alloc)(size_t alloc_size));
 
 /* Read and verify the header all at once. returns -1 on failure */
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);

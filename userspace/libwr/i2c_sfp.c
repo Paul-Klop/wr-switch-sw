@@ -53,6 +53,7 @@
 /* Either 8 or 16 byte pages, so we use the smaller */
 #define SFP_PAGE_SIZE 8
 
+struct shw_sfp_caldata *shw_sfp_cal_list = NULL;
 /*
  * We need these tables because the schematics are messed up
  * The first one is for figuring out the masks in the pca9548's
@@ -745,8 +746,6 @@ int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head)
 	return shw_sfp_header_verify(head);
 }
 
-static struct shw_sfp_caldata *shw_sfp_cal_list = NULL;
-
 /* local helper */
 static void __err_msg(int index, char *pname, char *pvalue)
 {
@@ -758,7 +757,7 @@ static void __err_msg(int index, char *pname, char *pvalue)
 			 "is not specified\n", index, pname);
 }
 
-int shw_sfp_read_db(void)
+int shw_sfp_read_db(void *(*sfp_db_alloc)(size_t alloc_size))
 {
 	struct shw_sfp_caldata *sfp;
 	char s[128];
@@ -782,7 +781,7 @@ int shw_sfp_read_db(void)
 		if (error)
 			return 0; /* no more, no error */
 
-		sfp = calloc(1, sizeof(*sfp));
+		sfp = sfp_db_alloc(sizeof(*sfp));
 		strncpy(sfp->part_num, s, sizeof(sfp->part_num));
 
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "vn",

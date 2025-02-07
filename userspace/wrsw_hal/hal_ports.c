@@ -238,17 +238,6 @@ int hal_port_shmem_init(char *logfilename)
 
 	link_status_prepare_fd(&halPorts.hal_link_state_fd);
 
-	/* Allocate the ports in shared memory, so wr_mon etc can see them
-	   Use lock since some (like rtud) wait for hal to be available */
-	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
-				WRS_SHM_WRITE | WRS_SHM_LOCKED);
-	if (!hal_shmem_hdr) {
-		pr_error("Can't join shmem: %s\n", strerror(errno));
-		return -1;
-	}
-	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
-
-	hal_shmem->shmemState= HAL_SHMEM_STATE_NOT_INITITALIZED;
     halPorts.ports = wrs_shm_alloc(hal_shmem_hdr,
 			      sizeof(struct hal_port_state)
 			      * HAL_MAX_PORTS);

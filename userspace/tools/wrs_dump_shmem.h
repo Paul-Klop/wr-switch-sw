@@ -53,6 +53,7 @@ enum dump_type {
 	dump_type_time,
 	dump_type_ip_address,
 	dump_type_sfp_flags,
+	dump_type_sfp_match_flags,
 	dump_type_sfp_dom_temp,
 	dump_type_sfp_dom_voltage,
 	dump_type_sfp_dom_bias_curr,
@@ -94,6 +95,7 @@ typedef int            link_up_status;
 typedef int            ip_addr_status;
 typedef int            sensor_temp;
 typedef uint32_t       sfp_flags;
+typedef uint32_t       sfp_match_flags;
 typedef uint8_t        sfp_dom_temp;
 typedef uint8_t        sfp_dom_voltage;
 typedef uint8_t        sfp_dom_bias_curr;

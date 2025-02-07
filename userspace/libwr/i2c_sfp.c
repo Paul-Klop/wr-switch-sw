@@ -784,6 +784,13 @@ int shw_sfp_read_db(void *(*sfp_db_alloc)(size_t alloc_size))
 		sfp = sfp_db_alloc(sizeof(*sfp));
 		strncpy(sfp->part_num, s, sizeof(sfp->part_num));
 
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "rev",
+					   LIBWR_STRING, s, index);
+		/* copy revision if found */
+		if (!error)
+			strncpy(sfp->vendor_revision, s,
+				sizeof(sfp->vendor_revision));
+
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "vn",
 					   LIBWR_STRING, s, index);
 		/* copy vendor name if found */
@@ -844,15 +851,62 @@ static inline void removeTrailingSpaces(char *p, int strSize) {
 	}
 }
 
+static struct shw_sfp_caldata *shw_sfp_match_db(int *txWaveLength,
+						char *vn,
+						char *pn,
+						char *vs,
+						char *vr)
+{
+	struct shw_sfp_caldata *t;
+
+	t = shw_sfp_cal_list;
+
+	while (t) {
+		/* If pointer to parameter is not null, it has to match.
+		 * If TX wavelength pointer is null it has to match 0 in
+		 * database (not defined), otherwite match the values. */
+		if (   ((!txWaveLength && t->tx_wl == 0)    || (txWaveLength && *txWaveLength == t->tx_wl))
+		    && ((!vn && t->vendor_name[0] == 0)     || (vn           && strncmp(vn, t->vendor_name, VENDOR_NAME_LEN) == 0))
+		    && ((!pn && t->part_num[0] == 0)        || (pn           && strncmp(pn, t->part_num, VENDOR_PN_LEN) == 0))
+		    && ((!vs && t->vendor_serial[0] == 0)   || (vs           && strncmp(vs, t->vendor_serial, VENDOR_SERIAL_LEN) == 0))
+		    && ((!vr && t->vendor_revision[0] == 0) || (vr           && strncmp(vr, t->vendor_revision, VENDOR_REV_LEN) == 0))
+		    ) {
+			t->match_flags = 0;
+			t->match_flags |= txWaveLength ? SFP_MATCH_FLAG_TX_WAVELENGTH : 0;
+			t->match_flags |= vn           ? SFP_MATCH_FLAG_VN : 0;
+			t->match_flags |= pn           ? SFP_MATCH_FLAG_PN : 0;
+			t->match_flags |= vs           ? SFP_MATCH_FLAG_VS : 0;
+			t->match_flags |= vr           ? SFP_MATCH_FLAG_VR : 0;
+
+			pr_info("Matched SFP in database based on: %s%s%s%s%s\n",
+				t->match_flags & SFP_MATCH_FLAG_TX_WAVELENGTH ? "TX wavelength, " : "",
+				t->match_flags & SFP_MATCH_FLAG_VN ? "Vendor Name, " : "",
+				t->match_flags & SFP_MATCH_FLAG_PN ? "Part Number, " : "",
+				t->match_flags & SFP_MATCH_FLAG_VS ? "Vendor Serial, " : "",
+				t->match_flags & SFP_MATCH_FLAG_VR ? "Vendor Revision, " : ""
+			);
+			pr_info("With database entry: vendor_name(%s), "
+			        "part_num(%s), vendor_serial(%s), "
+			        "vendor_revision(%s), TX wavelength(%d), "
+			        "RX wavelength(%d)\n",
+				t->vendor_name, t->part_num, t->vendor_serial,
+				t->vendor_revision, t->tx_wl, t->rx_wl);
+			return t;
+		}
+		t = t->next;
+	}
+
+	return NULL;
+}
+
 struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 					     struct shw_sfp_header *head)
 {
-	struct shw_sfp_caldata *t;
-	struct shw_sfp_caldata *match_pn_vn = NULL;
-	struct shw_sfp_caldata *match_pn = NULL;
+	struct shw_sfp_caldata *ret;
 	char *vn = (char *)head->vendor_name;
 	char *pn = (char *)head->vendor_pn;
 	char *vs = (char *)head->vendor_serial;
+	char *vr = (char *)head->vendor_rev;
 	int txWaveLength=getSfpTxWaveLength(head);
 
 	/* Replace spaces at the end of strings with 0 needed for
@@ -861,33 +915,25 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 	removeTrailingSpaces(vn,sizeof(head->vendor_name));
 	removeTrailingSpaces(pn,sizeof(head->vendor_pn));
 	removeTrailingSpaces(vs,sizeof(head->vendor_serial));
+	removeTrailingSpaces(vr,sizeof(head->vendor_rev));
 
-	t = shw_sfp_cal_list;
-	/* In the first pass, look for serial number */
-	while (t) {
+	/* Try to match entries, NULL excludes matchig of a parameter */
+	if        ((ret = shw_sfp_match_db(&txWaveLength, vn,   pn,   vs,   vr))) {
+	} else if ((ret = shw_sfp_match_db(&txWaveLength, vn,   pn,   vs,   NULL))) {
+	} else if ((ret = shw_sfp_match_db(&txWaveLength, vn,   pn,   NULL, vr))) {
+	} else if ((ret = shw_sfp_match_db(&txWaveLength, vn,   pn,   NULL, NULL))) {
+	} else if ((ret = shw_sfp_match_db(&txWaveLength, NULL, pn,   NULL, vr))) {
+	} else if ((ret = shw_sfp_match_db(&txWaveLength, NULL, pn,   NULL, NULL))) {
 
-		if ( t->tx_wl == txWaveLength ) {
-			if (t->vendor_name[0] == 0
-				&& strncmp(pn, t->part_num, 16) == 0
-				&& t->vendor_serial[0] == 0)
-				/* matched pn, but vn and vs not defined */
-				match_pn = t;
-			else if (strncmp(vn, t->vendor_name, 16) == 0
-				&& strncmp(pn, t->part_num, 16) == 0
-				&& t->vendor_serial[0] == 0 )
-				/* matched vn, pn, but vs not defined */
-				match_pn_vn = t;
-			else if (strncmp(vn, t->vendor_name, 16) == 0
-				&& strncmp(pn, t->part_num, 16) == 0
-				&& strncmp(vs, t->vendor_serial, 16) == 0)
-				/* matched vn, pn, vs */
-				return t;
-		}
-		t = t->next;
+	/* Try to match entries without defined tx wavelength */
+	} else if ((ret = shw_sfp_match_db(NULL,          vn,   pn,   vs,   vr))) {
+	} else if ((ret = shw_sfp_match_db(NULL,          vn,   pn,   vs,   NULL))) {
+	} else if ((ret = shw_sfp_match_db(NULL,          vn,   pn,   NULL, vr))) {
+	} else if ((ret = shw_sfp_match_db(NULL,          vn,   pn,   NULL, NULL))) {
+	} else if ((ret = shw_sfp_match_db(NULL,          NULL, pn,   NULL, vr))) {
+	} else if ((ret = shw_sfp_match_db(NULL,          NULL, pn,   NULL, NULL))) {
+	} else {
 	}
-	if (match_pn_vn)
-		return match_pn_vn;
-	if (match_pn)
-		return match_pn;
-	return NULL;
+
+	return ret;
 }

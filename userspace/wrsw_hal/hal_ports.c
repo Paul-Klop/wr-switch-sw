@@ -480,8 +480,10 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 		}
 
 	}
-	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s\n",
-	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
+	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s, "
+		"Rev: %.4s\n",
+		shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial,
+		shdr.vendor_rev);
 	cdata = shw_sfp_get_cal_data(ps->hw_index, &shdr);
 	if (cdata) {
 		/* Alpha is not known now. It is read later from the fibers'
@@ -499,17 +501,20 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 		ps->calib.sfp.flags |= SFP_FLAG_IN_DB;
 	} else {
 		pr_error("Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
-			"vs=\"%.16s\" on port %s\n", shdr.vendor_name,
-			shdr.vendor_pn, shdr.vendor_serial, ps->name);
+			"vs=\"%.16s\" rev=\"%.4s\" on port %s\n",
+			shdr.vendor_name,
+			shdr.vendor_pn, shdr.vendor_serial, shdr.vendor_rev,
+			ps->name);
 		memset(&ps->calib.sfp, 0, sizeof(ps->calib.sfp));
 	}
 
 	ps->sfpPresent=1;
 	shw_sfp_set_tx_disable(ps->hw_index, 0);
 	/* Copy the strings anyways, for informative value in shmem */
-	strncpy(ps->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
-	strncpy(ps->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
-	strncpy(ps->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
+	strncpy(ps->calib.sfp.vendor_name, (void *)shdr.vendor_name, VENDOR_NAME_LEN);
+	strncpy(ps->calib.sfp.part_num, (void *)shdr.vendor_pn, VENDOR_PN_LEN);
+	strncpy(ps->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, VENDOR_SERIAL_LEN);
+	strncpy(ps->calib.sfp.vendor_revision, (void *)shdr.vendor_rev, VENDOR_REV_LEN);
 	/* check if SFP is 1GbE */
 	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
 	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_10 ? SFP_FLAG_1GbE : 0;

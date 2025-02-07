@@ -300,13 +300,14 @@ static void dump_sfp_database_from_hal(void)
 	int i = 1;
 	struct shw_sfp_caldata *sfp_db_entry = shw_sfp_cal_list_local;
 
-	printf(" # |    Vendor Name   |    Part Number   |   Vendor Serial  | TX WL | RX WL | delta TX | delta RX\n");
-	printf("---+------------------+------------------+------------------+-------+-------+----------+---------\n");
+	printf(" # |    Vendor Name   |    Part Number   |  Rev |   Vendor Serial  | TX WL | RX WL | Delta TX | Delta RX\n");
+	printf("---+------------------+------------------+------+------------------+-------+-------+----------+---------\n");
 
 	while (sfp_db_entry) {
 		printf("%2d", i);
 		printf(" | %16.16s", sfp_db_entry->vendor_name);
 		printf(" | %16.16s", sfp_db_entry->part_num);
+		printf(" | %4.4s", sfp_db_entry->vendor_revision);
 		printf(" | %16.16s", sfp_db_entry->vendor_serial);
 		printf(" | %5d", sfp_db_entry->tx_wl);
 		printf(" | %5d", sfp_db_entry->rx_wl);

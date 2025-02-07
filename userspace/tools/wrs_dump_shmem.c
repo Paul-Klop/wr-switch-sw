@@ -265,6 +265,21 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 			printf("SFP in data base, ");
 		printf("\n");
 		break;
+
+	case dump_type_sfp_match_flags:
+		if (*(uint32_t *)p & SFP_MATCH_FLAG_TX_WAVELENGTH)
+			printf("tx wavelength, ");
+		if (*(uint32_t *)p & SFP_MATCH_FLAG_VN)
+			printf("Vendor Name, ");
+		if (*(uint32_t *)p & SFP_MATCH_FLAG_PN)
+			printf("Part number, ");
+		if (*(uint32_t *)p & SFP_MATCH_FLAG_VS)
+			printf("Vendor Serial, ");
+		if (*(uint32_t *)p & SFP_MATCH_FLAG_VR)
+			printf("Vendor Revision, ");
+		printf("\n");
+		break;
+
 	case dump_type_sfp_dom_temp:
 		printf("%.3f C\n", (int16_t)ntohs(*(uint16_t *)p)/(float)256);
 		break;
@@ -593,6 +608,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int,       calib.sfp.delta_rx_ps),
 	DUMP_FIELD(int,       calib.sfp.tx_wl),
 	DUMP_FIELD(int,       calib.sfp.rx_wl),
+	DUMP_FIELD(sfp_match_flags, calib.sfp.match_flags),
 	DUMP_FIELD(pointer,   calib.sfp.next),
 
 	/* Dump some values from the SFP's DOM area of */

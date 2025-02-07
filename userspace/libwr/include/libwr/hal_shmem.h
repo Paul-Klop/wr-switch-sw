@@ -178,7 +178,7 @@ struct hal_temp_sensors {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 16 /* Add shw_sfp_caldata to hal_shmem_header */
+#define HAL_SHMEM_VERSION 17 /* Add revision for SFPs */
 
 typedef enum {
 	HAL_SHMEM_STATE_NOT_INITITALIZED=0,

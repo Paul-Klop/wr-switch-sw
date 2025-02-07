@@ -36,6 +36,16 @@
 					accessing information at 2-wire serial
 					address A2h. */
 
+#define SFP_MATCH_FLAG_TX_WAVELENGTH	(1 << 0)
+#define SFP_MATCH_FLAG_VN		(1 << 1)
+#define SFP_MATCH_FLAG_PN		(1 << 2)
+#define SFP_MATCH_FLAG_VS		(1 << 3)
+#define SFP_MATCH_FLAG_VR		(1 << 4)
+
+#define VENDOR_NAME_LEN		16
+#define VENDOR_SERIAL_LEN	16
+#define VENDOR_PN_LEN		16
+#define VENDOR_REV_LEN		4
 
 struct shw_sfp_caldata {
 	uint32_t flags;
@@ -44,9 +54,10 @@ struct shw_sfp_caldata {
 	 * may specify per-specimen delays, but it is not used at this
 	 * point in time
 	 */
-	char vendor_name[16];
-	char part_num[16];
-	char vendor_serial[16];
+	char vendor_name[VENDOR_NAME_LEN];
+	char part_num[VENDOR_PN_LEN];
+	char vendor_serial[VENDOR_SERIAL_LEN];
+	char vendor_revision[VENDOR_REV_LEN];
 	/* Callibration data */
 	double alpha;
 	int delta_tx_ps; /* "delta" of this SFP type WRT calibration type */
@@ -54,6 +65,7 @@ struct shw_sfp_caldata {
 	/* wavelengths, used to get alpha from fiber type */
 	int tx_wl;
 	int rx_wl;
+	uint32_t match_flags;
 	/* and link as a list */
 	struct shw_sfp_caldata *next;
 };
@@ -72,11 +84,11 @@ struct shw_sfp_header {
 	uint8_t length4;	/* Link length supported for 62.5/125 mm fiber (10m) */
 	uint8_t length5;	/* Link length supported for copper (1m) */
 	uint8_t length6;	/* Link length supported on OM3 (1m) */
-	uint8_t vendor_name[16];
+	uint8_t vendor_name[VENDOR_NAME_LEN];
 	uint8_t reserved3;	/* This is now a field named transceiver */
 	uint8_t vendor_oui[3];
 	uint8_t vendor_pn[16];
-	uint8_t vendor_rev[4];
+	uint8_t vendor_rev[VENDOR_REV_LEN];
 	uint8_t tx_wavelength[2];
 	uint8_t reserved4;
 	uint8_t cc_base;
@@ -85,7 +97,7 @@ struct shw_sfp_header {
 	uint8_t options[2];
 	uint8_t br_max;
 	uint8_t br_min;
-	uint8_t vendor_serial[16];
+	uint8_t vendor_serial[VENDOR_SERIAL_LEN];
 	uint8_t date_code[8];
 	uint8_t diagnostic_monitoring_type;
 	uint8_t enhanced_options;

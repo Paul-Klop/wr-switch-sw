@@ -47,6 +47,7 @@ void print_info(char *prgname)
 		"   -d                 Dump sfp DOM data page\n"
 		"   -x                 Dump sfp/DOM header also in hex\n"
 		"   -b                 Dump SFP database from HAL\n"
+		"   -m                 Dump SFP basic parameters with matching information (marked with \"+\") from HAL\n"
 		"   -t <on|off|0|1|s>  Enable(1), disable(1) or check status of SFP's TX pin; Use with -L or -I\n"
 		"   -q                 Decrease verbosity\n"
 		"   -v                 Increase verbosity\n"
@@ -211,8 +212,7 @@ void print_version(char *prgname)
 	       __GIT_USR__);
 }
 
-int hal_read(struct shw_sfp_header *sfp_header_local_copy,
-	     struct shw_sfp_dom *sfp_dom) {
+int hal_read_sfp_eeprom(struct hal_port_calibration *sfp_calib_local_copy) {
 	unsigned ii;
 	unsigned retries = 0;
 	int port;
@@ -221,15 +221,14 @@ int hal_read(struct shw_sfp_header *sfp_header_local_copy,
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		for (port = 0; port < hal_nports_local; port++) {
-			memcpy(&sfp_header_local_copy[port],
+			memcpy(&sfp_calib_local_copy[port].sfp_header_raw,
 			       &hal_ports[port].calib.sfp_header_raw,
 			       sizeof(struct shw_sfp_header));
 		}
-		if (sfp_dom)
-			for (port = 0; port < hal_nports_local; port++) {
-				memcpy(&sfp_dom[port],
-				      &hal_ports[port].calib.sfp_dom_raw,
-				      sizeof(struct shw_sfp_dom));
+		for (port = 0; port < hal_nports_local; port++) {
+			memcpy(&sfp_calib_local_copy[port].sfp_dom_raw,
+			       &hal_ports[port].calib.sfp_dom_raw,
+			       sizeof(struct shw_sfp_dom));
 		}
 		retries++;
 		if (retries > 100)
@@ -242,6 +241,29 @@ int hal_read(struct shw_sfp_header *sfp_header_local_copy,
 	return 0;
 }
 
+int hal_read_sfp_caldata(struct hal_port_calibration *sfp_calib_local_copy) {
+	unsigned ii;
+	unsigned retries = 0;
+	int port;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(hal_head);
+		for (port = 0; port < hal_nports_local; port++) {
+			memcpy(&sfp_calib_local_copy[port].sfp,
+			       &hal_ports[port].calib.sfp,
+			       sizeof(struct shw_sfp_caldata));
+		}
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	return 0;
+}
 
 void hal_init_shm(void)
 {
@@ -320,6 +342,33 @@ static void dump_sfp_database_from_hal(void)
 	};
 }
 
+static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports, struct hal_port_calibration *hal_sfp_calib_lc)
+{
+	int i = 0;
+
+	printf(" #    |     Vendor Name     |     Part Number     |   Rev   |    Vendor Serial    |   TX WL  | RX WL | delta TX | delta RX |      alpha\n");
+	printf("------+---------------------+---------------------+---------+---------------------+----------+-------+----------+----------+----------------\n");
+
+	for (i = dump_port; i <= nports; i++) {
+		printf("%2d%3s", i, hal_sfp_calib_lc[i - 1].sfp.match_flags ? "(+)" : "");
+		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_name,
+		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VN ? "(+)" : "");
+		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.part_num,
+		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_PN ? "(+)" : "");
+		printf(" | %4.4s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_revision,
+		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VR ? "(+)" : "");
+		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_serial,
+		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VS ? "(+)" : "");
+		printf(" | %5d%3s", hal_sfp_calib_lc[i - 1].sfp.tx_wl,
+		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_TX_WAVELENGTH ? "(+)" : "");
+		printf(" | %5d", hal_sfp_calib_lc[i - 1].sfp.rx_wl);
+		printf(" | %8d", hal_sfp_calib_lc[i - 1].sfp.delta_tx_ps);
+		printf(" | %8d", hal_sfp_calib_lc[i - 1].sfp.delta_rx_ps);
+		printf(" | %15.12f", hal_sfp_calib_lc[i - 1].sfp.alpha);
+		printf("\n");
+	};
+}
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -339,16 +388,15 @@ int main(int argc, char **argv)
 	int sfp_tx_update = 0;
 	int sfp_tx_enable = 0;
 	int dump_sfp_database = 0;
+	int dump_sfp_database_match_reason = 0;
 	/* local copy of sfp eeprom */
-	struct shw_sfp_header hal_sfp_raw_header_lc[HAL_MAX_PORTS];
-	struct shw_sfp_dom hal_sfp_raw_dom_lc[HAL_MAX_PORTS];
-
+	struct hal_port_calibration hal_sfp_calib_lc[HAL_MAX_PORTS];
 
 	wrs_msg_init(argc, argv, LOG_USER);
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:b")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:bm")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -391,6 +439,9 @@ int main(int argc, char **argv)
 			break;
 		case 'b':
 			dump_sfp_database = 1;
+			break;
+		case 'm':
+			dump_sfp_database_match_reason = 1;
 			break;
 		case 'L':
 			/* HAL mode */
@@ -435,7 +486,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (dump_sfp_database) {
+	if (dump_sfp_database || dump_sfp_database_match_reason) {
 		if (sfp_data_source != READ_HAL) {
 			printf("Reading SFP database can be done only from HAL "
 			       "(use -L parameter).\n");
@@ -443,7 +494,15 @@ int main(int argc, char **argv)
 		}
 
 		hal_init_shm();
-		dump_sfp_database_from_hal();
+		if (dump_sfp_database)
+			dump_sfp_database_from_hal();
+
+		if (dump_sfp_database_match_reason) {
+			hal_read_sfp_caldata(hal_sfp_calib_lc);
+			dump_sfp_database_match_reason_from_hal(dump_port, nports,
+								hal_sfp_calib_lc);
+		}
+
 		exit(0);
 	}
 
@@ -495,7 +554,7 @@ int main(int argc, char **argv)
 	}
 	else if (sfp_data_source == READ_HAL) {
 		hal_init_shm();
-		hal_read(hal_sfp_raw_header_lc, hal_sfp_raw_dom_lc);
+		hal_read_sfp_eeprom(hal_sfp_calib_lc);
 		printf("Reading SFP eeprom from HAL\n");
 	}
 
@@ -535,8 +594,8 @@ int main(int argc, char **argv)
 			shw_sfp_read_dom(i - 1, sfp_dom_p);
 		}
 		if (sfp_data_source == READ_HAL) {
-			sfp_hdr_p = &hal_sfp_raw_header_lc[i - 1];
-			sfp_dom_p = &hal_sfp_raw_dom_lc[i - 1];
+			sfp_hdr_p = &hal_sfp_calib_lc[i - 1].sfp_header_raw;
+			sfp_dom_p = &hal_sfp_calib_lc[i - 1].sfp_dom_raw;
 		}
 		err = shw_sfp_header_verify(sfp_hdr_p);
 		if (err == -2) {

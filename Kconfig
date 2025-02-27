@@ -71,6 +71,14 @@ config DOTCONF_URL
 	  MACADDR are substituted before retrieving the file.
 	  Example:  "tftp://morgana/wrs-config-IPADDR"
 
+if DOTCONF_LOCAL_OVERWRITE
+comment "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+comment "XX   Local Overwrite enabled!                             XX"
+comment "XX   (config values may be overwritten by values in       XX"
+comment "XX   /update/permanent/dot-config/dot-config-overwrite)   XX"
+comment "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+endif
+
 config DOTCONF_LOCAL_OVERWRITE
 	boolean "Overwrite dot-config with values locally stored in /update"
 	default y

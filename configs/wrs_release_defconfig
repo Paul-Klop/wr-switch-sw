@@ -8,6 +8,26 @@ CONFIG_DOTCONF_INFO=""
 # CONFIG_DOTCONF_SOURCE_LOCAL is not set
 # CONFIG_DOTCONF_SOURCE_REMOTE is not set
 CONFIG_DOTCONF_SOURCE_TRY_DHCP=y
+
+#
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#
+
+#
+# XX   Local Overwrite enabled!                             XX
+#
+
+#
+# XX   (config values may be overwritten by values in       XX
+#
+
+#
+# XX   /update/permanent/dot-config/dot-config-overwrite)   XX
+#
+
+#
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#
 CONFIG_DOTCONF_LOCAL_OVERWRITE=y
 CONFIG_LEAPSEC_SOURCE_LOCAL=y
 # CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE is not set

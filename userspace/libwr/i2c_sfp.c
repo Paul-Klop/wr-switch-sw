@@ -775,7 +775,7 @@ int shw_sfp_read_db(void *(*sfp_db_alloc)(size_t alloc_size))
 		return -1;
 	}
 
-	for (index = 0; index<nbSfpEntries; index++) {
+	for (index = nbSfpEntries - 1; index >= 0 ; index--) {
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "pn",
 					   LIBWR_STRING, s, index);
 		if (error)

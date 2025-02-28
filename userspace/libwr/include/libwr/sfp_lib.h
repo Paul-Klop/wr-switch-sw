@@ -48,6 +48,7 @@
 #define VENDOR_REV_LEN		4
 
 struct shw_sfp_caldata {
+	int32_t db_entry;
 	uint32_t flags;
 	/*
 	 * Part number used to identify it. Serial number because we

@@ -782,6 +782,7 @@ int shw_sfp_read_db(void *(*sfp_db_alloc)(size_t alloc_size))
 			continue; /* Skip empty entries */
 
 		sfp = sfp_db_alloc(sizeof(*sfp));
+		sfp->db_entry = index;
 		strncpy(sfp->part_num, s, sizeof(sfp->part_num));
 
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "rev",
@@ -885,10 +886,11 @@ static struct shw_sfp_caldata *shw_sfp_match_db(int *txWaveLength,
 				t->match_flags & SFP_MATCH_FLAG_VS ? "Vendor Serial, " : "",
 				t->match_flags & SFP_MATCH_FLAG_VR ? "Vendor Revision, " : ""
 			);
-			pr_info("With database entry: vendor_name(%s), "
+			pr_info("With database entry %d: vendor_name(%s), "
 			        "part_num(%s), vendor_serial(%s), "
 			        "vendor_revision(%s), TX wavelength(%d), "
 			        "RX wavelength(%d)\n",
+				t->db_entry,
 				t->vendor_name, t->part_num, t->vendor_serial,
 				t->vendor_revision, t->tx_wl, t->rx_wl);
 			return t;

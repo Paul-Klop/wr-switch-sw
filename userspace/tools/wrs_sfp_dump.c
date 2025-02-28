@@ -324,14 +324,13 @@ void hal_init_shm(void)
 
 static void dump_sfp_database_from_hal(void)
 {
-	int i = 1;
 	struct shw_sfp_caldata *sfp_db_entry = shw_sfp_cal_list_local;
 
 	printf(" # |    Vendor Name   |    Part Number   |  Rev |   Vendor Serial  | TX WL | RX WL | Delta TX | Delta RX\n");
 	printf("---+------------------+------------------+------+------------------+-------+-------+----------+---------\n");
 
 	while (sfp_db_entry) {
-		printf("%2d", i);
+		printf("%2d", sfp_db_entry->db_entry);
 		printf(" | %16.16s", sfp_db_entry->vendor_name);
 		printf(" | %16.16s", sfp_db_entry->part_num);
 		printf(" | %4.4s", sfp_db_entry->vendor_revision);
@@ -343,7 +342,6 @@ static void dump_sfp_database_from_hal(void)
 		printf("\n");
 
 		sfp_db_entry = wrs_shm_follow(hal_head, sfp_db_entry->next);
-		i++;
 	};
 }
 
@@ -351,11 +349,12 @@ static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports, s
 {
 	int i = 0;
 
-	printf(" #    |     Vendor Name     |     Part Number     |   Rev   |    Vendor Serial    |   TX WL  | RX WL | delta TX | delta RX |      alpha\n");
-	printf("------+---------------------+---------------------+---------+---------------------+----------+-------+----------+----------+----------------\n");
+	printf(" Port | DB# |     Vendor Name     |     Part Number     |   Rev   |    Vendor Serial    |   TX WL  | RX WL | delta TX | delta RX |      alpha\n");
+	printf("------+-----+---------------------+---------------------+---------+---------------------+----------+-------+----------+----------+----------------\n");
 
 	for (i = dump_port; i <= nports; i++) {
 		printf("%2d%3s", i, hal_sfp_calib_lc[i - 1].sfp.match_flags ? "(+)" : "");
+		printf(" | %3d", hal_sfp_calib_lc[i - 1].sfp.db_entry);
 		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_name,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VN ? "(+)" : "");
 		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.part_num,

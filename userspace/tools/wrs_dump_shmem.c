@@ -599,6 +599,7 @@ struct dump_info hal_port_info [] = {
 
 
 	/* Another internal structure, with a final pointer */
+	DUMP_FIELD(int,       calib.sfp.db_entry),
 	DUMP_FIELD(sfp_flags, calib.sfp.flags),
 	DUMP_FIELD_SIZE(char, calib.sfp.vendor_name, 16),
 	DUMP_FIELD_SIZE(char, calib.sfp.part_num, 16),

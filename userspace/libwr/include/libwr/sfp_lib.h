@@ -218,4 +218,7 @@ void shw_sfp_dom_dump(struct shw_sfp_dom * dom);
 struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 					     struct shw_sfp_header *head);
 
+/* Return TX Wavelength from SFP header */
+int getSfpTxWaveLength (struct shw_sfp_header *head);
+
 #endif /* __LIBWR_SHW_SFPLIB_H */

@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
+#include <arpa/inet.h>
+
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/shw_io.h>
@@ -48,6 +51,7 @@ void print_info(char *prgname)
 		"   -x                 Dump sfp/DOM header also in hex\n"
 		"   -b                 Dump SFP database from HAL\n"
 		"   -m                 Dump SFP basic parameters with matching information (marked with \"+\") from HAL\n"
+		"   -s                 Dump SFP (with DOM) summary as table.\n"
 		"   -t <on|off|0|1|s>  Enable(1), disable(1) or check status of SFP's TX pin; Use with -L or -I\n"
 		"   -q                 Decrease verbosity\n"
 		"   -v                 Increase verbosity\n"
@@ -369,6 +373,61 @@ static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports, s
 	};
 }
 
+static void sfp_summary_print_header(void)
+{
+	printf("                                                                           @                      DOM\n");
+	printf(" # |    Vendor Name   |   Part Number    |  Rev |   Vendor Serial  | TX WL @   Temp  |  Volt | BiasCur |     TX Power    |     RX Power\n");
+	printf("   |                  |                  |      |                  |  (nm) @    (C)  |   (V) |   (mA)  |     mW (dBm)    |     mW (dBm)\n");
+	printf("---+------------------+------------------+------+------------------+-------+---------+-------+---------+-----------------+----------------\n");
+}
+
+
+static void sfp_summary_print_entry(int i, struct shw_sfp_header *sfp_hdr_p,
+				    struct shw_sfp_dom *sfp_dom_p)
+{
+	int tmp_i;
+	double tmp_f;
+	printf("%2d", i);
+	printf(" | %16.16s", sfp_hdr_p->vendor_name);
+	printf(" | %16.16s", sfp_hdr_p->vendor_pn);
+	printf(" | %4.4s",   sfp_hdr_p->vendor_rev);
+	printf(" | %16.16s", sfp_hdr_p->vendor_serial);
+
+	/* DOM */
+	if ((tmp_i = getSfpTxWaveLength(sfp_hdr_p))) {
+		printf(" | %5d", getSfpTxWaveLength(sfp_hdr_p));
+	} else {
+		printf(" | %5s", "");
+	}
+	if ((tmp_f = (int16_t) ntohs(sfp_dom_p->temp) / (float) 256)) {
+		printf(" @ %7.3f", tmp_f);
+	} else {
+		printf(" @ %7s", "");
+	}
+	if ((tmp_f = ntohs(sfp_dom_p->vcc) / (float) 10000)) {
+		printf(" | %5.3f", tmp_f);
+	} else {
+		printf(" | %5s", "");
+	}
+	if ((tmp_f = ntohs(sfp_dom_p->tx_bias) / (float) 500)) {
+		printf(" | %7.3f", tmp_f);
+	} else {
+		printf(" | %7s", "");
+	}
+	if ((tmp_f = (ntohs(sfp_dom_p->tx_pow))  /(float) 10000)) {
+		printf(" | %6.4f (%6.2f)", tmp_f, 10 * log10(tmp_f));
+	} else {
+		printf(" | %15s", "");
+	}
+	if ((tmp_f = (ntohs(sfp_dom_p->rx_pow)) / (float) 10000)) {
+		printf(" | %6.4f (%6.2f)", tmp_f, 10 * log10(tmp_f));
+	} else {
+		printf(" | %15s", "");
+	}
+
+	printf("\n");
+}
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -389,6 +448,7 @@ int main(int argc, char **argv)
 	int sfp_tx_enable = 0;
 	int dump_sfp_database = 0;
 	int dump_sfp_database_match_reason = 0;
+	int dump_sfp_summary = 0;
 	/* local copy of sfp eeprom */
 	struct hal_port_calibration hal_sfp_calib_lc[HAL_MAX_PORTS];
 
@@ -396,7 +456,7 @@ int main(int argc, char **argv)
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:bm")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:bms")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -442,6 +502,9 @@ int main(int argc, char **argv)
 			break;
 		case 'm':
 			dump_sfp_database_match_reason = 1;
+			break;
+		case 's':
+			dump_sfp_summary = 1;
 			break;
 		case 'L':
 			/* HAL mode */
@@ -583,8 +646,14 @@ int main(int argc, char **argv)
 	}
 
 
+	if (dump_sfp_summary) {
+		sfp_summary_print_header();
+	}
+
 	for (i = dump_port; i <= nports; i++) {
-		printf("========= port %d =========\n", i);
+		if (!dump_sfp_summary) {
+			printf("========= port %d =========\n", i);
+		}
 		if (sfp_data_source == READ_I2C) {
 			memset(&sfp_hdr, 0, sizeof(sfp_hdr));
 			sfp_hdr_p = &sfp_hdr;
@@ -604,6 +673,8 @@ int main(int argc, char **argv)
 		} else if (err < 0) {
 			pr_error("Failed to read SFP configuration header on "
 				 "port %d\n", i);
+		} else if (dump_sfp_summary) {
+			sfp_summary_print_entry(i, sfp_hdr_p, sfp_dom_p);
 		} else {
 			shw_sfp_print_header(sfp_hdr_p);
 			if (dump_hex_header) {

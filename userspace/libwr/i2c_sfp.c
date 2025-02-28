@@ -299,7 +299,7 @@ int shw_sfp_header_verify(struct shw_sfp_header *head)
 		!shw_sfp_header_verify_ext(head)) ? 0 : -1;
 }
 
-static inline int getSfpTxWaveLength (struct shw_sfp_header *head) {
+int getSfpTxWaveLength (struct shw_sfp_header *head) {
 	return (head->tx_wavelength[0] << 8)
 			+ head->tx_wavelength[1];
 }

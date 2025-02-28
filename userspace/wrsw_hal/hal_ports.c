@@ -515,6 +515,7 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 	strncpy(ps->calib.sfp.part_num, (void *)shdr.vendor_pn, VENDOR_PN_LEN);
 	strncpy(ps->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, VENDOR_SERIAL_LEN);
 	strncpy(ps->calib.sfp.vendor_revision, (void *)shdr.vendor_rev, VENDOR_REV_LEN);
+	ps->calib.sfp.tx_wl = getSfpTxWaveLength(&shdr);
 	/* check if SFP is 1GbE */
 	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
 	ps->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_10 ? SFP_FLAG_1GbE : 0;

@@ -779,7 +779,7 @@ int shw_sfp_read_db(void *(*sfp_db_alloc)(size_t alloc_size))
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "pn",
 					   LIBWR_STRING, s, index);
 		if (error)
-			return 0; /* no more, no error */
+			continue; /* Skip empty entries */
 
 		sfp = sfp_db_alloc(sizeof(*sfp));
 		strncpy(sfp->part_num, s, sizeof(sfp->part_num));

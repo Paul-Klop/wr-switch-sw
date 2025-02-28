@@ -107,26 +107,26 @@ struct shw_sfp_header {
 
 struct shw_sfp_dom {
 /* Treshold values, 0 - 55 */
-	uint8_t temp_high_alarm[2];
-	uint8_t temp_low_alarm[2];
-	uint8_t temp_high_warn[2];
-	uint8_t temp_low_warn[2];
-	uint8_t volt_high_alarm[2];
-	uint8_t volt_low_alarm[2];
-	uint8_t volt_high_warn[2];
-	uint8_t volt_low_warn[2];
-	uint8_t bias_high_alarm[2];
-	uint8_t bias_low_alarm[2];
-	uint8_t bias_high_warn[2];
-	uint8_t bias_low_warn[2];
-	uint8_t tx_pow_high_alarm[2];
-	uint8_t tx_pow_low_alarm[2];
-	uint8_t tx_pow_high_warn[2];
-	uint8_t tx_pow_low_warn[2];
-	uint8_t rx_pow_high_alarm[2];
-	uint8_t rx_pow_log_alarm[2];
-	uint8_t rx_power_high_warn[2];
-	uint8_t rx_power_low_warn[2];
+	uint16_t temp_high_alarm;
+	uint16_t temp_low_alarm;
+	uint16_t temp_high_warn;
+	uint16_t temp_low_warn;
+	uint16_t volt_high_alarm;
+	uint16_t volt_low_alarm;
+	uint16_t volt_high_warn;
+	uint16_t volt_low_warn;
+	uint16_t bias_high_alarm;
+	uint16_t bias_low_alarm;
+	uint16_t bias_high_warn;
+	uint16_t bias_low_warn;
+	uint16_t tx_power_high_alarm;
+	uint16_t tx_power_low_alarm;
+	uint16_t tx_power_high_warn;
+	uint16_t tx_power_low_warn;
+	uint16_t rx_power_high_alarm;
+	uint16_t rx_power_low_alarm;
+	uint16_t rx_power_high_warn;
+	uint16_t rx_power_low_warn;
 	uint8_t unalloc0[16];
 /* Calibration data, 56-91 */
 	uint8_t cal_rx_pwr4[4];

@@ -52,6 +52,7 @@ void print_info(char *prgname)
 		"   -b                 Dump SFP database from HAL\n"
 		"   -m                 Dump SFP basic parameters with matching information (marked with \"+\") from HAL\n"
 		"   -s                 Dump SFP (with DOM) summary as table.\n"
+		"   -A                 Dump information about alarms. Implies -s parameter. Note: Output is very wide.\n"
 		"   -t <on|off|0|1|s>  Enable(1), disable(1) or check status of SFP's TX pin; Use with -L or -I\n"
 		"   -q                 Decrease verbosity\n"
 		"   -v                 Increase verbosity\n"
@@ -428,6 +429,101 @@ static void sfp_summary_print_entry(int i, struct shw_sfp_header *sfp_hdr_p,
 	printf("\n");
 }
 
+float sfp_conv_temp(uint16_t temp)
+{
+	return (int16_t) ntohs(temp) / (float) 256;
+}
+
+float sfp_conv_voltage(uint16_t voltage)
+{
+	return ntohs(voltage) / (float) 10000;
+}
+
+float sfp_conv_tx_bias(uint16_t tx_bias)
+{
+	return (ntohs(tx_bias)) / (float) 500;
+}
+
+float sfp_conv_power(uint16_t power)
+{
+	return (ntohs(power)) / (float) 10000;
+}
+
+static void sfp_summary_print_header_alarms(void)
+{
+	printf("                                                                           @                                                                                                 DOM\n");
+	printf(" # |    Vendor Name   |   Part Number    |  Rev |   Vendor Serial  | TX WL @                   Temp                  |              Voltage              |                 BiasCur                 |                   TX Power                  |                   RX Power\n");
+	printf("   |                  |                  |      |                  |  (nm) @  A Hi <  W Hi {    (C)  }  W Lo >  A Hi | A Hi < W Hi {  (V)  } W Lo > A Hi |  A Hi <  W Hi {    (mA) }  W Lo >  A Hi | A Hi < W Hi {     mW (dBm)    } W Lo > A Hi | A Hi < W Hi {     mW (dBm)    } W Lo > A Hi\n");
+	printf("---+------------------+------------------+------+------------------+-------+-----------------------------------------+-----------------------------------+-----------------------------------------+---------------------------------------------+--------------------------------------------\n");
+}
+
+static void sfp_summary_print_entry_alarms(int i,
+					   struct shw_sfp_header *sfp_hdr_p,
+					   struct shw_sfp_dom *sfp_dom_p)
+{
+	int tmp_i;
+	double tmp_f;
+	printf("%2d", i);
+	printf(" | %16.16s", sfp_hdr_p->vendor_name);
+	printf(" | %16.16s", sfp_hdr_p->vendor_pn);
+	printf(" | %4.4s", sfp_hdr_p->vendor_rev);
+	printf(" | %16.16s", sfp_hdr_p->vendor_serial);
+
+	/* DOM */
+	if ((tmp_i = getSfpTxWaveLength(sfp_hdr_p))) {
+		printf(" | %5d", getSfpTxWaveLength(sfp_hdr_p));
+	} else {
+		printf(" | %5s", "");
+	}
+	if ((tmp_f = sfp_conv_temp(sfp_dom_p->temp))) {
+		printf(" @ %5.1f", sfp_conv_temp(sfp_dom_p->temp_high_alarm));
+		printf(" < %5.1f", sfp_conv_temp(sfp_dom_p->temp_high_warn));
+		printf(" { %7.3f", tmp_f);
+		printf(" } %5.1f", sfp_conv_temp(sfp_dom_p->temp_low_warn));
+		printf(" > %5.1f", sfp_conv_temp(sfp_dom_p->temp_low_alarm));
+	} else {
+		printf(" @ %5s   %5s   %7s   %5s   %5s", "", "", "", "", "");
+	}
+	if ((tmp_f = sfp_conv_voltage(sfp_dom_p->vcc))) {
+		printf(" | %4.2f", sfp_conv_voltage(sfp_dom_p->volt_high_alarm));
+		printf(" < %4.2f", sfp_conv_voltage(sfp_dom_p->volt_high_warn));
+		printf(" { %5.3f", tmp_f);
+		printf(" } %4.2f", sfp_conv_voltage(sfp_dom_p->volt_low_warn));
+		printf(" > %4.2f", sfp_conv_voltage(sfp_dom_p->volt_low_alarm));
+	} else {
+		printf(" | %4s   %4s   %5s   %4s   %4s", "", "", "", "", "");
+	}
+	if ((tmp_f = sfp_conv_tx_bias(sfp_dom_p->tx_bias))) {
+		printf(" | %5.1f", sfp_conv_tx_bias(sfp_dom_p->bias_high_alarm));
+		printf(" < %5.1f", sfp_conv_tx_bias(sfp_dom_p->bias_high_warn));
+		printf(" { %7.3f", tmp_f);
+		printf(" } %5.1f", sfp_conv_tx_bias(sfp_dom_p->bias_low_warn));
+		printf(" > %5.1f", sfp_conv_tx_bias(sfp_dom_p->bias_low_alarm));
+	} else {
+		printf(" | %5s   %5s   %7s   %5s   %5s", "", "", "", "", "");
+	}
+	if ((tmp_f = sfp_conv_power(sfp_dom_p->tx_pow))) {
+		printf(" | %4.2f", sfp_conv_power(sfp_dom_p->tx_power_high_alarm));
+		printf(" < %4.2f", sfp_conv_power(sfp_dom_p->tx_power_high_warn));
+		printf(" { %6.4f (%6.2f)", tmp_f, 10 * log10(tmp_f));
+		printf(" } %4.2f", sfp_conv_power(sfp_dom_p->tx_power_low_warn));
+		printf(" > %4.2f", sfp_conv_power(sfp_dom_p->tx_power_low_alarm));
+	} else {
+		printf(" | %4s   %4s   %6s %8s   %4s   %4s", "", "", "", "", "", "");
+	}
+	if ((tmp_f = sfp_conv_power(sfp_dom_p->rx_pow))) {
+		printf(" | %4.2f", sfp_conv_power(sfp_dom_p->rx_power_high_alarm));
+		printf(" < %4.2f", sfp_conv_power(sfp_dom_p->rx_power_high_warn));
+		printf(" { %6.4f (%6.2f)", tmp_f, 10 * log10(tmp_f));
+		printf(" } %4.2f", sfp_conv_power(sfp_dom_p->rx_power_low_warn));
+		printf(" > %4.2f", sfp_conv_power(sfp_dom_p->rx_power_low_alarm));
+	} else {
+		printf(" | %4s   %4s   %6s %8s   %4s   %4s", "", "", "", "", "", "");
+	}
+
+	printf("\n");
+}
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -449,6 +545,7 @@ int main(int argc, char **argv)
 	int dump_sfp_database = 0;
 	int dump_sfp_database_match_reason = 0;
 	int dump_sfp_summary = 0;
+	int dump_sfp_summary_alarms = 0;
 	/* local copy of sfp eeprom */
 	struct hal_port_calibration hal_sfp_calib_lc[HAL_MAX_PORTS];
 
@@ -456,7 +553,7 @@ int main(int argc, char **argv)
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:bms")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:t:bmsA")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -505,6 +602,10 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			dump_sfp_summary = 1;
+			break;
+		case 'A':
+			dump_sfp_summary = 1;
+			dump_sfp_summary_alarms = 1;
 			break;
 		case 'L':
 			/* HAL mode */
@@ -647,7 +748,10 @@ int main(int argc, char **argv)
 
 
 	if (dump_sfp_summary) {
-		sfp_summary_print_header();
+		if (!dump_sfp_summary_alarms)
+			sfp_summary_print_header();
+		else
+			sfp_summary_print_header_alarms();
 	}
 
 	for (i = dump_port; i <= nports; i++) {
@@ -674,7 +778,12 @@ int main(int argc, char **argv)
 			pr_error("Failed to read SFP configuration header on "
 				 "port %d\n", i);
 		} else if (dump_sfp_summary) {
-			sfp_summary_print_entry(i, sfp_hdr_p, sfp_dom_p);
+			if (!dump_sfp_summary_alarms)
+				sfp_summary_print_entry(i, sfp_hdr_p,
+							sfp_dom_p);
+			else
+				sfp_summary_print_entry_alarms(i, sfp_hdr_p,
+							       sfp_dom_p);
 		} else {
 			shw_sfp_print_header(sfp_hdr_p);
 			if (dump_hex_header) {

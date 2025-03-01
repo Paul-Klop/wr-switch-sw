@@ -246,7 +246,9 @@ int hal_read_sfp_eeprom(struct hal_port_calibration *sfp_calib_local_copy) {
 	return 0;
 }
 
-int hal_read_sfp_caldata(struct hal_port_calibration *sfp_calib_local_copy) {
+int hal_read_sfp_caldata(struct hal_port_calibration *sfp_calib_local_copy,
+			 int *hal_port_fiber_index_copy)
+{
 	unsigned ii;
 	unsigned retries = 0;
 	int port;
@@ -258,6 +260,8 @@ int hal_read_sfp_caldata(struct hal_port_calibration *sfp_calib_local_copy) {
 			memcpy(&sfp_calib_local_copy[port].sfp,
 			       &hal_ports[port].calib.sfp,
 			       sizeof(struct shw_sfp_caldata));
+			hal_port_fiber_index_copy[port] =
+						hal_ports[port].fiber_index;
 		}
 		retries++;
 		if (retries > 100)
@@ -345,16 +349,18 @@ static void dump_sfp_database_from_hal(void)
 	};
 }
 
-static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports, struct hal_port_calibration *hal_sfp_calib_lc)
+static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports,
+						    struct hal_port_calibration *hal_sfp_calib_lc,
+						    int *hal_port_fiber_index_lc)
 {
 	int i = 0;
 
-	printf(" Port | DB# |     Vendor Name     |     Part Number     |   Rev   |    Vendor Serial    |   TX WL  | RX WL | delta TX | delta RX |      alpha\n");
-	printf("------+-----+---------------------+---------------------+---------+---------------------+----------+-------+----------+----------+----------------\n");
+	printf("                                      From SFPs EEPROM                                      @         From SFP Database         @ From Fiber Database\n");
+	printf(" Port |     Vendor Name     |     Part Number     |   Rev   |    Vendor Serial    |  TX WL  @ #DB | RX WL | Delta TX | Delta RX @ #DB |     Alpha\n");
+	printf("------+---------------------+---------------------+---------+---------------------+---------+-----+-------+----------+----------+-----+----------------\n");
 
 	for (i = dump_port; i <= nports; i++) {
 		printf("%2d%3s", i, hal_sfp_calib_lc[i - 1].sfp.match_flags ? "(+)" : "");
-		printf(" | %3d", hal_sfp_calib_lc[i - 1].sfp.db_entry);
 		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_name,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VN ? "(+)" : "");
 		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.part_num,
@@ -363,12 +369,22 @@ static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports, s
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VR ? "(+)" : "");
 		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_serial,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VS ? "(+)" : "");
-		printf(" | %5d%3s", hal_sfp_calib_lc[i - 1].sfp.tx_wl,
+		printf(" | %4d%3s", hal_sfp_calib_lc[i - 1].sfp.tx_wl,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_TX_WAVELENGTH ? "(+)" : "");
-		printf(" | %5d", hal_sfp_calib_lc[i - 1].sfp.rx_wl);
-		printf(" | %8d", hal_sfp_calib_lc[i - 1].sfp.delta_tx_ps);
-		printf(" | %8d", hal_sfp_calib_lc[i - 1].sfp.delta_rx_ps);
-		printf(" | %15.12f", hal_sfp_calib_lc[i - 1].sfp.alpha);
+		if (hal_sfp_calib_lc[i - 1].sfp.match_flags) {
+			printf(" @ %3d", hal_sfp_calib_lc[i - 1].sfp.db_entry);
+			printf(" | %5d", hal_sfp_calib_lc[i - 1].sfp.rx_wl);
+			printf(" | %8d", hal_sfp_calib_lc[i - 1].sfp.delta_tx_ps);
+			printf(" | %8d", hal_sfp_calib_lc[i - 1].sfp.delta_rx_ps);
+		} else {
+			printf(" @ %3s | %5s | %8s | %8s", "", "", "", "");
+		}
+		if (hal_sfp_calib_lc[i - 1].sfp.flags & SFP_FLAG_FIBER_IN_DB) {
+			printf(" @ %2d%1.1s", hal_port_fiber_index_lc[i - 1], hal_sfp_calib_lc[i - 1].sfp.flags & SFP_FLAG_FIBER_REV_IN_DB ? "R" : " ");
+			printf(" | %15.12f", hal_sfp_calib_lc[i - 1].sfp.alpha);
+		} else {
+			printf(" @ %3s | %15s", "", "");
+		}
 		printf("\n");
 	};
 }
@@ -547,6 +563,7 @@ int main(int argc, char **argv)
 	int dump_sfp_summary_alarms = 0;
 	/* local copy of sfp eeprom */
 	struct hal_port_calibration hal_sfp_calib_lc[HAL_MAX_PORTS];
+	int hal_port_fiber_index_lc[HAL_MAX_PORTS];
 
 	wrs_msg_init(argc, argv, LOG_USER);
 	nports = 18;
@@ -661,9 +678,11 @@ int main(int argc, char **argv)
 			dump_sfp_database_from_hal();
 
 		if (dump_sfp_database_match_reason) {
-			hal_read_sfp_caldata(hal_sfp_calib_lc);
+			hal_read_sfp_caldata(hal_sfp_calib_lc,
+					     hal_port_fiber_index_lc);
 			dump_sfp_database_match_reason_from_hal(dump_port, nports,
-								hal_sfp_calib_lc);
+								hal_sfp_calib_lc,
+								hal_port_fiber_index_lc);
 		}
 
 		exit(0);

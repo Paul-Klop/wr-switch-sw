@@ -533,9 +533,11 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 				 ps->fiber_index);
 	if (!err) {
 		/* Now we know alpha, so print it. */
-		pr_info("%s SFP Info: alpha %.3f (* 1e6) found for TX wl: %dnm,"
-			" RX wl: %dmn\n", ps->name, ps->calib.sfp.alpha * 1e6,
+		pr_info("%s SFP Info: alpha %.3f (* 1e6) found in Fiber DB "
+			"entry %d for TX wl: %dnm, RX wl: %dmn\n",
+			ps->name, ps->calib.sfp.alpha * 1e6, ps->fiber_index,
 			ps->calib.sfp.tx_wl, ps->calib.sfp.rx_wl);
+		ps->calib.sfp.flags |= SFP_FLAG_FIBER_IN_DB;
 		return;
 	}
 
@@ -547,14 +549,17 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 	if (!err) {
 		ps->calib.sfp.alpha = (1.0 / (1.0 + ps->calib.sfp.alpha)) - 1.0;
 		/* Now we know alpha, so print it. */
-		pr_info("%s SFP Info: alpha %.3f (* 1e6) found for TX wl: %dnm,"
-			" RX wl: %dmn\n", ps->name, ps->calib.sfp.alpha * 1e6,
+		pr_info("%s SFP Info: alpha %.3f (* 1e6) found in Fiber DB "
+			"entry (reverse) %d for TX wl: %dnm, RX wl: %dmn\n",
+			ps->name, ps->calib.sfp.alpha * 1e6, ps->fiber_index,
 			ps->calib.sfp.tx_wl, ps->calib.sfp.rx_wl);
+		ps->calib.sfp.flags |= SFP_FLAG_FIBER_IN_DB;
+		ps->calib.sfp.flags |= SFP_FLAG_FIBER_REV_IN_DB;
 		return;
 	}
 
 	pr_error("Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
-		"fiber %i: no alpha known\n", ps->name,
+		"fiber %i: no alpha known, use 0\n", ps->name,
 		ps->calib.sfp.vendor_name, ps->calib.sfp.part_num,
 		ps->calib.sfp.vendor_serial, ps->fiber_index);
 	ps->calib.sfp.alpha = 0;

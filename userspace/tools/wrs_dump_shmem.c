@@ -263,6 +263,10 @@ void dump_one_field(void *addr, struct dump_info *info, char *info_prefix)
 			printf("SFP is 1GbE, ");
 		if (*(uint32_t *)p & SFP_FLAG_IN_DB)
 			printf("SFP in data base, ");
+		if (*(uint32_t *)p & SFP_FLAG_FIBER_IN_DB)
+			printf("Fiber in data base, ");
+		if (*(uint32_t *)p & SFP_FLAG_FIBER_REV_IN_DB)
+			printf("Fiber reverse in data base, ");
 		printf("\n");
 		break;
 

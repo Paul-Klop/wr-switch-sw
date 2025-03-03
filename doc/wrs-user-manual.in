@@ -255,6 +255,17 @@ The most important changes introduced in v8.0 are:
 @item Add support of @t{https} for remote locations configured in dot-config,
       e.g., dot-config, leap-seconds file, custom script script executed at
       boot and @i{ppsi.conf}.
+@item Add new functionality to @t{wrs_sfp_dump} to:
+      @itemize
+      @item Dump SFP database from HAL as defined in dot-config
+            (parameter @t{-b}).
+      @item Dump information about the matched database entry and the reason
+            for matching of SFP and fiber (parameter @t{-m}).
+      @item Print summary table with information about inserted SFPs
+            (including DOM, parameter @t{-s}).
+      @item Print summary table with information about inserted SFPs and
+            Alarm/Warning levels for some DOM parameters (parameter @t{-A}).
+      @end itemize
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -4653,6 +4664,178 @@ following counters for each port are reported:
 @item @code{39:NIC_Tx} @tab Number of frames sent from WR Switch ARM to that port
 
 @end multitable
+
+@c --------------------------------------------------------------------------
+@node wrs_sfp_dump
+@section wrs_sfp_dump
+
+The @t{wrs_sfp_dump} tool can be used to read information related to SFPs.
+It can also be used to set/write a limited number of parameters.
+
+The @t{wrs_sfp_dump} tool can access most of the information via two methods.
+The first, preferred and default method is to get requested information from HAL
+(parameter @t{-L}).
+The second method is to use direct reads (or writes) from SFP via the I2C bus
+(parameter @t{-I}).
+If the second method is used, special attention must be paid.
+If HAL is running at the time of direct I2C accesses, it can cause
+corruption of the SFP's EEPROM.
+To prevent corruption, please make sure that HAL and @i{monit}
+(which can restart HAL) are stopped/disabled.
+
+The @t{wrs_sfp_dump} tool can accept a number of parameters with their functions
+described below.
+If no extra parameters are provided, by default @t{wrs_sfp_dump} dumps
+detailed information stored in bytes 0-95 at address 0xA0 of the SFP's EEPROM
+for all SFPs connected to a WR switch.
+
+To save space, the example below contains a dump only of the SFP's EEPROM
+connected to the first port.
+
+@example
+========= port 1 =========
+Identifier: 03
+Extended Identifier: 04
+Connector: 07
+Transceiver: 0000004000000000
+Encoding: 01
+Nominal Bit Rate: 1300 Megabits/s
+Length (9m): 20km
+Length (9m): 20000m
+Length (50m): 0m
+Length (62.5m): 0m
+Length (copper): 0m
+Vendor Name: BlueOptics      
+Company ID: 000000
+Vendor Part Number: BO15C4931620D-WR
+Vendor Revision: 2.0 
+TX Wavelength: 1490
+Options: 0x001A
+Bitrate (MAX): 00
+Bitrate (MIN): 00
+Vendor Serial: BOWRC39Q1797    
+Date Code: 240416  
+========= port 2 =========
+[...]
+@end example
+
+For more details about SFP's EEPROM content please refer to SFF-8472 standard
+published by SNIA.
+
+@table @code
+
+@item -p <num>
+
+      Selects a specific port (1-18).
+      If this parameter is not specified, the desired action will apply to
+      all ports.
+      Please note that this parameter may be either required or prohibited
+      when used with certain other parameters.
+
+
+@item -d
+
+      Extend the default dump with the SFP's Real-Time Diagnostics as
+      reported via DDM/DOM
+      (Digital Diagnostic Monitoring/Digital Optical Monitoring)
+      in bytes 96-111 at address 0xA2 of the SFP's EEPROM.
+
+      The extended information includes @i{Temperature}, @i{Voltage},
+      @i{Bias Current}, @i{TX Power} and @i{RX Power} measured by the SFP.
+
+      The example output:
+@example
+Temperature: 51.000 C
+Voltage: 3.276 V
+Bias Current:  20.098 mA
+TX power: 0.2392 mW (-6.2 dBm)
+RX power: 0.0988 mW (-10.1 dBm)
+@end example
+
+@item -x
+
+      Dump the SFP's content also in hexadecimal format.
+      Bytes 0-95 at address 0xA0 of the SFP's EEPROM are dumped by default.
+      If the parameter @t{-d} is used, bytes 0-255 at address 0xA2 are also
+      included.
+
+@item -s
+
+      Dump SFPs' EEPROM summary (with DOM/DDM) as table.
+
+      @center @image{images/wrs_sfp_dump_s, 14cm,, Example dump of wrs_sfp_dump -s}
+
+@item -A
+
+      Dump information about the alarm and warning levels for @i{Temperature},
+      @i{Voltage}, @i{Bias Current}, @i{TX power} and @i{RX power} as reported
+      by the SFPs.
+      This parameter implies the use of the @t{-s} parameter.
+
+      Note: The output is very wide and, in the example below, is split into
+      two parts.
+
+      @center @image{images/wrs_sfp_dump_A, 14cm,, Example dump of wrs_sfp_dump -A}
+
+@item -b
+
+      Dump SFP database from HAL as configured in @i{dot-config}.
+
+      @center @image{images/wrs_sfp_dump_b, 12cm,, Example dump of wrs_sfp_dump -b}
+
+@item -m
+
+      Dump the details about the matching process of inserted SFPs against
+      the SFP database.
+      Dump SFP basic parameters (@i{Vendor Name}, @i{Part Number}, @i{Revision},
+      @i{Vendor Serial}, @i{TX Wavelength}) read from the SFP's EEPROM
+      (left part of the table).
+      The fields that were used during matching against SFP database entries
+      are marked with @t{(+)}.
+
+      The matched SFP database entry (@t{#DB}) and the parameters associated
+      with it (@i{RX Wavelength}, @i{Delta TX}, and @i{Delta RX})are displayed
+      in the middle part of the table.
+      These parameters remain empty if no match is found.
+
+      The right part of the table includes the entry of the matched Fiber
+      database (@t{#DB}) along with the Alpha value.
+      An @t{R} in the @t{#DB} column indicates that there was no match for
+      the requested pair of @i{XX} and @i{YY} wavelengths,
+      but a match was found for the reverse direction
+      (@i{YY} and @i{XX} wavelengths).
+
+      @center @image{images/wrs_sfp_dump_m, 14cm,, Example dump of wrs_sfp_dump -m}
+
+      For more details about the matching process for SFPs and fibers,
+      please refer to @ref{SFP name matching} and
+      @ref{Fiber parameter matching}.
+
+@item -t <on|off|0|1|s>
+
+      Enable (@t{on} or @t{1}), disable (@t{off} or @t{0}),
+      or check the status (@t{s}) of the SFP's TX pin, which is used
+      to control the TX laser.
+
+@item -a <READ|WRITE>
+@itemx -f <file>
+
+      The @t{wrs_sfp_dump} tool can be used to read (@t{-a READ}) or
+      write (@t{-a WRITE}) the content of the SFP's EEPROM.
+      Use the @t{-f} parameter followed by a filename to store or retrieve
+      the EEPROM's content.
+
+      This parameter must be used with direct I2C accesses
+      (@t{-I} parameter).
+      To avoid potential race conditions on the I2C bus, ensure that HAL
+      and @i{monit} are disabled/stopped.
+      Otherwise, the SFP's EEPROM may become corrupted.
+
+      These parameters can be used to fix a corrupted SFP's EEPROM.
+
+@end table
+
+For more parameters, please refer to tool's help (@t{-h}).
 
 @c --------------------------------------------------------------------------
 @node wrs_vlans

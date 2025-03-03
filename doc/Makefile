@@ -24,6 +24,12 @@ IMG_PDF=\
 	images/dot-config_overwrite_flow.pdf \
 	images/wr_mon.pdf \
 
+IMG_PNG=\
+	images/wrs_sfp_dump_A.png \
+	images/wrs_sfp_dump_b.png \
+	images/wrs_sfp_dump_m.png \
+	images/wrs_sfp_dump_s.png \
+
 MAKEINFO ?= makeinfo
 DOT ?= dot
 
@@ -63,7 +69,7 @@ DIRS=\
 all: $(ALL) $(DIRS)
 	$(MAKE) terse
 
-wrs-user-manual.texi: ../userspace/ppsi/doc/ppsi_conf-manual.in $(PDF_DOT) $(IMG_PDF)
+wrs-user-manual.texi: ../userspace/ppsi/doc/ppsi_conf-manual.in $(PDF_DOT) $(IMG_PDF) $(IMG_PNG)
 
 check: _err.ps
 	gs -sDEVICE=linux -r320x200x16 $<

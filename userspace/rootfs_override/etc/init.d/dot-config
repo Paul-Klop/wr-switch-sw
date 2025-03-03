@@ -187,8 +187,8 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
     echo "$URL" > "$tmpdir"/dot-config_source_url
     rm -f $tmpconfig
     case $proto in
-		http|ftp)
-		    wget $URL -O $tmpconfig
+		http|https|ftp)
+		    wget --no-check-certificate $URL -O $tmpconfig
 		    ;;
 		tftp)
 		    tftp -g -r "$filename" -l $tmpconfig $host

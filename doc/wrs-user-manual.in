@@ -252,6 +252,9 @@ The most important changes introduced in v8.0 are:
       Check @t{WR-SWITCH-MIB}'s header for details.
       Please note that some changes are not backward compatible, check
       @ref{Non backward-compatible changes in v8.0} for details.
+@item Add support of @t{https} for remote locations configured in dot-config,
+      e.g., dot-config, leap-seconds file, custom script script executed at
+      boot and @i{ppsi.conf}.
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -1203,8 +1206,12 @@ The three parts of the URL are as follows:
 
 @item protocol
 
-	We support @t{http}, @t{ftp} and @t{tftp}.  Any other protocols
-        result in an error, and the @t{dot-config} file is not replaced.
+      We support @t{http}, @t{https}, @t{ftp} and @t{tftp}.
+      Please note that if the @t{https} protocol is used, the CA certificates
+      are ignored because the local time is not set correctly when the file
+      is downloaded.
+      Any other protocols result in an error, and the @t{dot-config} file
+      is not replaced.
 
 @item host
 
@@ -1670,13 +1677,16 @@ appropriate way, before the respective service is started.
 
         As an alternative, you can choose
         @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE} and specify an URL
-        (@t{http://}, @t{ftp://} or @t{tftp://}) in
+        (@t{http://}, @t{https://}, @t{ftp://} or @t{tftp://}) in
         @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL} whence
         the switch will download the script to be executed at boot time.
         The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
         and/or @t{MACADDR}, so the same configuration string can be used to set
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
+        Please note that if the @t{https} protocol is used, the CA certificates
+        are ignored because the local time is not set correctly when the file
+        is downloaded.
 
 @item   CONFIG_LLDPD_DISABLE
 @itemx  CONFIG_LLDPD_TX_INTERVAL
@@ -1902,13 +1912,15 @@ instances of the WR switch.
 @item CONFIG_PTP_CONF_URL
 
 	If you choose @t{CONFIG_PTP_REMOTE_CONF} specify an URL
-	(@t{http://}, @t{ftp://} or @t{tftp://}) whence
+	(@t{http://}, @t{https://}, @t{ftp://} or @t{tftp://}) whence
         the switch will download the @t{ppsi.conf} at boot time.
         The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
         and/or @t{MACADDR}, so the same configuration string can be used to set
         up a batch of switches with different configurations (similar to the
         @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
-
+        Please note that if the @t{https} protocol is used, the CA certificates
+        are ignored because the local time is not set correctly when the file
+        is downloaded.
 @c @item   CONFIG_PTP_SLAVE_ONLY
 
 @c         A slaveOnly Ordinary Clock utilizes the slaveOnly state machine
@@ -3265,7 +3277,8 @@ ports in ACCESS mode, the PTP VID is derived from the VID
 As an alternative you can write a custom @i{PPSi} configuration file with 
 VLANs specified per-port.
 You can simply copy the file generated in the WRS filesystem
-(@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
+(@i{/etc/ppsi.conf})
+to a central @t{tftp}/@t{http}/@t{https}/@t{ftp} server where
 @t{dot-config} files for your switches are stored and fetched on boot time or
 permanently store it in the flash (for details, please check the
 configuration options @t{CONFIG_PTP_*} in the

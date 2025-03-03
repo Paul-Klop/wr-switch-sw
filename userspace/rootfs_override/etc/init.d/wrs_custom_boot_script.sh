@@ -79,8 +79,8 @@ start() {
 	echo "$URL" > "$custom_boot_source_url_file"
 	rm -f "$tmpscript"
 	case $proto in
-	    http|ftp)
-		wget $URL -O "$tmpscript"
+	    http|https|ftp)
+		wget --no-check-certificate $URL -O "$tmpscript"
 		;;
 	    tftp)
 		tftp -g -r "$filename" -l "$tmpscript" "$host"

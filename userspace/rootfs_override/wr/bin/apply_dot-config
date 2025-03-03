@@ -152,8 +152,8 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 
     rm -f $tmpconfig
     case $proto in
-	http|ftp)
-	    wget $URL -O $tmpconfig
+	http|https|ftp)
+	    wget --no-check-certificate $URL -O $tmpconfig
 	    ;;
 	tftp)
 	    tftp -g -r "$filename" -l $tmpconfig $host

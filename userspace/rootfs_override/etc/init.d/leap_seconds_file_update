@@ -157,8 +157,8 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
     write_msg "$URL" $leapSecondsSourceUrl
     rm -f $tmpconfig
     case $proto in
-		http|ftp)
-		    wget $URL -O $tmpconfig
+		http|https|ftp)
+		    wget --no-check-certificate $URL -O $tmpconfig
 		    ;;
 		tftp)
 		    tftp -g -r "$filename" -l $tmpconfig $host
@@ -201,7 +201,7 @@ if [ "$CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE" = "y" ] || [ "$CONFIG_LEAPSEC_SOURCE_
 			fi
 		else
 		    write_msg "no_changes" $leapSecondsStatus
-		    eval echo "No changes detected" $LOGPIPE 
+		    eval echo "File downloaded from $URL. No changes detected" $LOGPIPE
 		fi
     else
 		write_msg "download_error" $leapSecondsStatus

@@ -65,7 +65,8 @@ config DOTCONF_URL
 	string "URL for a run-time replacement of dot-config"
 	depends on DOTCONF_SOURCE_REMOTE
 	help
-	  tftp://, ftp:// or http:// URLs are allowed. Names are allowed if
+	  tftp://, ftp://, http:// or https:// URLs are allowed. For https
+	  CA certificates are ignored. Names are allowed if
 	  you configured a DNS server. The special strings HOSTNAME, IPADDR and
 	  MACADDR are substituted before retrieving the file.
 	  Example:  "tftp://morgana/wrs-config-IPADDR"
@@ -114,7 +115,8 @@ config LEAPSEC_URL
 	default "ftp://ftp.boulder.nist.gov/pub/time/leap-seconds.list"
 	depends on LEAPSEC_SOURCE_REMOTE_TRY || LEAPSEC_SOURCE_REMOTE_FORCE
 	help
-	  tftp://, ftp:// or http:// URLs are allowed. Names are allowed if
+	  tftp://, ftp://, http:// or https:// URLs are allowed. For https
+	  CA certificates are ignored. Names are allowed if
 	  you configured a DNS server. The special strings HOSTNAME, BOOTSERVER, IPADDR and
 	  MACADDR are substituted before retrieving the file.
 	  Example:  "tftp://BOOTSERVER/leap-seconds.IPADDR"
@@ -855,11 +857,13 @@ config PTP_CUSTOM_FILENAME
 
 config PTP_CONF_URL
 	depends on PTP_REMOTE_CONF
-	string "Download URL (http, ftp, tftp) for custom ppsi.conf"
+	string "Download URL (http, https, ftp, tftp) for custom ppsi.conf"
 	help
 	  Like CONFIG_DOTCONF_URL, this option allows passing HOSTNAME, IPADDR
 	  and MACADDR in the filename, and if a DNS server is configured,
 	  you can use host names.
+	  tftp://, ftp://, http:// or https:// URLs are allowed. For https
+	  CA certificates are ignored.
 	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
 
 source Kconfig_port_timing.in

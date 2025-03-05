@@ -6042,7 +6042,141 @@ Continue calibration for port 3 ? (y/n)n
 @node Interoperability with non-WR devices
 @appendix Interoperability with non-WR devices
 
-TODO: provide examples how to configure WRS to work with non-WR devices.
+WR Switch has been successfully run with a number of PTP-compatible devices,
+both as master or slave (see table below).
+
+For most of the devices it is enough to configure the Default PTP profile
+over Ethernet.
+However, some devices needs more parameters to be set.
+See following sections for details.
+
+@multitable  @columnfractions .17 .21 .16 .45
+@headitem Device       @tab Role          @tab Profiles        @tab Comments
+
+@item Oscilloquartz OSA 5440
+                       @tab Master, Slave @tab Default+UDP     @tab For details see @ref{Oscilloquartz}.
+@item Juniper          @tab Master, Slave @tab AES-67          @tab For details see @ref{Juniper}
+@item Meinberg         @tab Master, Slave @tab Default, AES-67 @tab
+@item Microchip        @tab Master, Slave @tab Default         @tab
+@item Raspberry CM4 with ptp4l
+                       @tab Master, Slave @tab Default          @tab
+@end multitable
+
+@c ==========================================================================
+@node Oscilloquartz
+@section Oscilloquartz
+
+It was found that @i{Oscilloquartz OSA 5440} device does not support
+Default PTP profile over Ethernet, but they support Default PTP profile over UDP.
+To use @i{Oscilloquartz} with WR Switch please use the configuration described
+below.
+
+Configuration for WR Switch:
+@itemize @bullet
+@item Set PTP version 2.0:
+      @itemize @bullet
+      @item @t{"Global PTP configuration (profile, timing mode, BMCA and external port config, ...)"} ->
+            Enable @t{"Allow the overwrite of the default PTP version per instance"}
+      @item For a given port: @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{XX}"} ->
+            @t{"Instance 1"} ->
+            Enable @t{"Force PTP version"} and select @t{"PTP version (v2.0 (IEEE1588-2008))"}
+      @end itemize
+@item Set to use PTP over L3 for a port
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{XX}"} ->
+            @t{"Instance 1"} ->
+            @t{"Network protocol"} ->
+            Select @t{"UDP/IPv4"}
+      @end itemize
+@item Set IP address for a given port
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{"XX"}} ->
+            @t{"Instance 1"} ->
+            Set desired @t{"IP address"}
+      @end itemize
+@item Select Default PTP profile
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT XX"} ->
+            @t{"Instance 1"} ->
+            @t{"Network protocol"} ->
+            Set @t{"PTP Profile (Default (IEEE 1588))"}
+      @end itemize
+
+@end itemize
+
+Configuration for @i{Oscilloquartz} device:
+@itemize @bullet
+@item Select profile @t{"IEEE1588-2008 annex J.3"}
+@item Set IP address on a port
+@item For Slave role, set properly SyncE (to not expect @i{ESMC} messages)
+@end itemize
+
+@c ==========================================================================
+@node Juniper
+@section Juniper
+
+It was found that @i{Juniper} devices does not support Default PTP profile
+over Ethernet, but they support @i{AES-67} PTP profile over UDP.
+To use @i{Juniper} with WR Switch please use the configuration described
+below.
+
+Configuration for WR Switch:
+@itemize @bullet
+@item Set PTP version 2.0:
+      @itemize @bullet
+      @item @t{"Global PTP configuration (profile, timing mode, BMCA and external port config, ...)"} ->
+            Enable @t{"Allow the overwrite of the default PTP version per instance"}
+      @item For a given port: @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{XX}"} ->
+            @t{"Instance 1"} ->
+            Enable @t{"Force PTP version"} and select @t{"PTP version (v2.0 (IEEE1588-2008))"}
+      @end itemize
+@item Set to use PTP over L3 for a port
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{XX}"} ->
+            @t{"Instance 1"} ->
+            @t{"Network protocol"} ->
+            Select @t{"UDP/IPv4"}
+      @end itemize
+@item Set IP address for a given port
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{"XX"}} ->
+            @t{"Instance 1"} ->
+            Set desired @t{"IP address"}
+      @end itemize
+@item Select Default PTP profile
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT XX"} ->
+            @t{"Instance 1"} ->
+            @t{"Network protocol"} ->
+            Set @t{"PTP Profile (Default (IEEE 1588))"}
+      @end itemize
+@item Adjust message rates
+      @itemize @bullet
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{XX}"} ->
+            @t{"Instance 1"} ->
+            Enable @t{"Overwrite default minDelayRequestInterval"}
+      @item @t{"Port PTP/Timing configuration"} ->
+            @t{"PORT @i{XX}"} ->
+            @t{"Instance 1"} ->
+            Set to @t{3} the value of @t{"minDelayRequestInterval"}
+      @end itemize
+
+@end itemize
+
+Apply the following configuration for Juniper device:
+@itemize @bullet
+@item Select profile @t{"AES-67"}
+@item Set IP address on a port
+@end itemize
 
 @c ##########################################################################
 @bye

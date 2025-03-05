@@ -634,6 +634,8 @@ int main(int argc, char **argv)
 		case 'H':
 			/* Set path for shmem files */
 			wrs_shm_set_path(optarg);
+			/* Ignore WRS_SHM_LOCKED flag */
+			wrs_shm_ignore_flag_locked(1);
 			break;
 		case 't':
 			/* Handle enable/disable/status of SFP's TX */

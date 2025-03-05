@@ -670,6 +670,10 @@ void init_shm(void)
 	if ( read_instances()==-1 )
 		exit(1);
 
+	/* Ignore connecting to ppsi */
+	if (ignore_alive)
+		return;
+
 	ppsi_connect_minipc();
 }
 
@@ -1394,6 +1398,10 @@ void show_all(void)
 static void toggle_tracking(void)
 {
 	int rval;
+
+	/* Ignore minipc_calls to PPSI */
+	if (ignore_alive)
+		return;
 
 	if (ptp_ch_pid != ppsi_head->pid) {
 		/* ppsi was restarted since minipc connection, reconnect now */

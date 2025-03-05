@@ -39,7 +39,8 @@ void print_info(char *prgname)
 		"Select the source of SFP eeprom data:\n"
 		"   -L                 Use eeprom data read by HAL at SFP insertion time (default)\n"
 		"   -I                 Use read eeprom data directly from SFP via I2C\n"
-		"                      (Use with caution! May corrupt SFPs EEPROM if HAL is running!)\n"
+		"                      NOTE: Be carefull! All reads (i2c transfers) are in race with HAL!\n"
+		"                      May corrupt SFPs EEPROM if HAL is running!\n"
 		"Optional parameters:\n"
 		"   -p <num>           Dump sfp header for specific port (1-18); dump sfp header info for all\n"
 		"                      ports if no <-p> specified\n"
@@ -53,13 +54,12 @@ void print_info(char *prgname)
 		"   -m                 Dump SFP basic parameters with matching information (marked with \"+\") from HAL\n"
 		"   -s                 Dump SFP (with DOM) summary as table.\n"
 		"   -A                 Dump information about alarms. Implies -s parameter. Note: Output is very wide.\n"
-		"   -t <on|off|0|1|s>  Enable(1), disable(1) or check status of SFP's TX pin; Use with -L or -I\n"
+		"   -t <on|off|1|0|s>  Enable(1), disable(0) or check status of SFP's TX pin; Use with -L or -I\n"
 		"   -q                 Decrease verbosity\n"
 		"   -v                 Increase verbosity\n"
 		"   -V                 Print version\n"
 		"   -h                 Show this message\n"
 		"\n"
-		"NOTE: Be carefull! All reads (i2c transfers) are in race with HAL!\n"
 	);
 
 }

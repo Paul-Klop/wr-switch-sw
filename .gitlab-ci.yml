@@ -1,8 +1,11 @@
 stages:
-- wrs_sw_compile
+  - build
+  - doc
 
 job_wrs_compile:
-  stage: wrs_sw_compile
+  stage: build
+  tags:
+    - wrs_sw
   script:
     - apt update && apt upgrade -y && apt install -y git make build-essential m4 gettext bison flex texinfo libncurses-dev libncursesw5-dev bc python unzip wget cpio locales
     - locale-gen en_US.UTF-8
@@ -15,7 +18,12 @@ job_wrs_compile:
     - rm -rf *.log
     - rm -rf build
     - rm -rf images
-    - cd wr-switch-sw ; cd userspace/ppsi ; git fetch -p; cd ../..; git submodule update; cd ..
+    - rm -rf docs
+    - cd wr-switch-sw
+    - git clean -xfd
+    - cd userspace/ppsi
+    - git clean -xfd
+    - git fetch -p; cd ../..; git submodule update; cd ..
     - echo "Using `grep -c ^processor /proc/cpuinfo` parallel jobs" 
     - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt
     - cp *.tar ${CI_PROJECT_DIR}
@@ -25,5 +33,45 @@ job_wrs_compile:
     paths:
     - log_${CI_JOB_ID}.txt
     - ./*.tar
+
+
+job_build_docs:
+  stage: doc
+  image: ubuntu:22.04
   tags:
     - wrs_sw
+  script:
+    - apt update
+    - DEBIAN_FRONTEND=noninteractive TZ=Europe/Zurich apt -y install tzdata
+    - apt upgrade -y && apt install -y git make locales texinfo texlive-latex-base texlive-latex-extra texlive-extra-utils libreoffice-common libreoffice-draw emacs graphviz
+    - locale-gen en_US.UTF-8
+    # use the user who triggered a job to appear in binaries
+    - echo "[user]" >  ~/.gitconfig
+    - echo "    name = CI ${GITLAB_USER_NAME}" >>  ~/.gitconfig
+    - cd ..
+    - echo "Remove leftovers from the previous build"
+    - rm -rf *.tar
+    - rm -rf *.log
+    - rm -rf build
+    - rm -rf images
+    - rm -rf docs
+    - rm -rf *.pdf
+    - cd wr-switch-sw
+    - git clean -xfd
+    - cd userspace/ppsi
+    - git clean -xfd
+    - git fetch -p; cd ../..; git submodule update; cd ..
+    - cd wr-switch-sw/doc
+    - make
+    - cd ${CI_PROJECT_DIR}
+    - mkdir -p docs
+    - cp doc/wrs-user-manual.pdf docs
+    - cp doc/wrs-developer-manual.pdf docs
+    - cp doc/radiusvlan.pdf docs
+    - cp doc/wrs_failures/wrs_failures.pdf docs
+    - cp doc/autonegotiation_ha_wr/autonegotiation_ha_wr.pdf docs
+  artifacts:
+    name: "wrs_sw_ci_docs_${CI_JOB_ID}"
+    when: always
+    paths:
+    - ./docs/*.pdf

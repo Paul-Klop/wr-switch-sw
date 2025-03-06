@@ -97,7 +97,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
    handling measures, the external connectors, hardware features and the
    initial bring-up of the device.
 
-@item @i{White Rabbit Switch: User's Manual}: documentation about
+@item @i{White Rabbit Switch: User's Manual} (this document): documentation about
    configuring the @sc{wrs}, at software level.  This guide is maintained
    by software developers.  The manual describes
    configuration in a deployed network, either as a standalone device or
@@ -140,15 +140,24 @@ development.
 @node Supported Hardware Versions
 @section Supported Hardware Versions
 
-This document applies to the following hardware versions the @sc{wrs}
+This document applies to the following hardware versions of the @sc{wrs}
 device:
 @itemize @bullet
- @item SCB-3.3, SCB-3.4, SCB-3.4.1 with and without the Low Jitter Daughterboard
-  (@sc{wrs}, see @url{https://ohwr.org/project/wrs-low-jitter/-/wikis/home})
- @item SCB-3.5 (also called FL-SCB-v1.5), fanless with LJD integrated
- @item SCB-LJ 2.0, with LJD integrated.
+ @item @b{WRSv3.3} and @b{WRSv3.4}: SCB-3.3, SCB-3.4, SCB-3.4.1 with and without the Low Jitter Daughterboard (LJD)
+   @itemize @bullet
+     @item SCB in @url{https://ohwr.org/project/wr-switch-hw/-/wikis/home}
+     @item LJD in @url{https://ohwr.org/project/wrs-low-jitter/-/wikis/home}
+   @end itemize
+ @item @b{WRSv3.5}: SCB-3.5 (also called FL-SCB-v1.5), fanless with LJD integrated
+   @itemize @bullet
+     @item SCB in @url{https://ohwr.org/project/wrs-fl-hw/-/wikis/home}
+   @end itemize
+ @item @b{WRSv3.6}: SCB-LJ 2.0, with LJD integrated.
+   @itemize @bullet
+     @item SCB in @url{https://ohwr.org/project/wrs-lj-hw/-/wikis/home}
+   @end itemize
 @end itemize
-See for details table in @url{https://ohwr.org/project/wr-switch-sw/-/wikis/home#compatibility-of-the-official-firmware-releases-with-commercially-available-wr-switches}.
+For details, see table in @url{https://ohwr.org/project/wr-switch-sw/-/wikis/home#compatibility-of-the-official-firmware-releases-with-commercially-available-wr-switches}.
 
 Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
 are the owner of one of them, please refer to version 3.3 of the
@@ -191,7 +200,7 @@ Version from v8.0 stores the SSH host keys
 in @t{/update/permanent/ssh/}.
 When upgrading from this or later version no action is needed to preserve
 SSH host keys.
-When upgrading from version pre-v8.0, the SSH host keys can preserved
+When upgrading from version pre-v8.0, the SSH host keys can be preserved
 by manual copy before update.
 Please see @ref{Preserving SSH host keys during update to v8.0}
 for exact commands.
@@ -257,7 +266,7 @@ The most important changes introduced in v8.0 are:
       boot and @i{ppsi.conf}.
 @item Add new functionality to @t{wrs_sfp_dump} to:
       @itemize
-      @item Dump SFP database from HAL as defined in dot-config
+      @item Dump SFP database from HAL as defined in @i{dot-config}
             (parameter @t{-b}).
       @item Dump information about the matched database entry and the reason
             for matching of SFP and fiber (parameter @t{-m}).
@@ -268,10 +277,26 @@ The most important changes introduced in v8.0 are:
       @end itemize
 @item Add SFP revision field in the process of SFP matching
       (see @ref{SFP name matching}).
+@item Release three different firmware tarballs, one for each supported hardware
+      type described in @ref{Supported Hardware Versions}, i.e. WRSv3.4,
+      WRSv3.5 and WRSv3.6.
+      The differences include:
+      @itemize
+      @item Values in @i{tx_phase_cal.conf} file.
+      @item Ingress/egress latency values for each port
+            (@t{CONFIG_PORTxx_INSTyy_EGRESS_LATENCY} and
+            @t{CONFIG_PORTxx_INSTyy_INGRESS_LATENCY} in @i{dot-config})
+      @item AUXCLK configuration (@t{CONFIG_WRSAUXCLK_CSHIFT},
+            @t{CONFIG_WRSAUXCLK_SIGDEL} and @t{CONFIG_WRSAUXCLK_PPSHIFT} in
+            @i{dot-config}).
+      @end itemize
 @end itemize
 
-@b{NOTE: Other than updating the @i{dot-config}, there is no special action
-needed from the user when upgrading firmware from v6.1 to v7.0.}
+@b{NOTE: @i{dot-config} used with v7.0 is compatible and will work for v8.0.
+Unless you want to enable new features introduced by v8.0 that are not enabled
+by default, it is not strictly speaking necessary to generate a new dot-config.
+Yet, it is always good to regenerate it for v8.0.
+Read more in the subsequent sections.}
 
 
 @b{NOTE: Firmware v8.0 uses different FPGA GW/bitstream than v7.0,
@@ -1138,6 +1163,11 @@ The configuration step creates @t{.config}, that you can copy to your
 @sc{wrs} as @t{/wr/etc/dot-config}. After reboot, you'll see your
 choices in effect.
 
+Make note about the mechanism to overwrite some configuration parameters
+stored in @t{/wr/etc/dot-config} by that stored in
+@t{/update/permanent/dot-config/dot-config-overwrite}, see
+@ref{Local Overwrite of dot-config}.
+
 The rest of this section describes various options that are provided through the
 configuration (@t{dot-config}) file.
 
@@ -1255,12 +1285,16 @@ It results in @t{wrs-config-192.168.16.9} being served to the @sc{wrs}.
 Please remember, that the new @t{dot-config} should include a valid
 @t{CONFIG_DOTCONF_SOURCE_*} setting, or you won't be able to update the
 configuration at the next boot. In any case, you can always copy a
-configuration file using @i{ssh}, or use the web interface to change the
-configuration.
-Changes performed using the web interface are immediately active, because
-the web server takes proper action; the new file copied over with @i{ssh},
-or any hand-edits, are only effective at next boot, unless overwritten by
-a remote configuration file.
+configuration file using @i{ssh}.
+
+Please remember, that the configuration in the new @t{dot-config}
+(regardless of its source) will always be overwritten by configuration
+parameters in @t{/update/permanent/dot-config/dot-config-overwrite},
+if present.
+See @ref{Local Overwrite of dot-config}.
+
+Manual replacement or hand-edits of @t{dot-config} are only effective
+at next boot, unless overwritten by a remote configuration file.
 In case there are errors or unknown configuration entries in the retrieved
 file, the old one will be used.
 
@@ -1317,6 +1351,9 @@ boot the value (the old one or the just-downloaded one) is used in the
 appropriate way, before the respective service is started.
 @c When the value is changed by the web interface, proper action is taken.
 
+@node Non-timing related configuration items
+@subsection Non-timing related configuration items
+
 @table @code
 
 @item CONFIG_DOTCONF_SOURCE_LOCAL
@@ -1329,23 +1366,6 @@ appropriate way, before the respective service is started.
         the next time the system boots. See @ref{Configuration of the Device}
         and @ref{The Configuration File} for details.
 
-@item CONFIG_LEAPSEC_SOURCE_LOCAL
-@itemx CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE
-@itemx CONFIG_LEAPSEC_SOURCE_REMOTE_TRY
-@itemx CONFIG_LEAPSEC_URL
-	The @t{/etc/leap-seconds.list} file is used to get the current TAI offset. @xref{wr_date}.
-	The @t{CONFIG_LEAPSEC_SOURCE_LOCAL} choice forces the use the local leap seconds file that
-  is stored locally on the switch (under @t{/etc/leap-seconds.list}). 
-	
-	@t{CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE} and @t{CONFIG_LEAPSEC_SOURCE_REMOTE_TRY} provide
-  similar functionality. In both cases the @t{leap-seconds.list} is downloaded at boot
-  time using the URL defined in @t{CONFIG_LEAPSEC_URL}. The address is defined in the
-  same format as @t{CONFIG_DOTCONF_URL}. If the downloaded file is newer than the
-  local copy stored in @t{/etc/leap-seconds.list}, it is used to update the local
-  copy.
-  In case the @sc{wrs} is unable to fetch a leap seconds file from the provided location,
-  using @t{CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE} will result in an error generated through
-  SNMP, while using @t{CONFIG_LEAPSEC_SOURCE_REMOTE_TRY} will suppress the alarm.
 
 @item CONFIG_ETH0_DHCP
 @itemx CONFIG_ETH0_DHCP_ONCE
@@ -1831,52 +1851,19 @@ appropriate way, before the respective service is started.
         (that is preserved over restarts and firmware update).
         This mechanism is enabled by default.
         For more information see @ref{Local Overwrite of dot-config}.
+@end table
 
-@item   CONFIG_TOD_SOURCE_IRIGB
-@itemx  CONFIG_TOD_SOURCE_NMEA
-@itemx  CONFIG_TOD_SOURCE_NONE
-@itemx  CONFIG_TOD_SOURCE_NTP
+@c =-------------------------------------------------------------------------
+@node Non-timing related per-port configuration items
+@subsubsection Non-timing related per-port configuration items
 
-        Select external source of Time of Day.
-        It is used to set the local Linux UTC time at boot.
-        For a @sc{WRS} that is the PTP Grandmaster for a WR Network, this time
-        is used to set the WR time that is distributed over WR Network.
-        For a @sc{WRS} that is a Boundary Clock, this time is overwritten by
-        the time obtained via slave port when synchronization is established.
+@table @code
+@item   CONFIG_PORT@i{xx}_IFACE
+        Used to define the physical port interface name: "wri[1-18]"
 
-        In both cases, this source of time is used only at boot to set the time.
-        If the selected source is NTP, it can be used during operation for
-        monitoring.
-        If enabled via configuration (@t{SNMP_SYSTEM_CLOCK_MONITOR_ENABLED}),
-        the WR time is compared with the time obtained from NTP.
-
-        If NMEA or NTP is selected, please check also check their specific
-        configuration items (@t{CONFIG_NMEA_*} and @t{CONFIG_NTP_SERVER}).
-
-        For more information check @ref{NMEA}, @ref{IRIG-B}, @ref{NTP}.
-
-@item   CONFIG_NMEA_B115200
-@itemx  CONFIG_NMEA_B19200
-@itemx  CONFIG_NMEA_B38400
-@itemx  CONFIG_NMEA_B57600
-@itemx  CONFIG_NMEA_B9600
-@itemx  CONFIG_NMEA_GPRMC
-@itemx  CONFIG_NMEA_GPZDA
-
-        Configuration of the NMEA source of Time of Day.
-        For more information check @ref{NMEA}.
-
-@item   CONFIG_SPLL_HPLL_KI
-@itemx  CONFIG_SPLL_HPLL_KI_OVERWRITE
-@itemx  CONFIG_SPLL_HPLL_KP
-@itemx  CONFIG_SPLL_HPLL_KP_OVERWRITE
-@itemx  CONFIG_SPLL_MPLL_KI
-@itemx  CONFIG_SPLL_MPLL_KI_OVERWRITE
-@itemx  CONFIG_SPLL_MPLL_KP
-@itemx  CONFIG_SPLL_MPLL_KP_OVERWRITE
-
-        Configuration of Ki and Kp parameters the Main and Helper PLL in SoftPLL.
-        For more information, check @ref{SoftPLL}.
+@item   CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT
+        Used to define that a port shall stay down after a boot of WRS.
+        Such a port can be brought up by using the @t{ifconfig wriX up} command.
 
 @end table
 
@@ -1892,6 +1879,9 @@ The following table lists the configuration items that are common to all port
 instances of the WR switch.
 
 @table @code
+
+
+
 @item CONFIG_PTP_PORT_PARAMS
 @itemx CONFIG_PTP_CUSTOM
 @itemx CONFIG_PTP_REMOTE_CONF
@@ -1961,21 +1951,24 @@ instances of the WR switch.
         @item @t{CONFIG_TIME_FM} a free-running master (FM), used for isolated
               acquisition networks, without an external reference.
         @item @t{CONFIG_TIME_BC} a normal ``boundary-clock'' device that
-              is slave on some ports and master on other ports.
+              is slave on one port and master on other ports.
         @item @t{CONFIG_TIME_CUSTOM} an option which leaves the possibility
               to define freely the PTP clock class.
               It allows to set other PTP attributes without a need of use
               @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
         @end itemize
+        The first 4 choices have pre-defined values of PTP attributes that
+        can be overwritten using @t{CONFIG_PTP_OPT_OVERWRITE_ATTRIBUTES}.
 
 @item   CONFIG_GLOBAL_PROFILE_PTP
 @itemx  CONFIG_GLOBAL_PROFILE_HA_WR
 @itemx  CONFIG_GLOBAL_PROFILE_CUSTOM
-        Selection of a global profile may set allowed and default values of
+        Selection of a global profile sets allowed and default values of
         global attributes.
-        @t{CONFIG_GLOBAL_PROFILE_PTP} must be set for the Default PTP Profile,
-        @t{CONFIG_GLOBAL_PROFILE_HA_WR} must
-        be set to use the @i{White Rabbit} or @i{High Accuracy} profile.
+        The Default PTP Profile is used when @t{CONFIG_GLOBAL_PROFILE_PTP} is
+        set.
+        The @i{White Rabbit} or @i{High Accuracy} profile is used when
+        @t{CONFIG_GLOBAL_PROFILE_HA_WR} is set.
         @i{White Rabbit} and @i{High Accuracy} profiles use the same
         configuration option because they share the same values for all
         attributes except the used extension.
@@ -1999,13 +1992,14 @@ instances of the WR switch.
         @t{CONFIG_PTP_OPT_BMCA_EXT_PORT_CONFIG} is selected.
         In such case, the states are defined by
         @t{CONFIG_PORT@i{xx}_INST@i{yy}_DESIRADE_STATE_*}).
-        When set, each port can be forced to always stay either in
+        As such, each port can be forced to always stay either in
         the slave, master or passive state.
 
 @item   CONFIG_PTP_OPT_PTP_VERSION_OVERWRITE
         Enables the possibility to overwrite the default PTP version used in
         the transmitted PTP messages.
-        The actual setting can be done with per instance granularity.
+        The value of the version to be transmitted is configured per port
+        instance.
         For more details please check the description of
         @t{CONFIG_PORT@i{xx}_INST@i{yy}_PTP_VERSION_OVERWRITE}
 
@@ -2255,6 +2249,70 @@ instances of the WR switch.
 @item CONFIG_EXT_PPS_LATENCY_PS
 	A value in ps to align the 1-PPS input and 1-PPS output.
 
+@item   CONFIG_TOD_SOURCE_IRIGB
+@itemx  CONFIG_TOD_SOURCE_NMEA
+@itemx  CONFIG_TOD_SOURCE_NONE
+@itemx  CONFIG_TOD_SOURCE_NTP
+
+        Select external source of Time of Day.
+        It is used to set the local Linux UTC time at boot.
+        For a @sc{WRS} that is the PTP Grandmaster for a WR Network, this time
+        is used to set the WR time that is distributed over WR Network.
+        For a @sc{WRS} that is a Boundary Clock, this time is overwritten by
+        the time obtained via slave port when synchronization is established.
+
+        In both cases, this source of time is used only at boot to set the time.
+        If the selected source is NTP, it can be used during operation for
+        monitoring.
+        If enabled via configuration (@t{SNMP_SYSTEM_CLOCK_MONITOR_ENABLED}),
+        the WR time is compared with the time obtained from NTP.
+
+        If NMEA or NTP is selected, please check also their specific
+        configuration items (@t{CONFIG_NMEA_*} and @t{CONFIG_NTP_SERVER}).
+
+        For more information check @ref{NMEA}, @ref{IRIG-B}, @ref{NTP}.
+
+@item   CONFIG_NMEA_B115200
+@itemx  CONFIG_NMEA_B19200
+@itemx  CONFIG_NMEA_B38400
+@itemx  CONFIG_NMEA_B57600
+@itemx  CONFIG_NMEA_B9600
+@itemx  CONFIG_NMEA_GPRMC
+@itemx  CONFIG_NMEA_GPZDA
+
+        Configuration of the NMEA source of Time of Day.
+        For more information check @ref{NMEA}.
+
+@item CONFIG_LEAPSEC_SOURCE_LOCAL
+@itemx CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE
+@itemx CONFIG_LEAPSEC_SOURCE_REMOTE_TRY
+@itemx CONFIG_LEAPSEC_URL
+	The @t{/etc/leap-seconds.list} file is used to get the current TAI offset. @xref{wr_date}.
+	The @t{CONFIG_LEAPSEC_SOURCE_LOCAL} choice forces the use of the leap seconds file that
+  is stored locally on the switch (under @t{/etc/leap-seconds.list}).
+
+	@t{CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE} and @t{CONFIG_LEAPSEC_SOURCE_REMOTE_TRY} provide
+  similar functionality. In both cases the @t{leap-seconds.list} is downloaded at boot
+  time using the URL defined in @t{CONFIG_LEAPSEC_URL}. The address is defined in the
+  same format as @t{CONFIG_DOTCONF_URL}. If the downloaded file is newer than the
+  local copy stored in @t{/etc/leap-seconds.list}, it is used to update the local
+  copy.
+  In case the @sc{wrs} is unable to fetch a leap seconds file from the provided location,
+  using @t{CONFIG_LEAPSEC_SOURCE_REMOTE_FORCE} will result in an error generated through
+  SNMP, while using @t{CONFIG_LEAPSEC_SOURCE_REMOTE_TRY} will suppress the alarm.
+
+@item   CONFIG_SPLL_HPLL_KI
+@itemx  CONFIG_SPLL_HPLL_KI_OVERWRITE
+@itemx  CONFIG_SPLL_HPLL_KP
+@itemx  CONFIG_SPLL_HPLL_KP_OVERWRITE
+@itemx  CONFIG_SPLL_MPLL_KI
+@itemx  CONFIG_SPLL_MPLL_KI_OVERWRITE
+@itemx  CONFIG_SPLL_MPLL_KP
+@itemx  CONFIG_SPLL_MPLL_KP_OVERWRITE
+
+        Configuration of Ki and Kp parameters the Main and Helper PLL in SoftPLL.
+        For more information, check @ref{SoftPLL}.
+
 @end table
 
 @c =-------------------------------------------------------------------------
@@ -2281,16 +2339,12 @@ The @i{xx} value in the parameter name represents the port number.
 
 @subheading  Common instance configuration
 
-A set of parameters common to all instances running on the same physical port.
+A set of timing parameters common to all instances running on the same physical
+port see also @t{CONFIG_PORT@i{xx}_IFACE} and
+@t{CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT} in
+@ref{Non-timing related per-port configuration items}).
 
 @table @code
-
-@item   CONFIG_PORT@i{xx}_IFACE
-        Used to define the physical port interface name: "wri[1-18]"
-
-@item   CONFIG_PORT@i{xx}_IFACE_DOWN_AFTER_BOOT
-        Used to define that a port shall stay down after a boot of WRS.
-        Such a port can be brought up by using the @t{ifconfig wriX up} command.
 
 @item   CONFIG_PORT@i{xx}_FIBER
         Identify the fiber type. This is a number (@i{zz}) referring to the
@@ -2339,15 +2393,14 @@ It is advised to keep the default values for these options.
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR
 @itemx  CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_CUSTOM
-        Selection of an instance specific profile may set allowed and default
-        values of instance's attributes.
+        Selection of an instance specific profile permits to set the allowed
+        and default values of instance's attributes.
         The option @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_KEEP_GLOBAL}
         selects the same profile for an instance as selected option
         for global profile (one of @t{CONFIG_GLOBAL_PROFILE_*}.
-        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} must be set for
-        the Default PTP Profile,
-        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR} must
-        be set to use the @i{White Rabbit} or @i{High Accuracy} profile.
+        @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_PTP} sets the @i{Default PTP}
+        Profile, @t{CONFIG_PORT@i{xx}_INST@i{yy}_PROFILE_HA_WR} sets
+        the @i{White Rabbit} or @i{High Accuracy} profile.
         @i{White Rabbit} and @i{High Accuracy} profiles use the same
         configuration option because they share the same default values and
         their allowed ranges for all attributes except the used extension.
@@ -2397,7 +2450,7 @@ It is advised to keep the default values for these options.
 
         This option is only accessible when the PTP profile is selected
         otherwise this option is enabled by default.
-        It is used to force the servo to integrate on its calculation
+        It is used to force the servo to include in its calculation
         the computation of the delay asymmetry.
 
 @item   CONFIG_PORT@i{xx}_INST@i{yy}_BMODE_MASTER_ONLY
@@ -2679,7 +2732,7 @@ Please use this mechanism with caution, it can make WRS unreachable
 (especially in remote locations).
 
 The information of the execution of this mechanism is passed to the @i{syslog}.
-Please aware that some messages may appear twice.
+Please be aware that some messages may appear twice.
 Example outputs are included below.
 
 In the first example the @t{CONFIG_DOTCONF_LOCAL_OVERWRITE} is enabled but,
@@ -2691,9 +2744,6 @@ similar entries to the log below would appear in @i{syslog}.
 /dot-config/dot-config-overwrite file not found!
 @end smallexample
 
-In the examples below the timestamps and host name in @i{syslog}'s output are
-skipped.
-
 In another example, @i{dot-config} is configured to try DHCP for management
 port, if not available then use static IP (@t{CONFIG_ETH0_DHCP_ONCE=y}
 and in @t{CONFIG_ETH0_*} IP related configuration in case the DHCP server is not
@@ -2704,6 +2754,8 @@ The @t{CONFIG_ETH0_STATIC=y} is added to
 @t{/update/permanent/dot-config/dot-config-overwrite},
 
 In runtime the following log can be seen in the @i{syslog}.
+Note that in this and next example below the timestamps and host name in
+@i{syslog}'s output are skipped.
 
 @smallexample
 CONFIG_DOTCONF_LOCAL_OVERWRITE enabled
@@ -2973,7 +3025,8 @@ then the @i{L1Sync} extension is selected, but the link is degraded to the
 standard PTP.
 
 After the link-down, link-up sequence the link will start with the @i{L1Sync}
-extension.
+extension, if enabled.
+
 
 NOTE:
 It was decided that an instance with autonegotiated WR will not send
@@ -2996,10 +3049,11 @@ constant time offset.
 @node BMCA Configuration
 @subsection BMCA Configuration
 
-As today the WRS supports two ways how a role of a port/instance can be chosen:
+As today the WRS supports two ways how a role/state of a port/instance can be
+chosen:
 @itemize
-@item @i{External Port Configuration} -- the assignment of a role is static,
-      the role is configured in the @i{dot-config}
+@item @i{External Port Configuration} -- the assignment of a state is static,
+      the state is configured in the @i{dot-config}
 @item @i{Best Master Clock Algorithm} -- automatic selection based on
       the content of announce messages (as defined in IEEE1588-2019 standard)
 @end itemize
@@ -3032,7 +3086,7 @@ possible to pick two adjacent channels such that their wavelengths, after
 conversion to integers, give the same value.
 Please note that it was observed in the field that two DWDM SFPs using the same
 ITU-T channel had different TX wavelength stored in EEPROM.
-These SFPs were form the same manufacturer, but from different batches,
+These SFPs were from the same manufacturer, but from different batches,
 one SFP had TX wavelength value rounded up, second SFP rounded down.
 },
 as shown by @t{wrs_sfp_dump} (see @ref{wrs_sfp_dump}).
@@ -3184,8 +3238,13 @@ All examples from previous sections match typical @sc{wr} networks we setup at
 CERN with a single mono-modal fiber and 1310/1490 nm light wavelengths.
 
 If you are using dual-fiber transceivers, which is acceptable for
-short links, you use the same wavelength in both directions, over two
-fibers of the same length. In this case you may omit the 
+short links, you use the same @i{xx} wavelength in both directions,
+over two fibers of the same length.
+The proper configuration in this case is to set the parameter
+@t{wl_txrx}=@i{xx}+@i{xx} in @sc{sfp} @t{dot-config} configuration
+and to have a corresponding fiber entry with zero for the
+@t{alpha_@i{xx}_@i{xx}} parameter.
+Alternatively, in this case, you may omit the
 @t{wl_txrx} parameter in @sc{sfp} @t{dot-config} configuration and the
 @t{alpha_@i{xx}_@i{xx}} parameter in fiber configuration.  The missing
 parameters will cause warning messages to log destination, but are not
@@ -3214,25 +3273,45 @@ less than 10ps.
 @subsection Calibration
 
 Calibration of per-port and per-@sc{sfp} delays as well as alpha is described in the
-White Rabbit Calibration procedure:
+White Rabbit Calibration procedure available from the calibration wiki page:
 @url{http://www.ohwr.org/projects/white-rabbit/wiki/Calibration}.
 
 The delays used in the examples come from values listed in the calibration wiki
-page, and you should not be surprised by the fact that the
-transceiver (SFP) specifies the delays as zero.  By performing the
+page.
+You should not be surprised by the fact that for one of the
+transceiver (SFP), the delay is set to zero.
+By performing the
 calibration procedure using this very transceiver type, the whole delay is
-assigned to the port.  Other transceiver
+assigned to the port (the values of ingress and egress latency specified
+in parameters @t{CONFIG_PORTxx_INSTyy_INGRESS_LATENCY} and
+@t{CONFIG_PORTxx_INSTyy_INGRESS_LATENCY}.
+Other transceiver
 types can be calibrated to either positive or negative values, to cope
-with the @i{difference} between them and the default @t{AXGE} devices.
+with the @i{difference} between their internal delays and that
+of the reference (i.e. "golden") @t{SFP} transceiver.
+@footnote{The reference (i.e. "golden") @t{SFP} module used to be
+@t{AXGE}, as of v7.0 release it is @t{BlueOptics}, part number
+@t{BO15C3149620D}.}
+In other words, the ingress and egress latency for each port is calibrated
+using the reference @t{SFP} type.
+For this @t{SFP} type the SFP-specific correction in @sc{sfp} @t{dot-config}
+configuration is zero (i.e. @i{tx=0,rx=0}).
+For different @t{SFP} types, the same per-port ingress and egress latency
+values are used and the @sc{sfp} @t{dot-config} configuration includes
+residual corrections of the ingress and egress latency for the given
+type of the @t{SFP} transceiver.
+
+
 
 @c =-------------------------------------------------------------------------
 @node Time and Frequency Source of Grandmaster
 @subsection Time and Frequency Source of Grandmaster
 
 Up to version v7.0, a @sc{wrs} configured as Grandmaster would assume that it
-receives 1PPS and 10MHz signals on its input connectors and obtains @i{Time of Date}
+receives 1 PPS and 10 MHz signals on its input connectors and obtains
+@i{Time of Date}
 from an @i{NTP} server. Release v8.0 introduces two new sources:
-@i{IRIG-B} and @i{NMEA}. Us such, the @sc{wrs} configured as Grandmaster can
+@i{IRIG-B} and @i{NMEA}. As such, the @sc{wrs} configured as Grandmaster can
 now accept:
 
 @itemize
@@ -3268,7 +3347,8 @@ The proportional and integral gain factors of both PLLs can be configured via
 @i{dot-config} items @t{CONFIG_SPLL_*}, and at runtime using the @i{spll_conf}
 command line tool.
 
-
+Note: Changes of these values are reserved for experts who @t{REALLY} know
+what they are doing.
 
 @c ==========================================================================
 @node VLANs Configuration
@@ -3655,8 +3735,8 @@ If a port is also synced then it blinks yellow instead.
 @section Password-less login (with SSH keys)
 
 WRS had always provided functionality to login as root without a password.
-To used it it was necessary to copy a public SSH key to the file
-@t{/root/.ssh/authorized_keys}.
+To use this functionality, it was necessary to copy a public SSH key to the
+file @t{/root/.ssh/authorized_keys}.
 However, since this file was within root's home directory it was stored only
 in volatile memory, this file was wiped at every reboot of WRS.
 From the version v8.0 of WRS firmware the file with authorized SSH keys,
@@ -3685,7 +3765,7 @@ $ cat ~/.ssh/authorized_keys >> /update/permanent/ssh/authorized_keys.root
 @node Booting with Barebox
 @chapter Booting with Barebox
 
-After the initial installation, the boot loader offers an
+After the initial installation, the bootloader offers an
 interactive  menu, where the first entry is selected by default.
 The menu is a simple ASCII interface on the serial port, and looks
 like the following:
@@ -3779,7 +3859,8 @@ system with a separate @t{/usr} partition in flash memory.
 The @i{boot from TFTP script} menu entry looks for the script
 using three
 different names, from most specific to most generic; the first found
-is be used.  When using the boot script, the @sc{wrs} first performs
+is to be used.
+When using the boot script, the @sc{wrs} first performs
 a @sc{dhcp} query, and then uses that IP address to retrieve
 the script using the following names (the @t{eth0.ethaddr} is
 stored by the manufacturer in static storage and retrieved by the
@@ -3885,14 +3966,15 @@ decompression and the @t{-C} (change directory) option.
 @node Append files to the firmware archive
 @section Append files to the firmware archive
 
-This appendix includes a short instruction how to add custom files to the WRS
-firmware image (@i{wrs-firmware.tar}). It can be used to e.g. update
-@i{/wr/etc/tx_phase_cal.conf} file, @i{dot-config}
-or to add a new script/binary.
+This section includes a short instruction on how to update existing or add
+custom files to the WRS firmware image (@i{wrs-firmware.tar}).
+This method can be used to create your own @i{wrs-firmware.tar} with,
+for example, an updated @i{/wr/etc/tx_phase_cal.conf} or @i{dot-config}
+files, or a new script/binary.
 
 Unpack the firmware into an empty directory:
 @smallexample
-$ tar xf wr-switch-sw-v7.0-XXXXXXXX_binaries.tar
+$ tar xf wr-switch-sw-vY-XXXXXXXX_binaries.tar
 @end smallexample
 Ungzip @t{wrs-usr.tar.gz}:
 @smallexample
@@ -3923,15 +4005,15 @@ $ mv checksums.md5.new checksums.md5
 @end smallexample
 Create firmware archive:
 @smallexample
-$ tar cf wr-switch-sw-v7.x-`date +%Y%m%d`_binaries_repack.tar \
+$ tar cf wr-switch-sw-vY-`date +%Y%m%d`_binaries_repack.tar \
 at91bootstrap.bin  barebox.bin  checksums.md5  wrs-initramfs.gz  wrs-usr.tar.gz  zImage
 @end smallexample
 
 Please note that this method appends the desired files at the end of an archive,
 as a consequence if a file is added several times, the archive may be bigger
 than expected to be.
-It is better to always start with a fresh firmware rather than re-using the same
-archive several times.
+It is better to always start with a fresh @i{wrs-firmware.tar} file rather than
+re-using the same archive several times.
 
 @c ##########################################################################
 @node WRS Command-Line Tools
@@ -4024,7 +4106,7 @@ The following tools and scripts are provided:
         The tool that can be used to change some of PPSi's attributes in
 	runtime.
 	Some parameters that can be changed are global (e.g. @t{priority1},
-	@t{servo tracking}), other are specific for PPSi instance
+	@t{servo tracking}), other are specific to per-port PPSi instance
 	(e.g. @t{delay-req-interval}, @t{sync-interval}).
 	This tool supports a change of parameter's value for all instances on
 	a given port or for all existing instances.
@@ -4117,8 +4199,8 @@ The following tools and scripts are provided:
 	A tool to read and write PHY registers in the switch.
 
 @item wrs_auxclk
-	The tool allows to setup the parameters of a clock generated on the
-	@i{clk2} SMC output on the front panel.
+	The tool allows to setup the parameters of the clock signal generated on
+      the @i{clk2} SMC output on the front panel, as well as the PPS output.
 	For details please refer to the @ref{wrs_auxclk}.
 
 @item wrs_checkcfg
@@ -4219,8 +4301,11 @@ The following tools and scripts are provided:
             @item lj-wrs-type:  @sc{wrs} with LJ Daughterboard, one of
                   the @sc{wrs} with LJ integrated in SCB,
             @item lj-osc-freq: main oscillator frequency,
-            @item lj-periph-id: currently recognized: SyncTech FL v1.0 and 1.5,
-                  Safran 2.0.
+            @item lj-periph-id: currently recognized:
+                  @itemize
+                    @item v3.5: SyncTech FL v1.0 and 1.5
+                    @item v3.6: Safran 2.0
+                  @end itemize
             @end itemize
       @end itemize
       Please check the help message for parameters.
@@ -4348,8 +4433,8 @@ The following option flags are supported:
 the White Rabbit switch.
 It is a simple monitor of the basic White Rabbit status and configuration.
 
-The tools prints every second to @i{stdout} using the standard escape sequences
-for color output.
+The tool is printed every second to @i{stdout} using the standard escape
+sequences for color output.
 @t{wr_mon} reacts accordingly to the following key presses:
 @itemize 
 @item @t{c} -- Show additional information in the output
@@ -4381,12 +4466,15 @@ in @t{wr_mon} snapshot presented in this chapter.
       The version should be identical with the firmware version reported
       by @t{wrs_version} tool.
 
-      @item @t{WR time (TAI)} -- Current TAI time used as time reference for WR
-      @item @t{Leap seconds} -- Current number of @i{Leap Seconds}
-      @item @t{Switch time (UTC)} -- Local time on WR Switch.
+      @item @t{WR time (TAI)} -- Current TAI time used as time reference for WR.
+      @item @t{Leap seconds} -- Current number of @i{Leap Seconds} obtained from
+            PTP (synchronized BC) or @i{LeapSecond} file (GM, FR or
+            unsynchronized BC).
+      @item @t{Switch time (UTC)} -- Local Linux time on WR Switch.
             Usually differs from TAI with a number of @i{Leap seconds}
-      @item @t{TAI-UTC} -- Difference of TAI and UTC time.
-            Usually almost equal to WR (TAI) time
+      @item @t{TAI-UTC} -- Actual current difference between @t{WR time (TAI)}
+            and @t{Switch time (UTC)}.
+            Usually almost equal to @t{Leap seconds}.
       @end itemize
 @item Global PTP parameters (2):
       @itemize
@@ -4395,57 +4483,67 @@ in @t{wr_mon} snapshot presented in this chapter.
             the @t{dot-config} file.
             As a consequence, a GM or BC switch will show the @t{Timing Mode}
             to be @t{FR} (free running) until it locks to the source of time,
-            i.e. input 10MHz & 1PPS or Slave port, respectively.
+            e.g. input 10 MHz & 1 PPS or Slave port, respectively.
       @item @t{PLL locking state} -- Indicates the lock status of the Soft PLL.
       @item @t{PPS} -- Shows whether the WR switch provides a valid output
-            PPS signal on PPS output connector.
-      @item @t{BMCA} -- Shows the used @i{Best Master Clock Algorithm} (BMCA) or
-            configured @i{external port configuration}.
+            PPS signal on the PPS output connector.
+      @item @t{BMCA} -- Shows the method used to established timing hierarchy, it is either
+            @itemize
+            @item @t{Standard} - the PTP default @i{Best Master Clock Algorithm}
+                  (BMCA) is used, or
+            @item @t{extPortCfg} - the @i{external port configuration} is used.
+            @end itemize
       @item @t{domain} -- Shows the used PTP @i{domain}.
       @end itemize
 @item Additional global PTP parameters, showed after @t{c} is pressed.
       Marked with the top grey box (3):
       @itemize
       @item @t{local clockId} -- @i{clockId} used by this WR switch;
-            if @t{wr_mon} is run on a Grand Master switch, other devices will
-            show this value as @i{Grand Maser Id}
-      @item @t{clockClass} -- @i{clockClass} of a local clock
-      @item @t{clockAccuracy} -- @i{clockAccuracy} of a local clock
-      @item @t{logVar} -- @i{offsetScaledLogVariance} of a local clock
-      @item @t{prio1} -- @i{priority1} of a local clock
-      @item @t{prio2} -- @i{priority2} of a local clock
+            if @t{wr_mon} is executed on a Grand Master switch, other devices
+            will show this value as @i{Grand Maser Id}
+      @item @t{clockClass} -- @i{clockClass} of this WR switch
+            (i.e. configured in dot-config)
+      @item @t{clockAccuracy} -- @i{clockAccuracy} of this WR switch
+            (i.e. configured in dot-config)
+      @item @t{logVar} -- @i{offsetScaledLogVariance} of this WR switch
+            (i.e. configured in dot-config)
+      @item @t{prio1} -- @i{priority1} of this WR switch
+            (i.e. configured in dot-config)
+      @item @t{prio2} -- @i{priority2} of this WR switch
+            (i.e. configured in dot-config)
       @end itemize
-@item Detailed information about the used @i{Grand Master} (4).
-      This table contains information about the local clock if no better
-      remote clock is available (in such case @t{stepsRemoved} is equal to
-      @t{0th hop}).
+@item Detailed information about the @i{Grand Master} selected for
+      the network/domain (4).
+      If no better remote clock is available and this switch is
+      the @i{Grand Master} (in such case @t{stepsRemoved} is equal to
+      @t{0th hop}), the table contains information about this switch
+      (i.e. configured in dot-config).
       @itemize
-      @item @t{Grand Master Id} -- @i{clockId} of the best clock currently
-            available (remote or local)
-      @item @t{stepsRemoved} -- number of hops to the used best clock
-            (0 if the local clock is used)
-      @item @t{clockClass} -- @i{clockClass} of the best clock currently
-            available (remote or local)
-      @item @t{timeSource} -- @i{timeSource} of the best clock currently
-            available (remote or local)
-      @item @t{accuracy} -- @i{clockAccuracy} of the best clock currently
-            available (remote or local)
-      @item @t{logVar} -- @i{offsetScaledLogVariance} of the best clock
-            currently available (remote or local)
+      @item @t{Grand Master Id} -- @i{clockId} of the @i{Grand Master} in use
+            (@i{clockId} of this switch in case it is the @i{Grand Master} for
+            this network/domain
+      @item @t{stepsRemoved} -- number of hops to the @i{Grand Master} in use
+            (0 if this switch is the @i{Grand Master})
+      @item @t{clockClass} -- @i{clockClass} of the @i{Grand Master} in use
+      @item @t{timeSource} -- @i{timeSource} of the @i{Grand Master} in use
+      @item @t{accuracy} -- @i{clockAccuracy} of the @i{Grand Master} in use
+      @item @t{logVar} -- @i{offsetScaledLogVariance} of the @i{Grand Master}
+            in use
       @end itemize
 @end itemize
-The next discussed table contains the detailed information for each instance.
+The next discussed table contains the detailed information for each per-port
+instance.
 Please note that there can be none or more than one instance on a port:
 @itemize
-@item @b{HAL} -- Information related to @t{wrsw_hal}
+@item @b{HAL} -- Information provided by @t{wrsw_hal}
       (marked with yellow box (5))
       @itemize
       @item @t{Iface} -- Contains the details about the interface/port.
             If the terminal supports colors, ports that have established
             connection are displayed with a green font, otherwise with red.
             @itemize
-            @item @t{+}/@t{-} -- Indicates if the plugged SFP to a particular
-                  port is matched to the SFPs database entry
+            @item @t{+}/@t{-} -- Indicates if the SFP plugged to a particular
+                  port is matched with an SFPs database entry
             @item @t{*} -- To provide the same information for terminals that
                   do not support colors, ports that don't have an established
                   link have a star in front of interface's name.
@@ -4454,16 +4552,17 @@ Please note that there can be none or more than one instance on a port:
       @item @t{Freq} -- Value @t{Lock} indicates that PLL is locked to this
             port.
       @end itemize
-@item @b{PPSI} -- Information related to the configuration and status of PTP
-      (marked with two purple boxes (6))
+@item @b{PPSI} -- Information provided by @t{ppsi} about its PTP
+      configuration and status (marked with two purple boxes (6))
       @itemize
       @item @t{Inst} -- PTP instance number, there can be more than one instance
             running on a port.
       @item @t{Name} -- PTP instance name, mostly for monitoring purposes
-      @item @t{Config} -- Configured role of a port. Can have values: @i{auto},
-            @i{masterOnly} or a desired role if an
-            @i{external port configuration} is used
-      @item @t{MAC of peer port} -- MAC address of a peer port
+      @item @t{Config} -- Configured mode of a port.
+            It can have values: @i{auto}, @i{masterOnly} or a desired PTP state
+            if an @i{external port configuration} is used
+      @item @t{MAC of peer port} -- MAC address of the port on the other end of
+            the medium connected to this port (i.e. peer port)
       @item @t{PTP/EXT/PDETECT states} Provides runtime status information about
             an instance.
             It contains three main parts separated with slash character (@t{/}):
@@ -4486,11 +4585,11 @@ Please note that there can be none or more than one instance on a port:
       @item @t{PrConf} -- This heavily packed field contains information about
             the configuration of an instance. It contains several subfields:
             @itemize 
-            @item The first letter reflects the configured protocol for PTP.
+            @item The first letter reflects the configured PTP mapping.
                   It can be one of:
                   @itemize
                   @item @t{R} -- Ethernet
-                  @item @t{U} -- UDP
+                  @item @t{U} -- UDP/IPv4
                   @item @t{V} -- Ethernet over VLAN
                   @end itemize
             @item The second and the third letter inform about the configured
@@ -4508,37 +4607,47 @@ Please note that there can be none or more than one instance on a port:
                         Additionally, the selected extension is reflected in
                         the @t{EXT} part of the previous column.
                   @end itemize
+            @item The last three characters represent the configured profile:
+                  @itemize
+                  @item @t{PTP} -- @i{Default PTP} Profile.
+                  @item @t{H/W} -- @i{High Accuracy}/@i{White Rabbit} Profile
+                  @item @t{CST} -- @i{Custom} configuration which can implement
+                        a PTP Profile.
+                  @end itemize
             @end itemize
       @item @t{VLANs} -- VLAN ID used by a PTP instance
       @end itemize
 @item Additionally in the @b{PPSI} part there are extra PTP parameters specific
-      for port/instance that are showed after @t{c} is pressed
+      to port/instance that are shown after @t{c} key is pressed
       (grey box (7), in the right part of the picture showing @t{wr_mon}):
       @itemize
-      @item @t{annI} -- Configured mean time interval between successive
-            send of PTP @i{Announce} messages (@i{logAnnounceInterval}).
-            The value is represented as the logarithm to the base 2.
+      @item @t{annI} -- Configured @i{logAnnounceInterval} which determines
+            the mean time interval between successive transmission of PTP
+            @i{Announce} messages (it is two to the power of
+            @i{logAnnounceInterval}).
             Used by a port in @i{master} state.
-      @item @t{syncI} -- Configured mean time interval between successive
-            send of PTP @i{Sync} messages (@i{logSyncInterval}).
-            The value is represented as the logarithm to the base 2.
+      @item @t{syncI} -- Configured @i{logSyncInterval} which determines
+            the mean time interval between successive transmissions of
+            PTP @i{Sync} messages (it is two to the power of
+            @i{logSyncInterval}).
             Used by a port in @i{master} state.
-      @item @t{delReqI} -- Configured mean time interval between successive
-            send of PTP @i{Delay_Req} messages (@i{logMinDelayReqInterval}).
+      @item @t{delReqI} -- Configured @i{logMinDelayReqInterval} which
+            determines the mean time interval between successive transmissions
+            of PTP @i{Delay_Req} messages (it is two to the power of
+            @i{logMinDelayReqInterval}).
             Please note that according to the IEEE1588-2019 standard this value
             on slave ports is updated with the value received in
             @i{logMessageInterval} field of the @i{Delay_Resp} messages.
-
-            The value is represented as the logarithm to the base 2.
-      @item @t{pdelReqI} -- Configured mean time interval between successive
-            send of PTP @i{Pdelay_Req} messages (@i{logMinPDelayReqInterval}).
-            The value is represented as the logarithm to the base 2.
+      @item @t{pdelReqI} -- Configured @i{logMinPDelayReqInterval} which
+            determines the mean time interval between successive transmissions
+            of PTP @i{Pdelay_Req} messages (it is two to the power of
+            @i{Pdelay_Req}).
       @end itemize
 @item Description of the used abbreviations (8).
       Abbreviations marked with a grey box appear after @t{c} key is pressed.
 @item @t{Synchronization status} (9) -- Servo status and timing parameters.
       @itemize
-      @item @t{Servo state} -- Includes which port is used as a source of
+      @item @t{Servo state} -- Indicates which port is used as a source of
             synchronization (e.g., @t{wri1});
             information if extension is used (@t{White-Rabbit} or @t{L1Sync})
             or standard PTP;
@@ -4549,7 +4658,7 @@ Please note that there can be none or more than one instance on a port:
       used.
       @itemize
       @item @t{meanDelay} -- Average of the delay between Master to Slave and
-            Slave to Master (both ways).
+            the delay between Slave to Master (both directions).
             If @t{delayCoefficient} (alpha) is set to 0 (no link asymmetry),
             delays in both directions are equal.
             In such case @t{meanDelay} is equal @t{DelayMS}.
@@ -4557,19 +4666,18 @@ Please note that there can be none or more than one instance on a port:
             affected by @t{delayCoefficient} (alpha).
             This value does not include @t{ingressLatency} nor
             @t{egressLatency}.
-      @item @t{delayMS} -- Delay between Master and Slave (one way).
+      @item @t{delayMS} -- Delay between Master and Slave (one direction).
             This value does not include @t{ingressLatency} nor
             @t{egressLatency}.
-      @item @t{delayMM} -- Delay from Master to Slave and from Slave to Master.
-            (both ways).
-            Also known as @i{round-trip delay}.
+      @item @t{delayMM} -- A total delay from Master to Slave and from Slave
+            to Master (both directions), also known as @i{round-trip delay}.
             This value includes @t{ingressLatency} and @t{egressLatency} of
             both peers.
-      @item @t{delayAsymmetry} -- Difference in @i{ns} between the delay from
+      @item @t{delayAsymmetry} -- Difference between the delay from
             Master to Slave and Slave to Master.
             Calculated as
             @math{constantAsymmetry + \alpha_{MS} / (\alpha_{MS}+2)  * meanDelay }
-      @item @t{delayCoefficient} -- Also known as @i{alpha}.
+      @item @t{delayCoefficient} -- Also known as @i{alpha} (@math{\alpha}).
             This value is a relative difference between the transmission times
             in the two directions.
             This is a unit-less value which depends on the used medium and
@@ -4601,7 +4709,7 @@ Please note that there can be none or more than one instance on a port:
             This latency includes any correction from the SFP's database,
             bitslide is not present on TX.
       @item @t{semistaticLatency} -- Bitslide value.
-            Thanks to @i{LPDC} on ports 1-12 it is always equal to 0.
+            Thanks to @i{LPDC}, on ports 1-12, it is always equal to 0.
       @item @t{offsetFromMaster} -- Offset between of a local and master clock;
             if this value is not zero then local servo adjusts the offset.
       @item @t{Phase setpoint} -- Phase offset between the RX clock recovered
@@ -4620,45 +4728,49 @@ Please note that there can be none or more than one instance on a port:
             This value proved to be useful especially in the lab to know
             the estimated length of a fiber that was partly not accessible.
 
-            The calculation of this value uses the fixed speed of light in the
+            The calculation of this value uses a fixed speed of light in the
             medium.
-            The speed of light in the fiber depends on factors like
-            used wavelength and fiber type.
+            The speed of light in the fiber depends on such factors as
+            the wavelength in use and the fiber type.
       @item @t{Update counter} -- Number of servo updates since the link was
             established.
       @item @t{Master PHY delays TX} -- This is the peer's Master port
             @t{egressLatency}
-            (already includes SFPs TX delay used in peer's port).
+            (already includes the TX delay correction for the SFP type
+            used in peer's port).
       @item @t{Master PHY delays RX} -- This is a sum of the peer's Master port
             @t{ingressLatency}
-            (already includes SFPs RX delay used in peer's port)
+            (already includes the RX delay correction for the SFP type
+            used in peer's port)
             and its bitslide (@t{semistaticLatency}).
       @item @t{Slave PHY delay TX} -- This is @t{egressLatency} on the slave
             port of this device
-            (already includes SFPs TX delay used in a slave port).
+            (already includes the TX delay correction for the SFP type
+            used in the slave port).
       @item @t{Slave PHY delay RX} -- This is a sum of @t{ingressLatency}
-            (already includes SFPs RX delay used in a slave port)
+            (already includes the RX delay correction for the SFP type
+            used in the slave port)
             and the bitslide (@t{semistaticLatency}) on the slave port of this
             device.
       @item @t{err state} -- Number of servo executions when servo was not in
             @t{TRACK_PHASE} state.
-            It is normal that this value increases during
-            synchronization process, but once the devices are synchronized it
-            shall remain constant.
+            It is normal that this value increases during the process of
+            establishing synchronization, but once the devices are synchronized
+            it shall remain constant.
             This value can be used to check if the link was synchronized
             continuously between checks.
       @item @t{err offset} -- Number of servo executions when
             @t{offsetFromMaster} was not within 500ps.
-            It is normal that this value increases during
-            synchronization process, but once the devices are synchronized it
-            shall remain constant.
+            It is normal that this value increases during the process of
+            establishing synchronization, but once the devices are synchronized
+            it shall remain constant.
             This value can be used to check if the link was synchronized
             continuously between checks.
       @item @t{err delta} -- Number of servo executions when
-            the @t{delayMM} changed more than 1ns form the previous run of servo.
-            It is normal that this value increases during
-            synchronization process, but once the devices are synchronized it
-            shall remain constant.
+            the @t{delayMM} changed more than 1ns from the previous run of servo.
+            It is normal that this value increases during the process of
+            establishing synchronization, but once the devices are synchronized
+            it shall remain constant.
             This value can be used to check if the link was synchronized
             continuously between checks.
       @end itemize
@@ -4680,15 +4792,18 @@ For more detailed list of parameters and their values, please use
 @node wrs_auxclk
 @section wrs_auxclk
 
-The @i{wrs_auxclk} shell tool can be used to configure parameters of a clock
-signal generated on the @i{clk2} SMC connector on the front panel.
+The @i{wrs_auxclk} command line tool can be used to configure parameters of
+a clock signal generated on the @i{clk2} SMC connector on the front panel
+as well as the PPS output.
 
 @b{Note:} You need to have WRS hardware at least in version 3.4 to have @i{clk2}
 output.
 
-By default @i{wrs_auxclk} is called by init scripts to generate 10MHz clock
-signal with 50% duty cycle. This configuration can be modified by using various
-options:
+@i{wrs_auxclk} is called by init scripts and configures @i{clk2} according
+to values defined in dpt-config (@t{CONFIG_WRSAUXCLK_*}).
+By default @i{clk2} is configured to generate 10MHz clock signal with 50% duty
+cycle.
+This configuration can be modified by using various options:
 
 @table @code
 
@@ -4709,22 +4824,31 @@ options:
 
 @item --sigdel <steps>
   Clock signal generated from the FPGA is cleaned by a discrete flip-flop.
-  It may happen that generated aux clock is in phase with the flip-flop clock.
+  It may happen that generated aux clock is in phase with the flip-flop clock,
+  leading to metastability.
   In that case it is visible on the oscilloscope that @i{clk2} clock is
   jittering by 2ns. The @code{--sigdel} parameter allows to add a precise delay
   to the FPGA-generated clock to avoid such jitter. This delay is specified in
   steps, where each step is around 150ps. This value, same as the
-  @code{--cshift} parameter, is constant for a given bitstream so should be
-  verified only once.
+  @code{--cshift} parameter, is constant for a given bitstream so it should be
+  verified only once. This value may vary between different hardware versions
+  of the switch.
 
 @item --ppshift <steps>
   If one needs to precisely align 1-PPS output with the @i{clk2} aux clock using
-  @code{--cshift} parameter is not enough as it has 4ns granularity. In that
+  @code{--cshift} parameter is not enough as it has 2ns granularity. In that
   case @code{--ppshift} lets you shift 1-PPS output by a configured number
-  of 150ps steps. However, please have in mind that 1-PPS output is used as a
-  reference for WR calibration procedure. Therefore, once this parameter is
-  modified, the device should be re-calibrated. Otherwise, 1-PPS output
-  will be shifted from the WR timescale by <steps>*150ps.
+  of 150ps steps, unless the PPS output is re-timed with a flip-flop (which
+  is the case for some types of switch hardware).
+  Please have in mind that 1-PPS output is used as a reference for WR
+  calibration procedure.
+  If the 1-PPS output is shifted from the WR timescale as a result of changing
+  this parameter, then re-calibration is required.
+  Modification of this parameter will require re-calibration in case of switches
+  that @i{do not} re-time PPS output with an external flip-flop.
+  Modification of this parameter might or might not require re-calibration
+  in case of switches that @i{do} re-time PPS output with an external flip-flop.
+
 
 
 @end table
@@ -4738,8 +4862,9 @@ the PPS output and the parameters above is illustrated in the figure below.
 @node wrs_pstats
 @section wrs_pstats
 
-The @i{wrs_pstats} shell tool can be used to read per-port statistics counters
-from FPGA. When it is executed without any parameters all displayed values are
+The @i{wrs_pstats} command line tool can be used to read per-port statistics
+counters from FPGA.
+When it is executed without any parameters, all displayed values are
 counted from the moment the tool was started. In case you're interested in the
 values gathered from the start of WR switch, you can use @i{-s} option. The
 following counters for each port are reported:
@@ -4784,8 +4909,8 @@ It can also be used to set/write a limited number of parameters.
 The @t{wrs_sfp_dump} tool can access most of the information via two methods.
 The first, preferred and default method is to get requested information from HAL
 (parameter @t{-L}).
-The second method is to use direct reads (or writes) from SFP via the I2C bus
-(parameter @t{-I}).
+The second method is to use direct reads (or writes) of SFP's EEPROM via
+the I2C bus (parameter @t{-I}).
 If the second method is used, special attention must be paid.
 If HAL is running at the time of direct I2C accesses, it can cause
 corruption of the SFP's EEPROM.
@@ -4903,7 +5028,7 @@ RX power: 0.0988 mW (-10.1 dBm)
       are marked with @t{(+)}.
 
       The matched SFP database entry (@t{#DB}) and the parameters associated
-      with it (@i{RX Wavelength}, @i{Delta TX}, and @i{Delta RX})are displayed
+      with it (@i{RX Wavelength}, @i{Delta TX}, and @i{Delta RX}) are displayed
       in the middle part of the table.
       These parameters remain empty if no match is found.
 
@@ -4950,7 +5075,8 @@ For more parameters, please refer to tool's help (@t{-h}).
 @node wrs_vlans
 @section wrs_vlans
 
-The @i{wrs_vlans} shell tool can be used to setup VLANs in the switch.
+The @i{wrs_vlans} command line tool can be used to configure VLANs in
+the switch.
 The configuration can be read from the @t{dot-config} file pointed by @t{-f} or
 @t{--file} parameter (for @t{dot-config} details please check
 @ref{Configuration Items that Apply at Build Time}).
@@ -5014,8 +5140,9 @@ To configure each Endpoint the following options may be used:
   Sets priority for tagging ingress frames. @t{-1} disables priority overwrite.
 
 @item --puntag <0|1>
-  Disables or enables egress untagging. By default, if you configure ingress
-  tagging, all VIDs are untagged on egress.
+  Disables or enables egress untagging.
+  If you configure ingress tagging, typically you will want that all VIDs are
+  untagged on egress.
 
 @end table
 
@@ -5050,8 +5177,8 @@ Possible RTU VLAN configuration options:
 
 @end table
 
-In addition to that @i{wrs_vlans} can be also used to display and clear current
-VLAN configuration of the switch:
+In addition to the VLAN configuration described above, @i{wrs_vlans} can be
+also used to display and clear current VLAN configuration of the switch:
 
 @table @code
 
@@ -5086,7 +5213,7 @@ applied to one port at a time.
 @c --------------------------------------------------------------------------
 @node wrsw_hal_conf
 @section wrsw_hal_conf
-The @t{wrsw_hal_conf} tool that can be used to change some of HAL's attributes
+The @t{wrsw_hal_conf} tool can be used to change some of HAL's attributes
 in runtime.
 It uses IPC mechanism to pass change requests to the @t{HAL} daemon.
 @c The tool can take several parameters, but in the current implementation
@@ -5554,7 +5681,7 @@ These are:
 Both of these types contain a UTC field, which can be parsed and used by
 the WR switch as its source of time.
 
-To use @i{IRIG-B} in WR switch select @t{CONFIG_TOD_SOURCE_NMEA} in
+To use @i{NMEA} in WR switch select @t{CONFIG_TOD_SOURCE_NMEA} in
 @i{dot-config}.
 The message type to be used is set in @i{dot-config} via @t{CONFIG_NMEA_GPRMC}
 and @t{CONFIG_NMEA_GPZDA}.
@@ -6176,8 +6303,8 @@ See following sections for details.
 @section Oscilloquartz
 
 It was found that @i{Oscilloquartz OSA 5440} device does not support
-Default PTP profile over Ethernet, but they support Default PTP profile over UDP.
-To use @i{Oscilloquartz} with WR Switch please use the configuration described
+Default PTP Profile over Ethernet, but it does support Default PTP Profile over UDP.
+To use @i{Oscilloquartz} with WR Switch, please use the configuration described
 below.
 
 Configuration for WR Switch:
@@ -6221,7 +6348,7 @@ Configuration for @i{Oscilloquartz} device:
 @itemize @bullet
 @item Select profile @t{"IEEE1588-2008 annex J.3"}
 @item Set IP address on a port
-@item For Slave role, set properly SyncE (to not expect @i{ESMC} messages)
+@item For the Slave port, set properly SyncE (to not expect @i{ESMC} messages)
 @end itemize
 
 @c ==========================================================================
@@ -6229,7 +6356,9 @@ Configuration for @i{Oscilloquartz} device:
 @section Juniper
 
 It was found that @i{Juniper} devices does not support Default PTP profile
-over Ethernet, but they support @i{AES-67} PTP profile over UDP.
+over Ethernet, but it does support @i{AES-67} PTP Profile over UDP.
+The configuration of the  @i{AES-67} PTP Profile is reasonably close to
+that of the Default PTP Profile.
 To use @i{Juniper} with WR Switch please use the configuration described
 below.
 
@@ -6285,6 +6414,9 @@ Apply the following configuration for Juniper device:
 @itemize @bullet
 @item Select profile @t{"AES-67"}
 @item Set IP address on a port
+@item Set a debug mode that enables sending of Multicast Delay-Request
+      PTP messages (instead of Unicast PTP message sent by default) - please
+      check with the Juniper support how to do this.
 @end itemize
 
 @c ##########################################################################

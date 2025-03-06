@@ -25,7 +25,7 @@ job_wrs_compile:
     - git clean -xfd
     - git fetch -p; cd ../..; git submodule update; cd ..
     - echo "Using `grep -c ^processor /proc/cpuinfo` parallel jobs" 
-    - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt
+    - MAKEFLAGS="-j `grep -c ^processor /proc/cpuinfo`" wr-switch-sw/build/wrs_build-all --alt-firmware > ${CI_PROJECT_DIR}/log_${CI_JOB_ID}.txt
     - cp *.tar ${CI_PROJECT_DIR}
   artifacts:
     name: "wrs_sw_ci_${CI_JOB_ID}"

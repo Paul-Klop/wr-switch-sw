@@ -266,6 +266,8 @@ The most important changes introduced in v8.0 are:
       @item Print summary table with information about inserted SFPs and
             Alarm/Warning levels for some DOM parameters (parameter @t{-A}).
       @end itemize
+@item Add SFP revision field in the process of SFP matching
+      (see @ref{SFP name matching}).
 @end itemize
 
 @b{NOTE: Other than updating the @i{dot-config}, there is no special action
@@ -3014,63 +3016,165 @@ changed with the @t{ppsi_conf} tool (see @ref{ppsi_conf}).
 @subsection SFP name matching
 
 Each time an SFP transceiver is plugged into any of the @sc{wrs} ports,
-it has to be matched
-against @t{dot-config} entries specifying the timing parameters and wavelength for the
-supported transceivers.
-The matching algorithm reads from the SFP its vendor name (@i{vn}), part number (@i{pn}), vendor
-serial (@i{vs}) and TX wavelength in @t{nm}.
+an attempt is made to match it against a database of supported transceivers
+specified in @t{dot-config}.
+For each supported transceiver, an entry contains the timing parameters
+and wavelength.
+The matching algorithm reads from the SFP's EEPROM its vendor name (@i{vn}),
+part number (@i{pn}), revision (@i{rev}), vendor
+serial (@i{vs}) and TX wavelength (in @t{nm}).
 Note that it only reads the integer part of the TX wavelength
 @footnote{The @i{SFF-8472} standard defines fields only for integer part of
 the TX wavelength.
-Please note that it was observed that two DWDM SFPs from the same manufacturer,
-but from different batches, one had this value rounded up, second rounded
-down.},
-as shown by @t{wrs_sfp_dump}.
-Then, these SFP parameters are compared
- with the values stored in the @t{CONFIG_SFP@i{xx}_PARAMS} @t{dot-config} entries:
-@itemize
-@item
-  The @i{wl_txrx} field in the @t{CONFIG_SFP@i{xx}_PARAMS} must contain the transmit and receive
-  wavelengths of the SFP in @t{nm}, as integers, separated by a '+'. The TX wavelength as
-  reported by the SFP is matched against the tx entry (first number) in the @i{wl_txrx} entry. If these do
-  not match, then this @t{CONFIG_SFP@i{xx}_PARAMS} entry cannot match against this SFP.
-@item 
-  For the remaining parameters, first a match against all the vendor SFP identifiers
-  (@i{vn}, @i{pn} and @i{vs}) is attempted.
-@item
-  If a corresponding entry cannot be found, the match is limited to @i{vn} and @i{pn} and
-  compared only with those @t{dot-config} entries that do not specify any vendor serial.
-@item
-  If the match still cannot be found, it is limited again, to @i{pn} only.
+Channels defined by ITU-T are roughly 0.8nm apart (50GHz spacing).
+Regardless of which rounding method is used (round, ceil or floor), it is
+possible to pick two adjacent channels such that their wavelengths, after
+conversion to integers, give the same value.
+Please note that it was observed in the field that two DWDM SFPs using the same
+ITU-T channel had different TX wavelength stored in EEPROM.
+These SFPs were form the same manufacturer, but from different batches,
+one SFP had TX wavelength value rounded up, second SFP rounded down.
+},
+as shown by @t{wrs_sfp_dump} (see @ref{wrs_sfp_dump}).
+Then, these SFP parameters are compared with the values of
+vendor name (@i{vn}), part number (@i{pn}), revision (@i{rev}),
+vendor serial (@i{vs}) and TX wavelength (@i{wl_txrx})
+stored in the @t{CONFIG_SFP@i{xx}_PARAMS} @t{dot-config} entries.
+The @i{wl_txrx} field in the @t{CONFIG_SFP@i{xx}_PARAMS} must contain
+the transmit and receive wavelengths of the SFP in @t{nm}, as integers,
+separated by a '+'.
+The TX wavelength, as reported by the SFP, is matched against the tx value
+(first number) in the @i{wl_txrx} entry.
+RX wavelength (second number in the @i{wl_txrx} entry) is used later for fiber
+matching to find the proper alpha value.
+(see @ref{Fiber parameter matching}).
 
-@end itemize
+In the first step the matching algorithm tries to find an entry for which all
+parameters match (@i{vn}, @i{pn}, @i{rev}, @i{vs} and TX wavelength).
+If such entry does not exist, it tries further matches with entries that
+do not specify some of parameters (e.g. @i{rev}).
+Missing parameters are interpreted as wildcards (always match).
+Due to the use of wildcards, it can happen that SFP matches to more than
+one entry, in such case the matching priority is used as illustrated in
+the table below.
 
-To understand better the operation of SFP matching algorithm, please see below some examples:
+In the table below, the symbol @t{=} means that there is an exact match between
+corresponding parameter in SFP's EEPROM and in an SFP database entry
+@t{CONFIG_SFP@i{xx}_PARAMS}.
+In the table below, the symbol @t{x} means that the parameter is not
+defined in the SFP database entry.
+For the TX wavelength, it means that the value in the SFP database is zero.
+For other parameters, it means that these are not defined or defined
+as empty in @t{CONFIG_SFP@i{xx}_PARAMS}.
+The @t{x} is treated as a wildcard by the matching algorithm.
+The table below indicates the priority in matching.
+An entry @t{CONFIG_SFP@i{xx}_PARAMS} with a given set of matched parameters
+will take priority over another set which is below in the table.
+
+@multitable  @columnfractions .1 .15 .15 .15 .15 .15
+@headitem  Matching priority @tab TX wavelength   @tab Vendor Name
+      @tab Product Name   @tab Vendor Serial   @tab Vendor Revision
+@item  1 @tab = @tab =  @tab = @tab =  @tab =
+@item  2 @tab = @tab =  @tab = @tab =  @tab x
+@item  3 @tab = @tab =  @tab = @tab x  @tab =
+@item  4 @tab = @tab =  @tab = @tab x  @tab x
+@item  5 @tab = @tab x  @tab = @tab x  @tab =
+@item  6 @tab = @tab x  @tab = @tab x  @tab x
+@item  7 @tab x @tab =  @tab = @tab =  @tab =
+@item  8 @tab x @tab =  @tab = @tab =  @tab x
+@item  9 @tab x @tab =  @tab = @tab x  @tab =
+@item 10 @tab x @tab =  @tab = @tab x  @tab x
+@item 11 @tab x @tab x  @tab = @tab x  @tab =
+@item 12 @tab x @tab x  @tab = @tab x  @tab x
+@end multitable
+
+To understand better the operation of SFP matching algorithm, please see below
+some examples:
 @itemize @bullet
-@item
-  @t{CONFIG_SFP00_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,vs=AX12390009629,
-  tx=0,rx=0,wl_txrx=1490+1310"}
+@item @t{CONFIG_SFP00_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,
+      vs=AX12390009629,rev=A,tx=0,rx=0,wl_txrx=1490+1310"}
 
-  This entry can be matched only to one SFP transceiver as it specifies full set of parameters,
-  including the unique vendor serial number (@i{vs}).
+      This entry can be matched only to one SFP transceiver as it specifies full
+      set of parameters, including the unique vendor serial number (@i{vs}).
+      Such entry is matched with priority 1 (see table above).
 
-@item
-  @t{CONFIG_SFP01_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,
-  wl_txrx=1490+1310"}
+@item @t{CONFIG_SFP01_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,
+      wl_txrx=1490+1310"}
 
-  This entry may be matched only to all SFPs with vendor name "Axcen Photonics",
-  part number "AXGE-3454-0531" and a TX wavelength of 1490 nm, with exception of the SFP
-  that was already matched to
-  the previous entry @t{CONFIG_SFP00_PARAMS} (with vendor serial defined).
+      This entry may be matched only to SFPs with vendor name
+      "@t{Axcen Photonics}", part number "@t{AXGE-3454-0531}" and
+      TX wavelength @t{1490} nm, with exception of the SFP
+      that was already matched to the previous entry @t{CONFIG_SFP00_PARAMS}
+      (with vendor serial and revision defined).
+      Matched SFPs would have various vendor serial number (@i{vs})
+      and revision (@i{rev}).
+      Such entry is matched with priority 4 (see table above).
 
-@item
-  @t{CONFIG_SFP02_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"}
+@item @t{CONFIG_SFP02_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"}
 
-  This entry will be matched to all SFPs with part number "AXGE-3454-0531" and TX wavelength of
-  1310 nm, that were not matched by any of the entries listed earlier.
+      This entry will be matched to all SFPs with part number (@i{pn})
+      "@t{AXGE-3454-0531}" and TX wavelength of @t{1310} nm, that were not
+      matched by any of the entries listed earlier.
+      Such entry is matched with priority 6 (see table above).
 
 @end itemize
 
+Let's define few more entries:
+@itemize @bullet
+@item @t{CONFIG_SFP03_PARAMS="pn=ABC1234,tx=0,rx=0,wl_txrx=1310+1490"}
+@item @t{CONFIG_SFP04_PARAMS="pn=ABC1234,rev=A,tx=0,rx=0,wl_txrx=1310+1490"}
+@item @t{CONFIG_SFP05_PARAMS="pn=ABC1234,tx=0,rx=0,wl_txrx=0+1490"}
+@end itemize
+
+If we plug an SFP with parameters:
+@itemize @bullet
+
+@item @t{vs="Elephant"}, @t{pn="ABC1234"}, @t{vs="cc10"}, @t{rev="A"},
+      @t{wl_tx=1555}
+
+      It will be matched to @t{CONFIG_SFP05_PARAMS} based on the priorities
+      in the table above.
+      Even if @i{pn} matches to @t{CONFIG_SFP@i{xx}_PARAMS} with @i{xx} 3-5,
+      the @i{wl_tx} does not match to @t{CONFIG_SFP03_PARAMS} and
+      @t{CONFIG_SFP04_PARAMS}.
+      It only matches to @t{CONFIG_SFP05_PARAMS} since @i{wl_txrx} is set to
+      @t{0} and is treated as wildcard that matches all values.
+
+@item @t{vs="Elephant"}, @t{pn="ABC1234"}, @t{vs="cc11"}, @t{rev="A"},
+      @t{wl_tx=1310}
+
+      It will be matched to @t{CONFIG_SFP04_PARAMS} based on priorities
+      in the table above, even if the parameters matches to
+      @t{CONFIG_SFP@i{xx}_PARAMS} with @i{xx} 3-5,
+
+
+      Match with @t{CONFIG_SFP03_PARAMS} has priority 6,
+      match with @t{CONFIG_SFP04_PARAMS} has priority 5,
+      match with @t{CONFIG_SFP05_PARAMS} has priority 12.
+      Priority 5 is the highest from the available matches.
+
+@item @t{vs="Elephant"}, @t{pn="ABC1234"}, @t{vs="cc12"}, @t{rev="B"},
+      @t{wl_tx=1310}
+
+      It will be matched to @t{CONFIG_SFP03_PARAMS} based on priorities
+      in the table above, even if the parameters match to
+      @t{CONFIG_SFP03_PARAMS} and @t{CONFIG_SFP05_PARAMS}
+      (in entry @t{CONFIG_SFP04_PARAMS} @i{rev} does not match).
+
+
+      Match with @t{CONFIG_SFP03_PARAMS} has priority 6,
+      no match of @i{rev} in @t{CONFIG_SFP04_PARAMS},
+      match with @t{CONFIG_SFP05_PARAMS} has priority 12.
+      Priority 6 is the highest from the available matches.
+
+@end itemize
+
+
+The order of entries in DB (@i{dot-config}) does not matter unless
+an SFP is matched to multiple entries with the same priority levels.
+
+A parameter that is defined as empty (e.g. @t{vs=}) is handled in the same way
+as not being defined at all.
 
 @c =-------------------------------------------------------------------------
 @node Fiber parameter matching
@@ -3128,11 +3232,11 @@ with the @i{difference} between them and the default @t{AXGE} devices.
 Up to version v7.0, a @sc{wrs} configured as Grandmaster would assume that it
 receives 1PPS and 10MHz signals on its input connectors and obtains @i{Time of Date}
 from an @i{NTP} server. Release v8.0 introduces two new sources:
-@i{IRIG B} and @i{NMEA}. Us such, the @sc{wrs} configured as Grandmaster can
+@i{IRIG-B} and @i{NMEA}. Us such, the @sc{wrs} configured as Grandmaster can
 now accept:
 
 @itemize
-@item @i{IRIG B} on clk input connector as source of frequency and Time of Day, or
+@item @i{IRIG-B} on clk input connector as source of frequency and Time of Day, or
 @item @i{10 MHz} on clk input connector as source of frequency and combination of
   @i{1 PPS} on input connector and either
   @itemize

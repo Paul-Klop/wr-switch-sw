@@ -219,7 +219,7 @@ menu "Local Network Configuration"
 
 choice
 	prompt "Management port configuration (eth0)"
-	default ETH0_DHCP
+	default ETH0_DHCP_ONCE
 
 config ETH0_DHCP
 	bool "DHCP forever"
@@ -650,7 +650,7 @@ endchoice
 
 choice
 	prompt "BMCA"
-	default PTP_OPT_BMCA_STANDARD
+	default PTP_OPT_BMCA_EXT_PORT_CONFIG
 	help
 	  Select Alternate Best Master Clock Algorithm
 	config PTP_OPT_BMCA_STANDARD

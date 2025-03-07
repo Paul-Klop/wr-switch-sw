@@ -816,7 +816,8 @@ void show_ports(int hal_alive, int ppsi_alive)
 			term_cprintf(C_BLUE, " PPS: ");
 			term_cprintf(C_WHITE, "%s", shw_pps_gen_enable_output_read() ? "On ":"Off");
 			term_cprintf(C_BLUE, "    BMCA: ");
-			term_cprintf(C_WHITE, "%-10s", getStateAsString(bmca_type, defaultDS->bmcaType));
+			/* If externalPortConfigurationEnabled true, display EPC, otherwise display defaultDS->bmcaType */
+			term_cprintf(C_WHITE, "%-10s", defaultDS->externalPortConfigurationEnabled ? getStateAsString(bmca_type, PPSI_BMCA_EXT_PORT_CONFIG) : getStateAsString(bmca_type, defaultDS->bmcaType));
 			term_cprintf(C_BLUE, "    Domain: ");
 			term_cprintf(C_WHITE, "%d", defaultDS->domainNumber);
 			term_cprintf(C_WHITE, "\n");

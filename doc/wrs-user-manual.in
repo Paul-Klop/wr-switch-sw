@@ -3797,8 +3797,8 @@ $ gunzip wrs-usr.tar.gz
 In the same directory as @t{wrs-usr.tar}, copy files to be added to the firmware
 with the full path e.g., @t{wr/etc/tx_phase_cal.conf}
 @smallexample
-$ mkdir wr/etc
-$ cp ../tx_phase_cal.conf .
+$ mkdir -p wr/etc
+$ cp ../tx_phase_cal.conf wr/etc
 @end smallexample
 Add @t{wr/etc/tx_phase_cal.conf} to @t{wrs-usr.tar}.
 @smallexample

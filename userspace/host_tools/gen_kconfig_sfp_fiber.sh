@@ -138,15 +138,15 @@ function print_fiber_footer() {
 } 
 
 declare sfp_params=(
-	"vn=Axcen Photonics,pn=AXGE-1254-0531,tx=-631,rx=463,wl_txrx=1310+1490"
-	"vn=Axcen Photonics,pn=AXGE-3454-0531,tx=-688,rx=528,wl_txrx=1490+1310"
-	"vn=APAC Opto,pn=LS38-C3S-TC-N-B9,tx=-649,rx=809,wl_txrx=1310+1490"
-	"vn=APAC Opto,pn=LS48-C3S-TC-N-B4,tx=-1333,rx=505,wl_txrx=1490+1310"
-	"vn=ZyXEL,pn=SFP-BX1490-10-D,tx=-1344,rx=-90,wl_txrx=1490+1310"
-	"vn=ZyXEL,pn=SFP-BX1310-10-D,tx=-1357,rx=55,wl_txrx=1310+1490"
-	"vn=OEM,pn=SFP-BX-D,tx=-1530,rx=218,wl_txrx=1490+1310"
-	"vn=OEM,pn=SFP-BX-U,tx=-1582,rx=206,wl_txrx=1310+1490"
-	"vn=BlueOptics,pn=BO15C4931620D-WR,tx=48,rx=110,wl_txrx=1490+1310"
+	"vn=Axcen Photonics,pn=AXGE-1254-0531,tx=-525,rx=549,wl_txrx=1310+1490"
+	"vn=Axcen Photonics,pn=AXGE-3454-0531,tx=-642,rx=538,wl_txrx=1490+1310"
+	"vn=APAC Opto,pn=LS38-C3S-TC-N-B9,tx=-654,rx=806,wl_txrx=1310+1490"
+	"vn=APAC Opto,pn=LS48-C3S-TC-N-B4,tx=-1316,rx=480,wl_txrx=1490+1310"
+	"vn=ZyXEL,pn=SFP-BX1490-10-D,tx=-1318,rx=2,wl_txrx=1490+1310"
+	"vn=ZyXEL,pn=SFP-BX1310-10-D,tx=-1356,rx=50,wl_txrx=1310+1490"
+	"vn=OEM,pn=SFP-BX-D,tx=-1530,rx=272,wl_txrx=1490+1310"
+	"vn=OEM,pn=SFP-BX-U,tx=-1506,rx=314,wl_txrx=1310+1490"
+	"vn=BlueOptics,pn=BO15C4931620D-WR,tx=55,rx=115,wl_txrx=1490+1310"
 	"vn=BlueOptics,pn=BO15C3149620D-WR,tx=0,rx=0,wl_txrx=1310+1490"
 )
 

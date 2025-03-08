@@ -4625,6 +4625,11 @@ options:
 
 @end table
 
+The relation between the WR clock, the auxiliary output clock (typically 10 MHz),
+the PPS output and the parameters above is illustrated in the figure below.
+
+@center @image{images/AUXCLK, 16cm,, Auxiliary clock, PPS output, WR clock, parameters}
+
 @c --------------------------------------------------------------------------
 @node wrs_pstats
 @section wrs_pstats

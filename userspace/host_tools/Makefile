@@ -1,6 +1,8 @@
 # Author: Adam Wujek 2024
 
 
+ALL: converter_standalone gensdbfs
+
 converter_standalone: ../../scripts/kconfig/conf
 	mkdir -p dot-config_converter_standalone/kconfigs/v7.0
 	mkdir -p dot-config_converter_standalone/bin
@@ -19,3 +21,10 @@ converter_standalone: ../../scripts/kconfig/conf
 	@echo "Please trigger compilation of it with \"make listnewconfig\" in the root of wr-switch-sw repo."
 	@echo ""
 	@false
+
+gensdbfs: sources/gensdbfs.c sources/gensdbfs.h
+	${CC} -I../include ${CFLAGS} -o $@ sources/gensdbfs.c
+
+clean:
+	rm -rf dot-config_converter_standalone
+	rm gensdbfs

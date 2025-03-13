@@ -7,13 +7,6 @@
 #     0x000000094800-0x000000095040 : "hwinfo"
 #
 
-# The sdb file has a predefined structure, and we are not expected to
-# change the manufacturer name.  We chose to have it "hardwired", in a
-# way, to avoid building gensdbfs during switch installation, as it's
-# an extra burden and an extra dependency.  We rather use sed for mac
-# addresses (like we always did) and we write hwinfo in place, at
-# offset 0x420.
-
 # See hwinfo-sdb/--SDB-CONFIG-- and the respective
 # commit for details.
 
@@ -21,18 +14,14 @@ dir=$(dirname $0)/..
 WRS_BASE_DIR=$(cd $dir && /bin/pwd)
 
 SDB_TMP=$(mktemp /tmp/wrs-hwinfo.XXXXXX)
-XTRA_TMP=$(mktemp /tmp/wrs-hwinfo.xtra.XXXXXX)
+SDB_TMPDIR=$(mktemp -d /tmp/wrs-hwinfo-dir.XXXXXX)
 
-cp $WRS_BASE_DIR/binaries/sdb-for-dataflash $SDB_TMP
-
-# Some of what follows comes from ./flash-wrs, where we used to do the same
+hw_info_str_max_size=1056
 
 # Default MAC address for the switch board ethernet
-MAC1_DEF="02:34:56:78:9A:BC"
-MAC1=$MAC1_DEF
+MAC1="02:34:56:78:9A:BC"
 # Default base MAC address for the 18 switch ports
-MAC2_DEF="02:34:56:78:9A:00"
-MAC2=$MAC2_DEF
+MAC2="02:34:56:78:9A:00"
 
 checkMAC()
 {
@@ -44,6 +33,30 @@ checkMAC()
 }
 
 noversion=true
+hw_info_str=""
+# set default manufacturer	
+manufacturer="SAFRAN"
+fpga_type="LX240T"
+
+print_help()
+{
+    echo "  -m1|--mac1|--eth0.ethaddr <XX:XX:XX:XX:XX:XX>"
+    echo "                                  - MAC address for the management port"
+    echo "                                  - Default:" $MAC1
+    echo "  -m2|--mac2|--wri1.ethaddr <XX:XX:XX:XX:XX:XX>"
+    echo "                                  - MAC address for the first WR port (wri1)"
+    echo "                                  - Default:" $MAC2
+    echo "  -mf|--manufacturer <name>       - Name of manufacturer, default:" $manufacturer
+    echo "  -v|--version <X.X[.X][.X]>      - scb version"
+    echo "  -n|--scb_sn <string>            - Serial number of WRS"
+    echo "  -b|--scb_batch <string>         - String describing batch of WRS"
+    echo "  -f|--fpga <string>              - FPGA type, default:" $fpga_type
+    echo "  -x|--extra \"<string: string>\"   - Extra strings to be added to hw_info partition"
+    echo "  -F|--file <file>                - Add content of <file> tohw_info partition"
+    echo "  --verbose                       - Print more messages from gensdbfs"
+    echo "                                    Don't remove temporary SDB partition files"
+    echo "  -h|--help                       - Print this help"
+}
 
 # parse arguments and modify the temporary copy of the sdb image
 while [ $# -ge 1 ]; do
@@ -55,7 +68,6 @@ while [ $# -ge 1 ]; do
 		echo "Error: MAC address 1 invalid ($MAC1)"
 		exit 1
 	    fi
-	    sed -i "s/$MAC1_DEF/$MAC1/" $SDB_TMP
 	    shift; shift
 	    ;;
 	
@@ -66,74 +78,112 @@ while [ $# -ge 1 ]; do
 		echo "Error: MAC address 2 invalid ($MAC2)"
 		exit 1
 	    fi
-	    sed -i "s/$MAC2_DEF/$MAC2/" $SDB_TMP
-   	    shift; shift
+	    shift; shift
+	    ;;
+
+	-mf|--manufacturer)
+	    manufacturer="$2"
+	    shift; shift
 	    ;;
 
 	-v|--version)
-	    V="$2"
+	    scb_version="$2"
 	    # match digits.digits | digits.digits.digits | digits.digits.digits.digits
-	    if echo $V | grep -v -E '^[0-9]+(\.[0-9]+){1,3}$'; then
-		echo "Version must be <digit>.<digit>[.<digit>][.<digit>], not \"$V\"" >& 2
+	    if echo $scb_version | grep -v -E '^[0-9]+(\.[0-9]+){1,3}$'; then
+		echo "Version must be <digit>.<digit>[.<digit>][.<digit>], not \"$scb_version\"" >& 2
 		exit 1;
 	    fi
 	    noversion=false
-	    sed -i "s/000/$V/" $SDB_TMP
-   	    shift; shift
+	    shift; shift
 	    ;;
-	    
-	# all other information goes in the "extra" file
+
+	# all other information goes in the hw_info file
 	-n|--scb_sn)
-	    echo "scb_serial: $2" >> $XTRA_TMP
-   	    shift; shift
+	    hw_info_str+="scb_serial: $2"$'\n'
+	    shift; shift
 	    ;;
 	
 	-b|--scb_batch)
-	    echo "scb_batch: $2" >> $XTRA_TMP
-   	    shift; shift
+	    hw_info_str+="scb_batch: $2"$'\n'
+	    shift; shift
 	    ;;
 
 	-f|--fpga)
-	    echo "fpga_type: $2" >> $XTRA_TMP
-   	    shift; shift
+	    hw_info_str+="fpga_type: $2"$'\n'
+	    fpga_type=""
+	    shift; shift
 	    ;;
 
 	-x|--extra)
 	    # this argument is expected to be tagged format
-	    echo "$2" >> $XTRA_TMP
-   	    shift; shift
+	    hw_info_str+="$2"$'\n'
+	    shift; shift
 	    ;;
 
 	-F|--file)
 	    # and the file is expected to be tagged format too
-	    cat "$2" >> $XTRA_TMP
-   	    shift; shift
+	    hw_info_str+=$(< answer.txt)
+	    shift; shift
+	    ;;
+
+	--verbose)
+	    gensdbfs_verbose="-v"
+	    shift
+	    ;;
+
+	-h|--help)
+	    print_help
+	    exit 0
 	    ;;
 
 	*)
-	    echo "Unknown argument \"$1\"; please see sources/docs" >& 2
+	    echo "Unknown argument \"$1\"; please see --help" >& 2
 	    exit 1
 	    ;;
 
     esac
 done
 
+if ! [ -e "$WRS_BASE_DIR/userspace/host_tools/gensdbfs" ]; then
+    echo "Error! $WRS_BASE_DIR/userspace/host_tools/gensdbfs not compiled!" >& 2
+    echo "Please use the following command to complie gensdbfs:" >& 2
+    echo "make -C $WRS_BASE_DIR/userspace/host_tools gensdbfs" >& 2
+    exit 1
+fi
+
 if $noversion; then
     echo "You must specify the SCB version (e.g. \"-v 3.3\")" >& 2
     exit 1
 fi
 
-# Finally, replace the XTRA part (second half)
-# But dd is crappy, it prints statistics to stderr, we don't want them
-dd conv=notrunc if=$XTRA_TMP of=$SDB_TMP bs=1056 seek=1 2> /dev/null
+cp "$WRS_BASE_DIR/hwinfo-sdb/--SDB-CONFIG--" $SDB_TMPDIR
+# Create SDB partition files
+echo $MAC1 > $SDB_TMPDIR/eth0.ethaddr
+echo $MAC2 > $SDB_TMPDIR/wri1.ethaddr
+echo $manufacturer > $SDB_TMPDIR/manufacturer
+echo $scb_version > $SDB_TMPDIR/scb_version
 
-if [ $? -ne 0 ]; then
-    # do it again, so we see the errors
-    dd conv=notrunc if=$XTRA_TMP of=$SDB_TMP bs=1056 seek=1
-    exit 1
+# Add default fpga_type
+if [ "$fpga_type" != "" ]; then
+    hw_info_str+="fpga_type: $fpga_type"$'\n'
 fi
-rm $XTRA_TMP
+
+# Pad with 0xFF to hw_info_str_max_size bytes
+while ((${#hw_info_str} < $hw_info_str_max_size)); do
+    hw_info_str+=$'\xff'
+done
+
+# Create hw_info SDB partition
+echo -n "$hw_info_str" >> $SDB_TMPDIR/hw_info
+
+# Generate SDB
+$WRS_BASE_DIR/userspace/host_tools/gensdbfs $gensdbfs_verbose $SDB_TMPDIR $SDB_TMP
+
+if [ -n "$gensdbfs_verbose" ]; then
+    echo -e "\n\nSDB partition files kept in $SDB_TMPDIR\n"
+else
+    rm -rf "$SDB_TMPDIR"
+fi
 
 # echo the name, to be used by the manufacturer build procedure.
 echo $SDB_TMP
-

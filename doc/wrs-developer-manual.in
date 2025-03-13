@@ -376,7 +376,7 @@ The messages of a download run are like the following ones:
 @end smallexample
 
 After buildroot is downloaded, it is unpacked and then configured. Buildroot
-uses simillar mechanism to the one described above to download packages that
+uses similar mechanism to the one described above to download packages that
 it needs. Buildroot prints the progress of downloading of each package.
 After downloading is over you can work even without a network connection.
 
@@ -1685,7 +1685,7 @@ information in its own file, withing @i{/dev/shm/}; each file has
 the same structure, but the size allocated in shared memory is
 process-specific.
 
-The initial part of each process' area is a @t{stuct wrs_shm_head}, which
+The initial part of each process' area is a @t{struct wrs_shm_head}, which
 allows to make some sense of the overall area.  The structure
 is filled by library functions and accessed by shared memory users.
 You can see how it is used in @t{tools/wrs_dump_shmem.c}.
@@ -2000,7 +2000,7 @@ The area is available as @t{/dev/mtd5} from the Linux kernel, and can
 be accessed as a partition from @i{barebox} (the default boot scripts
 create it as @t{/dev/dataflash0.hwinfo}).
 
-The binary image includes 4 files, stored as an @sc{sdb} filesystem:
+The binary image includes 5 files, stored as an @sc{sdb} filesystem:
 
 @table @code
 @item manufacturer
@@ -2036,21 +2036,21 @@ The binary image includes 4 files, stored as an @sc{sdb} filesystem:
 @subsection Creating the Hwinfo File
 
 The @i{hwinfo} file is created using @i{gensdbfs}. The tool is part of
-@i{fpga-config-space} and is not included in @t{wr-switch-sw}, because
-the package ships a pre-built base image that is then edited in-place.
+@i{fpga-config-space} and a copy of it is now included in @t{wr-switch-sw}.
 
-To re-build the image, please follow the instructions included as
-comments in the configuration file, @t{hwinfo-sdb/--SDB-CONFIG--}
-and the respective commit message.  You most likely won't need to
+An example pre-built image is included as @t{binaries/sdb-for-dataflash}.
+
+You most likely won't need to
 rebuild the image, unless you want to add data files or change
 the manufacturer name from the default.
 
-A pre-built image is included as @t{binaries/sdb-for-dataflash}.
-
-The script @i{build/wrs_hwinfo} can be used to edit the file
-upgrading the MAC addresses and the tagged text file.  The tool
-creates a copy of the base file and modifies it in @t{/tmp}.
-It finally prints the new file name on @i{stdout}.
+The script @i{build/wrs_hwinfo} can be used to generate SDB image.
+The tool creates a copy of the base file (@t{hwinfo-sdb/--SDB-CONFIG--})
+and stores it with generated partition files in @t{wrs-hwinfo-dir.XXXXXX}
+directory (where @t{XXXXXX} is randomly generated at every execution).
+After SDB image generation, it prints the new file name of SDB image located in
+@t{/tmp/wrs-hwinfo.XXXXXX} (where @t{XXXXXX} is randomly generated at every
+execution) on @i{stdout}.
 
 The following example with ``strange'' values by design shows how to
 use the script, assuming @t{/tftpboot} is the public directory
@@ -2068,7 +2068,18 @@ accessed by the @sc{tftp} server.
   cp $F /tftpboot
 @end smallexample
 
-Please check the source code for details about the command-line options.
+Another example:
+@smallexample
+./build/wrs_hwinfo \
+        -m1 00:02:04:06:08:0a \
+        -m2 22:33:44:55:66:77 \
+        -v 3.6.2.0 \
+        --scb_sn 123 \
+        -b 2 \
+        -f LX240T
+@end smallexample
+
+Please check the help (@t{--help}) for details about the command-line options.
 The @i{version} argument is mandatory, because the software must know
 what version the SCB is (this is not really needed to identify  3.4 from
 3.4, but we don't know if we will be able to auto detect 3.5 or 4.0).
@@ -2076,7 +2087,6 @@ what version the SCB is (this is not really needed to identify  3.4 from
 Some information items are not really mandatory (the script will
 not fail if the are not specified), but should be defined anyways
 because @sc{snmp} code retrieves them to tell network administrators.
-Currently this only applies to the serial number (@t{-n}).
 
 @c ==========================================================================
 @node Storing Hwinfo in a White Rabbit Switch

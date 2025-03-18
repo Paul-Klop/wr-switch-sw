@@ -480,10 +480,10 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 		}
 
 	}
-	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s, "
-		"Rev: %.4s\n",
+	pr_info("SFP Info: VN:\"%.16s\" PN:\"%.16s\", SN:\"%.16s\", "
+		"REV:\"%.4s\", TXWL:%d\n",
 		shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial,
-		shdr.vendor_rev);
+		shdr.vendor_rev, getSfpTxWaveLength(&shdr));
 	cdata = shw_sfp_get_cal_data(ps->hw_index, &shdr);
 	if (cdata) {
 		/* Alpha is not known now. It is read later from the fibers'
@@ -500,11 +500,11 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 		/* Mark SFP as found in data base */
 		ps->calib.sfp.flags |= SFP_FLAG_IN_DB;
 	} else {
-		pr_error("Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
-			"vs=\"%.16s\" rev=\"%.4s\" on port %s\n",
+		pr_error("Unknown SFP VN:\"%.16s\", PN:\"%.16s\", "
+			"VS:\"%.16s\", REV:\"%.4s\", TXWL:%d on port %s\n",
 			shdr.vendor_name,
 			shdr.vendor_pn, shdr.vendor_serial, shdr.vendor_rev,
-			ps->name);
+			getSfpTxWaveLength(&shdr), ps->name);
 		memset(&ps->calib.sfp, 0, sizeof(ps->calib.sfp));
 	}
 
@@ -558,10 +558,12 @@ static void hal_port_insert_sfp(struct hal_port_state * ps)
 		return;
 	}
 
-	pr_error("Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
-		"fiber %i: no alpha known, use 0\n", ps->name,
+	pr_error("Port %s, SFP VN:\"%.16s\", PN:\"%.16s\", VS:\"%.16s\", "
+		"REV:\"%.4s\", TXWL:%d, fiber %i: no alpha known, use 0\n",
+		ps->name,
 		ps->calib.sfp.vendor_name, ps->calib.sfp.part_num,
-		ps->calib.sfp.vendor_serial, ps->fiber_index);
+		ps->calib.sfp.vendor_serial, ps->calib.sfp.vendor_revision,
+		ps->calib.sfp.tx_wl, ps->fiber_index);
 	ps->calib.sfp.alpha = 0;
 }
 

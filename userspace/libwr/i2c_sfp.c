@@ -886,10 +886,10 @@ static struct shw_sfp_caldata *shw_sfp_match_db(int *txWaveLength,
 				t->match_flags & SFP_MATCH_FLAG_VS ? "Vendor Serial, " : "",
 				t->match_flags & SFP_MATCH_FLAG_VR ? "Vendor Revision, " : ""
 			);
-			pr_info("With database entry %d: vendor_name(%s), "
-			        "part_num(%s), vendor_serial(%s), "
-			        "vendor_revision(%s), TX wavelength(%d), "
-			        "RX wavelength(%d)\n",
+			pr_info("With database entry %d: VS:\"%s\", "
+			        "PN:\"%s\", VS:\"%s\", "
+			        "REV:\"%s\", TXWL:\"%d\", "
+			        "RXWL:\"%d\"\n",
 				t->db_entry,
 				t->vendor_name, t->part_num, t->vendor_serial,
 				t->vendor_revision, t->tx_wl, t->rx_wl);

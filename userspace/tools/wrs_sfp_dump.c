@@ -335,10 +335,10 @@ static void dump_sfp_database_from_hal(void)
 
 	while (sfp_db_entry) {
 		printf("%2d", sfp_db_entry->db_entry);
-		printf(" | %16.16s", sfp_db_entry->vendor_name);
-		printf(" | %16.16s", sfp_db_entry->part_num);
-		printf(" | %4.4s", sfp_db_entry->vendor_revision);
-		printf(" | %16.16s", sfp_db_entry->vendor_serial);
+		printf(" | %-16.16s", sfp_db_entry->vendor_name);
+		printf(" | %-16.16s", sfp_db_entry->part_num);
+		printf(" | %-4.4s", sfp_db_entry->vendor_revision);
+		printf(" | %-16.16s", sfp_db_entry->vendor_serial);
 		printf(" | %5d", sfp_db_entry->tx_wl);
 		printf(" | %5d", sfp_db_entry->rx_wl);
 		printf(" | %8d", sfp_db_entry->delta_tx_ps);
@@ -356,18 +356,18 @@ static void dump_sfp_database_match_reason_from_hal(int dump_port, int nports,
 	int i = 0;
 
 	printf("                                      From SFPs EEPROM                                      @         From SFP Database         @ From Fiber Database\n");
-	printf(" Port |     Vendor Name     |     Part Number     |   Rev   |    Vendor Serial    |  TX WL  @ #DB | RX WL | Delta TX | Delta RX @ #DB |     Alpha\n");
+	printf(" Port |   Vendor Name   (m) |   Part Number   (m) | Rev (m) |  Vendor Serial  (m) | TXWL(m) @ #DB | RX WL | Delta TX | Delta RX @ #DB |     Alpha\n");
 	printf("------+---------------------+---------------------+---------+---------------------+---------+-----+-------+----------+----------+-----+----------------\n");
 
 	for (i = dump_port; i <= nports; i++) {
 		printf("%2d%3s", i, hal_sfp_calib_lc[i - 1].sfp.match_flags ? "(+)" : "");
-		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_name,
+		printf(" | %-16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_name,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VN ? "(+)" : "");
-		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.part_num,
+		printf(" | %-16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.part_num,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_PN ? "(+)" : "");
-		printf(" | %4.4s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_revision,
+		printf(" | %-4.4s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_revision,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VR ? "(+)" : "");
-		printf(" | %16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_serial,
+		printf(" | %-16.16s%3s", hal_sfp_calib_lc[i - 1].sfp.vendor_serial,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_VS ? "(+)" : "");
 		printf(" | %4d%3s", hal_sfp_calib_lc[i - 1].sfp.tx_wl,
 		       hal_sfp_calib_lc[i - 1].sfp.match_flags & SFP_MATCH_FLAG_TX_WAVELENGTH ? "(+)" : "");
@@ -404,10 +404,10 @@ static void sfp_summary_print_entry(int i, struct shw_sfp_header *sfp_hdr_p,
 	int tmp_i;
 	double tmp_f;
 	printf("%2d", i);
-	printf(" | %16.16s", sfp_hdr_p->vendor_name);
-	printf(" | %16.16s", sfp_hdr_p->vendor_pn);
-	printf(" | %4.4s",   sfp_hdr_p->vendor_rev);
-	printf(" | %16.16s", sfp_hdr_p->vendor_serial);
+	printf(" | %-16.16s", sfp_hdr_p->vendor_name);
+	printf(" | %-16.16s", sfp_hdr_p->vendor_pn);
+	printf(" | %-4.4s",   sfp_hdr_p->vendor_rev);
+	printf(" | %-16.16s", sfp_hdr_p->vendor_serial);
 
 	/* DOM */
 	if ((tmp_i = getSfpTxWaveLength(sfp_hdr_p))) {
@@ -467,7 +467,7 @@ float sfp_conv_power(uint16_t power)
 static void sfp_summary_print_header_alarms(void)
 {
 	printf("                                                                           @                                                                                                 DOM\n");
-	printf(" # |    Vendor Name   |   Part Number    |  Rev |   Vendor Serial  | TX WL @                   Temp                  |              Voltage              |                 BiasCur                 |                   TX Power                  |                   RX Power\n");
+	printf(" # |    Vendor Name   |   Part Number    |  Rev |   Vendor Serial  | TX WL @               Temperature               |              Voltage              |               Bias Current              |                   TX Power                  |                   RX Power\n");
 	printf("   |                  |                  |      |                  |  (nm) @  A Hi <  W Hi {    (C)  }  W Lo >  A Hi | A Hi < W Hi {  (V)  } W Lo > A Hi |  A Hi <  W Hi {    (mA) }  W Lo >  A Hi | A Hi < W Hi {     mW (dBm)    } W Lo > A Hi | A Hi < W Hi {     mW (dBm)    } W Lo > A Hi\n");
 	printf("---+------------------+------------------+------+------------------+-------+-----------------------------------------+-----------------------------------+-----------------------------------------+---------------------------------------------+--------------------------------------------\n");
 }
@@ -479,10 +479,10 @@ static void sfp_summary_print_entry_alarms(int i,
 	int tmp_i;
 	double tmp_f;
 	printf("%2d", i);
-	printf(" | %16.16s", sfp_hdr_p->vendor_name);
-	printf(" | %16.16s", sfp_hdr_p->vendor_pn);
-	printf(" | %4.4s", sfp_hdr_p->vendor_rev);
-	printf(" | %16.16s", sfp_hdr_p->vendor_serial);
+	printf(" | %-16.16s", sfp_hdr_p->vendor_name);
+	printf(" | %-16.16s", sfp_hdr_p->vendor_pn);
+	printf(" | %-4.4s", sfp_hdr_p->vendor_rev);
+	printf(" | %-16.16s", sfp_hdr_p->vendor_serial);
 
 	/* DOM */
 	if ((tmp_i = getSfpTxWaveLength(sfp_hdr_p))) {

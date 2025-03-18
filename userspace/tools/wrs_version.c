@@ -43,8 +43,8 @@
 
 char *spll_lj_periph_id_to_name[] = {
 	[PERIPH_ID_WRS_LJ_SAFRAN] = "Safran",
-	[PERIPH_ID_WRS_FL_SYNCTECHv1_5] = "SyncTech v1.0",
-	[PERIPH_ID_WRS_FL_SYNCTECHv1_0] = "SyncTech v1.5",
+	[PERIPH_ID_WRS_FL_SYNCTECHv1_0] = "SyncTech v1.0",
+	[PERIPH_ID_WRS_FL_SYNCTECHv1_5] = "SyncTech v1.5",
 };
 
 char *spll_lj_osc_freq_type_to_name[] = {

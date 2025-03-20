@@ -1534,6 +1534,28 @@ config SPLL_HPLL_KI
 	help
 	  Helper PLL integral gain term, 4.12 format
 
+config SPLL_REVERSE_OVERWRITE
+	bool "Overwrite SPLL direction"
+	help
+
+choice
+	prompt "SPLL direction"
+	depends on SPLL_REVERSE_OVERWRITE
+	default SPLL_REVERSE_DISABLE
+
+
+	config SPLL_REVERSE_DISABLED
+		bool "Forward SPLL direction"
+		help
+		  
+
+	config SPLL_REVERSE_ENABLED
+		bool "Reverse SPLL direction"
+		help
+		  
+
+endchoice # "SPLL direction"
+	
 endmenu # "Overwrite SPLL Settings"
 
 endmenu # "Developer options"

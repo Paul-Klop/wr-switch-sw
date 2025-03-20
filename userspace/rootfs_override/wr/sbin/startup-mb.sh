@@ -43,7 +43,12 @@ fi
 if [ -n "$CONFIG_SPLL_HPLL_KI" ]; then
     SPLL_SETTINGS="$SPLL_SETTINGS helper_pll_ki=$CONFIG_SPLL_HPLL_KI"
 fi
-
+if [ -n "$CONFIG_SPLL_REVERSE_DISABLED" ]; then
+    SPLL_SETTINGS="$SPLL_SETTINGS reverse_spll=0"
+fi
+if [ -n "$CONFIG_SPLL_REVERSE_ENABLED" ]; then
+    SPLL_SETTINGS="$SPLL_SETTINGS reverse_spll=1"
+fi
 # handle monit's restat reason
 # no need to remove $MONIT_RR_TMP, since tmp is not persistent
 if [ -f "$MONIT_RR_FLASH" ]; then

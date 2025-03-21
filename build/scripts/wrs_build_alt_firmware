@@ -69,10 +69,15 @@ for alt_ver in $alt_versions; do
     #  - wrs-iniramfs.gz
     #  - wrs-usr.tar.gz
     # Actually, the pack is already built by "wrs_build_wraprootfs", so check
-    packlist="at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
+    packlist="wrs_firmware_version.txt at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
     checksum_file="checksums.md5"
 
     wrs_echo "--- Alternative config $alt_ver: Calculating checksums";
+    # Check if the current git repo correspond to a tag
+    version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
+    # Add a file with version info
+    echo "$version" > "wrs_firmware_version.txt"
+
     rm -f "$checksum_file"
     for file in $packlist; do
 	md5sum "$file" >> "$checksum_file"
@@ -81,8 +86,6 @@ for alt_ver in $alt_versions; do
     # Put $checksum_file first into the archive. In case the archive is damaged,
     # the beginning of the archive has the biggest chance to be untouched
     packlist="$checksum_file $packlist"
-    # Check if the current git repo correspond to a tag
-    version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
     # If prefix 'wr-switch-sw-' is not set in tagname, we force it to
     # 'wr-switch-sw-unof-'
     name=$(echo $version | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')

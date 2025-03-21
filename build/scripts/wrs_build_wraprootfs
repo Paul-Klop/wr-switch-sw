@@ -99,10 +99,15 @@ fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
 #  - wrs-iniramfs.gz
 #  - wrs-usr.tar.gz
 # Actually, the pack is already built by "wrs_build_wraprootfs", so check
-packlist="at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
+packlist="wrs_firmware_version.txt at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
 checksum_file="checksums.md5"
 
 wrs_echo "--- Calculating checksums";
+# Check if the current git repo correspond to a tag
+version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
+# Add a file with version info
+echo "$version" > "$WRS_OUTPUT_DIR/images/wrs_firmware_version.txt"
+
 rm -f "$WRS_OUTPUT_DIR/images/$checksum_file"
 for file in $packlist; do
       (cd "$WRS_OUTPUT_DIR/images" && md5sum "$file" >> "$checksum_file")
@@ -111,8 +116,6 @@ done
 # Put $checksum_file first into the archive. In case the archive is damaged,
 # the beginning of the archive has the biggest chance to be untouched
 packlist="$checksum_file $packlist"
-# Check if the current git repo correspond to a tag
-version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
 # If prefix 'wr-switch-sw-' is not set in tagname, we force it to
 # 'wr-switch-sw-unof-'
 name=$(echo $version | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')

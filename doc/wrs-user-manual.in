@@ -4006,7 +4006,8 @@ $ mv checksums.md5.new checksums.md5
 Create firmware archive:
 @smallexample
 $ tar cf wr-switch-sw-vY-`date +%Y%m%d`_binaries_repack.tar \
-at91bootstrap.bin  barebox.bin  checksums.md5  wrs-initramfs.gz  wrs-usr.tar.gz  zImage
+checksums.md5 wrs_firmware_version.txt at91bootstrap.bin barebox.bin wrs-initramfs.gz \
+wrs-usr.tar.gz zImage
 @end smallexample
 
 Please note that this method appends the desired files at the end of an archive,

@@ -39,7 +39,7 @@ This document is licensed under the Attribution-ShareAlike 4.0 International (CC
 
 @setchapternewpage off
 
-@set update-month June 2023
+@set update-month March 2025
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 

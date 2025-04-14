@@ -9,7 +9,7 @@
  *              Miguel Baizan     <miguel.baizan@integrasys.es>
  *
  * Description:  RTU IRQ registration, capture and handling. 
- *               Applies gnurabbit (http://www.ohwr.org) misc device concepts 
+ *               Applies gnurabbit misc device concepts
  *               to make RTU UFIFO interrupts available to user space.
  *
  * Fixes:       

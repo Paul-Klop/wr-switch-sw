@@ -415,7 +415,7 @@ refrained from and chose to write code using the internal API
 I used the generator for the initial trial, @i{wrsScalar}, as
 described in detail in @ref{wrsScalar}, but then I gave up. My failed
 experiments are still part of the @t{netsnmp-pain} branch, pushed to
-@t{ohwr.org}.
+project's page.
 
 For example, commit @t{ed1d654} uses the ``mib for dummies'' option of
 @i{mib2c} for the @t{pStats} table included in the local WR MIB file.

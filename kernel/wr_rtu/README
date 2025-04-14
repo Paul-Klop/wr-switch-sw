@@ -11,7 +11,7 @@ Short info: Loadable module in kernel space, which handles UFIFO IRQs (RTU IRQ
 
 
 
-This module applies gnurabbit (http://www.ohwr.org) misc device concepts to 
+This module applies gnurabbit misc device concepts to
 make RTU UFIFO interrupts available to user space. It depends on the "wrminic" 
 and "wrvic" drivers developed by Alessandro Rubini at his wr-switch-software 
 project (git://gnudd.com/wr-switch-software.git).

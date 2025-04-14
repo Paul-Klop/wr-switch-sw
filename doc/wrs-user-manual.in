@@ -46,7 +46,7 @@ This document is licensed under the Attribution-ShareAlike 4.0 International (CC
 @comment %**useful declaration used in the document
 @set release_version 8.0
 @set release_version_tiny 0
-@set url_docs https://www.ohwr.org/project/wr-switch-sw/wikis/Documents#files
+@set url_docs https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/Documents
 
 @finalout
 
@@ -125,7 +125,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 @end itemize
 
 The official @sc{pdf} copy of these manuals at each release
-is published in the @i{files} tab of the software project in @t{ohwr.org}:
+is published in the @i{Documents} tab of the @t{wr-switch-sw} software project:
 (@uref{@value{url_docs}})).
 This doesn't apply to release v4.0 and earlier.
 
@@ -145,25 +145,25 @@ device:
 @itemize @bullet
  @item @b{WRSv3.3} and @b{WRSv3.4}: SCB-3.3, SCB-3.4, SCB-3.4.1 with and without the Low Jitter Daughterboard (LJD)
    @itemize @bullet
-     @item SCB in @url{https://ohwr.org/project/wr-switch-hw/-/wikis/home}
-     @item LJD in @url{https://ohwr.org/project/wrs-low-jitter/-/wikis/home}
+     @item SCB in @url{https://gitlab.com/ohwr/project/wr-switch-hw/-/wikis/home}
+     @item LJD in @url{https://gitlab.com/ohwr/project/wrs-low-jitter/-/wikis/home}
    @end itemize
  @item @b{WRSv3.5}: SCB-3.5 (also called FL-SCB-v1.5), fanless with LJD integrated
    @itemize @bullet
-     @item SCB in @url{https://ohwr.org/project/wrs-fl-hw/-/wikis/home}
+     @item SCB in @url{https://gitlab.com/ohwr/project/wrs-fl-hw/-/wikis/home}
    @end itemize
  @item @b{WRSv3.6}: SCB-LJ 2.0, with LJD integrated.
    @itemize @bullet
-     @item SCB in @url{https://ohwr.org/project/wrs-lj-hw/-/wikis/home}
+     @item SCB in @url{https://gitlab.com/ohwr/project/wrs-lj-hw/-/wikis/home}
    @end itemize
 @end itemize
-For details, see table in @url{https://ohwr.org/project/wr-switch-sw/-/wikis/home#compatibility-of-the-official-firmware-releases-with-commercially-available-wr-switches}.
+For details, see table in @url{https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/home#compatibility-of-the-official-firmware-releases-with-commercially-available-wr-switches}.
 
 Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
 are the owner of one of them, please refer to version 3.3 of the
 @i{wrs-build} document, that includes appendixes about using older
-versions. As usual, it is in the @i{files} tab of 
-@t{@uref{@value{url_docs}}}.
+versions.
+As usual, it is in the @i{Documents} tab of @t{@uref{@value{url_docs}}}.
 
 V1 and V2 were development items, never shipped.
 
@@ -662,7 +662,7 @@ with firmware v6.x to a version compatible with firmware 7.0, the tool
       @t{userspace/host_tools/dot-config_converter_6_x_to_7_0.sh}
 @item standalone -- run on most x86-64 bit GNU/Linux compatible systems;
       can be downloaded from the release page
-      @url{https://ohwr.org/project/wr-switch-sw/wikis/Release-v7.0}
+      @url{https://gitlab.com/ohwr/project/wr-switch-sw/wikis/Release-v7.0}
       or can be created by executing @t{make converter_standalone} in
       the @t{userspace/host_tools} directory of @i{wr-switch-sw} repository;
       the standalone version will be created in
@@ -987,7 +987,8 @@ hardware information to all levels of software, such information
 includes the MAC addresses for the management Ethernet and the
 @sc{sfp} ports.  Information is now stored in a Flash partition called
 @i{hwinfo}, using the @sc{sdb} file format. @sc{sdb} is defined in the
-@t{fpga-configuration-space} within @t{ohwr.org}.  Before using
+@t{fpga-config-space} (@url{https://gitlab.com/ohwr/project/fpga-config-space}).
+Before using
 @sc{sdb} we used to edit the boot loader's configuration at flash
 time.
 
@@ -3274,7 +3275,7 @@ less than 10ps.
 
 Calibration of per-port and per-@sc{sfp} delays as well as alpha is described in the
 White Rabbit Calibration procedure available from the calibration wiki page:
-@url{http://www.ohwr.org/projects/white-rabbit/wiki/Calibration}.
+@url{https://gitlab.com/ohwr/project/white-rabbit/-/wikis/calibration}.
 
 The delays used in the examples come from values listed in the calibration wiki
 page.
@@ -4356,8 +4357,9 @@ The following tools and scripts are provided:
 @node sdb-read
 @section sdb-read
 
-[Note: this documentation section comes from the @t{ohwr} project
-called @t{fpga-config-space}.]
+[Note: this documentation section comes from the project
+called @t{fpga-config-space}
+(@url{https://gitlab.com/ohwr/project/fpga-config-space}).]
 
 
 The @i{sdb-read} program can be used to access an @i{sdbfs} image
@@ -5447,9 +5449,9 @@ some details can be
 suboptimal, while some procedures may be tricky and need more explanation.
 We are collecting all those issues in our project pages. Please visit:
 @itemize
-   @item Frequently Asked Questions: @url{http://www.ohwr.org/project/white-rabbit/wiki/FAQswitch}
-   @item Issues for WR Switch SW project: @url{http://www.ohwr.org/project/wr-switch-sw/issues}
-   @item Issues for WR Switch HDL project: @url{http://www.ohwr.org/project/wr-switch-hdl/issues}
+   @item Frequently Asked Questions: @url{https://gitlab.com/ohwr/project/white-rabbit/-/wikis/FAQswitch}
+   @item Issues for WR Switch SW project: @url{https://gitlab.com/ohwr/project/wr-switch-sw/-/issues}
+   @item Issues for WR Switch HDL project: @url{https://gitlab.com/ohwr/project/wr-switch-hdl/-/issues}
 @end itemize
 If you have any problem with this firmware and you don't find help in the above links,
 feel free to reach us on the @i{white-rabbit-dev} mailing list.
@@ -5463,7 +5465,7 @@ The @t{wrs_dump.sh} can dump the current state of a switch. Its use can be
 helpful when reporting a bug or saving a switch's state for later analysis.
 
 The tool can be found in WRS software repository (or accessed directly via
-weblink @url{https://ohwr.org/project/wr-switch-sw/blob/master/userspace/host_tools/wrs_dump.sh}).
+weblink @url{https://gitlab.com/ohwr/project/wr-switch-sw/blob/master/userspace/host_tools/wrs_dump.sh}).
 
 The @t{wrs_dump.sh} is independent from the WR software, it can be used on
 different versions of firmware.
@@ -5629,8 +5631,7 @@ In case the two times drift apart, a warning is generated
 
 @b{NOTE:} This annex is based on @i{Note on using WR Switch in Grandmaster mode}
 by T.Wlostowski
-(@url{https://ohwr.org/project/white-rabbit/uploads/ae3282acd8f9f6c5a9067b061202277d/wr_external_reference.pdf})
-
+(@url{https://gitlab.com/ohwr/project/white-rabbit/-/wikis/uploads/ae3282acd8f9f6c5a9067b061202277d/wr_external_reference.pdf})
 
 @node NTP
 @subsection NTP
@@ -5750,7 +5751,7 @@ A set of scripts to semi-automate calibration is included in:
 @t{userspace/host_tools/calibration}. These scripts follow the calibration
 procedures described @i{WR Calibration procedure}
 @footnote{White Rabbit Calibration procedure (v1.1):
-@url{https://ohwr.org/project/white-rabbit/-/wikis/Documents/White-Rabbit-calibration-procedure}.}
+@url{https://gitlab.com/ohwr/project/white-rabbit/-/wikis/Documents/White-Rabbit-calibration-procedure}.}
 and automate all actions that do not require human/manual intervention, e.g,:
 @itemize
 @item configuration of devices,
@@ -5804,7 +5805,7 @@ The measurement setup includes:
 The scripts support calibration procedures described in sections @i{4.2},
 @i{4.3}, @i{4.4} and @i{4.5} of @i{WR Calibration procedure}
 @footnote{White Rabbit Calibration procedure (v1.1):
-@url{https://ohwr.org/project/white-rabbit/-/wikis/Documents/White-Rabbit-calibration-procedure}.}.
+@url{https://gitlab.com/ohwr/project/white-rabbit/-/wikis/Documents/White-Rabbit-calibration-procedure}.}.
 In particular, the following scenarios are supported
 
 @enumerate

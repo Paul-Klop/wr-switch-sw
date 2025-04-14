@@ -17,7 +17,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Endpoint Configuration<a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Endpoint Configuration<a href='https://gitlab.com/ohwr/project/white-rabbit/-/wikis/calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
 <br>
 
 <?php session_is_started() ?>
@@ -27,7 +27,7 @@
 		// Warning message
 		echo "<hr>
 				<center>NOTE: If you do not know how to calibrate endpoints
-				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration'
+				please click on <a href='https://gitlab.com/ohwr/project/white-rabbit/-/wikis/calibration'
 				target='_blank'> here </a>*<hr><br>";
 		$formatID = "alternatecolor1";
 		$class = "altrowstablesmall firstcol";

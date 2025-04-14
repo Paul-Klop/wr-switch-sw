@@ -5,7 +5,7 @@
 --
 -- Use wbgen2 to generate code, documentation and more.
 -- wbgen2 is available at:
--- http://www.ohwr.org/projects/wishbone-gen
+-- https://gitlab.com/ohwr/project/wishbone-gen/-/wikis/home
 --
 
 top = peripheral {

@@ -121,8 +121,8 @@ This is the current set of manuals that accompany the @sc{wrs}:
 @end itemize
 
 The official @sc{pdf} copy of these manuals at each release
-is published in the @i{files} tab of the software project in @t{ohwr.org}:
-(@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
+is published in the @i{Documents} tab of the @t{wr-switch-sw} project:
+(@url{https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/Documents}).
 This doesn't apply to release 4.0 and earlier.
 
 The source form of all four manuals is maintained in @t{wr-switch-sw/doc}.
@@ -142,7 +142,8 @@ device.
 Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
 are the owner of one of them, please refer to version 3.3 of the
 @i{wrs-build} document, that includes appendixes about using older
-versions. As usual, it is in the @i{files} tab of @t{ohwr.org}.
+versions.
+As usual, it is in the @i{Documents} tab of the @t{wr-switch-sw} project.
 
 V1 and V2 were development items, never shipped.
 
@@ -157,7 +158,7 @@ V1 and V2 were development items, never shipped.
 To build your switch firmware you have to first clone the main git repository,
 which contains all the sources and building scripts:
 @example
-   git clone git://ohwr.org/white-rabbit/wr-switch-sw.git
+   git clone https://gitlab.com/ohwr/project/wr-switch-sw.git
 @end example
 
 Original build scripts were developed by Tomasz Wlostowski who first
@@ -221,7 +222,7 @@ The @i{gateware} is being downloaded as a pre-build tar archive
 (currently called @code{wrs-gw-v6.0-20200408.tar.gz}).  This
 is built from the @code{wr-switch-sw-v6.0} tag of the @code{wr-switch-hdl}
 repository.  Please note that the repository uses @i{git} submodules,
-so it depends on other @code{ohwr} repositories too, which in turn
+so it depends on other repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
 get the exact version you need. All relevant commit identifiers
 are shown by command @t{wrs_version -t} or in the SNMP version objects
@@ -494,8 +495,8 @@ In other words, we include both the tag name (from @t{git describe})
 and a date.  If the repository is not checked-out at a release (a ``tag''),
 this will be apparent in the filename used for the output.
 
-The ``official'' release package is available from @t{ohwr.org}, in
-the @i{Files} section of the @t{wr-switch-sw} project.
+The ``official'' release package is available from
+the @i{Documents} section of the @t{wr-switch-sw} project.
 
 In any case, the file must be renamed to @t{wrs-firmware.tar}
 to be used at installation time. See @ref{Flashing Procedure} for details.
@@ -831,7 +832,7 @@ we only support PPSi.
 
 The code is hosted in its own
 repository; it is a @i{git} submodule in this package.
-The repository is hosted on @code{ohwr.org}, like others.
+The repository is hosted on @code{https://gitlab.com/ohwr}, like others.
 
 PPSi is @i{Kconfig} based: you may build it in its own directory by
 using its @i{wrs_defconfig} and the proper @t{CROSS_COMPILE} variable.
@@ -890,7 +891,7 @@ variable @code{WRS_HW_DIR} is set, the script uses it to retrieve the
 binaries you just compiled (but the script is not compiling gateware).
 
 If the variable is not set, the script extracts a tar file downloaded
-from @code{ohwr.org} as part of the initial download step.
+from project's website as part of the initial download step.
 
 The RISC-V program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}.
@@ -1269,7 +1270,8 @@ or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
 The official binaries for installation of version 5.0.1 of this package
-are available in the @i{files} tab of this project in @t{ohwr.org}.
+are available in the @i{Documents} tab of this project website
+(@url{https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/Documents/}).
 We don't provide a complete link here, but one is available in the
 list of downloaded files: @t{build/download-info}.
 
@@ -1324,12 +1326,6 @@ The loader depends on code by the CPU vendor, which is very bad
 quality as typical in the field.   If, by unlucky chance, you need to
 rebuild the applets, you need a specific version of the cross-compiler,
 and everything else will spit horrible errors.
-
-A binary copy is uploaded in the @i{Files} sections of the @sc{ohwr}
-project. The direct link is
-@url{http://www.ohwr.org/attachments/download/3138/cd-g__lite.tar.gz}
-(the name was @t{cd-g++lite.tar.gz}, but @sc{ohwr} changed the @t{+}
-into @t{_}).
 
 To build, you can run Benoit's script
 @t{usb-loader/samba_applets/isp-project/build.sh}.
@@ -1982,8 +1978,10 @@ The storage device of choice, given the hardware architecture of the
 White Rabbit Switch, is the @i{dataflash}.  The data format we chose
 is @sc{sdb}, that we are using in a number of situations.
 
-A description of @sc{sdb} is to be found in the @t{ohwr.org} project
-called @i{fpga-config-space}. The @i{Self Describing Bus} was born
+A description of @sc{sdb} is to be found in the project
+called @i{fpga-config-space}
+(@url{https://gitlab.com/ohwr/project/fpga-config-space}).
+The @i{Self Describing Bus} was born
 to describe address spaces (i.e. the cores that are part of an @sc{fpga}
 design) but is also a good way to implement a small filesystem
 in limited storage.
@@ -2203,9 +2201,8 @@ code accesses the files directly, by linking the @i{libsdb} code base
 
 The switch schematics for all PCB versions (3.x of the
 SCB as well as both 3.1, 3.2 and 3.3 of the backplane)
-are available on the Open Hardware Repository, at
-@uref{http://www.ohwr.org/documents/180}, which can also be reached
-from the @i{Documents} tab of the @i{White Rabbit} project.
+are available on the @t{wr-switch-hw} project page, at
+@uref{https://gitlab.com/ohwr/project/wr-switch-hw/-/wikis/Documents/Version-'wr-switch-hw-v3.4'-Attachments}.
 
 Please note that only version 3.2 and 3.3 of both the motherboard and 
 the backplane has been shipped commercially; you are interested in 
@@ -2261,9 +2258,9 @@ some details can be
 suboptimal, while some procedures may be tricky and need more explanation.
 We are collecting all those issues in our project pages. Please visit:
 @itemize
-   @item Frequently Asked Questions: @url{http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch}
-   @item Issues for WR Switch SW project: @url{http://www.ohwr.org/projects/wr-switch-sw/issues}
-   @item Issues for WR Switch HDL project: @url{http://www.ohwr.org/projects/wr-switch-hdl/issues}
+   @item Frequently Asked Questions: @url{https://gitlab.com/ohwr/project/white-rabbit/-/wikis/FAQswitch}
+   @item Issues for WR Switch SW project: @url{https://gitlab.com/ohwr/project/wr-switch-sw/-/issues}
+   @item Issues for WR Switch HDL project: @url{https://gitlab.com/ohwr/project/wr-switch-hdl/-/issues}
 @end itemize
 If you have any problem with this firmware and you don't find help in the above
 links, feel free to reach us on the @i{white-rabbit-dev} mailing list.

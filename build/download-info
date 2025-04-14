@@ -20,7 +20,7 @@ linux-3.16.38.tar.xz            1af111d8ee7b57329611d4d804e9fe78 \
 
 # our gateware binaries
 wrs-gw-v8.0-20250121.tar.gz 9288b19760a173b24d888473670d086b \
-   https://ohwr.org/project/wr-switch-sw/-/wikis/uploads/686ed2491324534f7f43b3b1d232e447/wrs-gw-v8.0-20250121.tar.gz
+   https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/uploads/686ed2491324534f7f43b3b1d232e447/wrs-gw-v8.0-20250121.tar.gz
 
 # buildroot core and packages
 buildroot-2016.02.tar.bz2        fcf10ae55b0831f52d492b6939e95581 \
@@ -29,4 +29,4 @@ buildroot-2016.02.tar.bz2        fcf10ae55b0831f52d492b6939e95581 \
 ###########################################################
 # OHWR-mirrored legacy packages
 pam-krb5-4.8.tar.gz	1cc53b61435e151bd52dae3d59ae4f30 \
-   https://ohwr.org/project/wr-switch-sw/wikis/uploads/7f1ca15108f87fc2b50060b8f56399b9/pam-krb5-4.8.tar.gz
+   https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/uploads/7f1ca15108f87fc2b50060b8f56399b9/pam-krb5-4.8.tar.gz

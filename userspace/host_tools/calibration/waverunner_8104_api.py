@@ -1,6 +1,6 @@
 # Information on VB commands from:
 # https://github.com/SengerM/TeledyneLeCroyPy/blob/main/TeledyneLeCroyPy/__init__.py
-# https://ohwr.org/project/wr-abscal-el-auto/tree/master/lib
+# https://gitlab.com/ohwr/project/wr-abscal-el-auto/
 
 import pyvisa as visa
 

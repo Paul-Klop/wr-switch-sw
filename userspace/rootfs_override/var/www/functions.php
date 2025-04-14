@@ -815,9 +815,9 @@ function wrs_management(){
 
 			echo '<p align=center>Downloading '.$ohwrlink.'</p>';
 
-			$filename="/tmp/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
+			$filename="/tmp/wr-switch-sw-v8.0-20250324_binaries.tar";
 			$firmware="/update/wrs-firmware.tar";
-			$ohwrlink="http://www.ohwr.org/attachments/download/3095/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
+			$ohwrlink="https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/uploads/fc02a12aaa57b63632cd448ec487d051/wr-switch-sw-v8.0-20250324_binaries.tar";
 
 			file_put_contents($filename, file_get_contents($ohwrlink));
 			rename($filename, $firmware);

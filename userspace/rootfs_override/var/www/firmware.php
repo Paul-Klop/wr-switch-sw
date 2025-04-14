@@ -60,7 +60,7 @@
 		<div id="bottommsg">
 		<hr>
 		<p align=center ><font color="red">NOTE: Flashing the switch with a wrong binary file might damage your device. <br>Please visit the
-			<A HREF="http://www.ohwr.org/projects/wr-switch-sw/files" TARGET="_new">OHR website</A> for more details.</font>
+			<A HREF="https://gitlab.com/ohwr/project/wr-switch-sw/-/wikis/Documents" TARGET="_new">WR Switch website</A> for more details.</font>
 		</p>
 		<hr>
 	</div>

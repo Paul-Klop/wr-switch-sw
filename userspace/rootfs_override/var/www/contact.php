@@ -36,15 +36,15 @@
 	<div>
 		<p align=right>
 			<strong>Open Hardware Repository
-			<a href="http://www.ohwr.org/projects/white-rabbit/wiki">
-				http://www.ohwr.org/projects/white-rabbit/wiki</a>
+			<a href="https://gitlab.com/ohwr/project/white-rabbit/wikis">
+				https://gitlab.com/ohwr/project/white-rabbit/wikis</a>
 			</strong>
 		</p>
 		<br>
 		<p align=right>
-			<strong>White-Rabbit Mailing List
-			<a href="mailto:white-rabbit-dev@ohwr.org?subject=[White-Rabbit Switch Local Management Tool]">
-				(white-rabbit-dev@ohwr.org)</a>
+			<strong>White-Rabbit forums
+			<a href="https://forums.ohwr.org/c/white-rabbit-dev/">
+				https://forums.ohwr.org/c/white-rabbit-dev</a>
 			</strong>
 		</p>
 	</div>

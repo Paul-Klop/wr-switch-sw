@@ -64,7 +64,7 @@ This document lists the items I think are suboptimal in the current
 but it is more or less agreed-with by other developers in the group.
 The items here more a wish list, or long-time planning, rather than
 a list of pending bugs. For that, please use the @i{issues} feature
-of @t{ohwr.org}.
+of project's page.
 
 The document is now included in the master branch, because the list,
 seen as a review of the project, is considered useful. Besides, we are

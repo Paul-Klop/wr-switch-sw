@@ -168,7 +168,7 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
                                  WRS_PTP_CLOCK_CLASS_MAX_ACCEPTED);
                 }
         } else {
-                t->wrsPTPStatus = WRS_PTP_STATUS_WARNING_NA;
+                t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
                 snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
                          "PPSi shared memory not available, cannot check PTP clockClass\n",
                          slog_obj_name);

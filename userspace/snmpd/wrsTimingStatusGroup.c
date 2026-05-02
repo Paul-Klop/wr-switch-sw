@@ -23,12 +23,13 @@
  * report degraded PTP clockClass through wrsPTPStatus.
  *
  * In IEEE 1588/PTP, lower clockClass values indicate a better clock.
- * For a WR Grandmaster locked to a good reference, class 6 is expected.
  *
  * This affects SNMP status reporting only. It does not change BMCA,
  * PPSi state selection, servo behaviour, or announce processing.
  */
-#define WRS_PTP_CLOCK_CLASS_MAX_ACCEPTED 6
+#ifndef CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
+#define CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED 6
+#endif
 
 static struct pickinfo wrsTimingStatus_pickinfo[] = {
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsPTPStatus),
@@ -160,12 +161,12 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
         if (shmem_ready_ppsi()) {
                 int clock_class = ppsi_defaultDS->clockQuality.clockClass;
 
-                if (clock_class > WRS_PTP_CLOCK_CLASS_MAX_ACCEPTED) {
+                if (clock_class > CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED) {
                         t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
                         snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
                                  "PTP clockClass degraded: current=%d, max accepted=%d\n",
                                  slog_obj_name, clock_class,
-                                 WRS_PTP_CLOCK_CLASS_MAX_ACCEPTED);
+                                 CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED);
                 }
         } else {
                 t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;

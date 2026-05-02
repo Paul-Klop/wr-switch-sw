@@ -1,4 +1,5 @@
 #include "wrsSnmp.h"
+#include <stdlib.h>
 #include <libwr/util.h>
 #include <libwr/config.h>
 #include <snmp_shmem.h>
@@ -27,14 +28,6 @@
  * This affects SNMP status reporting only. It does not change BMCA,
  * PPSi state selection, servo behaviour, or announce processing.
  */
-#ifndef CONFIG_SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE
-#define CONFIG_SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE 0
-#endif
-
-#ifndef CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
-#define CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED 6
-#endif
-
 static struct pickinfo wrsTimingStatus_pickinfo[] = {
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsPTPStatus),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSoftPLLStatus),
@@ -132,6 +125,28 @@ time_t wrsTimingStatus_data_fill(void)
 	return time_update=get_monotonic_sec();
 }
 
+static int get_snmp_ptp_clock_class_check_enabled(void)
+{
+        char *config_item;
+
+        config_item = libwr_cfg_get("SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE");
+        if (config_item && !strncmp(config_item, "y", 1))
+                return 1;
+
+        return 0;
+}
+
+static int get_snmp_ptp_clock_class_max_accepted(void)
+{
+        char *config_item;
+
+        config_item = libwr_cfg_get("SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED");
+        if (config_item)
+                return atoi(config_item);
+
+        return 6;
+}
+
 static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_status_nrows, int t_delta)
 {
 	struct wrsSpllStatus_s *s;
@@ -162,16 +177,17 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 
 	t->wrsPTPStatus = WRS_PTP_STATUS_OK;
 
-        if (CONFIG_SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE) {
+        if (get_snmp_ptp_clock_class_check_enabled()) {
                 if (shmem_ready_ppsi()) {
                         int clock_class = ppsi_defaultDS->clockQuality.clockClass;
+                        int max_accepted = get_snmp_ptp_clock_class_max_accepted();
 
-                        if (clock_class > CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED) {
+                        if (clock_class > max_accepted) {
                                 t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
                                 snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
                                          "PTP clockClass degraded: current=%d, max accepted=%d\n",
                                          slog_obj_name, clock_class,
-                                         CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED);
+                                         max_accepted);
                         }
                 } else {
                         t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;

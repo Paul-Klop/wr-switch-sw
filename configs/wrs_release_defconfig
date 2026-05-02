@@ -1005,4 +1005,3 @@ CONFIG_OPTIMIZATION="-O2 -ggdb"
 # VLANs
 #
 # CONFIG_VLANS_ENABLE is not set
-

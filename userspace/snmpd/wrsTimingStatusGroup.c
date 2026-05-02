@@ -1,5 +1,6 @@
 #include "wrsSnmp.h"
 #include <stdlib.h>
+#include <string.h>
 #include <libwr/util.h>
 #include <libwr/config.h>
 #include <snmp_shmem.h>
@@ -200,8 +201,10 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 	 * implemented it will change */
 	for (i = 0; i < ptp_data_nrows; i++) {
 		if (first_run == 1) {
-			/* don't report errors during first run */
-			t->wrsPTPStatus = WRS_PTP_STATUS_FR;
+			/* don't report errors during first run, unless an
+			 * earlier check already reported an error */
+			if (t->wrsPTPStatus == WRS_PTP_STATUS_OK)
+			        t->wrsPTPStatus = WRS_PTP_STATUS_FR;
 			/* no need to check others */
 			break;
 

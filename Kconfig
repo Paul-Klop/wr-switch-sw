@@ -819,6 +819,27 @@ config PTP_OPT_CLOCK_CLASS
 	  Boundary Clock or Ordinary Clock.
 	  For more details please refer to the IEEE 1588-2019 standard.
 
+# SNMP monitoring based on global PTP clock quality
+
+# SNMP monitoring based on global PTP clock quality
+config SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
+        int "Maximum accepted PTP clockClass for SNMP timing status"
+        range 1 255
+        default 6
+        help
+          Maximum accepted PTP clockClass for the SNMP timing status check.
+
+          In IEEE 1588/PTP, lower clockClass values indicate a better clock.
+          A White Rabbit Grandmaster locked to a good reference is expected
+          to advertise clockClass 6.
+
+          If the active PPSi defaultDS clockClass is higher than this value,
+          wrsPTPStatus is reported as error.
+
+          This option affects SNMP monitoring only. It does not change BMCA,
+          PPSi state selection, servo behaviour, or Announce processing.
+
+
 endmenu #"PPSI options"
 
 menu "Port PTP/Timing configuration"
@@ -1080,22 +1101,6 @@ config SNMP_SYSTEM_CLOCK_MONITOR_ENABLED
 	  of time exceed a given threshold (CONFIG_SNMP_SYSTEM_CLOCK_DRIFT_THOLD)
 	  then an error will be notified to SNMP.
 
-config SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
-        int "Maximum accepted PTP clockClass for SNMP timing status"
-        range 1 255
-        default 6
-        help
-          Maximum accepted PTP clockClass for the SNMP timing status check.
-
-          In IEEE 1588/PTP, lower clockClass values indicate a better clock.
-          A White Rabbit Grandmaster locked to a good reference is expected
-          to advertise clockClass 6.
-
-          If the active PPSi defaultDS clockClass is higher than this value,
-          wrsPTPStatus is reported as error.
-
-          This option affects SNMP monitoring only. It does not change BMCA,
-          PPSi state selection, servo behaviour, or Announce processing.
 
 config SNMP_SYSTEM_CLOCK_DRIFT_THOLD
 	depends on SNMP_SYSTEM_CLOCK_MONITOR_ENABLED

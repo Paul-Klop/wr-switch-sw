@@ -27,6 +27,10 @@
  * This affects SNMP status reporting only. It does not change BMCA,
  * PPSi state selection, servo behaviour, or announce processing.
  */
+#ifndef CONFIG_SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE
+#define CONFIG_SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE 0
+#endif
+
 #ifndef CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
 #define CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED 6
 #endif
@@ -158,23 +162,24 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 
 	t->wrsPTPStatus = WRS_PTP_STATUS_OK;
 
-        if (shmem_ready_ppsi()) {
-                int clock_class = ppsi_defaultDS->clockQuality.clockClass;
+        if (CONFIG_SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE) {
+                if (shmem_ready_ppsi()) {
+                        int clock_class = ppsi_defaultDS->clockQuality.clockClass;
 
-                if (clock_class > CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED) {
+                        if (clock_class > CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED) {
+                                t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+                                snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+                                         "PTP clockClass degraded: current=%d, max accepted=%d\n",
+                                         slog_obj_name, clock_class,
+                                         CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED);
+                        }
+                } else {
                         t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
                         snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-                                 "PTP clockClass degraded: current=%d, max accepted=%d\n",
-                                 slog_obj_name, clock_class,
-                                 CONFIG_SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED);
+                                 "PPSi shared memory not available, cannot check PTP clockClass\n",
+                                 slog_obj_name);
                 }
-        } else {
-                t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
-                snmp_log(LOG_WARNING, "SNMP: " SL_NA " %s: "
-                         "PPSi shared memory not available, cannot check PTP clockClass\n",
-                         slog_obj_name);
         }
-
 	/* NOTE: only one PTP instance is used right now. When switchover is
 	 * implemented it will change */
 	for (i = 0; i < ptp_data_nrows; i++) {

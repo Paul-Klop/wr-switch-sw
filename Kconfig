@@ -821,24 +821,30 @@ config PTP_OPT_CLOCK_CLASS
 
 # SNMP monitoring based on global PTP clock quality
 
-# SNMP monitoring based on global PTP clock quality
+config SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE
+        bool "Enable SNMP PTP clockClass monitoring"
+        default n
+        help
+          Enable monitoring of defaultDS.clockQuality.clockClass through
+          wrsPTPStatus.
+
+          This affects monitoring only. It does not change BMCA, PPSi state
+          selection, servo behaviour, or Announce processing.
+
 config SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
-        int "Maximum accepted PTP clockClass for SNMP timing status"
+        int "Maximum accepted clockClass for PTP monitoring"
         range 1 255
         default 6
+        depends on SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE
         help
-          Maximum accepted PTP clockClass for the SNMP timing status check.
+          Maximum accepted PTP clockClass for monitoring.
 
           In IEEE 1588/PTP, lower clockClass values indicate a better clock.
-          A White Rabbit Grandmaster locked to a good reference is expected
-          to advertise clockClass 6.
-
-          If the active PPSi defaultDS clockClass is higher than this value,
+          If defaultDS.clockQuality.clockClass is higher than this value,
           wrsPTPStatus is reported as error.
 
-          This option affects SNMP monitoring only. It does not change BMCA,
-          PPSi state selection, servo behaviour, or Announce processing.
-
+          This affects monitoring only. It does not change BMCA, PPSi state
+          selection, servo behaviour, or Announce processing.
 
 endmenu #"PPSI options"
 

@@ -530,7 +530,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	
 	/* wrsSlaveLinksStatus is ERROR if the configured mode is BC (defined by
 	 * the clock class of defaultDS) and there is no active slave port*/
-	if (ppsi_parentDS->grandmasterClockQuality.clockClass > 193 && has_slave == 0) {
+	if (ppsi_defaultDS->clockQuality.clockClass > 193 && has_slave == 0) {
 		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
 			"In Boundary Clock mode, there is no active port in "

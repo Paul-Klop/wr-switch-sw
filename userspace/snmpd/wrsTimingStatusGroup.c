@@ -1,4 +1,6 @@
 #include "wrsSnmp.h"
+#include <stdlib.h>
+#include <string.h>
 #include <libwr/util.h>
 #include <libwr/config.h>
 #include <snmp_shmem.h>
@@ -18,6 +20,15 @@
 #define WRS_LEAPSEC_STATUS_CACHE_TIMEOUT    20 /* 20 seconds */
 #define WRS_LEAPSEC_DOWNLOAD_CACHE_TIMEOUT    20 /* 20 seconds */
 
+/*
+ * Custom monitoring extension, Paul Klop:
+ * report degraded PTP clockClass through wrsPTPStatus.
+ *
+ * In IEEE 1588/PTP, lower clockClass values indicate a better clock.
+ *
+ * This affects SNMP status reporting only. It does not change BMCA,
+ * PPSi state selection, servo behaviour, or announce processing.
+ */
 static struct pickinfo wrsTimingStatus_pickinfo[] = {
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsPTPStatus),
 	FIELD(wrsTimingStatus_s, ASN_INTEGER, wrsSoftPLLStatus),
@@ -115,6 +126,28 @@ time_t wrsTimingStatus_data_fill(void)
 	return time_update=get_monotonic_sec();
 }
 
+static int get_snmp_ptp_clock_class_check_enabled(void)
+{
+        char *config_item;
+
+        config_item = libwr_cfg_get("SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE");
+        if (config_item && !strncmp(config_item, "y", 1))
+                return 1;
+
+        return 0;
+}
+
+static int get_snmp_ptp_clock_class_max_accepted(void)
+{
+        char *config_item;
+
+        config_item = libwr_cfg_get("SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED");
+        if (config_item)
+                return atoi(config_item);
+
+        return 6;
+}
+
 static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_status_nrows, int t_delta)
 {
 	struct wrsSpllStatus_s *s;
@@ -144,12 +177,34 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 	slog_obj_name = wrsPTPStatus_str;
 
 	t->wrsPTPStatus = WRS_PTP_STATUS_OK;
+
+        if (get_snmp_ptp_clock_class_check_enabled()) {
+                if (shmem_ready_ppsi()) {
+                        int clock_class = ppsi_parentDS->grandmasterClockQuality.clockClass;
+                        int max_accepted = get_snmp_ptp_clock_class_max_accepted();
+
+                        if (clock_class > max_accepted) {
+                                t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+                                snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+                                         "PTP clockClass degraded: current=%d, max accepted=%d\n",
+                                         slog_obj_name, clock_class,
+                                         max_accepted);
+                        }
+                } else {
+                        t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+                        snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+                                 "PPSi shared memory not available, cannot check PTP clockClass\n",
+                                 slog_obj_name);
+                }
+        }
 	/* NOTE: only one PTP instance is used right now. When switchover is
 	 * implemented it will change */
 	for (i = 0; i < ptp_data_nrows; i++) {
 		if (first_run == 1) {
-			/* don't report errors during first run */
-			t->wrsPTPStatus = WRS_PTP_STATUS_FR;
+			/* don't report errors during first run, unless an
+			 * earlier check already reported an error */
+			if (t->wrsPTPStatus == WRS_PTP_STATUS_OK)
+			        t->wrsPTPStatus = WRS_PTP_STATUS_FR;
 			/* no need to check others */
 			break;
 

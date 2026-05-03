@@ -154,7 +154,7 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 		/* Global PTP quality readout; keep row 0 valid even when
 		 * no slave/servo instance is currently present. */
 		ptp_a[0].wrsPtpClockClass =
-		        ppsi_defaultDS->clockQuality.clockClass;
+		        ppsi_parentDS->grandmasterClockQuality.clockClass;
 		ptp_a[0].wrsPtpStepsRemoved =
 		        ppsi_currentDS->stepsRemoved;
 

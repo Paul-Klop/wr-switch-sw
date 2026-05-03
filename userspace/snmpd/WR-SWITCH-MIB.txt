@@ -2415,7 +2415,7 @@ wrsPtpClockClass OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "Current PTP defaultDS clockQuality.clockClass."
+            "Current PTP parentDS grandmasterClockQuality.clockClass."
     ::= { wrsPtpDataEntry 34 }
 
 wrsPtpStepsRemoved OBJECT-TYPE

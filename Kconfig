@@ -825,7 +825,7 @@ config SNMP_PTP_CLOCK_CLASS_CHECK_ENABLE
         bool "Enable SNMP PTP clockClass monitoring"
         default n
         help
-          Enable monitoring of defaultDS.clockQuality.clockClass through
+          Enable monitoring of parentDS.grandmasterClockQuality.clockClass through
           wrsPTPStatus.
 
           This affects monitoring only. It does not change BMCA, PPSi state
@@ -840,7 +840,7 @@ config SNMP_PTP_CLOCK_CLASS_MAX_ACCEPTED
           Maximum accepted PTP clockClass for monitoring.
 
           In IEEE 1588/PTP, lower clockClass values indicate a better clock.
-          If defaultDS.clockQuality.clockClass is higher than this value,
+          If parentDS.grandmasterClockQuality.clockClass is higher than this value,
           wrsPTPStatus is reported as error.
 
           This affects monitoring only. It does not change BMCA, PPSi state

@@ -180,7 +180,7 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows, unsigned int port_stat
 
         if (get_snmp_ptp_clock_class_check_enabled()) {
                 if (shmem_ready_ppsi()) {
-                        int clock_class = ppsi_defaultDS->clockQuality.clockClass;
+                        int clock_class = ppsi_parentDS->grandmasterClockQuality.clockClass;
                         int max_accepted = get_snmp_ptp_clock_class_max_accepted();
 
                         if (clock_class > max_accepted) {

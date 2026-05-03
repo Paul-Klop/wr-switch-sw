@@ -52,6 +52,8 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpDelayCoefficientStr),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpIngressLatency),
 	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpEgressLatency),
+	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpClockClass),
+	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpStepsRemoved),
 };
 
 static char *relativeDifferenceToString(RelativeDifference time, char *buf)
@@ -148,6 +150,14 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	 * implemented */
 	while (1) {
 		ii = wrs_shm_seqbegin(ppsi_head);
+
+		/* Global PTP quality readout; keep row 0 valid even when
+		 * no slave/servo instance is currently present. */
+		ptp_a[0].wrsPtpClockClass =
+		        ppsi_defaultDS->clockQuality.clockClass;
+		ptp_a[0].wrsPtpStepsRemoved =
+		        ppsi_currentDS->stepsRemoved;
+
 		for (i = 0; i < *ppsi_ppi_nlinks; i++)
 		{
 			/* report not more than max number of servo instances */

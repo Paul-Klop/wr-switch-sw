@@ -19,6 +19,7 @@ extern struct pp_instance *ppsi_ppi;
 extern int *ppsi_ppi_nlinks;
 extern parentDS_t *ppsi_parentDS;
 extern defaultDS_t *ppsi_defaultDS;
+extern currentDS_t *ppsi_currentDS;
 
 /* RTUd */
 extern struct wrs_shm_head *rtud_head;

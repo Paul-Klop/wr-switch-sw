@@ -14,6 +14,7 @@ static struct pp_globals *ppg;
 struct pp_instance *ppsi_ppi;
 parentDS_t *ppsi_parentDS;
 defaultDS_t *ppsi_defaultDS;
+currentDS_t *ppsi_currentDS;
 
 int *ppsi_ppi_nlinks=NULL;
 
@@ -146,6 +147,13 @@ static int init_shm_ppsi(void)
 		snmp_log(LOG_ERR, "SNMP: " SL_ER
 			"Cannot follow ppsi_defaultDS in shmem.\n");
 		return 5;
+	}
+
+	ppsi_currentDS = wrs_shm_follow(ppsi_head, ppg->currentDS);
+	if (!ppsi_currentDS) {
+	        snmp_log(LOG_ERR, "SNMP: " SL_ER
+	                "Cannot follow ppsi_currentDS in shmem.\n");
+	        return 5;
 	}
 	return 0;
 }

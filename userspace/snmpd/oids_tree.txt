@@ -366,6 +366,8 @@
    |  |     |        Size: 0..64
    |  |     +-- -R-- Integer32 wrsPtpIngressLatency(32)
    |  |     +-- -R-- Integer32 wrsPtpEgressLatency(33)
+   |  |     +-- -R-- Unsigned32 wrsPtpClockClass(34)
+   |  |     +-- -R-- Unsigned32 wrsPtpStepsRemoved(35)
    |  |
    |  +--wrsPortStatusTable(6)
    |  |  |

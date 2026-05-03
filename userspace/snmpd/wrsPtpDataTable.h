@@ -52,6 +52,8 @@ struct wrsPtpDataTable_s {
 	char wrsPtpDelayCoefficientStr[64];
 	int32_t wrsPtpIngressLatency;
 	int32_t wrsPtpEgressLatency;
+	uint32_t wrsPtpClockClass;
+	uint32_t wrsPtpStepsRemoved;
 };
 
 extern struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
